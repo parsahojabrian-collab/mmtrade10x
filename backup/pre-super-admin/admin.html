@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پنل مدیریت 10X</title>
+<style>
+:root{--bg:#f4f5f8;--card:#fff;--ink:#1b1f2a;--mut:#6b7280;--line:#e5e7eb;--pri:#4f46e5;--ok:#16a34a;--bad:#dc2626;--warn:#d97706}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#181b24;--ink:#e8eaf0;--mut:#9aa1b2;--line:#2a2f3c;--pri:#818cf8;--ok:#4ade80;--bad:#f87171;--warn:#fbbf24}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.7 Vazirmatn,Tahoma,sans-serif}
+.hide{display:none!important}.center{min-height:100vh;display:grid;place-items:center;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+input,select,textarea,button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+button{cursor:pointer;background:var(--pri);color:#fff;border:0}button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}button.bad{background:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>input,.row>select{flex:1;min-width:140px}
+#app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+aside{background:var(--card);border-inline-end:1px solid var(--line);padding:16px 10px;position:sticky;top:0;height:100vh}
+aside h2{margin:0 8px 14px;font-size:17px;color:var(--pri)}
+aside a{display:block;padding:9px 12px;border-radius:8px;color:var(--ink);cursor:pointer;margin-bottom:2px}
+aside a.on{background:var(--pri);color:#fff}aside a:hover:not(.on){background:var(--bg)}
+main{padding:20px;min-width:0}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px}
+header h1{margin:0;font-size:20px}.mut{color:var(--mut)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.stat b{display:block;font-size:28px}.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse}th,td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-weight:500}tbody tr.cl:hover{background:var(--bg);cursor:pointer}
+.tag{padding:2px 8px;border-radius:99px;font-size:12px;background:var(--bg);border:1px solid var(--line)}
+.tag.ok{color:var(--ok)}.tag.bad{color:var(--bad)}.tag.warn{color:var(--warn)}
+.bar{height:10px;border-radius:5px;background:var(--pri);min-width:3px}.f{display:grid;grid-template-columns:150px 1fr 40px;gap:10px;align-items:center;margin:6px 0}
+.two{display:grid;grid-template-columns:320px 1fr;gap:12px}.msgs{max-height:55vh;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.m{padding:8px 12px;border-radius:10px;background:var(--bg);max-width:85%}.m.ADMIN{background:var(--pri);color:#fff;align-self:flex-start}.m.USER{align-self:flex-end}.m.SYSTEM{align-self:center;color:var(--mut);font-size:12px}
+.ti{padding:10px;border-bottom:1px solid var(--line);cursor:pointer}.ti.on,.ti:hover{background:var(--bg)}
+#drawer{position:fixed;inset:0;background:#0006;display:flex;justify-content:flex-start;z-index:9}#drawer .card{width:min(420px,100%);height:100%;border-radius:0;overflow:auto}
+dl{display:grid;grid-template-columns:130px 1fr;gap:6px 10px}dt{color:var(--mut)}dd{margin:0;word-break:break-all}
+#toast{position:fixed;bottom:16px;inset-inline-start:16px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:10}
+@media(max-width:800px){#app{grid-template-columns:1fr}aside{position:static;height:auto;display:flex;overflow-x:auto;gap:4px;padding:8px}aside h2{display:none}aside a{white-space:nowrap;margin:0}.two{grid-template-columns:1fr}}
+</style></head><body>
+<div id="login" class="center"><div class="card" style="width:min(380px,100%)"><h2 style="margin-top:0">ورود به پنل 10X</h2>
+<div class="row" style="flex-direction:column;align-items:stretch"><input id="em" type="email" placeholder="ایمیل" autocomplete="username"><input id="pw" type="password" placeholder="رمز عبور" autocomplete="current-password"><button id="go">ورود</button></div>
+<details style="margin-top:12px"><summary class="mut">ورود اضطراری با توکن</summary><div class="row" style="margin-top:8px"><input id="tk" type="password" placeholder="ADMIN_API_TOKEN" autocomplete="off"><button class="sec" id="gt">اتصال</button></div></details>
+<p id="lerr" class="mut"></p></div></div>
+<div id="app" class="hide"><aside><h2>10X</h2><nav id="nav"></nav></aside>
+<main><header><h1 id="title"></h1><div class="row"><span class="mut" id="who"></span><button class="sec" id="out">خروج</button></div></header><div id="view"></div></main></div>
+<div id="drawer" class="hide"></div><div id="toast" class="hide"></div>
+<script>
+const $=s=>document.querySelector(s);
+const h=(t,p,...k)=>{const e=document.createElement(t);for(const[a,v]of Object.entries(p||{})){if(a==='class')e.className=v;else if(a.startsWith('on'))e[a]=v;else if(v!=null)e.setAttribute(a,v)}for(const c of k.flat())if(c!=null&&c!==false)e.append(c.nodeType?c:String(c));return e};
+let token='',me=null,cur='overview';try{token=sessionStorage.getItem('tenx_admin_token')||''}catch(e){}
+const fa=d=>d?new Date(d).toLocaleString('fa-IR'):'—';
+const toast=(m)=>{const t=$('#toast');t.textContent=m;t.classList.remove('hide');setTimeout(()=>t.classList.add('hide'),3500)};
+async function api(p,o={}){const r=await fetch('/admin'+p,{...o,headers:{'content-type':'application/json',authorization:'Bearer '+token}});const d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(d.message||d.error||('HTTP '+r.status));e.status=r.status;throw e}return d}
+const MENU=[['overview','نمای کلی',null],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['admins','مدیران و نقش‌ها',[]],['settings','تنظیمات',[]]];
+const ok=m=>me.role==='SUPER_ADMIN'||m[2]===null||m[2].includes(me.role);
+const ROLES=['SUPER_ADMIN','USER_MANAGER','SUPPORT','CONTENT_MANAGER','ACADEMY_MANAGER','CHALLENGE_MANAGER','ANALYST','MARKETING_MANAGER'];
+function table(cols,rows,onrow){return h('div',{class:'tbl'},h('table',{},h('thead',{},h('tr',{},cols.map(c=>h('th',{},c[0])))),h('tbody',{},rows.map(r=>h('tr',{class:onrow?'cl':'',onclick:onrow?()=>onrow(r):null},cols.map(c=>h('td',{},c[1](r))))))))}
+function generic(items){if(!items.length)return h('p',{class:'mut'},'موردی ثبت نشده است.');const ks=Object.keys(items[0]);return table(ks.map(k=>[k,r=>typeof r[k]==='object'&&r[k]?JSON.stringify(r[k]):String(r[k]??'—')]),items)}
+async function boot(){try{me=await api('/auth/me')}catch(e){$('#lerr').textContent=e.message;return}
+$('#login').classList.add('hide');$('#app').classList.remove('hide');$('#who').textContent=me.email+' · '+me.role;
+$('#nav').replaceChildren(...MENU.filter(ok).map(m=>h('a',{id:'n-'+m[0],onclick:()=>show(m[0])},m[1])));show(MENU.filter(ok)[0][0])}
+async function show(id){cur=id;document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.id==='n-'+id));$('#title').textContent=MENU.find(m=>m[0]===id)[1];const v=$('#view');v.replaceChildren(h('p',{class:'mut'},'در حال بارگذاری…'));try{v.replaceChildren(await VIEWS[id]())}catch(e){v.replaceChildren(h('div',{class:'card'},h('b',{class:'tag bad'},'خطا'),' ',e.message))}}
+const STAGES={};
+const VIEWS={
+async overview(){const s=await api('/summary');const box=h('div',{});box.append(h('div',{class:'grid'},[['کل کاربران',s.totalUsers],['ثبت‌نام کامل',s.registeredUsers],['ثبت‌نام ناقص',s.incompleteRegistrations],['جدید در ۲۴ ساعت',s.newLast24Hours]].map(x=>h('div',{class:'card stat'},h('span',{class:'mut'},x[0]),h('b',{},String(x[1]??0))))));
+try{const u=await api('/users?limit=200');const c={};u.items.forEach(x=>c[x.registrationStage||'—']=(c[x.registrationStage||'—']||0)+1);const mx=Math.max(1,...Object.values(c));box.append(h('div',{class:'card'},h('b',{},'قیف ثبت‌نام (بر اساس مرحله)'),Object.entries(c).map(([k,n])=>h('div',{class:'f'},h('span',{},k),h('div',{class:'bar',style:'width:'+(n/mx*100)+'%'}),h('span',{},String(n))))))}catch(e){}
+try{const a=await api('/audit-logs?limit=8');box.append(h('div',{class:'card',style:'margin-top:12px'},h('b',{},'آخرین فعالیت‌ها'),table([['زمان',r=>fa(r.createdAt)],['عمل',r=>r.action]],a.items.slice(0,8))))}catch(e){}
+return box},
+async users(){let items=[],cursor=null;const wrap=h('div',{}),tb=h('div',{}),more=h('button',{class:'sec',onclick:()=>load()},'بارگذاری بیشتر');
+const q=h('input',{placeholder:'جستجو: نام، یوزرنیم، تلفن، شناسه',oninput:draw}),st=h('select',{onchange:draw},h('option',{value:''},'همه‌ی وضعیت‌ها'));
+function draw(){const t=q.value.trim().toLowerCase(),f=st.value;const rows=items.filter(u=>(!f||u.registrationStatus===f)&&(!t||[u.firstName,u.lastName,u.username,u.phone,u.telegramId].join(' ').toLowerCase().includes(t)));tb.replaceChildren(table([['نام',u=>[u.firstName,u.lastName].filter(Boolean).join(' ')||'—'],['یوزرنیم',u=>u.username?'@'+u.username:'—'],['تلفن',u=>u.phone||'—'],['وضعیت',u=>h('span',{class:'tag '+(u.registrationStatus==='REGISTERED'?'ok':'warn')},u.registrationStatus)],['آخرین فعالیت',u=>fa(u.lastActivityAt)]],rows,drawer));more.classList.toggle('hide',!cursor)}
+async function load(){const d=await api('/users?limit=50'+(cursor?'&cursor='+encodeURIComponent(cursor):''));const seen=new Set(items.map(x=>x.id));d.items.forEach(x=>seen.has(x.id)||items.push(x));cursor=d.nextCursor&&d.items.length?d.nextCursor:null;[...new Set(items.map(x=>x.registrationStatus))].forEach(s=>{if(![...st.options].some(o=>o.value===s))st.append(h('option',{value:s},s))});draw()}
+wrap.append(h('div',{class:'row',style:'margin-bottom:12px'},q,st,['SUPER_ADMIN','MARKETING_MANAGER','USER_MANAGER','ANALYST'].includes(me.role)&&h('button',{class:'sec',onclick:csv},'خروجی ثبت‌نام‌های ناقص (CSV)')),h('div',{class:'card'},tb,more));await load();return wrap},
+async tickets(){const d=await api('/tickets');let sel=d.items[0]||null;const L=h('div',{class:'card',style:'padding:0'}),R=h('div',{class:'card'});
+function draw(){L.replaceChildren(...(d.items.length?d.items:[h('p',{class:'mut',style:'padding:12px'},'تیکتی نیست.')]).map(t=>h('div',{class:'ti'+(sel&&sel.id===t.id?' on':''),onclick:()=>{sel=t;draw()}},h('b',{},t.subject),h('div',{class:'mut'},[t.user?.firstName,t.user?.username&&'@'+t.user.username].filter(Boolean).join(' ')),h('span',{class:'tag '+(t.status==='OPEN'?'warn':'ok')},t.status))));
+if(!sel){R.replaceChildren(h('p',{class:'mut'},'یک تیکت را انتخاب کن.'));return}const ta=h('textarea',{rows:3,style:'width:100%',placeholder:'پاسخ…'});
+R.replaceChildren(h('div',{class:'row'},h('b',{},sel.subject),h('span',{class:'tag'},sel.status),h('span',{class:'mut'},fa(sel.updatedAt))),h('div',{class:'msgs'},sel.messages.map(m=>h('div',{class:'m '+m.senderType},h('div',{},m.body),h('small',{class:'mut'},fa(m.createdAt))))),ta,h('div',{class:'row',style:'margin-top:8px'},h('button',{onclick:async()=>{if(!ta.value.trim())return;try{await api('/tickets/'+sel.id+'/reply',{method:'POST',body:JSON.stringify({body:ta.value.trim()})});toast('پاسخ ارسال شد.');show('tickets')}catch(e){toast('خطا: '+e.message)}}},'ارسال پاسخ'),h('button',{class:'sec',onclick:async()=>{const n=sel.status==='OPEN'?'CLOSED':'OPEN';try{await api('/tickets/'+sel.id+'/status',{method:'PATCH',body:JSON.stringify({status:n})});toast('وضعیت تغییر کرد.');show('tickets')}catch(e){toast('خطا: '+e.message)}}},sel.status==='OPEN'?'بستن تیکت':'بازکردن مجدد')))}
+draw();return h('div',{class:'two'},L,R)},
+async outreach(){const[f,n]=await Promise.all([api('/followups'),api('/notifications')]);return h('div',{},h('div',{class:'card',style:'margin-bottom:12px'},h('b',{},'پیگیری‌ها'),generic(f.items)),h('div',{class:'card'},h('b',{},'اعلان‌ها'),generic(n.items)))},
+async academy(){const d=await api('/academy/courses');const w=['SUPER_ADMIN','ACADEMY_MANAGER'].includes(me.role);const box=h('div',{});
+if(w)box.append(h('button',{style:'margin-bottom:12px',onclick:()=>editAc('course',null)},'+ دوره‌ی جدید'));
+if(!d.items.length)box.append(h('p',{class:'mut'},'هنوز دوره‌ای ساخته نشده است.'));
+const st=s=>h('span',{class:'tag '+(s==='PUBLISHED'?'ok':'warn')},s==='PUBLISHED'?'منتشرشده':'پیش‌نویس');
+d.items.forEach(c=>box.append(h('div',{class:'card',style:'margin-bottom:12px'},h('div',{class:'row',style:'justify-content:space-between;margin-bottom:8px'},h('b',{},c.title),st(c.status),w&&h('span',{},h('button',{class:'sec',onclick:()=>editAc('course',c)},'ویرایش'),' ',h('button',{class:'sec',onclick:()=>editAc('lesson',{courseId:c.id})},'+ درس'))),c.lessons.length?table([['ترتیب',l=>l.sortOrder],['درس',l=>l.title],['وضعیت',l=>st(l.status)],['تکمیل‌شده',l=>l.completed]],c.lessons,w?l=>editAc('lesson',l):null):h('p',{class:'mut'},'درسی ندارد.'))));return box},
+async pages(){const[p,q]=await Promise.all([api('/content/pages'),api('/content/popups')]);const w=['SUPER_ADMIN','CONTENT_MANAGER'].includes(me.role);const box=h('div',{});const st=s=>h('span',{class:'tag '+(s==='PUBLISHED'?'ok':'warn')},s==='PUBLISHED'?'منتشرشده':'پیش‌نویس');
+box.append(h('div',{class:'card',style:'margin-bottom:12px'},h('b',{},'صفحه‌های Mini App'),h('p',{class:'mut'},'بلوک‌های هر صفحه قبل از بخش «شفافیت و ریسک» نمایش داده می‌شوند.'),table([['صفحه',r=>r.slug],['وضعیت',r=>st(r.status)],['بلوک‌ها',r=>r.blocks.length]],p.items,w?r=>editPage(r):null)));
+box.append(h('div',{class:'card'},h('div',{class:'row',style:'justify-content:space-between'},h('b',{},'پاپ‌آپ‌ها'),w&&h('button',{onclick:()=>editPopup(null)},'+ پاپ‌آپ جدید')),q.items.length?table([['عنوان',r=>r.title],['صفحه',r=>r.pageSlug],['نمایش',r=>r.frequency==='ONCE'?'یک بار':'هر بار'],['وضعیت',r=>st(r.status)]],q.items,w?r=>editPopup(r):null):h('p',{class:'mut'},'پاپ‌آپی نیست.')));return box},
+async audit(){const d=await api('/audit-logs?limit=100');return h('div',{class:'card'},table([['زمان',r=>fa(r.createdAt)],['عمل',r=>r.action],['نوع',r=>r.entityType||'—'],['جزئیات',r=>r.metadata?JSON.stringify(r.metadata).slice(0,90):'—']],d.items.slice(0,100)))},
+async admins(){const d=await api('/admins');const em=h('input',{type:'email',placeholder:'ایمیل'}),pw=h('input',{type:'password',placeholder:'رمز (حداقل ۱۲ نویسه)',autocomplete:'new-password'}),rl=h('select',{},ROLES.map(r=>h('option',{},r)));
+const act=async(id,body)=>{try{await api('/admins/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify(body)});toast('انجام شد.');show('admins')}catch(e){toast('خطا: '+e.message)}};
+return h('div',{},h('div',{class:'card',style:'margin-bottom:12px'},table([['ایمیل',a=>a.email],['نقش',a=>{const s=h('select',{onchange:()=>act(a.id,{role:s.value})},ROLES.map(r=>h('option',{selected:r===a.role?'':null},r)));return s}],['فعال',a=>h('span',{class:'tag '+(a.isActive?'ok':'bad')},a.isActive?'بله':'خیر')],['ساخته‌شده',a=>fa(a.createdAt)],['',a=>h('button',{class:'sec',onclick:()=>act(a.id,{isActive:!a.isActive})},a.isActive?'غیرفعال‌سازی':'فعال‌سازی')]],d.items)),
+h('div',{class:'card'},h('b',{},'افزودن مدیر'),h('div',{class:'row',style:'margin-top:8px'},em,pw,rl,h('button',{onclick:async()=>{try{await api('/admins',{method:'POST',body:JSON.stringify({email:em.value.trim(),password:pw.value,role:rl.value})});toast('مدیر اضافه شد.');show('admins')}catch(e){toast('خطا: '+e.message)}}},'افزودن'))))},
+async settings(){const d=await api('/settings');const x=d.settings||{};const F={MINI_APP_URL:h('input',{value:x.MINI_APP_URL||''}),REQUIRED_CHANNELS:h('input',{value:x.REQUIRED_CHANNELS||''}),REQUIRED_CHANNEL_LINKS:h('input',{value:x.REQUIRED_CHANNEL_LINKS||''}),ALLOW_NO_REQUIRED_CHANNELS:h('select',{},['false','true'].map(v=>h('option',{selected:String(Boolean(x.ALLOW_NO_REQUIRED_CHANNELS))===v?'':null},v)))};
+return h('div',{class:'card'},Object.entries(F).map(([k,el])=>h('div',{style:'margin-bottom:10px'},h('label',{class:'mut'},k),h('div',{},el))),h('button',{onclick:async()=>{const o={};for(const[k,el]of Object.entries(F))o[k]=k.startsWith('ALLOW')?el.value==='true':el.value.trim();try{await api('/settings',{method:'PUT',body:JSON.stringify(o)});toast('تنظیمات ذخیره شد.')}catch(e){toast('خطا: '+e.message)}}},'ذخیره'),h('p',{class:'mut'},'توجه: مقدار ذخیره‌شده در دیتابیس بر .env اولویت دارد.'))}
+};
+function editAc(kind,o){const isC=kind==='course',isNew=!o||!o.id;o=o||{};const f={title:h('input',{value:o.title||''}),sortOrder:h('input',{type:'number',value:o.sortOrder??0}),status:h('select',{},['DRAFT','PUBLISHED'].map(s=>h('option',{selected:(o.status||'DRAFT')===s?'':null},s)))};
+if(isC)f.description=h('textarea',{rows:3});else{f.summary=h('textarea',{rows:2});f.body=h('textarea',{rows:8});f.videoUrl=h('input',{value:o.videoUrl||'',placeholder:'https://...'})}
+for(const k of['description','summary','body'])if(f[k])f[k].value=o[k]||'';Object.values(f).forEach(e=>e.style.width='100%');
+const url=isC?(isNew?'/academy/courses':'/academy/courses/'+o.id):(isNew?'/academy/courses/'+o.courseId+'/lessons':'/academy/lessons/'+o.id);
+const save=async()=>{const b={};for(const[k,e]of Object.entries(f))b[k]=k==='sortOrder'?Number(e.value||0):e.value;try{await api(url,{method:isNew?'POST':'PATCH',body:JSON.stringify(b)});$('#drawer').classList.add('hide');toast('ذخیره شد.');show('academy')}catch(e){toast('خطا: '+e.message)}};
+const del=async()=>{if(!confirm('حذف شود؟ پیشرفت کاربران هم پاک می‌شود.'))return;try{await api(url,{method:'DELETE',body:'{}'});$('#drawer').classList.add('hide');toast('حذف شد.');show('academy')}catch(e){toast('خطا: '+e.message)}};
+const d=$('#drawer');d.classList.remove('hide');d.onclick=e=>{if(e.target===d)d.classList.add('hide')};
+d.replaceChildren(h('div',{class:'card'},h('b',{},(isNew?'ساخت ':'ویرایش ')+(isC?'دوره':'درس')),Object.entries(f).map(([k,e])=>h('div',{style:'margin:8px 0'},h('label',{class:'mut'},k),e)),h('div',{class:'row'},h('button',{onclick:save},'ذخیره'),!isNew&&h('button',{class:'bad',onclick:del},'حذف'),h('button',{class:'sec',onclick:()=>d.classList.add('hide')},'بستن'))))}
+const SLUGS=['index','academy','crypto','copy-trading','challenge','support','profile'];
+function editPage(r){const blocks=JSON.parse(JSON.stringify(r.blocks||[]));const FL={heading:['text'],text:['text'],image:['url','alt'],button:['text','url'],banner:['title','text','url'],progress:['kind','title'],divider:[]};
+const stt=h('select',{},['DRAFT','PUBLISHED'].map(s=>h('option',{selected:r.status===s?'':null},s)));stt.style.width='100%';const list=h('div',{});
+const fld=(b,k)=>{if(k==='kind'){const s=h('select',{style:'width:100%;margin-top:6px'},['registration','academy'].map(v=>h('option',{selected:b.kind===v?'':null},v)));s.onchange=()=>b.kind=s.value;return s}const e=h(k==='text'&&b.type==='text'?'textarea':'input',{placeholder:k,style:'width:100%;margin-top:6px'});e.value=b[k]||'';e.oninput=()=>b[k]=e.value;return e};
+const mv=(i,j)=>{if(j<0||j>=blocks.length)return;[blocks[i],blocks[j]]=[blocks[j],blocks[i]];draw()};
+function draw(){list.replaceChildren(...blocks.map((b,i)=>h('div',{class:'card',style:'margin:8px 0;padding:10px'},h('div',{class:'row',style:'justify-content:space-between'},h('b',{},b.type),h('span',{},h('button',{class:'sec',onclick:()=>mv(i,i-1)},'↑'),' ',h('button',{class:'sec',onclick:()=>mv(i,i+1)},'↓'),' ',h('button',{class:'bad',onclick:()=>{blocks.splice(i,1);draw()}},'×'))),FL[b.type].map(k=>fld(b,k)))))}
+const ty=h('select',{},Object.keys(FL).map(t=>h('option',{},t)));
+const save=async()=>{const clean=blocks.map(b=>Object.fromEntries(Object.entries(b).filter(([k,v])=>v!=='')));try{await api('/content/pages/'+r.slug,{method:'PUT',body:JSON.stringify({status:stt.value,blocks:clean})});$('#drawer').classList.add('hide');toast('ذخیره شد.');show('pages')}catch(e){toast('خطا: '+e.message)}};
+const d=$('#drawer');d.classList.remove('hide');d.onclick=e=>{if(e.target===d)d.classList.add('hide')};draw();
+d.replaceChildren(h('div',{class:'card'},h('b',{},'صفحه: '+r.slug),h('div',{style:'margin:8px 0'},h('label',{class:'mut'},'status'),stt),list,h('div',{class:'row',style:'margin:10px 0'},ty,h('button',{class:'sec',onclick:()=>{blocks.push(ty.value==='progress'?{type:'progress',kind:'registration'}:{type:ty.value});draw()}},'افزودن بلوک')),h('div',{class:'row'},h('button',{onclick:save},'ذخیره'),h('button',{class:'sec',onclick:()=>d.classList.add('hide')},'بستن'))))}
+function editPopup(o){const isNew=!o||!o.id;o=o||{};const f={title:h('input',{value:o.title||''}),body:h('textarea',{rows:5}),imageUrl:h('input',{value:o.imageUrl||'',placeholder:'https://… یا /مسیر'}),buttonText:h('input',{value:o.buttonText||''}),buttonUrl:h('input',{value:o.buttonUrl||'',placeholder:'/miniapp/challenge.html'}),
+pageSlug:h('select',{},SLUGS.map(s=>h('option',{selected:(o.pageSlug||'index')===s?'':null},s))),frequency:h('select',{},['ONCE','EVERY_VISIT'].map(s=>h('option',{selected:(o.frequency||'ONCE')===s?'':null},s))),status:h('select',{},['DRAFT','PUBLISHED'].map(s=>h('option',{selected:(o.status||'DRAFT')===s?'':null},s)))};
+f.body.value=o.body||'';Object.values(f).forEach(e=>e.style.width='100%');
+const url=isNew?'/content/popups':'/content/popups/'+o.id;
+const save=async()=>{const b={};for(const[k,e]of Object.entries(f)){const v=e.value.trim();b[k]=['imageUrl','buttonText','buttonUrl'].includes(k)?(v||null):v}try{await api(url,{method:isNew?'POST':'PATCH',body:JSON.stringify(b)});$('#drawer').classList.add('hide');toast('ذخیره شد.');show('pages')}catch(e){toast('خطا: '+e.message)}};
+const del=async()=>{if(!confirm('پاپ‌آپ حذف شود؟'))return;try{await api(url,{method:'DELETE',body:'{}'});$('#drawer').classList.add('hide');toast('حذف شد.');show('pages')}catch(e){toast('خطا: '+e.message)}};
+const d=$('#drawer');d.classList.remove('hide');d.onclick=e=>{if(e.target===d)d.classList.add('hide')};
+d.replaceChildren(h('div',{class:'card'},h('b',{},isNew?'پاپ‌آپ جدید':'ویرایش پاپ‌آپ'),Object.entries(f).map(([k,e])=>h('div',{style:'margin:8px 0'},h('label',{class:'mut'},k),e)),h('div',{class:'row'},h('button',{onclick:save},'ذخیره'),!isNew&&h('button',{class:'bad',onclick:del},'حذف'),h('button',{class:'sec',onclick:()=>d.classList.add('hide')},'بستن'))))}
+function drawer(u){const d=$('#drawer');d.classList.remove('hide');d.replaceChildren(h('div',{class:'card'},h('div',{class:'row',style:'justify-content:space-between'},h('b',{},'جزئیات کاربر'),h('button',{class:'sec',onclick:()=>d.classList.add('hide')},'بستن')),h('dl',{},Object.entries(u).flatMap(([k,v])=>[h('dt',{},k),h('dd',{},/At$/.test(k)?fa(v):String(v??'—'))]))));d.onclick=e=>{if(e.target===d)d.classList.add('hide')}}
+async function csv(){try{const r=await fetch('/admin/registrations/incomplete.csv',{headers:{authorization:'Bearer '+token}});if(!r.ok)throw new Error('HTTP '+r.status);const a=h('a',{href:URL.createObjectURL(await r.blob()),download:'incomplete.csv'});a.click()}catch(e){toast('خطا: '+e.message)}}
+$('#go').onclick=async()=>{try{const r=await fetch('/admin/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:$('#em').value.trim(),password:$('#pw').value})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||d.error);token=d.token;$('#pw').value='';try{sessionStorage.setItem('tenx_admin_token',token)}catch(e){}boot()}catch(e){$('#lerr').textContent=e.message}};
+$('#gt').onclick=()=>{token=$('#tk').value.trim();$('#tk').value='';try{sessionStorage.setItem('tenx_admin_token',token)}catch(e){}boot()};
+$('#out').onclick=()=>{token='';try{sessionStorage.removeItem('tenx_admin_token')}catch(e){}location.reload()};
+if(token)boot();
+</script>
+<section id="tenx-real-bot-manager" style="padding:20px;margin:20px 0;border:1px solid #8885;border-radius:14px">
+<h2>مدیریت ربات تلگرام</h2>
+<div id="tenx-bot-status">در حال دریافت وضعیت...</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0">
+<button type="button" onclick="tenxBotAction('start')">روشن کردن</button>
+<button type="button" onclick="tenxBotAction('stop')">خاموش کردن</button>
+<button type="button" onclick="tenxBotAction('restart')">ری‌استارت</button>
+<button type="button" onclick="tenxBotStatus()">به‌روزرسانی وضعیت</button>
+<button type="button" onclick="tenxBotLogs()">نمایش لاگ‌ها</button>
+</div>
+<pre id="tenx-bot-logs" style="white-space:pre-wrap;direction:ltr;text-align:left;max-height:400px;overflow:auto"></pre>
+<div id="tenx-bot-message" role="status"></div>
+</section>
+<script>
+(function(){
+ const token=()=>sessionStorage.getItem('tenx_admin_token')||'';
+ async function call(path,method='GET'){
+  const r=await fetch(path,{method,headers:{'Authorization':'Bearer '+token(),'Content-Type':'application/json'}});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||('HTTP '+r.status));
+  return data;
+ }
+ window.tenxBotStatus=async function(){
+  const el=document.getElementById('tenx-bot-status');
+  el.textContent='در حال بررسی...';
+  try{const d=await call('/admin/bot/status');el.textContent='وضعیت سرویس: '+d.status;}
+  catch(e){el.textContent='خطا: '+e.message;}
+ };
+ window.tenxBotAction=async function(action){
+  if(action==='stop'&&!confirm('ربات تلگرام خاموش شود؟'))return;
+  const msg=document.getElementById('tenx-bot-message');
+  msg.textContent='در حال اجرا...';
+  try{await call('/admin/bot/'+action,'POST');msg.textContent='دستور '+action+' ارسال شد.';await tenxBotStatus();}
+  catch(e){msg.textContent='عملیات ناموفق: '+e.message;}
+ };
+ window.tenxBotLogs=async function(){
+  const el=document.getElementById('tenx-bot-logs');
+  el.textContent='در حال دریافت لاگ...';
+  try{const d=await call('/admin/bot/logs?lines=80');el.textContent=d.lines||'لاگی موجود نیست';}
+  catch(e){el.textContent='خطا: '+e.message;}
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tenxBotStatus);
+ else tenxBotStatus();
+})();
+</script>
+</body></html>

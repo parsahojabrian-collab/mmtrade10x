@@ -1,0 +1,153 @@
+.tenx-onboard-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: grid;
+  place-items: end center;
+  background: rgba(2, 7, 11, .86);
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
+  direction: rtl;
+  font-family: inherit;
+}
+.tenx-onboard-backdrop[hidden] { display: none !important; }
+.tenx-onboard-sheet {
+  width: min(100%, 490px);
+  max-height: 94dvh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 29px 23px max(29px, env(safe-area-inset-bottom));
+  border: 1px solid rgba(67,213,165,.26);
+  border-radius: 30px 30px 0 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(40,160,123,.19), transparent 57%),
+    linear-gradient(165deg, #14242b, #080e15 76%);
+  box-shadow: 0 -18px 85px rgba(0,0,0,.5);
+  color: #f4faf8;
+  animation: tenx-rise .42s ease-out both;
+}
+.tenx-onboard-brand {
+  color: #43d5a5;
+  letter-spacing: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+.tenx-onboard-symbol {
+  margin: 19px auto;
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  border-radius: 21px;
+  border: 1px solid rgba(67,213,165,.45);
+  background: rgba(67,213,165,.09);
+  color: #69e8bd;
+  font: 800 27px sans-serif;
+  box-shadow: 0 0 42px rgba(67,213,165,.15);
+}
+.tenx-onboard-sheet h2 {
+  font-size: 23px;
+  line-height: 1.65;
+  text-align: center;
+  margin: 8px 0;
+  color: #fff;
+}
+.tenx-onboard-subtitle {
+  color: #9bafb2;
+  text-align: center;
+  font-size: 13px;
+  line-height: 2;
+  margin: 0 0 22px;
+}
+.tenx-onboard-field {
+  display: block;
+  margin: 15px 0;
+  color: #c7d9d8;
+  font-size: 13px;
+}
+.tenx-onboard-field input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 8px;
+  padding: 15px;
+  border-radius: 14px;
+  border: 1px solid #30434a;
+  outline: none;
+  background: #0b151c;
+  color: #fff;
+  font: inherit;
+}
+.tenx-onboard-field input:focus {
+  border-color: #43d5a5;
+  box-shadow: 0 0 0 3px rgba(67,213,165,.1);
+}
+.tenx-onboard-level {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  margin: 11px 0;
+  text-align: right;
+  border-radius: 16px;
+  border: 1px solid #30434a;
+  background: #101d25;
+  color: #f5faf8;
+  font: inherit;
+  cursor: pointer;
+}
+.tenx-onboard-level[aria-pressed="true"] {
+  border-color: #43d5a5;
+  background: rgba(67,213,165,.13);
+}
+.tenx-onboard-level strong { display: block; font-size: 15px; }
+.tenx-onboard-level small { color: #9eafb3; font-size: 12px; }
+.tenx-onboard-level-icon { font-size: 23px; }
+.tenx-onboard-submit {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-top: 21px;
+  border: 0;
+  border-radius: 15px;
+  background: linear-gradient(115deg, #43d5a5, #22a77e);
+  color: #061810;
+  font: 800 15px inherit;
+  cursor: pointer;
+}
+.tenx-onboard-submit:disabled { opacity: .5; cursor: wait; }
+.tenx-onboard-error {
+  min-height: 20px;
+  color: #ff9b99;
+  text-align: center;
+  font-size: 12px;
+}
+.tenx-onboard-secondary {
+  background: none;
+  border: 0;
+  color: #b9ceca;
+  padding: 12px;
+  font: inherit;
+  cursor: pointer;
+}
+.tenx-edit-level {
+  display: inline-block;
+  padding: 11px 17px;
+  margin: 10px 0;
+  border: 1px solid #43d5a5;
+  border-radius: 12px;
+  color: #43d5a5;
+  background: rgba(67,213,165,.08);
+  font: inherit;
+  cursor: pointer;
+}
+@keyframes tenx-rise {
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tenx-onboard-sheet { animation: none; }
+}

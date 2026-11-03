@@ -1,0 +1,2677 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#070a09">
+  <title>10X | مسیر رشد تو</title>
+  <link rel="stylesheet" href="/miniapp/10x-theme.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/miniapp/10x-onboarding.css?v=p01">
+  <link rel="stylesheet" href="/miniapp/10x-fonts.css?v=doran-p1">
+<style>
+
+/* TENX_MM10_PREMIUM_V2 */
+#mmtrade10x-view {
+  --mm-green:#22df88;
+  --mm-gold:#dfb96c;
+  background:
+    radial-gradient(ellipse at 50% 0%,#0d3926 0%,transparent 48%),
+    #050b09 !important;
+  color:#f5fff9 !important;
+  padding:18px 14px 115px !important;
+  min-height:100vh;
+  font-family:inherit;
+}
+#mmtrade10x-view .mm10-hero {
+  position:relative;
+  overflow:hidden;
+  border:1px solid #2a6044;
+  border-radius:24px;
+  background:linear-gradient(135deg,#08150e,#123623 55%,#060b09);
+  padding:22px 18px;
+  min-height:218px;
+  box-shadow:0 12px 36px #0008,inset 0 1px #ffffff12;
+}
+.mm10-hero:before {
+  content:"";
+  position:absolute;
+  width:220px;height:220px;
+  border-radius:50%;
+  background:#12dc7130;
+  filter:blur(65px);
+  top:-90px;left:-60px;
+  pointer-events:none;
+}
+.mm10-hero .mm10-eyebrow {
+  color:#65efaa;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1.5px;
+}
+.mm10-hero h1 {
+  color:white;
+  font-size:29px;
+  font-weight:900;
+  margin:12px 0 8px;
+  direction:ltr;
+  text-align:right;
+}
+.mm10-hero p {
+  color:#c0d6c9;
+  line-height:1.9;
+  font-size:13px;
+  max-width:220px;
+}
+.mm10-bull {
+  position:absolute;
+  left:15px;top:38px;
+  font-size:76px;
+  line-height:1;
+  filter:sepia(1) saturate(3) hue-rotate(350deg)
+         drop-shadow(0 0 18px #e0b45c65);
+  transform:scaleX(-1);
+}
+.mm10-chart {
+  position:absolute;
+  left:0;bottom:0;
+  width:100%;height:80px;
+  opacity:.65;
+  pointer-events:none;
+}
+.mm10-progress-card {
+  margin-top:13px;
+  padding:18px;
+  border-radius:18px;
+  border:1px solid #285c40;
+  background:linear-gradient(120deg,#101f17,#09140e);
+}
+.mm10-progress-card .mm10-label {
+  color:#d8eee0;
+  font-size:13px;
+  margin-bottom:9px;
+}
+#mm10-progress {
+  font-size:15px;
+  font-weight:800;
+  color:#53eca0 !important;
+}
+.mm10-track {
+  height:7px;
+  background:#24392e;
+  border-radius:99px;
+  overflow:hidden;
+  margin-top:13px;
+}
+.mm10-fill {
+  height:100%;
+  width:0;
+  border-radius:99px;
+  background:linear-gradient(90deg,#078b52,#43f4a0);
+  transition:width .55s ease;
+}
+#mm10-lessons {
+  margin-top:18px;
+}
+#mm10-lessons details {
+  background:linear-gradient(125deg,#101c16,#0a1410) !important;
+  border:1px solid #284635 !important;
+  border-radius:17px !important;
+  padding:17px 15px !important;
+  margin:11px 0 !important;
+  box-shadow:0 6px 20px #0004;
+  transition:border-color .25s,transform .25s;
+}
+#mm10-lessons details[open] {
+  border-color:#31d789 !important;
+  background:linear-gradient(135deg,#122b1d,#09150f) !important;
+}
+#mm10-lessons summary {
+  color:#f5fff8;
+  font-size:14px;
+  line-height:1.8;
+  font-weight:800 !important;
+  cursor:pointer;
+}
+#mm10-lessons details p {
+  color:#b9d0c1 !important;
+  font-size:13px;
+  line-height:2.1 !important;
+}
+#mm10-lessons button {
+  width:100%;
+  min-height:44px;
+  background:linear-gradient(90deg,#098c55,#16cb79) !important;
+  color:#fff !important;
+  border:0 !important;
+  border-radius:13px !important;
+  font-weight:800;
+  cursor:pointer;
+}
+.mm10-intro {
+  color:#b5cabc;
+  margin:22px 3px 5px;
+  font-size:14px;
+  font-weight:800;
+}
+.mm10-risk {
+  background:#19170e;
+  border:1px solid #655128;
+  border-radius:16px;
+  padding:16px;
+  margin-top:18px;
+  color:#e7d5a7;
+  line-height:2;
+  font-size:12px;
+}
+@media(prefers-reduced-motion:no-preference) {
+  .mm10-hero {animation:mm10Enter .5s ease-out both}
+  #mm10-lessons details {animation:mm10Enter .35s ease-out both}
+  @keyframes mm10Enter {
+    from {opacity:0;transform:translateY(9px)}
+    to {opacity:1;transform:translateY(0)}
+  }
+}
+@media(max-width:360px) {
+  .mm10-bull {font-size:57px;top:54px}
+  .mm10-hero h1 {font-size:24px}
+}
+
+</style>
+<style>
+
+/* TENX_MM10_PREMIUM_V3 */
+#mmtrade10x-view {
+  padding:12px 14px 190px !important;
+  overflow-x:hidden;
+}
+#mmtrade10x-view .mm10-hero {
+  min-height:185px !important;
+  padding:18px !important;
+  border-radius:22px !important;
+  background:
+    radial-gradient(ellipse at 18% 40%,#28552b 0%,transparent 48%),
+    linear-gradient(120deg,#07100b,#10291a 65%,#050a07) !important;
+}
+#mmtrade10x-view .mm10-hero h1 {
+  font-family:Arial,sans-serif !important;
+  font-size:27px !important;
+  font-weight:900 !important;
+  letter-spacing:-.7px;
+  direction:ltr !important;
+  unicode-bidi:isolate;
+  text-align:right !important;
+  margin:8px 0 7px !important;
+  position:relative;
+  z-index:2;
+}
+#mmtrade10x-view .mm10-eyebrow {
+  font-family:Arial,sans-serif;
+  font-size:10px !important;
+  letter-spacing:1px !important;
+  position:relative;
+  z-index:2;
+}
+#mmtrade10x-view .mm10-hero p {
+  font-size:12px !important;
+  line-height:1.8 !important;
+  max-width:65% !important;
+  position:relative;
+  z-index:2;
+}
+#mmtrade10x-view .mm10-bull {
+  display:none !important;
+}
+#mmtrade10x-view .mm10-bull-art {
+  position:absolute;
+  left:0;
+  top:19px;
+  width:43%;
+  height:130px;
+  opacity:.96;
+  pointer-events:none;
+  filter:drop-shadow(0 0 15px #d4a34a55);
+}
+#mmtrade10x-view .mm10-chart {
+  height:48px !important;
+  opacity:.45 !important;
+}
+#mmtrade10x-view .mm10-progress-card {
+  margin-top:11px !important;
+  padding:14px 16px !important;
+  border-radius:16px !important;
+}
+#mmtrade10x-view .mm10-progress-card .mm10-label {
+  font-size:12px !important;
+  margin-bottom:4px !important;
+}
+#mmtrade10x-view #mm10-progress {
+  font-size:14px !important;
+  margin:4px 0 !important;
+}
+#mmtrade10x-view .mm10-track {
+  margin-top:10px !important;
+}
+#mmtrade10x-view .mm10-intro {
+  margin:18px 2px 7px !important;
+  font-size:13px !important;
+}
+#mmtrade10x-view #mm10-lessons details {
+  margin:8px 0 !important;
+  padding:12px 13px !important;
+  border-radius:14px !important;
+}
+#mmtrade10x-view #mm10-lessons summary {
+  font-size:13px !important;
+  line-height:1.7 !important;
+  min-height:30px;
+}
+#mmtrade10x-view #mm10-lessons details p {
+  font-size:12px !important;
+  line-height:1.9 !important;
+  margin:11px 0 !important;
+}
+#mmtrade10x-view #mm10-lessons button {
+  min-height:42px !important;
+  font-size:12px !important;
+}
+#mmtrade10x-view .mm10-risk {
+  margin-top:14px !important;
+  font-size:11px !important;
+}
+@media(max-width:380px) {
+  #mmtrade10x-view .mm10-hero h1 {
+    font-size:23px !important;
+  }
+  #mmtrade10x-view .mm10-bull-art {
+    width:39%;
+  }
+}
+
+</style>
+<style>
+
+/* TENX_MM10_3D_SCENE_V1 */
+
+#mmtrade10x-view .mm10-hero {
+  min-height:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:#040b08!important;
+}
+
+#mmtrade10x-view .mm10-hero > :not(.mm3d-wrap) {
+  display:none!important;
+}
+
+#mmtrade10x-view .mm3d-wrap {
+  position:relative;
+  height:310px;
+  width:100%;
+  overflow:hidden;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 50% 65%,#145538 0%,transparent 58%),
+    radial-gradient(ellipse at 50% 0%,#153e2c 0%,transparent 65%),
+    #040a08;
+  touch-action:pan-y;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+#mmtrade10x-view .mm3d-wrap::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,transparent 45%,#030a08 100%);
+  z-index:1;
+}
+
+#mmtrade10x-view .mm3d-stage {
+  position:absolute;
+  top:10px;
+  left:0;
+  right:0;
+  height:210px;
+  perspective:700px;
+  overflow:hidden;
+}
+
+#mmtrade10x-view .mm3d-world {
+  position:absolute;
+  width:260px;
+  height:190px;
+  left:50%;
+  top:44%;
+  margin-left:-130px;
+  margin-top:-95px;
+  transform-style:preserve-3d;
+  transform:rotateX(-21deg) rotateY(-25deg);
+  will-change:transform;
+}
+
+#mmtrade10x-view .mm3d-grid {
+  position:absolute;
+  width:320px;
+  height:320px;
+  left:-30px;
+  top:-65px;
+  transform:rotateX(90deg) translateZ(-38px);
+  background:
+    linear-gradient(#20d98a30 1px,transparent 1px),
+    linear-gradient(90deg,#20d98a30 1px,transparent 1px);
+  background-size:24px 24px;
+  border:1px solid #29d58b60;
+  box-shadow:0 0 45px #1aff8750;
+}
+
+#mmtrade10x-view .mm3d-platform {
+  position:absolute;
+  width:150px;
+  height:76px;
+  left:55px;
+  top:69px;
+  transform-style:preserve-3d;
+  transform:translateZ(4px);
+}
+
+#mmtrade10x-view .mm3d-platform-face {
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    135deg,#b78b3d,#ffdf8c,#745019
+  );
+  border:1px solid #ffe4a1;
+  transform:rotateX(90deg);
+  box-shadow:0 0 30px #e0b45b40;
+}
+
+#mmtrade10x-view .mm3d-candle {
+  position:absolute;
+  width:13px;
+  transform-style:preserve-3d;
+}
+
+#mmtrade10x-view .mm3d-candle .body {
+  position:absolute;
+  width:13px;
+  height:100%;
+  background:linear-gradient(
+    90deg,#065c39,#22e18d,#0b7048
+  );
+  border:1px solid #57ffc0;
+  box-shadow:0 0 12px #21e48a65;
+}
+
+#mmtrade10x-view .mm3d-candle.red .body {
+  background:linear-gradient(
+    90deg,#6a1c27,#ef5160,#842332
+  );
+  border-color:#ff8891;
+  box-shadow:0 0 12px #ee4d6060;
+}
+
+#mmtrade10x-view .mm3d-candle .wick {
+  position:absolute;
+  width:2px;
+  height:calc(100% + 17px);
+  top:-8px;
+  left:6px;
+  background:#c2dfcf;
+  z-index:-1;
+}
+
+#mmtrade10x-view .mm3d-candle .side {
+  position:absolute;
+  width:8px;
+  height:100%;
+  left:12px;
+  background:#0a5137;
+  transform-origin:left center;
+  transform:rotateY(90deg);
+}
+
+#mmtrade10x-view .mm3d-candle.red .side {
+  background:#6a2631;
+}
+
+#mmtrade10x-view .mm3d-tenx {
+  position:absolute;
+  left:65px;
+  top:43px;
+  width:140px;
+  text-align:center;
+  font:900 57px/1 Arial,sans-serif;
+  letter-spacing:-4px;
+  color:#f4d58c;
+  text-shadow:
+    0 2px #997039,
+    0 5px #67451f,
+    0 8px #302010,
+    0 0 24px #edbc5b70;
+  transform:translateZ(55px);
+  direction:ltr;
+}
+
+#mmtrade10x-view .mm3d-halo {
+  position:absolute;
+  left:50%;
+  top:25px;
+  width:180px;
+  height:180px;
+  margin-left:-90px;
+  border:1px solid #4affaa35;
+  border-radius:50%;
+  box-shadow:
+    0 0 50px #20de8640,
+    inset 0 0 35px #17cb7640;
+  pointer-events:none;
+}
+
+#mmtrade10x-view .mm3d-info {
+  position:absolute;
+  bottom:14px;
+  left:15px;
+  right:15px;
+  z-index:2;
+  text-align:center;
+}
+
+#mmtrade10x-view .mm3d-info strong {
+  display:block;
+  color:#fff;
+  font:900 25px Arial,sans-serif;
+  direction:ltr;
+  letter-spacing:-.5px;
+}
+
+#mmtrade10x-view .mm3d-info span {
+  display:block;
+  color:#b7d7c4;
+  font-size:12px;
+  margin-top:7px;
+}
+
+#mmtrade10x-view .mm3d-hint {
+  position:absolute;
+  top:12px;
+  right:13px;
+  z-index:2;
+  color:#a6d8b9;
+  font-size:10px;
+  border:1px solid #376b4e;
+  border-radius:30px;
+  padding:6px 10px;
+  background:#081b12b8;
+}
+
+@media(max-width:380px) {
+  #mmtrade10x-view .mm3d-wrap {
+    height:285px;
+  }
+  #mmtrade10x-view .mm3d-stage {
+    transform:scale(.88);
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  #mmtrade10x-view .mm3d-world {
+    will-change:auto;
+  }
+}
+
+</style>
+<style>
+/* TENX_MM10_BRAND_LOGO_V1 */
+#mmtrade10x-view .mm3d-brand {
+ position:absolute;
+ left:0;
+ top:43px;
+ width:270px;
+ height:135px;
+ transform:translateZ(60px);
+ filter:drop-shadow(0 7px 4px #0009)
+        drop-shadow(0 0 9px #36f48155);
+ pointer-events:none;
+}
+#mmtrade10x-view .mm3d-brand svg {
+ display:block;
+ width:100%;
+ height:100%;
+ overflow:visible;
+}
+</style><style>
+/* TENX_MM10_UPLOADED_LOGO_V1 */
+#mmtrade10x-view .mm3d-real-logo{
+ position:absolute;
+ width:235px;
+ max-height:130px;
+ object-fit:contain;
+ left:12px;
+ top:35px;
+ transform:translateZ(60px);
+ filter:drop-shadow(0 8px 9px #000a)
+        drop-shadow(0 0 12px #20e78555);
+ pointer-events:none;
+}
+</style>
+<style>
+/* TENX_MM10_CINEMATIC_CANDLES_V2 */
+
+/* Locked cinematic camera */
+#mmtrade10x-view .mm3d-stage {
+  pointer-events:none !important;
+  perspective:850px !important;
+  perspective-origin:50% 38% !important;
+}
+
+#mmtrade10x-view .mm3d-world {
+  transform:
+    rotateX(-17deg)
+    rotateY(-19deg) !important;
+  transform-style:preserve-3d !important;
+  transition:none !important;
+  animation:none !important;
+  pointer-events:none !important;
+}
+
+#mmtrade10x-view .mm3d-hint {
+  display:none !important;
+}
+
+/* Volumetric candle bodies */
+#mmtrade10x-view .mm3d-candle {
+  transform:translateZ(22px) !important;
+  transform-style:preserve-3d !important;
+  filter:
+    drop-shadow(3px 7px 4px rgba(0,0,0,.65));
+}
+
+#mmtrade10x-view .mm3d-candle:nth-of-type(3n) {
+  transform:translateZ(5px) scale(.93) !important;
+  opacity:.82;
+}
+
+#mmtrade10x-view .mm3d-candle:nth-of-type(4n) {
+  transform:translateZ(43px) scale(1.07) !important;
+  z-index:3;
+}
+
+#mmtrade10x-view .mm3d-candle .body {
+  box-sizing:border-box;
+  border-radius:2px;
+  background:
+    linear-gradient(90deg,
+      #063f2d 0%,
+      #0d8255 16%,
+      #53ffc0 38%,
+      #159d69 67%,
+      #063d2c 100%) !important;
+  border:1px solid rgba(135,255,204,.8) !important;
+  box-shadow:
+    inset 2px 0 3px rgba(255,255,255,.18),
+    inset -3px 0 5px rgba(0,0,0,.48),
+    0 0 13px rgba(24,229,132,.22),
+    5px 9px 9px rgba(0,0,0,.45) !important;
+  transform:translateZ(4px);
+}
+
+#mmtrade10x-view .mm3d-candle.red .body {
+  background:
+    linear-gradient(90deg,
+      #45121d 0%,
+      #9c253c 17%,
+      #ff8793 38%,
+      #d64058 67%,
+      #49101c 100%) !important;
+  border-color:rgba(255,145,158,.75) !important;
+  box-shadow:
+    inset 2px 0 3px rgba(255,255,255,.14),
+    inset -3px 0 5px rgba(0,0,0,.5),
+    0 0 12px rgba(239,65,85,.2),
+    5px 9px 9px rgba(0,0,0,.45) !important;
+}
+
+#mmtrade10x-view .mm3d-candle .side {
+  width:9px !important;
+  background:
+    linear-gradient(90deg,#063c2b,#116c4a,#042b20)
+    !important;
+  box-shadow:inset -2px 0 3px #0008;
+}
+
+#mmtrade10x-view .mm3d-candle.red .side {
+  background:
+    linear-gradient(90deg,#48131e,#8a2838,#330d17)
+    !important;
+}
+
+#mmtrade10x-view .mm3d-candle .wick {
+  width:2px !important;
+  background:
+    linear-gradient(90deg,#5e9c82,#dcfff0)
+    !important;
+  box-shadow:0 0 4px #a6ffd044;
+}
+
+/* Glossy candle top */
+#mmtrade10x-view .mm3d-candle .body::before {
+  content:"";
+  position:absolute;
+  left:-1px;
+  top:-5px;
+  width:100%;
+  height:7px;
+  background:
+    linear-gradient(135deg,#8affd0,#086b47);
+  transform:rotateX(68deg);
+  transform-origin:bottom;
+  border-radius:2px;
+  opacity:.85;
+}
+
+#mmtrade10x-view .mm3d-candle.red .body::before {
+  background:
+    linear-gradient(135deg,#ff9fa8,#832338);
+}
+
+/* Cinematic atmosphere */
+#mmtrade10x-view .mm3d-wrap {
+  isolation:isolate;
+}
+
+#mmtrade10x-view .mm3d-wrap::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(
+      ellipse at 28% 40%,
+      rgba(21,201,120,.13),transparent 56%),
+    radial-gradient(
+      ellipse at 77% 33%,
+      rgba(215,160,62,.075),transparent 49%);
+}
+
+#mmtrade10x-view .mm3d-real-logo {
+  z-index:8 !important;
+  filter:
+    drop-shadow(0 12px 12px rgba(0,0,0,.75))
+    drop-shadow(0 0 12px rgba(45,233,135,.24))
+    !important;
+}
+
+@media (prefers-reduced-motion:reduce) {
+  #mmtrade10x-view .mm3d-world,
+  #mmtrade10x-view .mm3d-candle {
+    animation:none !important;
+  }
+}
+</style>
+
+<style>
+/* TENX_MM10_LOGO_ONLY_V3 */
+#mmtrade10x-view .mm3d-wrap{
+  height:200px!important;
+  min-height:200px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+  position:relative!important;
+}
+#mmtrade10x-view .mm3d-stage,
+#mmtrade10x-view .mm3d-halo,
+#mmtrade10x-view .mm3d-hint,
+#mmtrade10x-view .mm3d-info,
+#mmtrade10x-view .mm3d-wrap::before,
+#mmtrade10x-view .mm3d-wrap::after{
+  display:none!important;
+}
+#mmtrade10x-view .mm10-logo-only{
+  display:block;
+  width:min(92%,420px);
+  height:auto;
+  max-height:180px;
+  object-fit:contain;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  filter:none;
+}
+</style>
+
+<style>
+/* TENX_MM10_BORDERLESS_LOGO_V4 */
+#mmtrade10x-view .mm3d-wrap,
+#mmtrade10x-view .mm3d-wrap.mm3d-wrap,
+#mmtrade10x-view .mm3d-hero,
+#mmtrade10x-view .mm3d-stage {
+  background:transparent!important;
+  background-image:none!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+}
+
+#mmtrade10x-view .mm3d-wrap {
+  height:auto!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  overflow:visible!important;
+}
+
+#mmtrade10x-view .mm10-logo-only {
+  display:block!important;
+  width:100%!important;
+  max-width:440px!important;
+  max-height:none!important;
+  height:auto!important;
+  margin:0 auto!important;
+  padding:0!important;
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  filter:none!important;
+  background:transparent!important;
+}
+
+#mmtrade10x-view .mm3d-wrap::before,
+#mmtrade10x-view .mm3d-wrap::after,
+#mmtrade10x-view .mm3d-hero::before,
+#mmtrade10x-view .mm3d-hero::after {
+  display:none!important;
+  content:none!important;
+}
+</style>
+</head>
+<body>
+  <main class="home-shell">
+    <header class="home-topbar">
+      <a class="home-brand" href="/miniapp" data-link-key="home.logo">
+        <span class="home-brandmark">10X</span>
+        <span>اکوسیستم 10X</span>
+      </a>
+      <a class="home-user" href="/profile" data-link-key="home.profile">
+        <img id="user-photo" class="home-avatar" alt="" hidden>
+        <span id="user-initial" class="home-avatar home-avatar-fallback">10</span>
+        <span class="home-user-meta">
+          <strong id="user-name">در حال بارگذاری...</strong>
+          <small id="user-status">خوش آمدی</small>
+        </span>
+        <span class="home-arrow">‹</span>
+      </a>
+    </header>
+
+    <section class="home-hero">
+      <div class="home-orb home-orb-one"></div>
+      <div class="home-orb home-orb-two"></div>
+      <div class="home-hero-content">
+        <span class="home-eyebrow">YOUR NEXT LEVEL STARTS HERE</span>
+        <div class="home-logo">10<span>X</span></div>
+        <h1>نسخه قوی‌تر خودت رو بساز.</h1>
+        <p>یک مسیر مشخص، قدم‌های واقعی و پیشرفت قابل اندازه‌گیری.</p>
+        <a class="home-primary-btn" href="/profile" data-link-key="home.hero.cta">
+          شروع مسیر من <span>←</span>
+        </a>
+      </div>
+      <div class="home-hero-glow"></div>
+    </section>
+
+    <section class="home-progress card" id="progress-card">
+      <div class="home-section-head">
+        <div>
+          <span class="home-eyebrow">YOUR PROGRESS</span>
+          <h2>مسیر پیشرفت من</h2>
+        </div>
+        <span class="home-live-dot">LIVE</span>
+      </div>
+
+      <div class="home-progress-number">
+        <strong id="progress-percent">—</strong>
+        <span>درصد پیشرفت</span>
+      </div>
+      <div class="home-progress-track"><i id="progress-bar"></i></div>
+
+      <div class="home-progress-stats">
+        <div><strong id="completed-count">—</strong><span>مرحله انجام‌شده</span></div>
+        <div><strong id="total-count">—</strong><span>کل مراحل</span></div>
+      </div>
+
+      <div class="home-next-step" id="next-step">
+        <span class="home-next-icon">↗</span>
+        <div>
+          <small>قدم بعدی تو</small>
+          <strong id="next-title">در حال دریافت مسیر...</strong>
+          <p id="next-description"></p>
+        </div>
+        <a id="next-action" href="/profile" data-link-key="home.progress.next">شروع</a>
+      </div>
+      <p id="progress-message" class="home-message" role="status"></p>
+    </section>
+
+    <section class="home-section">
+      <div class="home-section-head">
+        <div>
+          <span class="home-eyebrow">10X ECOSYSTEM</span>
+          <h2>مسیرت رو انتخاب کن</h2>
+        </div>
+        <span class="home-section-mark">01 / 04</span>
+      </div>
+
+      <div class="home-grid">
+        <a class="home-feature-card" href="/academy" data-link-key="home.academy">
+          <span class="home-card-icon">▤</span>
+          <strong>آکادمی</strong>
+          <span>یادگیری و ارتقای مهارت‌ها</span>
+          <i>←</i>
+        </a>
+        <a class="home-feature-card" href="/challenge" data-link-key="home.challenge">
+          <span class="home-card-icon">⚡</span>
+          <strong>چالش‌ها</strong>
+          <span>یادگیری از مسیر عمل</span>
+          <i>←</i>
+        </a>
+        <a class="home-feature-card" href="/crypto" data-link-key="home.crypto">
+          <span class="home-card-icon">⌁</span>
+          <strong>بازارها</strong>
+          <span>دسترسی به فضای بازار</span>
+          <i>←</i>
+        </a>
+        <a class="home-feature-card" href="/copy-trading" data-link-key="home.copy-trading">
+          <span class="home-card-icon">◈</span>
+          <strong>کپی تریدینگ</strong>
+          <span>ابزارها و خدمات معاملاتی</span>
+          <i>←</i>
+        </a>
+      </div>
+    </section>
+
+    <section class="home-support-card">
+      <div>
+        <span class="home-eyebrow">WE ARE HERE</span>
+        <h2>در این مسیر تنها نیستی.</h2>
+        <p>برای راهنمایی و دریافت پشتیبانی با تیم 10X در ارتباط باش.</p>
+        <a href="/support" data-link-key="home.support">ارتباط با پشتیبانی ←</a>
+      </div>
+      <div class="home-support-symbol">10X</div>
+    </section>
+
+    <section class="home-stages card">
+      <div class="home-section-head">
+        <div>
+          <span class="home-eyebrow">YOUR ROADMAP</span>
+          <h2>ایستگاه‌های مسیر</h2>
+        </div>
+      </div>
+      <div id="stage-list" class="home-stage-list">
+        <p class="home-message">در حال دریافت مراحل...</p>
+      </div>
+    </section>
+
+    <footer class="home-footer">
+      <strong>10X</strong>
+      <span>هر روز، یک قدم جلوتر.</span>
+    </footer>
+
+    <section id="profile-view" hidden>
+      <a href="/miniapp" class="bbtn">← بازگشت به خانه</a>
+      <h1 style="margin:22px 0">پروفایل من</h1>
+      <div id="profile-data"></div>
+      <div id="profile-managed-content"></div>
+    </section>
+
+    <section id="academy-view" class="academy-view" hidden>
+      <a href="/miniapp" class="academy-back-home">
+        <span>←</span> بازگشت به خانه
+      </a>
+
+      <div class="academy-hero">
+        <div class="academy-hero-glow"></div>
+        <div class="academy-hero-content">
+          <span class="academy-kicker">10X LEARNING CENTER</span>
+          <div class="academy-logo">10<span>X</span></div>
+          <h1>آکادمی 10X</h1>
+          <p>دانش را به مهارت تبدیل کن؛ قدم‌به‌قدم در مسیر حرفه‌ای‌تر شدن.</p>
+          <span class="academy-hero-tag">LEARN · PRACTICE · GROW</span>
+        </div>
+        <div class="academy-hero-symbol">✦</div>
+      </div>
+
+      <div id="academy-content" aria-live="polite"></div>
+      <div id="academy-managed-content"></div>
+    </section>
+
+
+    <!-- TENX_MMTRADE10X_DIRECT_V1 -->
+    <section id="mmtrade10x-view" class="academy-view" hidden dir="rtl"
+      style="padding:18px 14px 110px;color:#f5fff8">
+      <div style="background:#101d17;border:1px solid #28563a;border-radius:20px;padding:22px">
+        <div style="color:#70dfa0;font-weight:bold">MMTRADE10X</div>
+        <h1>چالش MMTrade10X</h1>
+        <p style="line-height:2">از آشنایی تا شروع چالش، ساده و قدم‌به‌قدم.</p>
+        <p id="mm10-progress" style="color:#70dfa0"></p>
+      </div>
+      <div id="mm10-lessons"></div>
+      <div style="background:#101d17;padding:18px;border-radius:16px;margin-top:16px">
+        <h3>نکات مهم</h3>
+        <p style="line-height:2">کپی‌تریدینگ تضمین سود ندارد و ممکن است باعث از دست رفتن سرمایه شود.
+        پیش از شروع، قوانین و هزینه‌های رسمی را بررسی کن.</p>
+      </div>
+    </section>
+    <!-- END TENX_MMTRADE10X_DIRECT_V1 -->
+
+  <nav class="tenx-bottom-nav" aria-label="ناوبری اصلی 10X">
+    <a class="tenx-nav-item" href="/miniapp" data-nav="home" data-link-key="home.nav.home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg>
+      <span>خانه</span>
+    </a>
+    <a class="tenx-nav-item" href="/academy" data-nav="academy" data-link-key="home.nav.academy">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 4.5v17M8 6h8M8 10h8"/></svg>
+      <span>آکادمی</span>
+    </a>
+    <a class="tenx-nav-item" href="/support" data-nav="support" data-link-key="home.nav.support">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"/><path d="M4 12H3a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2v-6zM20 12h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2v-6z"/><path d="M18 19a6 6 0 0 1-6 3h-2"/></svg>
+      <span>پشتیبانی</span>
+    </a>
+  </nav>
+
+  </main>
+
+  <script src="/miniapp/tenx-lesson-renderer.js?v=r13b1"></script>
+<script src="/miniapp/tenx-hybrid3d.js?v=r13d1"></script>
+<script src="/miniapp/tenx-hybrid3d-scenes.js?v=r13d12full50_f34d90522632"></script>
+<script src="/miniapp/tenx-hybrid3d-examples.js?v=r13d7"></script>
+<link rel="stylesheet" href="/miniapp/tenx-hybrid3d-premium.css?v=r13d10">
+<script>
+  (function () {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    var initData = tg && tg.initData ? tg.initData : '';
+    var $ = function (id) { return document.getElementById(id); };
+    var currentPath = location.pathname.replace(/\/+$/, '') || '/';
+    var profileMode = currentPath === '/profile';
+    var mm10Mode = new URLSearchParams(location.search).get('view') === 'mmtrade10x';
+    var academyMode = new URLSearchParams(location.search).get('view') === 'academy';
+
+    var bottomNav = document.querySelector('.tenx-bottom-nav');
+    if (bottomNav && !profileMode) {
+      var activeNav = academyMode ? 'academy' : 'home';
+      var activeNavLink = bottomNav.querySelector('[data-nav="' + activeNav + '"]');
+      if (activeNavLink) {
+        activeNavLink.classList.add('is-active');
+        activeNavLink.setAttribute('aria-current', 'page');
+      }
+    }
+
+
+    // Load administrator-managed bottom navigation.
+    (function loadManagedBottomNav() {
+      var nav = document.querySelector('.tenx-bottom-nav');
+      if (!nav) return;
+
+      var iconPaths = {
+        home: 'M3 10 L12 3 L21 10 V21 H14 V14 H10 V21 H3 Z',
+        academy: 'M3 7 L12 3 L21 7 L12 11 Z M5 9 V16 Q12 21 19 16 V9 M21 7 V15',
+        support: 'M4 13 V11 A8 8 0 0 1 20 11 V13 M4 12 H3 V18 H6 V12 Z M20 12 H21 V18 H18 V12 Z',
+        chart: 'M4 20 V12 H8 V20 Z M10 20 V5 H14 V20 Z M16 20 V9 H20 V20 Z',
+        trophy: 'M7 3 H17 V9 A5 5 0 0 1 7 9 Z M7 6 H3 V8 A5 5 0 0 0 8 13 M17 6 H21 V8 A5 5 0 0 1 16 13 M12 13 V18 M8 21 H16',
+        user: 'M12 12 A4 4 0 1 0 12 4 A4 4 0 0 0 12 12 M4 21 A8 8 0 0 1 20 21',
+        book: 'M3 4 H10 Q12 4 12 6 V21 Q12 18 9 18 H3 Z M21 4 H14 Q12 4 12 6 V21 Q12 18 15 18 H21 Z',
+        star: 'M12 2 L15 9 L22 9 L16.5 14 L18.5 22 L12 17.5 L5.5 22 L7.5 14 L2 9 L9 9 Z'
+      };
+
+      fetch('/public/bottom-nav', { method: 'GET', cache: 'no-store' })
+        .then(function(response) {
+          if (!response.ok) throw new Error('bottom_nav_unavailable');
+          return response.json();
+        })
+        .then(function(config) {
+          if (!config || !Array.isArray(config.items)) return;
+
+          var items = config.items.filter(function(item) {
+            return item && item.enabled === true &&
+              typeof item.label === 'string' &&
+              typeof item.href === 'string' &&
+              /^\/(?!\/)[a-zA-Z0-9/_-]+$/.test(item.href) &&
+              !item.href.includes('..') &&
+              Object.prototype.hasOwnProperty.call(iconPaths, item.icon);
+          }).slice(0, 8);
+
+          if (!items.length) return;
+
+          // MMTrade10X navigation
+          var placeholder = items.find(function(x) {
+            return /آیتم جدید|آيتم جديد|new item/i.test(x.label || '');
+          });
+          if (placeholder) {
+            placeholder.id = 'mmtrade10x';
+            placeholder.label = 'MMTrade10X';
+            placeholder.href = '/miniapp/index.html?view=mmtrade10x';
+          } else if (!items.some(function(x){return x.id === 'mmtrade10x';})) {
+            items.push({
+              id:'mmtrade10x',
+              label:'MMTrade10X',
+              href:'/miniapp/index.html?view=mmtrade10x',
+              icon:'trophy'
+            });
+          }
+
+
+          nav.replaceChildren();
+
+          items.forEach(function(item) {
+            var link = document.createElement('a');
+            link.className = 'tenx-nav-item';
+            link.href = item.href;
+            link.setAttribute('data-nav', item.id);
+
+            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.setAttribute('aria-hidden', 'true');
+
+            var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', iconPaths[item.icon]);
+            svg.appendChild(path);
+
+            var label = document.createElement('span');
+            label.textContent = item.label;
+
+            link.append(svg, label);
+            nav.appendChild(link);
+          });
+
+          var current = location.pathname.replace(/\/+$/, '') || '/';
+          var active = items.find(function(item) {
+            var target = item.href.split('?')[0].replace(/\/+$/, '') || '/';
+            return target === current;
+          });
+
+          if (!active && academyMode) {
+            active = items.find(function(item) { return item.id === 'academy'; });
+          }
+          if (!active && !profileMode) {
+            active = items.find(function(item) { return item.id === 'home'; });
+          }
+
+          if (active) {
+            var activeLink = nav.querySelector('[data-nav="' + active.id + '"]');
+            if (activeLink) {
+              activeLink.classList.add('is-active');
+              activeLink.setAttribute('aria-current', 'page');
+            }
+          }
+        })
+        .catch(function(error) {
+          console.warn('Managed bottom navigation unavailable; using defaults.', error);
+        });
+    })();
+
+    if (profileMode || academyMode || mm10Mode) {
+      var main = document.querySelector('main.home-shell');
+      var activeView = mm10Mode ? 'mmtrade10x-view' : (profileMode ? 'profile-view' : 'academy-view');
+      Array.from(main.children).forEach(function (node) {
+        if (node.id !== activeView) node.hidden = true;
+      });
+      $(activeView).hidden = false;
+      document.title = mm10Mode ? 'MMTrade10X | 10X' : (profileMode ? 'پروفایل من | 10X' : 'آکادمی 10X');
+    }
+
+    function safeLink(value) {
+      return typeof value === 'string' &&
+        (/^https:\/\/\S+$/i.test(value) || /^\/(?!\/)\S*$/.test(value));
+    }
+
+    function post(url, body) {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(Object.assign({ initData: initData }, body || {}))
+      }).then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) throw new Error(data.error || 'request_failed');
+          return data;
+        });
+      });
+    }
+
+    function academyMessage(message) {
+      var root = $('academy-content');
+      root.replaceChildren();
+      var p = document.createElement('p');
+      p.className = 'home-message';
+      p.textContent = message;
+      root.append(p);
+    }
+
+    function academyButton(label, action) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'bbtn';
+      button.textContent = label;
+      button.addEventListener('click', action);
+      return button;
+    }
+
+    function openAcademyLesson(id) {
+      post('/academy/lessons/' + encodeURIComponent(id)).then(function (lesson) {
+        var root = $('academy-content');
+        root.replaceChildren();
+
+        var back = academyButton('← بازگشت به دوره‌ها', loadAcademy);
+        back.classList.add('academy-back-btn');
+        root.append(back);
+
+        var card = document.createElement('article');
+        card.className = 'academy-lesson-page';
+
+        var label = document.createElement('span');
+        label.className = 'academy-kicker';
+        label.textContent = '10X LEARNING CENTER';
+
+        var title = document.createElement('h2');
+        title.className = 'academy-lesson-title';
+        title.textContent = lesson.title || 'درس بدون عنوان';
+        card.append(label, title);
+
+        if (lesson.summary) {
+          var summary = document.createElement('p');
+          summary.className = 'academy-lesson-summary';
+          summary.textContent = lesson.summary;
+          card.append(summary);
+        }
+
+        var divider = document.createElement('div');
+        divider.className = 'academy-divider';
+        card.append(divider);
+
+        var body = document.createElement('div');
+        body.className = 'academy-lesson-body';
+        if (!(window.TenxLessonRenderer && window.TenxLessonRenderer.render(body, lesson.body))) {
+          body.textContent = lesson.body || 'محتوایی برای این درس ثبت نشده است.';
+        }
+        card.append(body);
+        var q13LessonQuiz = document.createElement('div');
+        q13LessonQuiz.className = 'tenx-q13-lesson-quiz';
+        card.append(q13LessonQuiz);
+        window.setTimeout(function () {
+          if (window.TenxQ13Quiz) window.TenxQ13Quiz.open({ lessonId: id }, q13LessonQuiz);
+        }, 0);
+
+        var state = {
+          video: Number(lesson.videoProgressPct || 0),
+          content: Number(lesson.contentProgressPct || 0),
+          lastSent: -1,
+          timer: null,
+          maxContent: Number(lesson.contentProgressPct || 0)
+        };
+
+        var hasContent = Boolean(lesson.body && lesson.body.trim());
+        var hasVideo = Boolean(lesson.videoUrl);
+        var videoElement = null;
+
+        function combinedPct() {
+          if (hasVideo && hasContent) return Math.round((state.video + state.content) / 2);
+          if (hasVideo) return state.video;
+          if (hasContent) return state.content;
+          return 100;
+        }
+
+        var progressPanel = document.createElement('section');
+        progressPanel.className = 'academy-progress-panel';
+
+        var overallInfo = document.createElement('div');
+        overallInfo.className = 'academy-progress-info';
+        var overallLabel = document.createElement('strong');
+        overallLabel.textContent = 'پیشرفت این درس';
+        var overallValue = document.createElement('strong');
+        overallInfo.append(overallLabel, overallValue);
+
+        var overallTrack = document.createElement('div');
+        overallTrack.className = 'academy-progress-track';
+        var overallFill = document.createElement('i');
+        overallTrack.append(overallFill);
+        progressPanel.append(overallInfo, overallTrack);
+
+        function addMetric(labelText, key) {
+          var wrap = document.createElement('div');
+          wrap.className = 'academy-progress-metric';
+
+          var info = document.createElement('div');
+          info.className = 'academy-progress-info';
+
+          var name = document.createElement('span');
+          name.textContent = labelText;
+
+          var value = document.createElement('strong');
+          info.append(name, value);
+
+          var track = document.createElement('div');
+          track.className = 'academy-progress-track';
+          var fill = document.createElement('i');
+          track.append(fill);
+
+          wrap.append(info, track);
+          progressPanel.append(wrap);
+
+          return function (pct) {
+            value.textContent = pct.toLocaleString('fa-IR') + '٪';
+            fill.style.width = pct + '%';
+          };
+        }
+
+        var renderVideoMetric = addMetric('مشاهده ویدئو', 'video');
+        var renderContentMetric = addMetric('مطالعه متن', 'content');
+
+        function renderProgress() {
+          var pct = combinedPct();
+          overallValue.textContent = pct.toLocaleString('fa-IR') + '٪';
+          overallFill.style.width = pct + '%';
+          renderVideoMetric(state.video);
+          renderContentMetric(state.content);
+        }
+
+        function sendProgress(force) {
+          var pct = combinedPct();
+          if (!force && state.lastSent >= 0 && Math.abs(pct - state.lastSent) < 1) return;
+          if (state.timer) window.clearTimeout(state.timer);
+
+          state.timer = window.setTimeout(function () {
+            state.lastSent = pct;
+            post('/academy/lessons/' + encodeURIComponent(id) + '/progress', {
+              videoProgressPct: state.video,
+              contentProgressPct: state.content
+            }).then(function (saved) {
+              state.video = saved.videoProgressPct;
+              state.content = saved.contentProgressPct;
+              renderProgress();
+
+              // Refresh the roadmap after every successful lesson progress save.
+              loadAcademyProgressQuietly();
+
+              if (saved.done) {
+                completionTitle.textContent = 'این درس را به پایان رسانده‌ای';
+                completionHint.textContent = 'پیشرفت درس به ۱۰۰٪ رسید.';
+                progressStatus.textContent = 'درس با موفقیت تکمیل شد.';
+              }
+            }).catch(function () {
+              progressStatus.textContent = 'ذخیره پیشرفت انجام نشد؛ اتصال اینترنت را بررسی کن.';
+            });
+          }, 850);
+        }
+
+        card.append(progressPanel);
+
+        if (hasVideo && safeLink(lesson.videoUrl)) {
+          var videoWrap = document.createElement('div');
+          videoWrap.className = 'academy-video-box';
+
+          var videoTitle = document.createElement('strong');
+          videoTitle.textContent = 'ویدئوی آموزشی این درس';
+          videoWrap.append(videoTitle);
+
+          var isDirectVideo = false;
+          try {
+            var parsedVideoUrl = new URL(lesson.videoUrl, location.origin);
+            isDirectVideo = /\.(mp4|webm|ogg|m4v)$/i.test(parsedVideoUrl.pathname) || (parsedVideoUrl.protocol === 'https:' && parsedVideoUrl.hostname === 'dl.namahub.ir');
+          } catch (_) {}
+
+          if (isDirectVideo) {
+            videoElement = document.createElement('video');
+            videoElement.className = 'academy-video-player';
+            videoElement.controls = true;
+            videoElement.playsInline = true;
+            videoElement.preload = 'metadata';
+            videoElement.src = lesson.videoUrl;
+
+            function watchedVideoPct() {
+              if (!videoElement || !Number.isFinite(videoElement.duration) || videoElement.duration <= 0) return state.video;
+              var seconds = 0;
+              try {
+                for (var i = 0; i < videoElement.played.length; i++) {
+                  seconds += videoElement.played.end(i) - videoElement.played.start(i);
+                }
+              } catch (_) {}
+              return Math.max(state.video, Math.min(100, Math.floor(seconds * 100 / videoElement.duration)));
+            }
+
+            videoElement.addEventListener('timeupdate', function () {
+              var next = watchedVideoPct();
+              if (next > state.video) {
+                state.video = next;
+                renderProgress();
+                sendProgress(false);
+              }
+            });
+
+            videoElement.addEventListener('ended', function () {
+              state.video = 100;
+              renderProgress();
+              sendProgress(true);
+            });
+
+            videoElement.addEventListener('error', function () {
+              progressStatus.textContent = 'پخش مستقیم ویدئو ممکن نشد؛ از لینک جایگزین استفاده کن.';
+            });
+
+            videoWrap.append(videoElement);
+            var fallbackLink = document.createElement('a');
+            fallbackLink.href = lesson.videoUrl;
+            fallbackLink.target = '_blank';
+            fallbackLink.rel = 'noopener noreferrer';
+            fallbackLink.className = 'academy-video-link';
+            fallbackLink.textContent = 'بازکردن لینک ویدئو  ←';
+            videoWrap.append(fallbackLink);
+          } else {
+            var link = document.createElement('a');
+            link.href = lesson.videoUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className = 'academy-video-link';
+            link.textContent = 'مشاهده ویدئو در پلتفرم مربوطه  ←';
+            videoWrap.append(link);
+
+            var confirmVideo = academyButton('ویدئو را کامل مشاهده کردم', function () {
+              state.video = 100;
+              renderProgress();
+              sendProgress(true);
+              confirmVideo.disabled = true;
+              confirmVideo.textContent = '✓ مشاهده تأیید شد';
+            });
+            confirmVideo.classList.add('academy-video-confirm');
+            videoWrap.append(confirmVideo);
+          }
+
+          card.append(videoWrap);
+        }
+
+        var completion = document.createElement('div');
+        completion.className = 'academy-completion';
+
+        var completionText = document.createElement('div');
+        var completionTitle = document.createElement('strong');
+        completionTitle.textContent = lesson.done ? 'این درس را به پایان رسانده‌ای' : 'پیشرفت یادگیری';
+
+        var completionHint = document.createElement('p');
+        completionHint.textContent = 'برای تکمیل درس، مشاهده ویدئو و مطالعه متن باید به ۱۰۰٪ برسند.';
+
+        completionText.append(completionTitle, completionHint);
+
+        var progressStatus = document.createElement('p');
+        progressStatus.className = 'academy-progress-status';
+        progressStatus.setAttribute('role', 'status');
+
+        completion.append(completionText);
+        card.append(completion, progressStatus);
+        root.append(card);
+
+        renderProgress();
+
+        if (hasContent) {
+          function measureContentRead() {
+            var rect = body.getBoundingClientRect();
+            var height = Math.max(body.scrollHeight, rect.height, 1);
+            var visible = Math.max(0, Math.min(height, window.innerHeight - rect.top));
+            var next = Math.max(0, Math.min(100, Math.floor(visible * 100 / height)));
+            if (next > state.maxContent) {
+              state.maxContent = next;
+              state.content = next;
+              renderProgress();
+              sendProgress(false);
+            }
+          }
+
+          window.addEventListener('scroll', measureContentRead, { passive: true });
+          window.addEventListener('resize', measureContentRead);
+          measureContentRead();
+        } else {
+          state.content = 100;
+        }
+
+        if (!hasVideo) state.video = 100;
+        renderProgress();
+        sendProgress(true);
+      }).catch(function (error) {
+        academyMessage(error.message === 'registration_required' ||
+          error.message === 'registration_incomplete'
+          ? 'برای دسترسی به آکادمی، ابتدا ثبت‌نامت را در 10X تکمیل کن.'
+          : 'دریافت محتوای درس با خطا مواجه شد. دوباره تلاش کن.');
+      });
+    }
+
+    var academyProgressRefreshId = 0;
+
+    function loadAcademyProgressQuietly() {
+      var requestId = ++academyProgressRefreshId;
+
+      return post('/progress/path').then(function (data) {
+        // Ignore an older response if a newer refresh has already started.
+        if (requestId === academyProgressRefreshId) {
+          renderProgress(data);
+        }
+        return data;
+      }).catch(function () {
+        // Keep the lesson usable if the separate path refresh fails.
+        return null;
+      });
+    }
+
+    // TENX_Q14_V2_INTEGRATED
+    function tenxQ14Next(courses) {
+      var firstLocked = false;
+      for (var i = 0; i < courses.length; i++) {
+        var c = courses[i];
+        if (c.isLocked) { firstLocked = true; break; }
+        var lessons = Array.isArray(c.lessons) ? c.lessons : [];
+        for (var j = 0; j < lessons.length; j++) {
+          var lesson = lessons[j];
+          if (!lesson.quizPassed) {
+            if (lesson.isLocked) return {kind:'locked',title:'برای ادامه، ابتدا آزمون درس قبلی را قبول شو'};
+            return {kind:'lesson',lessonId:lesson.id,title:'درس بعدی: '+(lesson.title || 'درس آکادمی')};
+          }
+        }
+        if (!c.quizPassed) {
+          if (c.quizUnlocked) return {kind:'course',courseId:c.id,title:'آزمون پایان دوره: '+(c.title || 'دوره آکادمی')};
+          return {kind:'locked',title:'آزمون پایان دوره هنوز فعال نشده است'};
+        }
+      }
+      return firstLocked ? {kind:'locked',title:'دوره بعدی هنوز قفل است'} : {kind:'complete',title:'آکادمی را با موفقیت تکمیل کردی'};
+    }
+    function tenxQ14OpenCourseQuiz(courseId) {
+      var cards = Array.from(document.querySelectorAll('.academy-course-card'));
+      var card = cards.find(function (x) { return x.getAttribute('data-q14-course-id') === String(courseId); });
+      if (!card) return;
+      var button = Array.from(card.querySelectorAll('button')).find(function (b) { return b.textContent.indexOf('آزمون پایان دوره') !== -1; });
+      if (button && !button.disabled) button.click();
+      else card.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    function tenxQ14LoadSummary() {
+      return post('/academy/courses').then(function (data) {
+        if (!data || !Array.isArray(data.items)) throw new Error('ACADEMY_DATA_INVALID');
+        var courses = data.items;
+        var lessons = courses.reduce(function (n,c) { return n + (Array.isArray(c.lessons) ? c.lessons.length : 0); },0);
+        var passedLessons = courses.reduce(function (n,c) { return n + (Array.isArray(c.lessons) ? c.lessons.filter(function(l){return !!l.quizPassed;}).length : 0); },0);
+        var passedCourses = courses.filter(function(c){return !!c.quizPassed;}).length;
+        return {percent: lessons+courses.length ? Math.round(100*(passedLessons+passedCourses)/(lessons+courses.length)) : 0,
+          passedLessons:passedLessons, passedCourses:passedCourses, lessons:lessons, courses:courses.length,
+          next:tenxQ14Next(courses)};
+      });
+    }
+    function tenxQ14RenderSummary(summary) {
+      if (profileMode) {
+        var old = $('profile-progress'); if (old) old.remove();
+        var host = $('profile-data'); if (!host) return;
+        var card = document.createElement('section');card.id='profile-progress';card.className='card';
+        card.style.cssText='padding:20px;margin:12px 0;line-height:2;border:1px solid rgba(57,255,136,.2)';
+        var heading=document.createElement('h2');heading.textContent='پیشرفت آکادمی من';card.append(heading);
+        var value=document.createElement('strong');value.textContent=summary.percent.toLocaleString('fa-IR')+'٪';
+        value.style.cssText='font-size:30px;color:#39ff88';card.append(value);
+        var info=document.createElement('p');info.textContent=summary.passedLessons.toLocaleString('fa-IR')+' از '+summary.lessons.toLocaleString('fa-IR')+' آزمون درس · '+summary.passedCourses.toLocaleString('fa-IR')+' از '+summary.courses.toLocaleString('fa-IR')+' آزمون دوره';card.append(info);
+        var bar=document.createElement('div');bar.style.cssText='height:9px;border-radius:9px;background:#263244;overflow:hidden';
+        var fill=document.createElement('div');fill.style.cssText='height:100%;background:#39ff88;width:'+summary.percent+'%';bar.append(fill);card.append(bar);host.append(card);
+        tenxQ15RenderProfile();
+      } else if (!academyMode) {
+        var title=$('next-title'), description=$('next-description'), action=$('next-action');
+        if (!title || !action) return;
+        title.textContent=summary.next.title;
+        description.textContent=summary.next.kind==='complete'?'تمام آزمون‌های آموزشی را با موفقیت گذرانده‌ای.':'مسیر آموزشی آکادمی 10X';
+        if (summary.next.kind==='lesson') {
+          action.href='/miniapp/?view=academy&lessonId='+encodeURIComponent(summary.next.lessonId);action.hidden=false;action.textContent='ادامه';
+        } else if (summary.next.kind==='course') {
+          action.href='/miniapp/?view=academy&courseQuizId='+encodeURIComponent(summary.next.courseId);action.hidden=false;action.textContent='آزمون';
+        } else {action.hidden=true;}
+      }
+    }
+    // END TENX_Q14_V2_INTEGRATED
+    // TENX_Q15_HISTORY_V1
+    function tenxQ15History() {
+      return post('/academy/quizzes/history').then(function (data) {
+        if (!data || !Array.isArray(data.items) || !data.summary) throw new Error('history_invalid');
+        return data;
+      });
+    }
+    function tenxQ15Card(data, compact) {
+      var card=document.createElement('section');
+      card.className=compact?'card':'academy-overview';
+      card.style.cssText='padding:18px;margin:16px 0;border:1px solid rgba(57,255,136,.24);border-radius:16px;line-height:1.9';
+      var head=document.createElement('h2');head.textContent='تاریخچه و عملکرد آزمون‌ها';head.style.cssText='font-size:18px;margin:0 0 12px';card.append(head);
+      var s=data.summary;
+      var stats=document.createElement('p');
+      stats.textContent='تلاش‌های ثبت‌شده: '+s.attempts.toLocaleString('fa-IR')+' · قبولی: '+s.passed.toLocaleString('fa-IR')+' · نرخ قبولی: '+s.passRate.toLocaleString('fa-IR')+'٪';
+      card.append(stats);
+      var unique=document.createElement('p');unique.textContent='آزمون‌های منحصربه‌فرد قبول‌شده: '+s.uniquePassed.toLocaleString('fa-IR');card.append(unique);
+      if (s.truncated) { var notice=document.createElement('p');notice.textContent='نمایش ۲۰۰ تلاش اخیر؛ آمار این بخش مربوط به همین تلاش‌هاست.';card.append(notice); }
+      if (!data.items.length) {var empty=document.createElement('p');empty.textContent='هنوز آزمون ثبت‌شده‌ای نداری.';card.append(empty);return card;}
+      var toggle=academyButton('نمایش تلاش‌های قبلی',function () { list.hidden=!list.hidden;toggle.textContent=list.hidden?'نمایش تلاش‌های قبلی':'بستن تاریخچه'; });
+      card.append(toggle);
+      var list=document.createElement('div');list.hidden=true;list.style.cssText='margin-top:12px;max-height:380px;overflow:auto';
+      data.items.forEach(function (a) {
+        var line=document.createElement('div');line.style.cssText='padding:10px 0;border-bottom:1px solid rgba(255,255,255,.10)';
+        var date=a.submittedAt?new Date(a.submittedAt).toLocaleString('fa-IR'):'—';
+        line.textContent=(a.type==='lesson'?'درس: ':'دوره: ')+a.title+' | '+Number(a.score||0).toLocaleString('fa-IR')+'/'+a.total.toLocaleString('fa-IR')+' | '+(a.passed?'قبول':'مردود')+' | '+date;
+        list.append(line);
+      });card.append(list);return card;
+    }
+    function tenxQ15RenderAcademy(root) {
+      tenxQ15History().then(function(data){if(root && root.isConnected && !$('tenx-q15-academy')) {var c=tenxQ15Card(data,false);c.id='tenx-q15-academy';root.append(c);}}).catch(function(){ /* History must not block academy. */ });
+    }
+    function tenxQ15RenderProfile() {
+      tenxQ15History().then(function(data){var root=$('profile-data');if(!profileMode||!root)return;var old=$('tenx-q15-profile');if(old)old.remove();var c=tenxQ15Card(data,true);c.id='tenx-q15-profile';root.append(c);}).catch(function(){ /* Profile remains available. */ });
+    }
+    // END TENX_Q15_HISTORY_V1
+    function loadAcademy() {
+      if (window.TenxQ13Quiz) window.TenxQ13Quiz.reset();
+      academyMessage('در حال دریافت دوره‌های آموزشی...');
+      post('/academy/courses').then(function (data) {
+        var root = $('academy-content');
+        root.replaceChildren();
+
+        var courses = Array.isArray(data.items) ? data.items : [];
+        if (!courses.length) {
+          academyMessage('هنوز دوره منتشرشده‌ای در آکادمی قرار نگرفته است.');
+          return;
+        }
+
+        var totalLessons = 0;
+        var completedLessons = 0;
+
+        courses.forEach(function (course) {
+          var lessons = Array.isArray(course.lessons) ? course.lessons : [];
+          totalLessons += lessons.length;
+          completedLessons += lessons.filter(function (lesson) {
+            return !!lesson.quizPassed;
+          }).length;
+        });
+
+        // TENX_Q14_V2_INTEGRATED: count passed lesson and course exams, not video views.
+        var passedCourses = courses.filter(function (c) { return !!c.quizPassed; }).length;
+        var totalAssessments = totalLessons + courses.length;
+        var percent = totalAssessments
+          ? Math.round((completedLessons + passedCourses) * 100 / totalAssessments) : 0;
+
+        var overview = document.createElement('section');
+        overview.className = 'academy-overview';
+
+        var overviewHead = document.createElement('div');
+        overviewHead.className = 'academy-overview-head';
+
+        var overviewTitle = document.createElement('div');
+        var eyebrow = document.createElement('span');
+        eyebrow.className = 'academy-kicker';
+        eyebrow.textContent = 'YOUR LEARNING JOURNEY';
+
+        var heading = document.createElement('h2');
+        heading.textContent = 'مسیر یادگیری تو';
+
+        overviewTitle.append(eyebrow, heading);
+
+        var percentLabel = document.createElement('strong');
+        percentLabel.className = 'academy-percent';
+        percentLabel.textContent = percent.toLocaleString('fa-IR') + '٪';
+
+        overviewHead.append(overviewTitle, percentLabel);
+
+        var track = document.createElement('div');
+        track.className = 'academy-progress-track';
+
+        var fill = document.createElement('span');
+        fill.style.width = percent + '%';
+        track.append(fill);
+
+        var stats = document.createElement('div');
+        stats.className = 'academy-stats';
+
+        function addStat(value, label) {
+          var item = document.createElement('div');
+          var number = document.createElement('strong');
+          number.textContent = Number(value).toLocaleString('fa-IR');
+          var caption = document.createElement('span');
+          caption.textContent = label;
+          item.append(number, caption);
+          stats.append(item);
+        }
+
+        addStat(courses.length, 'دوره آموزشی');
+        addStat(totalLessons, 'مجموع درس‌ها');
+        addStat(completedLessons, 'آزمون درس قبول‌شده');
+
+        addStat(passedCourses, 'آزمون دوره قبول‌شده');
+        overview.append(overviewHead, track, stats);
+        var next = tenxQ14Next(courses);
+        var nextBox = document.createElement('div');
+        nextBox.style.cssText = 'margin-top:18px;padding:14px;border-radius:14px;border:1px solid rgba(57,255,136,.25);background:rgba(57,255,136,.055)';
+        var nextTitle = document.createElement('strong');
+        nextTitle.textContent = next.title;
+        nextTitle.style.cssText = 'display:block;margin-bottom:10px';
+        nextBox.append(nextTitle);
+        if (next.kind === 'lesson' || next.kind === 'course') {
+          var go = academyButton('ادامه یادگیری', function () {
+            if (next.kind === 'lesson') openAcademyLesson(next.lessonId);
+            else tenxQ14OpenCourseQuiz(next.courseId);
+          });
+          nextBox.append(go);
+        }
+        overview.append(nextBox);
+        root.append(overview);
+        tenxQ15RenderAcademy(root);
+
+
+
+        var sectionHead = document.createElement('div');
+        sectionHead.className = 'academy-section-heading';
+
+        var sectionTitle = document.createElement('h2');
+        sectionTitle.textContent = 'دوره‌های آموزشی';
+
+        var sectionCaption = document.createElement('span');
+        sectionCaption.textContent = 'مسیرت را ادامه بده';
+
+        sectionHead.append(sectionTitle, sectionCaption);
+        root.append(sectionHead);
+
+        courses.forEach(function (course, courseIndex) {
+          var lessons = Array.isArray(course.lessons) ? course.lessons : [];
+          var done = lessons.filter(function (lesson) {
+            return !!lesson.done;
+          }).length;
+          var coursePercent = lessons.length
+            ? Math.round(lessons.reduce(function (sum, item) {
+                return sum + Math.max(0, Math.min(100, Number(item.progressPct || 0)));
+              }, 0) / lessons.length)
+            : 0;
+
+          var card = document.createElement('article');
+          card.className = 'academy-course-card';
+          card.setAttribute('data-q14-course-id', String(course.id));
+
+          var courseTop = document.createElement('div');
+          courseTop.className = 'academy-course-top';
+
+          var courseNumber = document.createElement('span');
+          courseNumber.className = 'academy-course-number';
+          courseNumber.textContent = String(courseIndex + 1).padStart(2, '0');
+
+          var courseMeta = document.createElement('div');
+          courseMeta.className = 'academy-course-meta';
+
+          var courseTag = document.createElement('span');
+          courseTag.className = 'academy-kicker';
+          courseTag.textContent = '10X COURSE';
+
+          var courseTitle = document.createElement('h3');
+          courseTitle.textContent = course.title || 'دوره بدون عنوان';
+
+          courseMeta.append(courseTag, courseTitle);
+          courseTop.append(courseNumber, courseMeta);
+          card.append(courseTop);
+
+          if (course.description) {
+            var description = document.createElement('p');
+            description.className = 'academy-course-description';
+            description.textContent = course.description;
+            card.append(description);
+          }
+
+          var courseProgress = document.createElement('div');
+          courseProgress.className = 'academy-course-progress';
+
+          var progressInfo = document.createElement('div');
+          progressInfo.className = 'academy-course-progress-info';
+
+          var lessonCount = document.createElement('span');
+          lessonCount.textContent = done.toLocaleString('fa-IR') + ' از ' +
+            lessons.length.toLocaleString('fa-IR') + ' درس تکمیل شده';
+
+          var progressValue = document.createElement('strong');
+          progressValue.textContent = coursePercent.toLocaleString('fa-IR') + '٪';
+
+          progressInfo.append(lessonCount, progressValue);
+
+          var courseTrack = document.createElement('div');
+          courseTrack.className = 'academy-course-track';
+
+          var courseFill = document.createElement('span');
+          courseFill.style.width = coursePercent + '%';
+          courseTrack.append(courseFill);
+
+          courseProgress.append(progressInfo, courseTrack);
+          card.append(courseProgress);
+
+          if (!lessons.length) {
+            var empty = document.createElement('p');
+            empty.className = 'academy-empty-course';
+            empty.textContent = 'هنوز درسی برای این دوره منتشر نشده است.';
+            card.append(empty);
+          }
+
+          var lessonList = document.createElement('div');
+          lessonList.className = 'academy-lesson-list';
+
+          lessons.forEach(function (lesson, index) {
+            var item = document.createElement('div');
+            item.className = 'academy-lesson-item' + (lesson.done ? ' is-done' : '');
+
+            var number = document.createElement('span');
+            number.className = 'academy-lesson-number';
+            number.textContent = lesson.done ? '✓' :
+              String(index + 1).padStart(2, '0');
+
+            var label = document.createElement('div');
+            label.className = 'academy-lesson-label';
+
+            var lessonTitle = document.createElement('strong');
+            lessonTitle.textContent = lesson.title || 'درس بدون عنوان';
+
+            var lessonStatus = document.createElement('small');
+            lessonStatus.textContent = lesson.done
+              ? 'تکمیل‌شده · آماده مرور'
+              : 'پیشرفت ' + Number(lesson.progressPct || 0).toLocaleString('fa-IR') + '٪';
+
+            label.append(lessonTitle, lessonStatus);
+
+            var open = academyButton(lesson.isLocked ? '🔒 قفل' : 'مشاهده ←', function () {
+              if (!lesson.isLocked) openAcademyLesson(lesson.id);
+            });
+            open.disabled = !!lesson.isLocked;
+            open.classList.add('academy-open-btn');
+
+            item.append(number, label, open);
+            lessonList.append(item);
+          });
+
+          card.append(lessonList);
+          if (course.quizUnlocked && !course.quizPassed) {
+            var courseQuizButton = academyButton('آزمون پایان دوره (۵ سؤال)', function () {
+              var host = document.createElement('div');
+              host.className = 'tenx-q13-course-quiz';
+              card.append(host);
+              if (window.TenxQ13Quiz) window.TenxQ13Quiz.open({ courseId: course.id }, host);
+              host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              courseQuizButton.disabled = true;
+            });
+            card.append(courseQuizButton);
+          }
+          if (course.isLocked) {
+            var lockedText = document.createElement('p');
+            lockedText.textContent = '🔒 برای ورود، آزمون دوره قبلی را قبول شو.';
+            card.append(lockedText);
+          }
+          root.append(card);
+        });
+        var targetCourse = new URLSearchParams(location.search).get('courseQuizId');
+        if (targetCourse) tenxQ14OpenCourseQuiz(targetCourse);
+      }).catch(function (error) {
+        academyMessage(error.message === 'registration_required' ||
+          error.message === 'registration_incomplete'
+          ? 'برای دسترسی به آکادمی، ابتدا ثبت‌نامت را در 10X تکمیل کن.'
+          : 'دریافت دوره‌های آکادمی با خطا مواجه شد. دوباره تلاش کن.');
+      });
+    }
+
+    function showMessage(message) {
+      $('progress-message').textContent = message || '';
+    }
+
+    function renderProfile(user) {
+      var telegramUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+      var name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+
+      if (!name && telegramUser) {
+        name = [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ').trim();
+      }
+      if (!name && telegramUser && telegramUser.username) name = '@' + telegramUser.username;
+
+      $('user-name').textContent = name || 'کاربر 10X';
+      $('user-status').textContent =
+        user.registrationStatus === 'COMPLETE' ? 'عضو 10X' : 'به مسیر 10X خوش آمدی';
+
+      if (telegramUser && telegramUser.photo_url) {
+        $('user-photo').src = telegramUser.photo_url;
+        $('user-photo').hidden = false;
+        $('user-initial').hidden = true;
+      } else {
+        $('user-initial').textContent = (name || '10X').trim().charAt(0).toUpperCase();
+      }
+
+      if (!profileMode) return;
+
+      var root = $('profile-data');
+      root.replaceChildren();
+
+      var card = document.createElement('section');
+      card.className = 'card';
+      card.style.cssText = 'padding:20px;margin:12px 0;line-height:2';
+
+      var title = document.createElement('h2');
+      title.textContent = name || 'کاربر 10X';
+      card.append(title);
+
+      if (telegramUser && telegramUser.photo_url) {
+        var photo = document.createElement('img');
+        photo.src = telegramUser.photo_url;
+        photo.alt = '';
+        photo.style.cssText = 'width:76px;height:76px;border-radius:50%;object-fit:cover';
+        card.append(photo);
+      }
+
+      function row(label, value) {
+        if (value === null || value === undefined || value === '') return;
+        var item = document.createElement('p');
+        item.textContent = label + ': ' + value;
+        card.append(item);
+      }
+
+      var statuses = {
+        STARTED: 'شروع ثبت‌نام',
+        PHONE_PENDING: 'در انتظار تأیید شماره',
+        REGISTERED: 'ثبت‌نام‌شده',
+        COMPLETE: 'عضو تکمیل‌شده'
+      };
+
+      var stages = {
+        STARTED: 'شروع',
+        CHANNELS_PENDING: 'عضویت در کانال‌ها',
+        CONSENT_PENDING: 'رضایت‌نامه',
+        PHONE_PENDING: 'تأیید شماره',
+        REGISTERED: 'ثبت‌نام',
+        MINI_APP_PENDING: 'ورود به مینی‌اپ',
+        COMPLETE: 'تکمیل مسیر'
+      };
+
+      row('نام کاربری', user.username ? '@' + user.username : '');
+      row('شماره تأییدشده', user.phone);
+      row('وضعیت حساب', statuses[user.registrationStatus] || user.registrationStatus);
+      row('مرحله ثبت‌نام', stages[user.registrationStage] || user.registrationStage);
+
+      if (user.createdAt) {
+        row('تاریخ عضویت', new Date(user.createdAt).toLocaleDateString('fa-IR'));
+      }
+
+      root.append(card);
+    }
+
+    function renderProfileProgress(data) {
+      if (!profileMode) return;
+      var root = $('profile-data');
+      if (!root) return;
+
+      var old = $('profile-progress');
+      if (old) old.remove();
+
+      var card = document.createElement('section');
+      card.id = 'profile-progress';
+      card.className = 'card';
+      card.style.cssText = 'padding:20px;margin:12px 0;line-height:2';
+
+      var heading = document.createElement('h2');
+      heading.textContent = 'پیشرفت مسیر من';
+      card.append(heading);
+
+      var p = data && data.progress;
+      var percent = data && data.hasPath && p ? Number(p.percentage) || 0 : 0;
+      var info = document.createElement('p');
+      info.textContent = data && data.hasPath
+        ? percent.toLocaleString('fa-IR') + '٪ پیشرفت · ' +
+          Number(p.completedStages || 0).toLocaleString('fa-IR') + ' از ' +
+          Number(p.totalStages || 0).toLocaleString('fa-IR') + ' مرحله'
+        : 'هنوز مسیر پیشرفتی برای حساب شما منتشر نشده است.';
+      card.append(info);
+
+      var bar = document.createElement('div');
+      bar.style.cssText = 'height:9px;background:#263244;border-radius:8px;overflow:hidden';
+      var fill = document.createElement('div');
+      fill.style.cssText = 'height:100%;width:' + Math.max(0, Math.min(100, percent)) +
+        '%;background:#39ff88;border-radius:8px';
+      bar.append(fill);
+      card.append(bar);
+      root.append(card);
+    }
+
+    function renderProgress(data) {
+      renderProfileProgress(data);
+      if (!data || !data.hasPath) {
+        $('progress-percent').textContent = '۰٪';
+        $('progress-bar').style.width = '0%';
+        $('completed-count').textContent = '۰';
+        $('total-count').textContent = '۰';
+        $('next-title').textContent = 'مسیر پیشرفت هنوز منتشر نشده است.';
+        $('next-action').hidden = true;
+        showMessage(data && data.message ? data.message : 'هنوز مسیری برای نمایش وجود ندارد.');
+        return;
+      }
+
+      var p = data.progress || {};
+      var pct = Math.max(0, Math.min(100, Number(p.percentage) || 0));
+      $('progress-percent').textContent = pct.toLocaleString('fa-IR') + '٪';
+      $('progress-bar').style.width = pct + '%';
+      $('completed-count').textContent = Number(p.completedStages || 0).toLocaleString('fa-IR');
+      $('total-count').textContent = Number(p.totalStages || 0).toLocaleString('fa-IR');
+
+      var next = data.nextStep;
+      if (next) {
+        $('next-title').textContent = next.title || 'مرحله بعدی';
+        $('next-description').textContent = next.description || '';
+        if (safeLink(next.actionTarget)) {
+          $('next-action').href = next.actionTarget;
+          $('next-action').hidden = false;
+        } else {
+          $('next-action').href = '/profile';
+          $('next-action').hidden = false;
+        }
+      } else {
+        $('next-title').textContent = p.isComplete ? 'تبریک! مسیر را کامل کردی.' : 'فعلاً قدم بعدی در دسترس نیست.';
+        $('next-description').textContent = p.isComplete ? 'به سطح بعدی خوش آمدی.' : '';
+        $('next-action').hidden = true;
+      }
+
+      var list = $('stage-list');
+      list.replaceChildren();
+      (data.stages || []).forEach(function (stage, index) {
+        var item = document.createElement('div');
+        item.className = 'home-stage-item' + (stage.isCompleted ? ' is-done' : '') + (stage.isLocked ? ' is-locked' : '');
+
+        var number = document.createElement('span');
+        number.className = 'home-stage-number';
+        number.textContent = stage.isCompleted ? '✓' : String(index + 1).padStart(2, '0');
+
+        var content = document.createElement('div');
+        content.className = 'home-stage-content';
+        var title = document.createElement('strong');
+        title.textContent = stage.title || 'مرحله بدون عنوان';
+        var desc = document.createElement('small');
+        desc.textContent = stage.isCompleted ? 'تکمیل‌شده' : (stage.isLocked ? 'ابتدا پیش‌نیازها را تکمیل کن' : (stage.description || 'در انتظار انجام'));
+        content.append(title, desc);
+        item.append(number, content);
+        list.append(item);
+      });
+
+      if (!data.stages || !data.stages.length) {
+        list.textContent = 'هنوز مرحله‌ای در این مسیر تعریف نشده است.';
+      }
+      showMessage('');
+    }
+
+
+    // MMTrade10X independent educational page
+    function mm10Render() {
+      var lessons = [
+        ['چالش MMTrade10X چیه؟',
+         'معرفی کوتاه چالش، هدف آن و نحوه شرکت. شرایط رسمی برگزارکننده را قبل از ورود بررسی کن.'],
+        ['قبل از شروع چی بدونم؟',
+         'معاملات ریسک دارند و سود تضمینی نیست. قوانین، هزینه‌ها و شرایط شرکت را بخوان.'],
+        ['چطور حساب ePlanet بسازم؟',
+         'از لینک رسمی بروکر وارد شو، ثبت‌نام کن و مراحل احراز هویت را کامل کن.'],
+        ['چطور حسابم رو شارژ کنم؟',
+         'روش واریز، کارمزد و اطلاعات مقصد را در سایت رسمی بروکر بررسی کن.'],
+        ['چطور به MMTrade وصل بشم؟',
+         'طبق راهنمای رسمی Copy Trading، حساب خود را متصل و تنظیمات ریسک را بررسی کن.'],
+        ['چطور چالش رو دنبال کنم؟',
+         'اطلاعیه‌ها، نتایج و شرایط جوایز را از مسیر رسمی برگزارکننده دنبال کن.']
+      ];
+      var root = document.getElementById('mm10-lessons');
+      if (!root) return;
+      var done = {};
+      try { done = JSON.parse(localStorage.getItem('mm10_read') || '{}'); }
+      catch(e) {}
+      function draw() {
+        root.replaceChildren();
+        var count = lessons.filter(function(x,i){return done[i];}).length;
+        document.getElementById('mm10-progress').textContent =
+          count.toLocaleString('fa-IR') + ' از ۶ مرحله مرورشده';
+        lessons.forEach(function(lesson,i) {
+          var card = document.createElement('details');
+          card.style.cssText = 'background:#111b15;border:1px solid #294b35;border-radius:16px;padding:16px;margin:12px 0';
+          var title = document.createElement('summary');
+          title.style.cssText = 'cursor:pointer;font-weight:bold';
+          title.textContent = (done[i] ? '✓ ' : '') + lesson[0];
+          var body = document.createElement('p');
+          body.style.cssText = 'line-height:2;color:#c7d7cd';
+          body.textContent = lesson[1];
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = done[i] ? 'خوانده شد ✓' : 'خواندم، مرحله بعد';
+          btn.style.cssText = 'padding:12px;border:0;border-radius:12px;background:#267b49;color:white';
+          btn.onclick = function() {
+            done[i] = true;
+            try { localStorage.setItem('mm10_read', JSON.stringify(done)); } catch(e) {}
+            draw();
+            var cards = root.querySelectorAll('details');
+            if (cards[i+1]) {
+              cards[i+1].open = true;
+              cards[i+1].scrollIntoView({block:'center',behavior:'smooth'});
+            }
+          };
+          card.append(title,body,btn);
+          root.append(card);
+        });
+      }
+      draw();
+      var first = root.querySelector('details');
+      if (first) first.open = true;
+    }
+    if (mm10Mode) { mm10Render(); return; }
+
+    if (academyMode) {
+      if (!initData) {
+        academyMessage('برای ورود به آکادمی، این صفحه را از داخل ربات 10X در تلگرام باز کن.');
+        return;
+      }
+      const requestedLessonId = new URLSearchParams(location.search).get('lessonId');
+    if (requestedLessonId) {
+      openAcademyLesson(requestedLessonId);
+    } else {
+      loadAcademy();
+    }
+      return;
+    }
+
+    if (!initData) {
+      $('user-name').textContent = 'ورود از تلگرام';
+      $('user-status').textContent = 'این صفحه باید از داخل ربات 10X باز شود.';
+      $('next-title').textContent = 'برای مشاهده مسیر، Mini App را از تلگرام باز کن.';
+      $('next-action').hidden = true;
+      showMessage('اطلاعات ورود تلگرام دریافت نشد.');
+      return;
+    }
+
+    post('/auth/telegram').then(function (auth) {
+      if (!auth.user) throw new Error('user_not_found');
+      renderProfile(auth.user);
+      return post('/progress/path').then(renderProgress).catch(function (error) {
+        $('next-title').textContent = 'مسیر پیشرفت در دسترس نیست.';
+        $('next-action').hidden = true;
+        showMessage(error.message === 'registration_required'
+          ? 'برای مشاهده مسیر، ابتدا ثبت‌نام را تکمیل کن.'
+          : 'دریافت اطلاعات پیشرفت با خطا مواجه شد.');
+      }).then(function () {
+        return tenxQ14LoadSummary().then(tenxQ14RenderSummary).catch(function () {
+          if (!profileMode) {
+            $('next-title').textContent='مرحله بعدی آکادمی فعلاً در دسترس نیست';
+            $('next-description').textContent='دوباره تلاش کن';
+            $('next-action').hidden=true;
+          }
+        });
+      });
+    }).catch(function (error) {
+      $('user-name').textContent = 'احراز هویت ناموفق';
+      $('user-status').textContent = 'لطفاً دوباره از ربات وارد شو.';
+      $('next-title').textContent = 'امکان دریافت اطلاعات حساب وجود ندارد.';
+      $('next-action').hidden = true;
+      showMessage(error.message || 'خطا در ورود');
+    });
+  })();
+  </script>
+  <script src="/miniapp/10x-onboarding.js?v=p01"></script>
+<script src="/miniapp/blocks.js"></script>
+<!-- TENX_Q10_Q12_R8_START -->
+<script id="tenx-q10-q12-preview-loader">
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(window.location.search);
+
+  if (params.get('quizPreview') !== '1') return;
+
+  var academyPage =
+    params.get('view') === 'academy' ||
+    window.location.pathname === '/academy';
+
+  if (!academyPage) return;
+
+  var script = document.createElement('script');
+  script.src = '/miniapp/tenx-quiz-ui.js?v=q12publicv2_20261102';
+  script.defer = true;
+  script.setAttribute('data-tenx-quiz-preview', '1');
+
+  document.head.appendChild(script);
+})();
+</script>
+<!-- TENX_Q10_Q12_R8_END -->
+<!-- TENX_Q13_QUIZ_LOADER -->
+<script>
+(function () {
+  if (document.querySelector('script[data-tenx-q13]')) return;
+  var s = document.createElement('script');
+  s.src = '/miniapp/tenx-quiz-ui.js?v=q13lock_20261102';
+  s.defer = true;
+  s.setAttribute('data-tenx-q13', '1');
+  document.head.appendChild(s);
+})();
+</script>
+<!-- TENX_D12_BRIDGE_V2 -->
+<script defer src="/miniapp/tenx-d12-bridge-v2.js?v=d12finalv5_20261102"></script>
+<script>
+
+/* TENX_MM10_PREMIUM_V2 */
+(function () {
+  function setup() {
+    var view = document.getElementById('mmtrade10x-view');
+    if (!view || view.dataset.premiumV2 === 'yes') return;
+    view.dataset.premiumV2 = 'yes';
+
+    var originalHeader = view.firstElementChild;
+    if (originalHeader && originalHeader.id !== 'mm10-lessons') {
+      originalHeader.style.display = 'none';
+    }
+
+    var hero = document.createElement('div');
+    hero.className = 'mm10-hero';
+    hero.innerHTML =
+      '<div class="mm10-eyebrow">THE 10X CHALLENGE</div>' +
+      '<h1>MMTrade10X</h1>' +
+      '<p>از آشنایی تا شروع چالش، قدم‌به‌قدم و بدون پیچیدگی.</p>' +
+      '<div class="mm10-bull" aria-hidden="true">🐂</div>' +
+      '<svg class="mm10-chart" viewBox="0 0 350 80" preserveAspectRatio="none" aria-hidden="true">' +
+      '<defs><linearGradient id="mm10g" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop stop-color="#1ef594" stop-opacity=".28"/>' +
+      '<stop offset="1" stop-color="#1ef594" stop-opacity="0"/>' +
+      '</linearGradient></defs>' +
+      '<path d="M0 75 L45 61 L78 68 L113 42 L145 54 L179 27 L212 40 L253 14 L291 24 L350 3 L350 80 L0 80Z" fill="url(#mm10g)"/>' +
+      '<path d="M0 75 L45 61 L78 68 L113 42 L145 54 L179 27 L212 40 L253 14 L291 24 L350 3" stroke="#31ef97" stroke-width="2.4" fill="none"/>' +
+      '</svg>';
+
+    var progress = document.getElementById('mm10-progress');
+    var progressCard = document.createElement('div');
+    progressCard.className = 'mm10-progress-card';
+
+    var label = document.createElement('div');
+    label.className = 'mm10-label';
+    label.textContent = 'پیشرفت مسیر تو';
+
+    var track = document.createElement('div');
+    track.className = 'mm10-track';
+
+    var fill = document.createElement('div');
+    fill.className = 'mm10-fill';
+    track.appendChild(fill);
+
+    progressCard.appendChild(label);
+    if (progress) progressCard.appendChild(progress);
+    progressCard.appendChild(track);
+
+    var intro = document.createElement('div');
+    intro.className = 'mm10-intro';
+    intro.textContent = 'مسیر شروع چالش · ۶ مرحله کوتاه';
+
+    var lessons = document.getElementById('mm10-lessons');
+    if (lessons) {
+      view.insertBefore(hero, lessons);
+      view.insertBefore(progressCard, lessons);
+      view.insertBefore(intro, lessons);
+    }
+
+    function refresh() {
+      var count = 0;
+      try {
+        var saved = JSON.parse(localStorage.getItem('mm10_read') || '{}');
+        count = Object.keys(saved).filter(function(k) {
+          return /^[0-5]$/.test(k) && saved[k];
+        }).length;
+      } catch (e) {}
+      fill.style.width = Math.round(count / 6 * 100) + '%';
+    }
+    refresh();
+    if (lessons) {
+      lessons.addEventListener('click', function(e) {
+        if (e.target.closest('button')) {
+          requestAnimationFrame(refresh);
+        }
+      });
+    }
+
+    var risk = document.createElement('div');
+    risk.className = 'mm10-risk';
+    risk.textContent =
+      '⚠️ معاملات و کپی‌تریدینگ دارای ریسک هستند. ' +
+      'هیچ سودی تضمین‌شده نیست و امکان از دست رفتن سرمایه وجود دارد.';
+    view.appendChild(risk);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();
+
+</script>
+<script>
+
+/* TENX_MM10_PREMIUM_V3 */
+(function () {
+  function enhance() {
+    var view = document.getElementById('mmtrade10x-view');
+    if (!view || view.dataset.premiumV3 === 'yes') return;
+
+    var hero = view.querySelector('.mm10-hero');
+    if (!hero) return;
+
+    view.dataset.premiumV3 = 'yes';
+
+    var heading = hero.querySelector('h1');
+    if (heading) {
+      heading.textContent = 'MMTrade10X';
+      heading.setAttribute('dir','ltr');
+      heading.style.unicodeBidi = 'isolate';
+    }
+
+    var eyebrow = hero.querySelector('.mm10-eyebrow');
+    if (eyebrow) eyebrow.textContent = 'THE 10X CHALLENGE';
+
+    var oldBull = hero.querySelector('.mm10-bull');
+    if (oldBull) oldBull.remove();
+
+    var art = document.createElementNS(
+      'http://www.w3.org/2000/svg','svg'
+    );
+    art.setAttribute('class','mm10-bull-art');
+    art.setAttribute('viewBox','0 0 180 150');
+    art.setAttribute('aria-hidden','true');
+
+    art.innerHTML = `
+      <defs>
+        <linearGradient id="mmBullGoldV3" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fff0aa"/>
+          <stop offset=".38" stop-color="#e3b75b"/>
+          <stop offset=".75" stop-color="#98702b"/>
+          <stop offset="1" stop-color="#f1cd79"/>
+        </linearGradient>
+      </defs>
+      <path d="M28 75 Q15 50 26 24 Q34 46 53 48
+        Q72 27 111 36 Q139 41 146 64
+        Q161 50 166 24 Q178 62 151 88
+        L140 111 L126 111 L123 85
+        Q103 94 82 89 L76 116 L63 116
+        L62 87 Q45 93 40 111 L26 111
+        Q32 91 28 75Z"
+        fill="url(#mmBullGoldV3)"
+        stroke="#f4d98c" stroke-width="2"/>
+      <path d="M120 48 Q147 42 153 66
+        Q148 82 130 84 L120 70Z"
+        fill="#b48a39"/>
+      <circle cx="139" cy="61" r="3.5" fill="#06110b"/>
+      <path d="M22 73 Q8 85 13 102"
+        fill="none" stroke="#d5ac58"
+        stroke-width="5" stroke-linecap="round"/>
+      <path d="M30 118 L57 118 M82 121 L116 121"
+        stroke="#cda34b" stroke-width="2"
+        opacity=".5"/>
+    `;
+    hero.appendChild(art);
+
+    var lessons = view.querySelector('#mm10-lessons');
+    if (lessons) {
+      var cards = lessons.querySelectorAll('details');
+      cards.forEach(function(card,i) {
+        var summary = card.querySelector('summary');
+        if (!summary) return;
+        summary.setAttribute('data-step',
+          String(i+1).padStart(2,'0'));
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded',enhance);
+  } else {
+    enhance();
+  }
+})();
+
+</script>
+<script>
+
+/* TENX_MM10_3D_SCENE_V1 */
+(function(){
+
+  function init(){
+
+    var view=document.getElementById('mmtrade10x-view');
+
+    if(!view || view.dataset.mm3dReady==='1') return;
+
+    var hero=view.querySelector('.mm10-hero');
+
+    if(!hero) return;
+
+    view.dataset.mm3dReady='1';
+
+    var wrap=document.createElement('div');
+    wrap.className='mm3d-wrap';
+    wrap.setAttribute(
+      'aria-label',
+      'صحنه سه‌بعدی چالش MMTrade10X'
+    );
+
+    var halo=document.createElement('div');
+    halo.className='mm3d-halo';
+
+    var hint=document.createElement('div');
+    hint.className='mm3d-hint';
+    hint.textContent='برای چرخاندن لمس کن';
+
+    var stage=document.createElement('div');
+    stage.className='mm3d-stage';
+
+    var world=document.createElement('div');
+    world.className='mm3d-world';
+
+    var grid=document.createElement('div');
+    grid.className='mm3d-grid';
+    world.appendChild(grid);
+
+    var platform=document.createElement('div');
+    platform.className='mm3d-platform';
+
+    var face=document.createElement('div');
+    face.className='mm3d-platform-face';
+
+    platform.appendChild(face);
+    world.appendChild(platform);
+
+    var values=[
+      [15,65,32,false],
+      [39,58,52,false],
+      [63,72,38,true],
+      [87,48,66,false],
+      [111,61,45,true],
+      [135,32,80,false],
+      [159,43,68,false],
+      [183,26,93,false],
+      [207,39,73,true],
+      [231,14,106,false]
+    ];
+
+    values.forEach(function(v){
+
+      var candle=document.createElement('div');
+
+      candle.className='mm3d-candle'+
+        (v[3]?' red':'');
+
+      candle.style.left=v[0]+'px';
+      candle.style.top=v[1]+'px';
+      candle.style.height=v[2]+'px';
+
+      candle.style.transform='translateZ(28px)';
+
+      ['wick','body','side'].forEach(function(c){
+
+        var el=document.createElement('div');
+        el.className=c;
+        candle.appendChild(el);
+
+      });
+
+      world.appendChild(candle);
+
+    });
+
+    var tenx=document.createElement('div');
+    tenx.className='mm3d-tenx';
+    tenx.textContent='10X';
+    world.appendChild(tenx);
+
+    stage.appendChild(world);
+
+    var info=document.createElement('div');
+    info.className='mm3d-info';
+
+    var title=document.createElement('strong');
+    title.textContent='MMTrade10X';
+
+    var subtitle=document.createElement('span');
+    subtitle.textContent=
+      'مسیر ورود به چالش، ساده و قدم‌به‌قدم';
+
+    info.append(title,subtitle);
+
+    wrap.append(halo,stage,hint,info);
+
+    hero.appendChild(wrap);
+
+    var angle=-25;
+    var tilt=-21;
+
+    var dragging=false;
+
+    var startX=0;
+    var startY=0;
+    var startAngle=angle;
+    var startTilt=tilt;
+
+    function render(){
+      world.style.transform=
+        'rotateX('+tilt+'deg) rotateY('+angle+'deg)';
+    }
+
+    wrap.addEventListener('pointerdown',function(e){
+
+      if(e.pointerType==='mouse' && e.button!==0)
+        return;
+
+      dragging=true;
+      startX=e.clientX;
+      startY=e.clientY;
+      startAngle=angle;
+      startTilt=tilt;
+
+    });
+
+    wrap.addEventListener('pointermove',function(e){
+
+      if(!dragging) return;
+
+      var dx=e.clientX-startX;
+      var dy=e.clientY-startY;
+
+      if(Math.abs(dx)<5 && Math.abs(dy)<5)
+        return;
+
+      angle=startAngle+dx*.35;
+
+      tilt=Math.max(
+        -50,
+        Math.min(5,startTilt-dy*.15)
+      );
+
+      render();
+
+    });
+
+    function stop(){
+      dragging=false;
+    }
+
+    wrap.addEventListener('pointerup',stop);
+    wrap.addEventListener('pointercancel',stop);
+    window.addEventListener('pointerup',stop);
+
+    var reduced=window.matchMedia &&
+      window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
+
+    var visible=true;
+
+    if('IntersectionObserver' in window){
+
+      var observer=new IntersectionObserver(
+        function(entries){
+          visible=!!entries[0].isIntersecting;
+        }
+      );
+
+      observer.observe(wrap);
+    }
+
+    var last=0;
+
+    function animate(t){
+
+      if(
+        !dragging &&
+        !reduced &&
+        visible &&
+        !document.hidden &&
+        t-last>30
+      ){
+        angle+=.035;
+        render();
+        last=t;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    render();
+
+    if(!reduced)
+      requestAnimationFrame(animate);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener(
+      'DOMContentLoaded',init
+    );
+  } else {
+    init();
+  }
+
+})();
+
+</script>
+<script>
+/* TENX_MM10_BRAND_LOGO_V1 */
+(function(){
+ function install(){
+   var scene=document.querySelector(
+     '#mmtrade10x-view .mm3d-world'
+   );
+   if(!scene) return;
+   var oldLogo=scene.querySelector('.mm3d-tenx');
+   if(!oldLogo || scene.querySelector('.mm3d-brand')) return;
+
+   var logo=document.createElement('div');
+   logo.className='mm3d-brand';
+   logo.innerHTML=`
+    <svg viewBox="0 0 340 150"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img" aria-label="MMTrade Challenge 10X">
+      <defs>
+        <linearGradient id="mmSilver" x1="0" y1="0" x2=".2" y2="1">
+          <stop stop-color="#ffffff"/>
+          <stop offset=".36" stop-color="#b8c3c5"/>
+          <stop offset=".55" stop-color="#f7ffff"/>
+          <stop offset="1" stop-color="#687779"/>
+        </linearGradient>
+        <linearGradient id="mmLime" x1="0" y1="0" x2=".7" y2="1">
+          <stop stop-color="#b8ff6a"/>
+          <stop offset=".45" stop-color="#47f025"/>
+          <stop offset="1" stop-color="#008e39"/>
+        </linearGradient>
+      </defs>
+      <g font-family="Arial,sans-serif"
+        font-style="italic" font-weight="900">
+        <text x="10" y="80" font-size="72"
+          letter-spacing="-8"
+          fill="url(#mmSilver)"
+          stroke="#566666" stroke-width=".7">MM</text>
+        <text x="150" y="80" font-size="66"
+          letter-spacing="-5"
+          fill="url(#mmSilver)"
+          stroke="#566666" stroke-width=".6">Trade</text>
+        <text x="84" y="121" font-size="37"
+          letter-spacing="-2"
+          fill="url(#mmSilver)">Challenge</text>
+        <text x="249" y="123" font-size="58"
+          letter-spacing="-5"
+          fill="url(#mmLime)">10X</text>
+      </g>
+      <path d="M22 100 C80 91 120 72 149 40
+        L140 34 L193 5 L177 57 L167 46
+        C133 89 91 102 22 100Z"
+        fill="url(#mmLime)" stroke="#aaff74"
+        stroke-width="1.4"/>
+      <path d="M95 133 Q190 121 319 137"
+        fill="none" stroke="#5df333"
+        stroke-width="4"/>
+    </svg>`;
+   oldLogo.replaceWith(logo);
+ }
+ if(document.readyState==='loading'){
+   document.addEventListener('DOMContentLoaded',install);
+ } else {
+   install();
+ }
+})();
+</script><script>
+/* TENX_MM10_UPLOADED_LOGO_V1 */
+(function(){
+ function run(){
+  var scene=document.querySelector(
+    '#mmtrade10x-view .mm3d-world');
+  if(!scene)return;
+  var old=scene.querySelector('.mm3d-tenx');
+  var vector=scene.querySelector('.mm3d-brand');
+  if(old)old.remove();
+  if(vector)vector.remove();
+  if(scene.querySelector('.mm3d-real-logo'))return;
+
+  var img=document.createElement('img');
+  img.className='mm3d-real-logo';
+  img.alt='MMTrade Challenge 10X';
+  img.src='/miniapp/mmtrade10x-logo.png';
+  img.onerror=function(){
+   if(!img.dataset.jpg){
+    img.dataset.jpg='1';
+    img.src='/miniapp/mmtrade10x-logo.jpg';
+   }else{
+    img.remove();
+    if(old)scene.appendChild(old);
+   }
+  };
+  scene.appendChild(img);
+ }
+ if(document.readyState==='loading')
+  document.addEventListener('DOMContentLoaded',run);
+ else run();
+})();
+</script>
+<script>
+/* TENX_MM10_LOGO_ONLY_V3 */
+(function(){
+ function install(){
+  var view=document.getElementById('mmtrade10x-view');
+  if(!view)return;
+  var wrap=view.querySelector('.mm3d-wrap');
+  if(!wrap || wrap.querySelector('.mm10-logo-only'))return;
+  var img=document.createElement('img');
+  img.className='mm10-logo-only';
+  img.src='/miniapp/mmtrade10x-logo.png';
+  img.alt='MMTrade Challenge 10X';
+  img.loading='eager';
+  img.decoding='async';
+  img.fetchPriority='high';
+  wrap.appendChild(img);
+ }
+ if(document.readyState==='loading')
+  document.addEventListener('DOMContentLoaded',install);
+ else install();
+})();
+</script>
+</body>
+</html>

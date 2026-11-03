@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#070a09">
+  <title>10X | مسیر رشد تو</title>
+  <link rel="stylesheet" href="/miniapp/10x-theme.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main class="home-shell">
+    <header class="home-topbar">
+      <a class="home-brand" href="/miniapp" data-link-key="home.logo">
+        <span class="home-brandmark">10X</span>
+        <span>اکوسیستم 10X</span>
+      </a>
+      <a class="home-user" href="/profile" data-link-key="home.profile">
+        <img id="user-photo" class="home-avatar" alt="" hidden>
+        <span id="user-initial" class="home-avatar home-avatar-fallback">10</span>
+        <span class="home-user-meta">
+          <strong id="user-name">در حال بارگذاری...</strong>
+          <small id="user-status">خوش آمدی</small>
+        </span>
+        <span class="home-arrow">‹</span>
+      </a>
+    </header>
+
+    <section class="home-hero">
+      <div class="home-orb home-orb-one"></div>
+      <div class="home-orb home-orb-two"></div>
+      <div class="home-hero-content">
+        <span class="home-eyebrow">YOUR NEXT LEVEL STARTS HERE</span>
+        <div class="home-logo">10<span>X</span></div>
+        <h1>نسخه قوی‌تر خودت رو بساز.</h1>
+        <p>یک مسیر مشخص، قدم‌های واقعی و پیشرفت قابل اندازه‌گیری.</p>
+        <a class="home-primary-btn" href="/profile" data-link-key="home.hero.cta">
+          شروع مسیر من <span>←</span>
+        </a>
+      </div>
+      <div class="home-hero-glow"></div>
+    </section>
+
+    <section class="home-progress card" id="progress-card">
+      <div class="home-section-head">
+        <div>
+          <span class="home-eyebrow">YOUR PROGRESS</span>
+          <h2>مسیر پیشرفت من</h2>
+        </div>
+        <span class="home-live-dot">LIVE</span>
+      </div>
+
+      <div class="home-progress-number">
+        <strong id="progress-percent">—</strong>
+        <span>درصد پیشرفت</span>
+      </div>
+      <div class="home-progress-track"><i id="progress-bar"></i></div>
+
+      <div class="home-progress-stats">
+        <div><strong id="completed-count">—</strong><span>مرحله انجام‌شده</span></div>
+        <div><strong id="total-count">—</strong><span>کل مراحل</span></div>
+      </div>
+
+      <div class="home-next-step" id="next-step">
+        <span class="home-next-icon">↗</span>
+        <div>
+          <small>قدم بعدی تو</small>
+          <strong id="next-title">در حال دریافت مسیر...</strong>
+          <p id="next-description"></p>
+        </div>
+        <a id="next-action" href="/profile" data-link-key="home.progress.next">شروع</a>
+      </div>
+      <p id="progress-message" class="home-message" role="status"></p>
+    </section>
+
+    <section class="home-section">
+      <div class="home-section-head">
+        <div>
+          <span class="home-eyebrow">10X ECOSYSTEM</span>
+          <h2>مسیرت رو انتخاب کن</h2>
+        </div>
+        <span class="home-section-mark">01 / 04</span>
+      </div>
+
+      <div class="home-grid">
+        <a class="home-feature-card" href="/academy" data-link-key="home.academy">
+          <span class="home-card-icon">▤</span>
+          <strong>آکادمی</strong>
+          <span>یادگیری و ارتقای مهارت‌ها</span>
+          <i>←</i>
+        </a>
+        <a class="home-feature-card" href="/challenge" data-link-key="home.challenge">
+          <span class="home-card-icon">⚡</span>
+          <strong>چالش‌ها</strong>
+          <span>یادگیری از مسیر عمل</span>
+          <i>←</i>
+        </a>
+        <a class="home-feature-card" href="/crypto" data-link-key="home.crypto">
+          <span class="home-card-icon">⌁</span>
+          <strong>بازارها</strong>
+          <span>دسترسی به فضای بازار</span>
+          <i>←</i>
+        </a>
+        <a class="home-feature-card" href="/copy-trading" data-link-key="home.copy-trading">
+          <span class="home-card-icon">◈</span>
+          <strong>کپی تریدینگ</strong>
+          <span>ابزارها و خدمات معاملاتی</span>
+          <i>←</i>
+        </a>
+      </div>
+    </section>
+
+    <section class="home-support-card">
+      <div>
+        <span class="home-eyebrow">WE ARE HERE</span>
+        <h2>در این مسیر تنها نیستی.</h2>
+        <p>برای راهنمایی و دریافت پشتیبانی با تیم 10X در ارتباط باش.</p>
+        <a href="/support" data-link-key="home.support">ارتباط با پشتیبانی ←</a>
+      </div>
+      <div class="home-support-symbol">10X</div>
+    </section>
+
+    <section class="home-stages card">
+      <div class="home-section-head">
+        <div>
+          <span class="home-eyebrow">YOUR ROADMAP</span>
+          <h2>ایستگاه‌های مسیر</h2>
+        </div>
+      </div>
+      <div id="stage-list" class="home-stage-list">
+        <p class="home-message">در حال دریافت مراحل...</p>
+      </div>
+    </section>
+
+    <footer class="home-footer">
+      <strong>10X</strong>
+      <span>هر روز، یک قدم جلوتر.</span>
+    </footer>
+
+    <section id="profile-view" hidden>
+      <a href="/miniapp" class="bbtn">← بازگشت به خانه</a>
+      <h1 style="margin:22px 0">پروفایل من</h1>
+      <div id="profile-data"></div>
+      <div id="profile-managed-content"></div>
+    </section>
+
+    <section id="academy-view" hidden>
+      <a href="/miniapp" class="bbtn">← بازگشت به خانه</a>
+      <h1 style="margin:22px 0">آکادمی 10X</h1>
+      <p class="muted">آموزش، تمرین و پیشرفت در مسیر 10X</p>
+      <div id="academy-content" aria-live="polite"></div>
+      <div id="academy-managed-content"></div>
+    </section>
+  </main>
+
+  <script>
+  (function () {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    var initData = tg && tg.initData ? tg.initData : '';
+    var $ = function (id) { return document.getElementById(id); };
+    var currentPath = location.pathname.replace(/\/+$/, '') || '/';
+    var profileMode = currentPath === '/profile';
+    var academyMode = new URLSearchParams(location.search).get('view') === 'academy';
+
+    if (profileMode || academyMode) {
+      var main = document.querySelector('main.home-shell');
+      var activeView = profileMode ? 'profile-view' : 'academy-view';
+      Array.from(main.children).forEach(function (node) {
+        if (node.id !== activeView) node.hidden = true;
+      });
+      $(activeView).hidden = false;
+      document.title = profileMode ? 'پروفایل من | 10X' : 'آکادمی 10X';
+    }
+
+    function safeLink(value) {
+      return typeof value === 'string' &&
+        (/^https:\/\/\S+$/i.test(value) || /^\/(?!\/)\S*$/.test(value));
+    }
+
+    function post(url, body) {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(Object.assign({ initData: initData }, body || {}))
+      }).then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) throw new Error(data.error || 'request_failed');
+          return data;
+        });
+      });
+    }
+
+    function academyMessage(message) {
+      var root = $('academy-content');
+      root.replaceChildren();
+      var p = document.createElement('p');
+      p.className = 'home-message';
+      p.textContent = message;
+      root.append(p);
+    }
+
+    function academyButton(label, action) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'bbtn';
+      button.textContent = label;
+      button.addEventListener('click', action);
+      return button;
+    }
+
+    function openAcademyLesson(id) {
+      post('/academy/lessons/' + encodeURIComponent(id)).then(function (lesson) {
+        var root = $('academy-content');
+        root.replaceChildren();
+
+        root.append(academyButton('← بازگشت به دوره‌ها', loadAcademy));
+
+        var card = document.createElement('section');
+        card.className = 'card';
+        card.style.marginTop = '16px';
+
+        var title = document.createElement('h2');
+        title.textContent = lesson.title || 'درس بدون عنوان';
+        card.append(title);
+
+        if (lesson.summary) {
+          var summary = document.createElement('p');
+          summary.className = 'muted';
+          summary.textContent = lesson.summary;
+          card.append(summary);
+        }
+
+        var body = document.createElement('div');
+        body.style.whiteSpace = 'pre-wrap';
+        body.style.lineHeight = '2';
+        body.textContent = lesson.body || 'محتوایی برای این درس ثبت نشده است.';
+        card.append(body);
+
+        if (lesson.videoUrl && safeLink(lesson.videoUrl)) {
+          var video = document.createElement('p');
+          var link = document.createElement('a');
+          link.href = lesson.videoUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.textContent = 'مشاهده ویدئوی درس';
+          video.append(link);
+          card.append(video);
+        }
+
+        var progressButton = academyButton(
+          lesson.done ? '✓ این درس تکمیل شده است (لغو تکمیل)' : 'علامت‌گذاری به‌عنوان درس تکمیل‌شده',
+          function () {
+            progressButton.disabled = true;
+            post('/academy/lessons/' + encodeURIComponent(id) + '/progress', {
+              completed: !lesson.done
+            }).then(function () {
+              openAcademyLesson(id);
+            }).catch(function () {
+              progressButton.disabled = false;
+              academyMessage('ثبت وضعیت درس انجام نشد. دوباره تلاش کن.');
+            });
+          }
+        );
+        progressButton.style.marginTop = '18px';
+        card.append(progressButton);
+        root.append(card);
+      }).catch(function (error) {
+        academyMessage(error.message === 'registration_required' ||
+          error.message === 'registration_incomplete'
+          ? 'برای دسترسی به آکادمی، ابتدا ثبت‌نامت را در 10X تکمیل کن.'
+          : 'دریافت محتوای درس با خطا مواجه شد. دوباره تلاش کن.');
+      });
+    }
+
+    function loadAcademy() {
+      academyMessage('در حال دریافت دوره‌های آموزشی...');
+      post('/academy/courses').then(function (data) {
+        var root = $('academy-content');
+        root.replaceChildren();
+
+        var courses = Array.isArray(data.items) ? data.items : [];
+        if (!courses.length) {
+          academyMessage('هنوز دوره منتشرشده‌ای در آکادمی قرار نگرفته است.');
+          return;
+        }
+
+        courses.forEach(function (course) {
+          var card = document.createElement('section');
+          card.className = 'card';
+          card.style.marginTop = '16px';
+
+          var heading = document.createElement('h2');
+          heading.textContent = course.title || 'دوره بدون عنوان';
+          card.append(heading);
+
+          if (course.description) {
+            var description = document.createElement('p');
+            description.className = 'muted';
+            description.textContent = course.description;
+            card.append(description);
+          }
+
+          var lessons = Array.isArray(course.lessons) ? course.lessons : [];
+          if (!lessons.length) {
+            var empty = document.createElement('p');
+            empty.className = 'muted';
+            empty.textContent = 'هنوز درسی برای این دوره منتشر نشده است.';
+            card.append(empty);
+          }
+
+          lessons.forEach(function (lesson, index) {
+            var item = document.createElement('div');
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.justifyContent = 'space-between';
+            item.style.gap = '12px';
+            item.style.padding = '12px 0';
+            item.style.borderTop = '1px solid rgba(148,163,184,.18)';
+
+            var label = document.createElement('span');
+            label.textContent = (lesson.done ? '✓ ' : (index + 1) + '. ') +
+              (lesson.title || 'درس بدون عنوان');
+
+            var open = academyButton(lesson.done ? 'مرور درس' : 'مشاهده درس', function () {
+              openAcademyLesson(lesson.id);
+            });
+
+            item.append(label, open);
+            card.append(item);
+          });
+
+          root.append(card);
+        });
+      }).catch(function (error) {
+        academyMessage(error.message === 'registration_required' ||
+          error.message === 'registration_incomplete'
+          ? 'برای دسترسی به آکادمی، ابتدا ثبت‌نامت را در 10X تکمیل کن.'
+          : 'دریافت دوره‌های آکادمی با خطا مواجه شد. دوباره تلاش کن.');
+      });
+    }
+
+    function showMessage(message) {
+      $('progress-message').textContent = message || '';
+    }
+
+    function renderProfile(user) {
+      var telegramUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+      var name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+
+      if (!name && telegramUser) {
+        name = [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ').trim();
+      }
+      if (!name && telegramUser && telegramUser.username) name = '@' + telegramUser.username;
+
+      $('user-name').textContent = name || 'کاربر 10X';
+      $('user-status').textContent =
+        user.registrationStatus === 'COMPLETE' ? 'عضو 10X' : 'به مسیر 10X خوش آمدی';
+
+      if (telegramUser && telegramUser.photo_url) {
+        $('user-photo').src = telegramUser.photo_url;
+        $('user-photo').hidden = false;
+        $('user-initial').hidden = true;
+      } else {
+        $('user-initial').textContent = (name || '10X').trim().charAt(0).toUpperCase();
+      }
+
+      if (!profileMode) return;
+
+      var root = $('profile-data');
+      root.replaceChildren();
+
+      var card = document.createElement('section');
+      card.className = 'card';
+      card.style.cssText = 'padding:20px;margin:12px 0;line-height:2';
+
+      var title = document.createElement('h2');
+      title.textContent = name || 'کاربر 10X';
+      card.append(title);
+
+      if (telegramUser && telegramUser.photo_url) {
+        var photo = document.createElement('img');
+        photo.src = telegramUser.photo_url;
+        photo.alt = '';
+        photo.style.cssText = 'width:76px;height:76px;border-radius:50%;object-fit:cover';
+        card.append(photo);
+      }
+
+      function row(label, value) {
+        if (value === null || value === undefined || value === '') return;
+        var item = document.createElement('p');
+        item.textContent = label + ': ' + value;
+        card.append(item);
+      }
+
+      var statuses = {
+        STARTED: 'شروع ثبت‌نام',
+        PHONE_PENDING: 'در انتظار تأیید شماره',
+        REGISTERED: 'ثبت‌نام‌شده',
+        COMPLETE: 'عضو تکمیل‌شده'
+      };
+
+      var stages = {
+        STARTED: 'شروع',
+        CHANNELS_PENDING: 'عضویت در کانال‌ها',
+        CONSENT_PENDING: 'رضایت‌نامه',
+        PHONE_PENDING: 'تأیید شماره',
+        REGISTERED: 'ثبت‌نام',
+        MINI_APP_PENDING: 'ورود به مینی‌اپ',
+        COMPLETE: 'تکمیل مسیر'
+      };
+
+      row('نام کاربری', user.username ? '@' + user.username : '');
+      row('شماره تأییدشده', user.phone);
+      row('وضعیت حساب', statuses[user.registrationStatus] || user.registrationStatus);
+      row('مرحله ثبت‌نام', stages[user.registrationStage] || user.registrationStage);
+
+      if (user.createdAt) {
+        row('تاریخ عضویت', new Date(user.createdAt).toLocaleDateString('fa-IR'));
+      }
+
+      root.append(card);
+    }
+
+    function renderProfileProgress(data) {
+      if (!profileMode) return;
+      var root = $('profile-data');
+      if (!root) return;
+
+      var old = $('profile-progress');
+      if (old) old.remove();
+
+      var card = document.createElement('section');
+      card.id = 'profile-progress';
+      card.className = 'card';
+      card.style.cssText = 'padding:20px;margin:12px 0;line-height:2';
+
+      var heading = document.createElement('h2');
+      heading.textContent = 'پیشرفت مسیر من';
+      card.append(heading);
+
+      var p = data && data.progress;
+      var percent = data && data.hasPath && p ? Number(p.percentage) || 0 : 0;
+      var info = document.createElement('p');
+      info.textContent = data && data.hasPath
+        ? percent.toLocaleString('fa-IR') + '٪ پیشرفت · ' +
+          Number(p.completedStages || 0).toLocaleString('fa-IR') + ' از ' +
+          Number(p.totalStages || 0).toLocaleString('fa-IR') + ' مرحله'
+        : 'هنوز مسیر پیشرفتی برای حساب شما منتشر نشده است.';
+      card.append(info);
+
+      var bar = document.createElement('div');
+      bar.style.cssText = 'height:9px;background:#263244;border-radius:8px;overflow:hidden';
+      var fill = document.createElement('div');
+      fill.style.cssText = 'height:100%;width:' + Math.max(0, Math.min(100, percent)) +
+        '%;background:#39ff88;border-radius:8px';
+      bar.append(fill);
+      card.append(bar);
+      root.append(card);
+    }
+
+    function renderProgress(data) {
+      renderProfileProgress(data);
+      if (!data || !data.hasPath) {
+        $('progress-percent').textContent = '۰٪';
+        $('progress-bar').style.width = '0%';
+        $('completed-count').textContent = '۰';
+        $('total-count').textContent = '۰';
+        $('next-title').textContent = 'مسیر پیشرفت هنوز منتشر نشده است.';
+        $('next-action').hidden = true;
+        showMessage(data && data.message ? data.message : 'هنوز مسیری برای نمایش وجود ندارد.');
+        return;
+      }
+
+      var p = data.progress || {};
+      var pct = Math.max(0, Math.min(100, Number(p.percentage) || 0));
+      $('progress-percent').textContent = pct.toLocaleString('fa-IR') + '٪';
+      $('progress-bar').style.width = pct + '%';
+      $('completed-count').textContent = Number(p.completedStages || 0).toLocaleString('fa-IR');
+      $('total-count').textContent = Number(p.totalStages || 0).toLocaleString('fa-IR');
+
+      var next = data.nextStep;
+      if (next) {
+        $('next-title').textContent = next.title || 'مرحله بعدی';
+        $('next-description').textContent = next.description || '';
+        if (safeLink(next.actionTarget)) {
+          $('next-action').href = next.actionTarget;
+          $('next-action').hidden = false;
+        } else {
+          $('next-action').href = '/profile';
+          $('next-action').hidden = false;
+        }
+      } else {
+        $('next-title').textContent = p.isComplete ? 'تبریک! مسیر را کامل کردی.' : 'فعلاً قدم بعدی در دسترس نیست.';
+        $('next-description').textContent = p.isComplete ? 'به سطح بعدی خوش آمدی.' : '';
+        $('next-action').hidden = true;
+      }
+
+      var list = $('stage-list');
+      list.replaceChildren();
+      (data.stages || []).forEach(function (stage, index) {
+        var item = document.createElement('div');
+        item.className = 'home-stage-item' + (stage.isCompleted ? ' is-done' : '') + (stage.isLocked ? ' is-locked' : '');
+
+        var number = document.createElement('span');
+        number.className = 'home-stage-number';
+        number.textContent = stage.isCompleted ? '✓' : String(index + 1).padStart(2, '0');
+
+        var content = document.createElement('div');
+        content.className = 'home-stage-content';
+        var title = document.createElement('strong');
+        title.textContent = stage.title || 'مرحله بدون عنوان';
+        var desc = document.createElement('small');
+        desc.textContent = stage.isCompleted ? 'تکمیل‌شده' : (stage.isLocked ? 'ابتدا پیش‌نیازها را تکمیل کن' : (stage.description || 'در انتظار انجام'));
+        content.append(title, desc);
+        item.append(number, content);
+        list.append(item);
+      });
+
+      if (!data.stages || !data.stages.length) {
+        list.textContent = 'هنوز مرحله‌ای در این مسیر تعریف نشده است.';
+      }
+      showMessage('');
+    }
+
+    if (academyMode) {
+      if (!initData) {
+        academyMessage('برای ورود به آکادمی، این صفحه را از داخل ربات 10X در تلگرام باز کن.');
+        return;
+      }
+      loadAcademy();
+      return;
+    }
+
+    if (!initData) {
+      $('user-name').textContent = 'ورود از تلگرام';
+      $('user-status').textContent = 'این صفحه باید از داخل ربات 10X باز شود.';
+      $('next-title').textContent = 'برای مشاهده مسیر، Mini App را از تلگرام باز کن.';
+      $('next-action').hidden = true;
+      showMessage('اطلاعات ورود تلگرام دریافت نشد.');
+      return;
+    }
+
+    post('/auth/telegram').then(function (auth) {
+      if (!auth.user) throw new Error('user_not_found');
+      renderProfile(auth.user);
+      return post('/progress/path').then(renderProgress).catch(function (error) {
+        $('next-title').textContent = 'مسیر پیشرفت در دسترس نیست.';
+        $('next-action').hidden = true;
+        showMessage(error.message === 'registration_required'
+          ? 'برای مشاهده مسیر، ابتدا ثبت‌نام را تکمیل کن.'
+          : 'دریافت اطلاعات پیشرفت با خطا مواجه شد.');
+      });
+    }).catch(function (error) {
+      $('user-name').textContent = 'احراز هویت ناموفق';
+      $('user-status').textContent = 'لطفاً دوباره از ربات وارد شو.';
+      $('next-title').textContent = 'امکان دریافت اطلاعات حساب وجود ندارد.';
+      $('next-action').hidden = true;
+      showMessage(error.message || 'خطا در ورود');
+    });
+  })();
+  </script>
+  <script src="/miniapp/blocks.js"></script>
+</body>
+</html>

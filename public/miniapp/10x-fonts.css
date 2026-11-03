@@ -1,0 +1,149 @@
+
+@font-face {
+  font-family: "Doran";
+  src: url("/miniapp/fonts/doran/Doran-Thin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "Doran";
+  src: url("/miniapp/fonts/doran/Doran-Light.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "Doran";
+  src: url("/miniapp/fonts/doran/Doran-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "Doran";
+  src: url("/miniapp/fonts/doran/Doran-Medium.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "Doran";
+  src: url("/miniapp/fonts/doran/Doran-Bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "Doran";
+  src: url("/miniapp/fonts/doran/Doran-ExtraBold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "DoranFaNum";
+  src: url("/miniapp/fonts/doran/DoranFaNum-Thin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "DoranFaNum";
+  src: url("/miniapp/fonts/doran/DoranFaNum-Light.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "DoranFaNum";
+  src: url("/miniapp/fonts/doran/DoranFaNum-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "DoranFaNum";
+  src: url("/miniapp/fonts/doran/DoranFaNum-Medium.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "DoranFaNum";
+  src: url("/miniapp/fonts/doran/DoranFaNum-Bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: "DoranFaNum";
+  src: url("/miniapp/fonts/doran/DoranFaNum-ExtraBold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+}
+
+
+:root {
+  --font-fa: "DoranFaNum", "Doran", sans-serif;
+  --font-latin: "Doran", Arial, sans-serif;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+}
+
+html,
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--font-fa) !important;
+}
+
+body {
+  font-weight: 400;
+}
+
+button,
+input,
+textarea,
+select {
+  font-weight: 500;
+}
+
+h1, h2, h3 {
+  font-weight: 700;
+}
+
+.academy-kicker {
+  font-family: var(--font-latin) !important;
+}
+
+code, pre, kbd, samp {
+  font-family: monospace !important;
+}
