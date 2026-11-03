@@ -247,6 +247,339 @@ app.patch('/admin/admins/:id', async (request, reply) => {
 });
 
 
+
+// TENX_TEAM_ADMIN_P36
+const teamSteps = [
+  'ACCOUNT_CREATED',
+  'DEPOSIT_COMPLETED',
+  'COPY_CONNECTED',
+  'CHALLENGE_PARTICIPANT'
+] as const;
+
+const teamAccessKey = 'TEAM_P36_ADMINS';
+const teamUserKey = (id: string) => 'TEAM_P36_USER_' + id;
+
+async function teamAuth(request: FastifyRequest, reply: FastifyReply, superOnly = false) {
+  const secret = adminSecret();
+  const header = request.headers.authorization;
+
+  if (!secret || !header?.startsWith('Bearer ')) {
+    reply.code(401).send({ error: 'unauthorized' });
+    return null;
+  }
+
+  const token = header.slice(7).trim();
+  let actor: { id: string | null; role: string; email: string } | null = null;
+
+  if (
+    process.env.ADMIN_LEGACY_TOKEN_ENABLED !== 'false' &&
+    tokenMatches(token, process.env.ADMIN_API_TOKEN)
+  ) {
+    actor = { id: null, role: 'SUPER_ADMIN', email: 'legacy-token' };
+  } else {
+    const session = verifySession(token, secret);
+    if (session) {
+      const admin = await prisma.adminUser.findUnique({
+        where: { id: session.sub }
+      });
+      if (
+        admin?.isActive &&
+        passwordVersion(admin.passwordHash) === session.pv
+      ) {
+        actor = { id: admin.id, role: admin.role, email: admin.email };
+      }
+    }
+  }
+
+  if (!actor) {
+    reply.code(401).send({ error: 'unauthorized' });
+    return null;
+  }
+
+  if (actor.role === 'SUPER_ADMIN') return actor;
+
+  if (superOnly) {
+    reply.code(403).send({ error: 'super_admin_required' });
+    return null;
+  }
+
+  const setting = await prisma.systemSetting.findUnique({
+    where: { key: teamAccessKey }
+  });
+
+  const ids = Array.isArray(setting?.value) ? setting.value : [];
+
+  if (!actor.id || !ids.includes(actor.id)) {
+    reply.code(403).send({ error: 'team_access_denied' });
+    return null;
+  }
+
+  return actor;
+}
+
+app.get('/admin/team/access', async (request, reply) => {
+  const actor = await teamAuth(request, reply);
+  if (!actor) return;
+  return {
+    ok: true,
+    email: actor.email,
+    superAdmin: actor.role === 'SUPER_ADMIN'
+  };
+});
+
+app.get('/admin/team/admins', async (request, reply) => {
+  if (!(await teamAuth(request, reply, true))) return;
+
+  const setting = await prisma.systemSetting.findUnique({
+    where: { key: teamAccessKey }
+  });
+  const ids = Array.isArray(setting?.value) ? setting.value : [];
+
+  const admins = await prisma.adminUser.findMany({
+    where: { isActive: true },
+    select: { id: true, email: true, role: true }
+  });
+
+  return {
+    items: admins.map(a => ({
+      ...a,
+      teamEnabled: ids.includes(a.id)
+    }))
+  };
+});
+
+app.put('/admin/team/admins', async (request, reply) => {
+  const actor = await teamAuth(request, reply, true);
+  if (!actor) return;
+
+  const parsed = z.object({
+    ids: z.array(z.string().min(1).max(100)).max(100)
+  }).strict().safeParse(request.body);
+
+  if (!parsed.success) {
+    return reply.code(400).send({ error: 'invalid_request' });
+  }
+
+  const ids = parsed.data.ids;
+
+  if (new Set(ids).size !== ids.length) {
+    return reply.code(400).send({ error: 'duplicate_ids' });
+  }
+
+  const admins = await prisma.adminUser.findMany({
+    where: { id: { in: ids }, isActive: true },
+    select: { id: true, role: true }
+  });
+
+  if (
+    admins.length !== ids.length ||
+    admins.some(a => a.role === 'SUPER_ADMIN')
+  ) {
+    return reply.code(400).send({ error: 'invalid_admin_selection' });
+  }
+
+  await prisma.$transaction(async tx => {
+    await tx.systemSetting.upsert({
+      where: { key: teamAccessKey },
+      create: { key: teamAccessKey, value: ids },
+      update: { value: ids }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        adminUserId: actor.id,
+        action: 'TEAM_ACCESS_UPDATED',
+        entityType: 'TeamAdmin',
+        metadata: { adminIds: ids }
+      }
+    });
+  });
+
+  return { ok: true };
+});
+
+app.get('/admin/team/users', async (request, reply) => {
+  if (!(await teamAuth(request, reply))) return;
+
+  const parsed = z.object({
+    q: z.string().max(100).optional(),
+    cursor: z.string().optional()
+  }).safeParse(request.query);
+
+  if (!parsed.success) {
+    return reply.code(400).send({ error: 'invalid_query' });
+  }
+
+  const q = parsed.data.q?.trim();
+
+  const where = q ? {
+    OR: [
+      { firstName: { contains: q } },
+      { lastName: { contains: q } },
+      { username: { contains: q } },
+      { telegramId: { contains: q } },
+      { phone: { contains: q } }
+    ]
+  } : {};
+
+  const users = await prisma.user.findMany({
+    where,
+    select: {
+      id: true,
+      telegramId: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      registrationStage: true,
+      registrationSource: true,
+      createdAt: true
+    },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: 50,
+    ...(parsed.data.cursor ? {
+      skip: 1,
+      cursor: { id: parsed.data.cursor }
+    } : {})
+  });
+
+  const settings = await prisma.systemSetting.findMany({
+    where: {
+      key: { in: users.map(u => teamUserKey(u.id)) }
+    }
+  });
+
+  const state = new Map(settings.map(s => [s.key, s.value]));
+
+  return {
+    items: users.map(u => ({
+      ...u,
+      team: state.get(teamUserKey(u.id)) || {}
+    })),
+    nextCursor: users.length === 50 ? users[49].id : null
+  };
+});
+
+app.put('/admin/team/users/:id/step', async (request, reply) => {
+  const actor = await teamAuth(request, reply);
+  if (!actor) return;
+
+  const params = z.object({
+    id: z.string().min(1).max(100)
+  }).safeParse(request.params);
+
+  const body = z.object({
+    step: z.enum(teamSteps),
+    approved: z.boolean(),
+    accountId: z.string().trim().max(100).optional(),
+    note: z.string().trim().max(500).optional()
+  }).strict().safeParse(request.body);
+
+  if (!params.success || !body.success) {
+    return reply.code(400).send({ error: 'invalid_request' });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: params.data.id },
+    select: { id: true }
+  });
+
+  if (!user) {
+    return reply.code(404).send({ error: 'user_not_found' });
+  }
+
+  const key = teamUserKey(user.id);
+  const current = await prisma.systemSetting.findUnique({
+    where: { key }
+  });
+
+  const previous =
+    current?.value &&
+    typeof current.value === 'object' &&
+    !Array.isArray(current.value)
+      ? current.value as Record<string, any>
+      : {};
+
+  const step = body.data.step;
+  const index = teamSteps.indexOf(step);
+  const approved = body.data.approved;
+
+  if (
+    approved &&
+    teamSteps.slice(0, index).some(s => previous[s]?.approved !== true)
+  ) {
+    return reply.code(409).send({
+      error: 'previous_step_not_approved'
+    });
+  }
+
+  if (
+    !approved &&
+    teamSteps.slice(index + 1).some(s => previous[s]?.approved === true)
+  ) {
+    return reply.code(409).send({
+      error: 'revoke_later_steps_first'
+    });
+  }
+
+  const accountId = body.data.accountId ||
+    previous.ACCOUNT_CREATED?.accountId || '';
+
+  if (step === 'ACCOUNT_CREATED' && approved && !accountId) {
+    return reply.code(400).send({
+      error: 'account_id_required'
+    });
+  }
+
+  const next = {
+    ...previous,
+    [step]: {
+      approved,
+      ...(step === 'ACCOUNT_CREATED' ? { accountId } : {}),
+      note: body.data.note || '',
+      by: actor.id,
+      at: new Date().toISOString()
+    }
+  };
+
+  await prisma.$transaction(async tx => {
+    await tx.systemSetting.upsert({
+      where: { key },
+      create: { key, value: next },
+      update: { value: next }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        adminUserId: actor.id,
+        userId: user.id,
+        action: 'TEAM_STEP_UPDATED',
+        entityType: 'User',
+        entityId: user.id,
+        metadata: {
+          step,
+          approved,
+          note: body.data.note || ''
+        }
+      }
+    });
+  });
+
+  return { ok: true, team: next };
+});
+
+app.get('/admin/team/panel', async (_request, reply) => {
+  const fs = await import('node:fs');
+  reply.header('cache-control', 'no-store');
+  return reply.type('text/html; charset=utf-8').send(
+    fs.readFileSync(
+      join(process.cwd(), 'apps/api/public/team.html'),
+      'utf8'
+    )
+  );
+});
+// END TENX_TEAM_ADMIN_P36
+
 app.get('/admin/panel', async (_request, reply) => {
   const { readFileSync, existsSync } = await import('node:fs');
   const { join } = await import('node:path');

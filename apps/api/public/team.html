@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MATIN FUTURE | Team Admin</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#08110d;color:#ecfff3;font:14px Tahoma,Arial}
+main{max-width:1100px;margin:auto;padding:18px}
+h1{color:#42e99a;font-size:23px}
+.card{background:#102119;border:1px solid #29543a;border-radius:14px;padding:15px;margin:12px 0}
+input,button{padding:11px;border-radius:9px;font:inherit}
+input{background:#07130d;color:#fff;border:1px solid #345641;max-width:100%}
+button{background:#18a96a;color:#fff;border:0;cursor:pointer;margin:3px}
+button:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th,td{padding:10px;text-align:right;border-bottom:1px solid #254232}
+.wrap{overflow-x:auto}
+.muted{color:#a6bdae}
+.ok{color:#50efa4}
+.bad{color:#ff9d9d}
+</style>
+</head>
+<body>
+<main>
+<h1>MATIN FUTURE | مدیریت تیم</h1>
+<div class="card">
+  <div class="row">
+    <input id="email" type="email" placeholder="ایمیل مدیر">
+    <input id="password" type="password" placeholder="رمز عبور">
+    <button id="login">ورود</button>
+    <button id="logout">خروج</button>
+  </div>
+  <p id="status" class="muted">ابتدا وارد شوید.</p>
+</div>
+<div id="app" hidden>
+  <div class="card">
+    <h3>کاربران پروژه</h3>
+    <div class="row">
+      <input id="search" placeholder="نام، شماره، آیدی تلگرام">
+      <button id="find">جست‌وجو</button>
+      <button id="more">صفحه بعد</button>
+    </div>
+    <div class="wrap">
+      <table>
+        <thead><tr>
+          <th>کاربر</th><th>تلگرام</th><th>منبع</th>
+          <th>وضعیت ePlanet</th><th>مدیریت</th>
+        </tr></thead>
+        <tbody id="users"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" id="editor" hidden>
+    <h3 id="selected"></h3>
+    <div id="steps"></div>
+    <input id="account" placeholder="شناسه حساب معاملاتی ePlanet">
+    <input id="note" placeholder="یادداشت ادمین">
+    <p class="muted">مراحل باید به ترتیب تأیید شوند.</p>
+  </div>
+  <div class="card" id="adminBox" hidden>
+    <h3>تعیین دسترسی ادمین‌های تیم</h3>
+    <div id="admins"></div>
+    <button id="saveAdmins">ذخیره دسترسی‌ها</button>
+  </div>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let token='',cursor=null,selected=null,adminRows=[];
+const names={
+ ACCOUNT_CREATED:'افتتاح حساب',
+ DEPOSIT_COMPLETED:'تکمیل شارژ',
+ COPY_CONNECTED:'اتصال کپی‌ترید',
+ CHALLENGE_PARTICIPANT:'شرکت رسمی در چالش'
+};
+const order=Object.keys(names);
+function status(t){$('status').textContent=t}
+async function api(path,options={}){
+ const r=await fetch('/admin'+path,{
+  ...options,
+  headers:{
+   'content-type':'application/json',
+   authorization:'Bearer '+token
+  }
+ });
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok)throw Error(data.message||data.error||'HTTP '+r.status);
+ return data;
+}
+function td(tr,value){
+ const e=document.createElement('td');
+ e.textContent=value??'—';tr.append(e);return e;
+}
+async function load(reset=true){
+ if(reset)cursor=null;
+ const params=new URLSearchParams();
+ if($('search').value.trim())params.set('q',$('search').value.trim());
+ if(cursor)params.set('cursor',cursor);
+ const d=await api('/team/users?'+params);
+ if(reset)$('users').replaceChildren();
+ for(const u of d.items){
+  const tr=document.createElement('tr');
+  td(tr,[u.firstName,u.lastName].filter(Boolean).join(' ')||u.username||'—');
+  td(tr,u.telegramId);
+  td(tr,u.registrationSource);
+  td(tr,order.filter(k=>u.team?.[k]?.approved).length+' از ۴');
+  const cell=td(tr,'');
+  const b=document.createElement('button');
+  b.textContent='بررسی';
+  b.onclick=()=>edit(u);
+  cell.append(b);
+  $('users').append(tr);
+ }
+ cursor=d.nextCursor;
+ $('more').disabled=!cursor;
+}
+function edit(u){
+ selected=u;
+ $('editor').hidden=false;
+ $('selected').textContent='مدیریت کاربر: '+(u.firstName||u.username||u.id);
+ $('account').value=u.team?.ACCOUNT_CREATED?.accountId||'';
+ $('note').value='';
+ renderSteps();
+}
+function renderSteps(){
+ $('steps').replaceChildren();
+ for(const key of order){
+  const row=document.createElement('div');
+  row.className='row';
+  row.style.margin='10px 0';
+  const label=document.createElement('strong');
+  label.textContent=names[key]+' : '+(selected.team?.[key]?.approved?'تأیید شده':'تأیید نشده');
+  const yes=document.createElement('button');
+  yes.textContent='تأیید';
+  yes.onclick=()=>saveStep(key,true);
+  const no=document.createElement('button');
+  no.textContent='لغو تأیید';
+  no.onclick=()=>saveStep(key,false);
+  row.append(label,yes,no);
+  $('steps').append(row);
+ }
+}
+async function saveStep(step,approved){
+ if(!selected)return;
+ try{
+  const d=await api('/team/users/'+encodeURIComponent(selected.id)+'/step',{
+   method:'PUT',
+   body:JSON.stringify({
+    step,approved,
+    accountId:$('account').value.trim(),
+    note:$('note').value.trim()
+   })
+  });
+  selected.team=d.team;
+  renderSteps();
+  status('تغییر وضعیت با موفقیت ثبت شد.');
+ }catch(e){status('خطا: '+e.message)}
+}
+async function loadAdmins(){
+ const d=await api('/team/admins');
+ adminRows=d.items;
+ $('adminBox').hidden=false;
+ $('admins').replaceChildren();
+ for(const a of adminRows){
+  if(a.role==='SUPER_ADMIN')continue;
+  const label=document.createElement('label');
+  label.style.display='block';
+  const cb=document.createElement('input');
+  cb.type='checkbox';cb.checked=a.teamEnabled;
+  cb.onchange=()=>a.teamEnabled=cb.checked;
+  label.append(cb,document.createTextNode(' '+a.email+' ('+a.role+')'));
+  $('admins').append(label);
+ }
+}
+$('login').onclick=async()=>{
+ try{
+  const r=await fetch('/admin/auth/login',{
+   method:'POST',
+   headers:{'content-type':'application/json'},
+   body:JSON.stringify({
+    email:$('email').value.trim(),
+    password:$('password').value
+   })
+  });
+  const d=await r.json();
+  if(!r.ok)throw Error(d.message||d.error);
+  token=d.token;
+  const a=await api('/team/access');
+  $('app').hidden=false;
+  status('ورود موفق: '+a.email);
+  await load();
+  if(a.superAdmin)await loadAdmins();
+ }catch(e){token='';$('app').hidden=true;status('خطا: '+e.message)}
+};
+$('logout').onclick=()=>{
+ token='';selected=null;$('app').hidden=true;
+ $('password').value='';status('خارج شدید.');
+};
+$('find').onclick=()=>load().catch(e=>status(e.message));
+$('more').onclick=()=>load(false).catch(e=>status(e.message));
+$('saveAdmins').onclick=async()=>{
+ try{
+  await api('/team/admins',{
+   method:'PUT',
+   body:JSON.stringify({
+    ids:adminRows.filter(a=>a.teamEnabled&&a.role!=='SUPER_ADMIN').map(a=>a.id)
+   })
+  });
+  status('دسترسی ادمین‌ها ذخیره شد.');
+ }catch(e){status('خطا: '+e.message)}
+};
+</script>
+</body>
+</html>

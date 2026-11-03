@@ -50,6 +50,7 @@ enum TicketStatus {
 }
 
 model User {
+  eplanetWorkflow EplanetUserWorkflow?
   quizAttempts AcademyQuizAttempt[]
   id                String             @id @default(cuid())
   telegramId        String?            @unique
@@ -442,4 +443,38 @@ model AcademyQuizAttempt {
 
   @@index([userId, lessonId, passed])
   @@index([userId, courseId, passed])
+}
+
+// TENX_STRUCTURED_TEAM_DATA_V1
+
+model TelegramTeamAdmin {
+  id          String    @id @default(cuid())
+  telegramId  String    @unique @db.VarChar(32)
+  displayName String    @db.VarChar(100)
+  role        AdminRole @default(USER_MANAGER)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive, role])
+}
+
+model EplanetUserWorkflow {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  accountId            String?  @db.VarChar(100)
+  accountCreated       Boolean  @default(false)
+  depositCompleted     Boolean  @default(false)
+  copyConnected        Boolean  @default(false)
+  challengeParticipant Boolean  @default(false)
+  note                 String?  @db.VarChar(500)
+  version              Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([challengeParticipant, updatedAt])
+  @@index([copyConnected, updatedAt])
+  @@index([depositCompleted, updatedAt])
+  @@index([accountCreated, updatedAt])
 }
