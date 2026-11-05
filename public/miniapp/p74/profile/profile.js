@@ -53,7 +53,7 @@ if(Array.isArray(a.nav))o.nav=o.nav.map((old,i)=>{const v=a.nav[i];return v&&typ
 if(a.settings&&typeof a.settings==='object'){for(const k of ['radius','gap','scale','heroHeight'])o.settings[k]=num(a.settings[k],o.settings[k],...({radius:[9,30],gap:[4,20],scale:[.8,1.2],heroHeight:[136,225]}[k]));
 for(const k of ['showRewardsNav','animate'])if(typeof a.settings[k]==='boolean')o.settings[k]=a.settings[k]}
 return o}
-function defaultUser(){return {displayName:'کاربر MMTrade',username:'',verified:false,vip:null,level:null,currentStage:null,currentStageTitle:'',progressPercent:null,completedTasks:null,activeDays:null,points:null,plan:'',awards:[],active:null,history:[],photoUrl:''}}
+function defaultUser(){return {displayName:'کاربر MMTrade',username:'',verified:false,vip:null,level:null,currentStage:null,currentStageTitle:'',progressPercent:null,completedTasks:null,activeDays:null,points:null,plan:'',awards:[],active:null,history:[],photoUrl:'',accountStatus:'',daysMeaning:''}}
 function cleanData(v){const u=defaultUser();if(!v||typeof v!=='object')return u;
 for(const k of ['displayName','username','currentStageTitle','plan'])if(v[k]!=null)u[k]=text(v[k],80);
 for(const k of ['level','currentStage','progressPercent','completedTasks','activeDays','points'])if(v[k]!=null)u[k]=num(v[k],null,0,100000000);
@@ -61,6 +61,8 @@ for(const k of ['vip','active','verified'])if(typeof v[k]==='boolean')u[k]=v[k];
 if(Array.isArray(v.awards))u.awards=v.awards.filter(x=>['member','pioneer','analyst'].includes(x));
 if(Array.isArray(v.history))u.history=v.history.slice(0,40).filter(x=>x&&typeof x==='object').map(x=>({title:text(x.title,70),date:text(x.date,40)}));
 if(typeof v.photoUrl==='string'&&((/^https:\/\//i.test(v.photoUrl)&&safeHref(v.photoUrl))||(/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(v.photoUrl)&&v.photoUrl.length<350000)))u.photoUrl=v.photoUrl;
+if(typeof v.accountStatus==='string')u.accountStatus=text(v.accountStatus,90);
+if(v.daysMeaning==='membership')u.daysMeaning='membership';
 return u}
 const fa=n=>n==null?'—':new Intl.NumberFormat('fa-IR').format(n);
 const I=(id,cl='')=>`<svg ${cl?'class="'+cl+'"':''} viewBox="0 0 24 24" aria-hidden="true">${icons[id]||icons.user}</svg>`;
@@ -107,6 +109,7 @@ function applyConfig(){
  const x=cfg.settings;ROOT.style.setProperty('--p77-radius',x.radius+'px');ROOT.style.setProperty('--p77-gap',x.gap+'px');ROOT.style.setProperty('--p77-scale',x.scale);ROOT.style.setProperty('--p77-hero-height',x.heroHeight+'px');
  ROOT.classList.toggle('p77-no-motion',!x.animate||!getMotion());
  for(const k of ['tagline','pathCaption','progressTitle','progressSubtitle','stageTitle','scoreTitle','daysTitle','tasksTitle','accountTitle','planTitle','awardsTitle','ctaText'])tt(k,cfg[k]);
+ if(data.daysMeaning==='membership')tt('daysTitle','روزهای عضویت');
  ROOT.querySelector('.p77-brand h1').textContent='';const title=ROOT.querySelector('.p77-brand h1');const main=cfg.brand.replace(/\s*10X\s*$/i,'');title.append(document.createTextNode(main+' '));const em=document.createElement('em');em.textContent=/10X/i.test(cfg.brand)?'10X':'';title.append(em);
  ROOT.querySelectorAll('[data-menu]').forEach(n=>n.textContent=cfg.menuTitles[Number(n.dataset.menu)]||'');
  ROOT.querySelectorAll('[data-award]').forEach((n,i)=>n.querySelector('span').textContent=cfg.awardTitles[i]);
@@ -123,7 +126,8 @@ function applyData(){
  const pct=data.progressPercent!=null?Math.max(0,Math.min(100,data.progressPercent)):null;
  ROOT.querySelector('#p77-ring').style.setProperty('--progress',pct??0);ROOT.querySelector('#p77-percent').textContent=pct!=null?fa(pct)+'٪':'—';
  ROOT.querySelector('#p77-tasks').textContent=fa(data.completedTasks);ROOT.querySelector('#p77-days').textContent=fa(data.activeDays);ROOT.querySelector('#p77-points').textContent=fa(data.points);
- ROOT.querySelector('#p77-account-detail').textContent=data.verified===true?'فعال و تأییدشده':'نیازمند بررسی';
+ tt('daysTitle',data.daysMeaning==='membership'?'روزهای عضویت':cfg.daysTitle);
+ ROOT.querySelector('#p77-account-detail').textContent=data.accountStatus||(data.verified===true?'فعال و تأییدشده':'نیازمند بررسی');
  ROOT.querySelector('#p77-account-detail').classList.toggle('good',data.verified===true);
  ROOT.querySelector('#p77-plan-detail').textContent=data.plan||'اطلاعات ثبت نشده';
  const avatar=ROOT.querySelector('#p77-avatar');avatar.replaceChildren();if(data.photoUrl||DEMO){const im=document.createElement('img');im.alt='تصویر پروفایل';im.src=data.photoUrl||(DEMO?'./assets/portrait_demo.webp':'');im.referrerPolicy='no-referrer';im.addEventListener('error',()=>{avatar.replaceChildren();avatar.textContent=display[0]||'M'});avatar.append(im)}else{const sp=document.createElement('span');sp.className='p77-avatar-fallback';sp.textContent=display[0]||'M';avatar.append(sp)}
@@ -149,7 +153,7 @@ function setConfig(value){cfg=cleanConfig(value);applyConfig()}
 function readBlock(blocks){const matches=(Array.isArray(blocks)?blocks:[]).filter(b=>b?.type==='element'&&b.selector===MARK&&typeof b.text==='string');if(matches.length!==1)return null;try{const obj=JSON.parse(matches[0].text);if(obj.version===77)return obj}catch(_){}return null}
 let fetched=false;
 function readPublished(){if(DEMO||fetched)return;const initData=window.Telegram?.WebApp?.initData;if(!initData)return;fetched=true;
-fetch('/content/page',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:'profile',initData}),credentials:'same-origin'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(payload=>{const p=readBlock(payload.blocks);if(p)setConfig(p);const progress=payload?.progress;const values=[progress?.challenge?.pct,progress?.challengeProgress?.pct,progress?.challenge?.percentage];const pct=values.find(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=100);if(pct!==undefined)setUserData({progressPercent:Math.round(pct)})}).catch(()=>{/* Standalone UI remains functional; never replace with spinner */});}
+fetch('/content/page',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:'profile',initData}),credentials:'same-origin'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(payload=>{p85Load();const p=readBlock(payload.blocks);if(p)setConfig(p);const progress=payload?.progress;const values=[progress?.challenge?.pct,progress?.challengeProgress?.pct,progress?.challenge?.percentage];const pct=values.find(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0&&x<=100);if(pct!==undefined)setUserData({progressPercent:Math.round(pct)})}).catch(()=>{/* Standalone UI remains functional; never replace with spinner */});}
 function addTelegram(){const tg=window.Telegram?.WebApp;if(!tg)return;try{tg.ready();tg.expand();const user=tg.initDataUnsafe?.user;if(user&&!DEMO){data.displayName=text([user.first_name,user.last_name].filter(Boolean).join(' '),80)||data.displayName;data.username=text(user.username,80)||data.username;applyData()}}catch(e){}readPublished()}
 
 /* P84_REAL_PROGRESS_BRIDGE */
@@ -170,6 +174,7 @@ function loadRealProgress(){
     return r.json();
   })
   .then(result=>{
+    p85Load();
     if(!result||result.hasPath!==true)return;
 
     const p=result.progress||{};
@@ -243,7 +248,7 @@ function p85Load(){
 
     for(const key of [
       'displayName','username','activeDays',
-      'verified','active','plan'
+      'verified','active','plan','accountStatus','daysMeaning'
     ]){
       if(result[key]!==undefined)
         values[key]=result[key];
@@ -254,6 +259,11 @@ function p85Load(){
          result.photoUrl
        )){
       values.photoUrl=result.photoUrl;
+    } else {
+      const sdkPhoto=window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
+      if(typeof sdkPhoto==='string'&&/^https:\/\//i.test(sdkPhoto)){
+        values.photoUrl=sdkPhoto;
+      }
     }
 
     setUserData(values);
