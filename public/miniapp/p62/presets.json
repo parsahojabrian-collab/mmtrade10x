@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "revision": 0,
+  "active": null,
+  "published": null,
+  "history": [],
+  "drafts": {
+    "1": {
+      "logo": "/uploads/challenge-organizers/mmtrade-logo-custom-p45.png",
+      "blocks": [
+        {"id":"hero","type":"video","title":"چالش ۱۰X","subtitle":"مسیر واقعی رشد سرمایه","text":"با چالش ۱۰X، مهارت و ذهنیت معاملاتی‌ات را ارتقا بده.","media":"","poster":"/miniapp/p62/assets/hero-1.webp","visible":true,"style":{"parallax":14,"radius":23}},
+        {"id":"cta-top","type":"button","title":"شروع چالش ۱۰X","url":"/challenge","icon":"arrow","visible":true,"style":{"radius":60}},
+        {"id":"steps","type":"steps","title":"مسیر سریع چالش","subtitle":"در چهار گام، وارد چالش ۱۰X شو","visible":true,"steps":[
+          {"id":"a","title":"ثبت‌نام","subtitle":"ساخت حساب در چالش","icon":"user","url":"/profile"},
+          {"id":"b","title":"انتخاب پلن","subtitle":"انتخاب سطح و شرایط چالش","icon":"layers","url":"/challenge"},
+          {"id":"c","title":"معامله","subtitle":"رعایت قوانین و مدیریت ریسک","icon":"chart","url":"/challenge"},
+          {"id":"d","title":"دریافت جایزه","subtitle":"تکمیل موفق مراحل چالش","icon":"trophy","url":"/challenge"}
+        ],"style":{"parallax":22,"radius":27}},
+        {"id":"features","type":"features","title":"مزیت‌های مسیر 10X","visible":true,"steps":[
+          {"id":"f1","title":"رشد مستمر","subtitle":"برنامه‌ریزی هدفمند","icon":"infinity","url":"/academy"},
+          {"id":"f2","title":"مدیریت ریسک","subtitle":"مسیر هوشمند","icon":"shield","url":"/challenge"},
+          {"id":"f3","title":"پشتیبانی","subtitle":"همراه با تیم 10X","icon":"bolt","url":"/support"}
+        ]}
+      ]
+    },
+    "2": {
+      "logo": "/uploads/challenge-organizers/mmtrade-logo-custom-p45.png",
+      "blocks": [
+        {"id":"hero","type":"video","title":"چالش ۱۰X","subtitle":"مسیر رشد ۱۰ برابری","text":"از شروع تا نتیجه، یک مسیر شفاف و عملی","media":"","poster":"/miniapp/p62/assets/hero-2.webp","visible":true,"style":{"radius":23,"parallax":15}},
+        {"id":"headline","type":"headline","title":"مسیر 10X را در پنج گام سریع تجربه کن","subtitle":"مراحل روشن، طراحی دقیق، اجرای منظم","visible":true},
+        {"id":"steps","type":"steps","title":"قله 10X","subtitle":"از نقطه شروع تا هدف نهایی","visible":true,"steps":[
+          {"id":"b1","title":"شروع چالش","subtitle":"فعال‌سازی ورود","icon":"play","url":"/challenge"},
+          {"id":"b2","title":"آموزش کلیدی","subtitle":"آشنایی با مسیر","icon":"book","url":"/academy"},
+          {"id":"b3","title":"طراحی برنامه","subtitle":"تنظیم اهداف","icon":"target","url":"/challenge"},
+          {"id":"b4","title":"اجرا و بهینه‌سازی","subtitle":"تمرین عملی","icon":"chart","url":"/challenge"},
+          {"id":"b5","title":"دستیابی به 10X","subtitle":"تکمیل چالش","icon":"rocket","url":"/challenge"}
+        ],"style":{"parallax":33}},
+        {"id":"progress","type":"progress","title":"پیشرفت شما در چالش","subtitle":"مسیر مرحله‌ای متین فیوچر","visible":true,"style":{"radius":25}},
+        {"id":"cta","type":"button","title":"ادامه مسیر چالش","url":"/challenge","icon":"rocket","visible":true}
+      ]
+    },
+    "3": {
+      "logo": "/uploads/challenge-organizers/mmtrade-logo-custom-p45.png",
+      "blocks": [
+        {"id":"hero","type":"video","title":"چالش ۱۰ برابری متین فیوچر","subtitle":"مسیر رشد، مهارت و تجربه","text":"معرفی رسمی 10X Challenge","media":"","poster":"/miniapp/p62/assets/hero-3.webp","visible":true,"style":{"parallax":10,"radius":26}},
+        {"id":"headline","type":"headline","title":"مسیر ۱۰ برابری تو از اینجا شروع می‌شود","subtitle":"چهار قدم تا شروع یک مسیر حرفه‌ای","visible":true},
+        {"id":"steps","type":"steps","title":"مراحل سریع چالش","subtitle":"چهار گام ساده، یک مسیر هدفمند","visible":true,"steps":[
+          {"id":"c1","title":"ثبت‌نام در چالش","subtitle":"ایجاد حساب و فعال‌سازی","icon":"user","url":"/profile"},
+          {"id":"c2","title":"انتخاب مسیر رشد","subtitle":"تعریف اهداف و برنامه","icon":"target","url":"/challenge"},
+          {"id":"c3","title":"انجام مأموریت‌ها","subtitle":"یادگیری، تمرین و اجرا","icon":"layers","url":"/academy"},
+          {"id":"c4","title":"ساخت نتیجه","subtitle":"پیشرفت گام‌به‌گام","icon":"chart","url":"/challenge"}
+        ],"style":{"parallax":18,"radius":25}},
+        {"id":"cta","type":"button","title":"شروع چالش ۱۰ برابری","url":"/challenge","icon":"rocket","visible":true},
+        {"id":"video-link","type":"button","title":"مشاهده معرفی چالش","url":"#video","icon":"play","visible":true,"style":{"variant":"outline"}},
+        {"id":"sculpture","type":"sculpture","title":"10X","subtitle":"MATIN FUTURE","visible":true,"style":{"parallax":30}}
+      ]
+    }
+  }
+}

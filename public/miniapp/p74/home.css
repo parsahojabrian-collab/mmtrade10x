@@ -1,0 +1,102 @@
+/* P74_HOME_MATCH_R2 -- single continuous scenic image, overlaid HTML controls; no tiled backgrounds */
+@font-face{font-family:P74Doran;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:P74Doran;src:url('/miniapp/fonts/doran/DoranFaNum-Bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:P74Doran;src:url('/miniapp/fonts/doran/DoranFaNum-ExtraBold.woff2') format('woff2');font-style:normal;font-weight:800;font-display:swap}
+html.p74-enabled,html.p74-enabled body{overflow:hidden!important}
+#p74-app,#p74-app *{box-sizing:border-box}
+#p74-app{--p74-ivory:#f8f2e9;--p74-emerald:#23dc9d;--p74-copper:#e4ad74;position:fixed;inset:0;isolation:isolate;z-index:2147483000;background:#041710;color:var(--p74-ivory);font-family:P74Doran,Tahoma,sans-serif!important;direction:rtl;overflow:hidden}
+#p74-app button,#p74-app a,#p74-app input{font-family:P74Doran,Tahoma,sans-serif!important}
+#p74-app button{cursor:pointer;color:inherit}
+#p74-app a{text-decoration:none;color:inherit;-webkit-tap-highlight-color:transparent}
+#p74-app .p74-scroll{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none}
+#p74-app .p74-scroll::-webkit-scrollbar{display:none}
+#p74-app .p74-scroll::after{content:none!important;display:none!important}
+#p74-app .p74-page{position:relative;width:min(100%,540px);margin:0 auto;min-height:0;aspect-ratio:780/1770;background-color:#03140f;background-image:var(--p76-background,url('/miniapp/p74/assets/mountain_steps_5.webp'));background-position:center top;background-size:100% 100%;background-repeat:no-repeat;overflow:hidden;box-shadow:0 0 80px #0009;contain:layout style}
+#p74-app .p74-page::after{content:none!important;display:none!important}
+#p74-app .p74-brand{position:absolute;top:2.8%;left:8%;width:84%;height:12%;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;z-index:2;text-shadow:0 2px 10px #000b}
+#p74-app .p74-emblem{width:18%;height:36%;object-fit:contain;filter:drop-shadow(0 3px 8px #cc874b80);margin-bottom:-.4%}
+#p74-app .p74-brand-name{font-family:P74Doran,Tahoma,sans-serif;font-weight:800;font-size:clamp(17px,5.0vw,29px);line-height:1.25;letter-spacing:.01em;white-space:nowrap;direction:ltr;background:linear-gradient(90deg,#e5dfd5,#fff,#d8a66e);color:transparent;background-clip:text;-webkit-background-clip:text}
+#p74-app .p74-brand-sub{font-size:clamp(9px,2.6vw,15px);font-weight:400;color:#e6d8c7;line-height:1.4}
+#p74-app .p74-hero{position:absolute;top:16.5%;left:3.6%;width:92.8%;height:17.1%;border:1px solid #ffd6a6b5;border-radius:clamp(13px,4vw,27px);background:#061a17 url('/miniapp/p74/assets/hero_poster.webp') center/cover no-repeat;box-shadow:0 0 0 3px #50d6b229,0 8px 23px #0009,0 0 25px #ce8a5755;overflow:hidden;z-index:2;text-align:right}
+#p74-app .p74-hero::after{content:"";position:absolute;inset:auto 10% -2px 10%;height:3px;background:linear-gradient(90deg,transparent,#ffcb94,transparent);box-shadow:0 0 12px #febf90;pointer-events:none}
+#p74-app .p74-hero-copy{position:absolute;left:4.2%;right:auto;top:9%;width:41%;height:80%;display:flex;flex-direction:column;align-items:flex-end;text-align:right;justify-content:center;gap:1%;pointer-events:none}
+#p74-app .p74-overline{font-size:clamp(10px,2.6vw,16px);font-weight:700;line-height:1.7}
+#p74-app .p74-hero-title{font-size:clamp(17px,5vw,31px);line-height:1.35;font-weight:800;text-shadow:0 2px 12px #000}
+#p74-app .p74-hero-desc{font-size:clamp(14px,4.0vw,23px);font-weight:800;color:#ffd29a;line-height:1.4}
+#p74-app .p74-hero-underline{width:34%;height:2px;background:linear-gradient(90deg,#ffd1a2,#aa754d);box-shadow:0 0 7px #f6b583;margin-top:3%}
+#p74-app .p74-video-badge{position:absolute;bottom:7%;right:4%;font:700 clamp(10px,2.7vw,15px) P74Doran;direction:ltr;color:#eee}
+#p74-app .p74-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:clamp(45px,14vw,76px);height:clamp(45px,14vw,76px);display:grid;place-items:center;border-radius:50%;border:2px solid #ffcb97;background:#0a130fcc;color:#fff;box-shadow:inset 0 0 13px #bd764b66,0 0 16px #e9a46d94;animation:p74Pulse 3.3s ease-in-out infinite;z-index:3}
+#p74-app .p74-play svg{width:46%;height:46%;fill:#fff;stroke:#fff;transform:translateX(2px)}
+#p74-app .p74-journey-title{position:absolute;top:35.0%;left:5%;width:90%;text-align:center;font-size:clamp(15px,4.6vw,27px);font-weight:800;line-height:1.5;text-shadow:0 2px 11px #000e;z-index:2}
+#p74-app .p74-journey-title b{color:#e8b986}
+#p74-app .p74-journey-title::before,#p74-app .p74-journey-title::after{content:'〃';color:#d49b64;font-size:1.2em;margin:0 6px;opacity:.85}
+#p74-app .p74-journey-sub{position:absolute;top:39.1%;left:5%;width:90%;text-align:center;font-size:clamp(10px,2.8vw,16px);color:#e6e1da;font-weight:400;line-height:1.6;z-index:2;text-shadow:0 1px 6px #000}
+#p74-app .p74-mountain-area{position:absolute;top:45.0%;left:0;right:0;height:32.0%;z-index:3;pointer-events:none}
+#p74-app .p74-step{position:absolute;pointer-events:auto;display:flex;align-items:center;flex-direction:row-reverse;justify-content:space-between;gap:2px;height:13%;min-height:29px;padding:1px 4%;border:1px solid #ffc58aa6;border-radius:clamp(7px,2.6vw,16px);background:linear-gradient(175deg,#172820eb,#06140fe8 66%,#523b27da);box-shadow:0 0 2px 1px #f6c38a70,0 5px 13px #050906b8,inset 0 0 10px #daa66d42;backdrop-filter:blur(2px);transform:translateZ(0);white-space:nowrap}
+#p74-app .p74-step:nth-child(1){top:5%;right:15%;width:33%}
+#p74-app .p74-step:nth-child(2){top:19%;right:25%;width:39%}
+#p74-app .p74-step:nth-child(3){top:34%;right:36%;width:45%}
+#p74-app .p74-step:nth-child(4){top:49%;right:45%;width:47%}
+#p74-app .p74-step:nth-child(5){top:64%;right:47%;width:51%;background:linear-gradient(170deg,#0ab578f2,#034d35f5 75%,#051f16);border-color:#8df4c5;box-shadow:0 0 14px #00e99a99,inset 0 0 12px #52f2b34d}
+#p74-app .p74-step-label{font-size:clamp(9px,2.45vw,15px);font-weight:800;text-align:center;text-shadow:0 1px 4px #000}
+#p74-app .p74-step-number{font:800 clamp(19px,5.3vw,35px)/1 P74Doran;color:#ffdcaa}
+#p74-app .p74-step-icon{font-size:clamp(12px,3.2vw,21px);color:#f9cc95;line-height:1}
+#p74-app .p74-decor{position:absolute;z-index:2;pointer-events:none;object-fit:contain;filter:drop-shadow(0 2px 14px #0007);animation:p74Float 5.5s ease-in-out infinite}
+#p74-app .p74-decor-cube{left:3%;top:46%;width:20%}
+#p74-app .p74-decor-coin{left:72%;top:60%;width:23%;animation-delay:-2s}
+#p74-app .p74-progress{position:absolute;top:74.1%;left:4.5%;width:91%;height:8.1%;display:flex;align-items:center;gap:3%;padding:2% 4%;border:1px solid #e6ba84b8;border-radius:clamp(15px,4vw,31px);background:linear-gradient(120deg,#0b2720e8,#163b2fce 72%,#163225e8);backdrop-filter:blur(14px);box-shadow:inset 0 0 18px #9ac4ad22,0 7px 18px #000b;z-index:4}
+#p74-app .p74-ring{--pct:0;flex:0 0 auto;order:3;width:clamp(56px,16vw,89px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#36f2b5 calc(var(--pct)*1%),#2a6756 0);padding:5px;box-shadow:0 0 0 2px #e5b77d88,0 0 14px #00fda02a}
+#p74-app .p74-ring span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:#071f19;color:white;font:800 clamp(14px,4.5vw,27px) P74Doran;direction:ltr}
+#p74-app .p74-progress-content{flex:1;text-align:right;min-width:0}
+#p74-app .p74-progress-content strong{display:block;font-size:clamp(14px,4.2vw,23px);white-space:nowrap;line-height:1.5}
+#p74-app .p74-progress-content small{display:block;font-size:clamp(10px,2.8vw,16px);line-height:1.7;color:#d9d8d4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#p74-app .p74-progress-arrow{font-size:clamp(22px,5vw,33px);font-weight:400;order:0}
+#p74-app .p74-cta{position:absolute;top:84.0%;left:5%;width:90%;height:6.3%;min-height:47px;display:flex;align-items:center;justify-content:space-between;gap:4%;padding:0 6%;border-radius:999px;border:1px solid #ffd8ad;background:linear-gradient(165deg,#f4d5a8,#d7a273 55%,#aa6a3c);color:#0d110f!important;box-shadow:inset 0 1px 0 #fff8,0 4px 17px #d89a6d6c,0 0 8px #fff2c481;overflow:hidden;z-index:5;font-size:clamp(17px,5.2vw,29px);font-weight:800}
+#p74-app .p74-cta::after{content:"";position:absolute;inset:0;transform:translateX(-160%) skewX(-20deg);background:linear-gradient(90deg,transparent,#ffffff80,transparent);width:42%;animation:p74Shimmer 6s ease-in-out infinite;pointer-events:none}
+#p74-app .p74-cta-icon{font-size:1.15em}
+#p74-app .p74-cta-text{flex:1;text-align:center;white-space:nowrap}
+#p74-app .p74-cta-chevron{font-size:1.5em;font-weight:400;line-height:1}
+#p74-app .p74-nav{position:absolute;bottom:max(5px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(calc(100% - 18px),520px);height:clamp(79px,22vw,100px);border-radius:32px;border:1px solid #90d8b4a8;background:linear-gradient(128deg,#0e342ba9,#061610ed 70%);backdrop-filter:blur(22px);box-shadow:0 12px 22px #000b,0 0 12px #46c99a33;display:flex;flex-direction:row;align-items:stretch;justify-content:space-around;gap:2%;padding:5px;z-index:8;direction:rtl}
+#p74-app .p74-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;flex:1;border-radius:25px;gap:1px;color:#d3d9d3;white-space:nowrap;font-size:clamp(12px,3.6vw,18px);font-weight:700}
+#p74-app .p74-nav svg{width:clamp(24px,7vw,34px);height:clamp(24px,7vw,34px);stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+#p74-app .p74-nav a[aria-current=page]{color:#ffe1af;background:linear-gradient(140deg,#1b372d,#392b20a6);box-shadow:inset 0 0 0 1px #e9b77c,0 0 12px #d696626a}
+#p74-app .p74-nav a[aria-current=page] svg{fill:#dfb67e33}
+#p74-app a:focus-visible,#p74-app button:focus-visible{outline:2px solid #5cf0b7;outline-offset:3px}
+#p74-app .p74-modal{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:#000c;z-index:20;backdrop-filter:blur(6px)}
+#p74-app .p74-modal-body{width:100%;max-width:530px;max-height:90%;padding:10px;background:#081a15;border:1px solid #b88d60;border-radius:19px;box-shadow:0 20px 60px #000;overflow:auto}
+#p74-app .p74-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#p74-app .p74-modal-close{border:1px solid #876d52;border-radius:12px;background:#09241a;padding:6px 12px}
+#p74-app .p74-modal video{width:100%;height:auto;max-height:65vh;background:black;border-radius:12px}
+#p74-app .p74-modal-msg{padding:12px;line-height:1.9;font-size:14px}
+#p74-app .p74-modal-msg a{display:inline-block;border:1px solid #b68c61;border-radius:8px;padding:6px 12px;margin-top:8px}
+@keyframes p74Float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-5px) rotate(2deg)}}
+@keyframes p74Pulse{50%{box-shadow:inset 0 0 14px #bd764b88,0 0 25px #efb57abb}}
+@keyframes p74Shimmer{0%,55%,100%{transform:translateX(-160%) skewX(-20deg)}75%{transform:translateX(440%) skewX(-20deg)}}
+@media(prefers-reduced-motion:reduce){#p74-app *,#p74-app *::before,#p74-app *::after{animation:none!important;transition:none!important}}
+@media(min-width:541px){#p74-app .p74-page{min-height:1120px}}
+
+/* P75: responsive coordinates anchored to mountain stage; safe RTL and completion states */
+#p74-app .p74-step{direction:rtl!important;flex-direction:row!important;text-align:right!important;justify-content:space-between;transition:box-shadow .18s ease,border-color .18s ease;}
+#p74-app .p74-step .p74-step-number{order:0;flex:0 0 auto;text-align:right!important;direction:rtl}
+#p74-app .p74-step .p74-step-label{order:1;flex:1;min-width:0;text-align:right!important;overflow:hidden;text-overflow:ellipsis}
+#p74-app .p74-step .p74-step-icon{order:2;flex:0 0 auto}
+#p74-app .p74-step[data-state="completed"]{background:linear-gradient(165deg,#0bb782f1,#075c41f7 65%,#043521);border-color:#75ffd1;box-shadow:inset 0 0 13px #63ffc856,0 0 11px #3af4ac9d,0 4px 13px #000c}
+#p74-app .p74-step[data-state="current"]{border-color:#ffd9a9;box-shadow:inset 0 0 12px #e9b17843,0 0 12px #ffd4a17e,0 4px 13px #000c}
+#p74-app .p74-step[data-state="upcoming"]{background:linear-gradient(175deg,#182a24f5,#071813f0 67%,#3c3024e3);border-color:#e6b787b8}
+#p74-app .p74-step:nth-child(5){background:linear-gradient(175deg,#172820eb,#06140fe8 66%,#523b27da)}
+#p74-app .p74-step:nth-child(5)[data-state="completed"]{background:linear-gradient(165deg,#0bb782f1,#075c41f7 65%,#043521)}
+#p74-app .p74-step:nth-child(5)[data-state="current"]{background:linear-gradient(165deg,#122d24ef,#523f2bed)}
+#p74-app.p75-editing .p74-step{touch-action:none!important;cursor:grab!important;outline:1px dashed #8df4c599;user-select:none;-webkit-user-select:none}
+#p74-app.p75-editing .p74-step.p75-drag-active{cursor:grabbing!important;z-index:20;outline:2px solid #64ffd1;box-shadow:0 0 22px #58ffb0db}
+#p74-app.p75-editing .p74-mountain-area{pointer-events:auto}
+@media(prefers-reduced-motion:reduce){#p74-app .p74-step{transition:none}}
+
+/* P76: variable count mountain buttons; one continuous scenic background, no separate mountain tile */
+#p74-app .p74-step{min-height:22px;height:auto;padding:1px 2.5%;touch-action:manipulation}
+#p74-app .p74-step:nth-child(5){background:linear-gradient(175deg,#172820eb,#06140fe8 66%,#523b27da);border-color:#e6b787b8;box-shadow:0 0 2px 1px #f6c38a70,0 5px 13px #050906b8,inset 0 0 10px #daa66d42}
+#p74-app .p74-step[data-state="completed"]{background:linear-gradient(165deg,#0bb782f1,#075c41f7 65%,#043521);border-color:#75ffd1;box-shadow:inset 0 0 13px #63ffc856,0 0 11px #3af4ac9d,0 4px 13px #000c}
+#p74-app .p74-step[data-state="current"]{background:linear-gradient(165deg,#122d24ef,#523f2bed);border-color:#ffd9a9;box-shadow:inset 0 0 12px #e9b17843,0 0 12px #ffd4a17e,0 4px 13px #000c}
+#p74-app .p74-page[data-step-count="7"] .p74-step-label,#p74-app .p74-page[data-step-count="8"] .p74-step-label{font-size:clamp(8px,2.15vw,13px)}
+#p74-app .p74-page[data-step-count="7"] .p74-step-number,#p74-app .p74-page[data-step-count="8"] .p74-step-number{font-size:clamp(17px,4.7vw,29px)}
+#p74-app.p75-editing .p74-step{touch-action:none!important}
+#p74-app .p74-mountain-area{top:50%;height:28%}
