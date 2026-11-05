@@ -6,11 +6,64 @@ function ok(u){return /^(https:\/\/\S+|\/(?!\/)\S*)$/.test(u||'')}
 function link(a,u){a.href=u;if(/^https:/.test(u)){a.target='_blank';a.rel='noopener noreferrer'}return a}
 var REG={STARTED:'شروع',CHANNELS_PENDING:'عضویت در کانال‌ها',CONSENT_PENDING:'رضایت‌نامه',PHONE_PENDING:'تأیید شماره',REGISTERED:'ثبت‌نام انجام شد',MINI_APP_PENDING:'ورود به Mini App',COMPLETE:'تکمیل شد'};
 function bar(title,pct,note){var c=el('section','card');c.append(el('h2','',title||''));var b=el('div','pbar'),i=el('i');i.style.width=Math.max(0,Math.min(100,pct))+'%';b.append(i);c.append(b,el('p','muted',pct+'٪'+(note?' · '+note:'')));return c}
+
+function p45LogoUrl(url){
+  if(typeof url!=='string')return url;
+  try{
+    var u=new URL(url,location.origin);
+    if(['/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg',
+        '/uploads/challenge-organizers/mmtrade-challenge10x-logo-p44.jpg',
+        '/uploads/challenge-organizers/mmtrade-logo-custom-p45.png'].includes(u.pathname)){
+      u.pathname='/uploads/challenge-organizers/mmtrade-logo-custom-p45.png';
+      return u.pathname+u.search;
+    }
+  }catch(e){}
+  return url;
+}
+function p45PositionLogo(img,target,url){
+  if(!img||!target||typeof url!=='string')return;
+  if(target.matches('img,input,hr,br,source,area,video,audio,button,a,select,textarea,svg,iframe'))return;
+  var u;try{u=new URL(url,location.origin)}catch(e){return}
+  var p=u.searchParams.get('p');
+  if(!/^(tl|tm|tr|ml|mm|mr|bl|bm|br)$/.test(p||''))return;
+  var h=p[1],v=p[0];
+  var x=h==='l'?'0%':h==='r'?'100%':'50%';
+  var y=v==='t'?'0%':v==='b'?'100%':'50%';
+  var tx=h==='l'?'0%':h==='r'?'-100%':'-50%';
+  var ty=v==='t'?'0%':v==='b'?'-100%':'-50%';
+  function offset(key){var n=Number(u.searchParams.get(key));return Number.isFinite(n)?Math.max(-200,Math.min(200,Math.round(n))):0}
+  if(getComputedStyle(target).position==='static')target.style.position='relative';
+  img.style.setProperty('position','absolute','important');
+  img.style.setProperty('left',x,'important');
+  img.style.setProperty('top',y,'important');
+  img.style.setProperty('right','auto','important');
+  img.style.setProperty('bottom','auto','important');
+  img.style.setProperty('margin','0','important');
+  img.style.setProperty('max-width','100%','important');
+  img.style.setProperty('height','auto','important');
+  img.style.setProperty('transform','translate('+tx+','+ty+') translate('+offset('dx')+'px,'+offset('dy')+'px)','important');
+  img.style.setProperty('pointer-events','none','important');
+}
+
 function block(b,pr){switch(b.type){
 case 'heading':return el('h2','',b.text);
 case 'text':return el('p','muted btxt',b.text);
 case 'divider':return el('hr','bdiv');
-case 'image':if(!ok(b.url))return null;var im=el('img','bimg');im.src=b.url;im.alt=b.alt||'';return im;
+case 'image':if(!ok(b.url))return null;var im=el('img','bimg');im.src=p45LogoUrl(b.url);im.alt=b.alt||'';
+if(typeof b.url==='string' && ['/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg','/uploads/challenge-organizers/mmtrade-challenge10x-logo-p44.jpg','/uploads/challenge-organizers/mmtrade-logo-custom-p45.png'].includes(b.url.split('?')[0])){
+  var p43w=Number(new URL(b.url,location.origin).searchParams.get('w'));
+  if(!Number.isFinite(p43w)||p43w<80||p43w>900)p43w=420;
+  im.style.width=Math.round(p43w)+'px';
+  im.style.maxWidth='100%';
+  im.style.height='auto';
+  im.style.objectFit='contain';
+  var retryUrl=new URL(b.url,location.origin);
+  retryUrl.pathname=retryUrl.pathname==='/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg'
+    ?'/uploads/challenge-organizers/mmtrade-challenge10x-logo-p44.jpg'
+    :'/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg';
+  im.onerror=function(){if(im.dataset.p45Fallback)return;im.dataset.p45Fallback='1';im.src='/uploads/challenge-organizers/mmtrade-challenge10x-logo-p44.jpg';};
+}
+return im;
 case 'button':if(!ok(b.url))return null;return link(el('a','bbtn',b.text),b.url);
 case 'banner':var c=el('section','card');c.append(el('h2','gold',b.title));if(b.text)c.append(el('p','muted btxt',b.text));if(b.url&&ok(b.url))c.append(link(el('a','bbtn','مشاهده'),b.url));return c;
 case 'progress':if(b.kind==='registration')return bar(b.title||'پیشرفت ثبت‌نام',pr.registration.pct,REG[pr.registration.stage]||'');
@@ -165,6 +218,7 @@ var observer=new MutationObserver(function(mutations){
   setTimeout(function(){
     reapplyPending=false;
     d.blocks.forEach(applyElement);
+    p44Place();
   },100);
 });
 
@@ -173,7 +227,33 @@ observer.observe(document.body,{
   subtree:true
 });
 
-var box=el('div');d.blocks.forEach(function(b){var e=block(b,d.progress);if(e)box.append(e)});
+var p44Anchored=[];
+var box=el('div');d.blocks.forEach(function(b,index){
+  var e=block(b,d.progress);
+  if(!e)return;
+  var anchor='';
+  if(b.type==='image'&&typeof b.url==='string'&&
+     ['/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg','/uploads/challenge-organizers/mmtrade-challenge10x-logo-p44.jpg','/uploads/challenge-organizers/mmtrade-logo-custom-p45.png'].includes(b.url.split('?')[0])){
+    try{anchor=new URL(b.url,location.origin).searchParams.get('at')||''}catch(_err){}
+  }
+  if(anchor){p44Anchored.push({element:e,selector:anchor,url:b.url})}
+  else box.append(e);
+});
+function p44Place(){
+  p44Anchored.forEach(function(item){
+    var t=null;
+    try{t=document.querySelector(item.selector)}catch(_err){}
+    if(!t||t.matches('script,style,textarea,template,svg,iframe'))return;
+    if(t.matches('img,input,hr,br,source,area,video,audio,button,a,select')){
+      if(item.element.previousElementSibling!==t||item.element.parentElement!==t.parentElement)
+        t.insertAdjacentElement('afterend',item.element);
+    }else{
+      if(item.element.parentElement!==t)t.appendChild(item.element);
+      p45PositionLogo(item.element,t,item.url);
+    }
+  });
+}
+p44Place();
 if(slug==='profile'){
 var target=document.getElementById('profile-managed-content');
 if(target)target.append(box);
@@ -188,3 +268,9 @@ var main=document.querySelector('main'),last=document.querySelector('main > sect
 if(main){last?last.before(box):main.append(box)}
 }}
 if(d.popup)popup(d.popup)}).catch(function(){})})();
+
+/* MATIN_FUTURE_P43_LOGO_ALL_PAGES */
+
+/* MATIN_P44_TARGETED_LOGO_V1 */
+
+/* MATIN_P45_PNG_NINE_POSITION_V1 */
