@@ -1,3 +1,4 @@
+import { authenticateTeamAdmin } from './team-auth-p37.js';
 import { randomInt as quizCryptoRandomInt } from 'node:crypto';
 import 'dotenv/config';
 import { timingSafeEqual } from 'node:crypto';
@@ -175,14 +176,389 @@ async function adminGuard(request: FastifyRequest, reply: FastifyReply): Promise
   }
   if (!identity) { reply.code(401).send({ error: 'unauthorized' }); return false; }
   const routeKey = `${request.method} ${request.routeOptions.url ?? request.url}`;
-  if (!canAccess(identity.role, routeKey)) {
+  if (!(await p60CanAccess(identity, routeKey))) {
     await prisma.auditLog.create({ data: { adminUserId: identity.id, action: 'ADMIN_ACCESS_DENIED', entityType: 'AdminRoute', metadata: { route: routeKey, role: identity.role }, ipAddress: request.ip } }).catch(() => undefined);
     reply.code(403).send({ error: 'forbidden', message: 'نقش شما به این بخش دسترسی ندارد.' });
     return false;
   }
+  const p60SessionScope=await p60ScopedAdmin(identity.id);
+  if(p60SessionScope)(request as unknown as {p60Scopes:P60ScopeRecord}).p60Scopes=p60SessionScope.scopes;
   (request as unknown as { admin: AdminIdentity }).admin = identity;
   return true;
 }
+
+// === TENX_P60_SECTION_RBAC_V1 ===
+// Granular section permissions for the existing Mini App management panel.
+// Storage: SystemSetting JSON, never a new database table.
+type P60SectionName='users'|'marketing'|'academy';
+type P60Level='none'|'read'|'write';
+type P60ScopeRecord=Record<P60SectionName,P60Level>;
+const p60ScopeKey='TENX_P60_ADMIN_SCOPE_';
+const p60TgPrefix='P38_ADMIN_TG_'; // existing signed Telegram Mini App login mapping
+const p60TgPattern=z.string().regex(/^[1-9]\d{4,15}$/);
+const p60EmptyScopes=():P60ScopeRecord=>({users:'none',marketing:'none',academy:'none'});
+const p60ScopeSchema=z.object({
+  users:z.enum(['none','read','write']),
+  marketing:z.enum(['none','read','write']),
+  academy:z.enum(['none','read','write'])
+}).strict();
+function p60Normalized(raw:unknown):P60ScopeRecord{
+  const result=p60ScopeSchema.safeParse(raw);
+  return result.success ? result.data : p60EmptyScopes();
+}
+async function p60ScopedAdmin(id:string|null):Promise<{scopes:P60ScopeRecord}|null>{
+  if(!id)return null;
+  const setting=await prisma.systemSetting.findUnique({where:{key:p60ScopeKey+id}});
+  if(!setting)return null;
+  const value=setting.value as any;
+  // A malformed scoped record must never fall back to legacy role grants.
+  return {scopes:p60Normalized(value?.scopes)};
+}
+function p60RouteSection(routeKey:string):P60SectionName|null{
+  const path=routeKey.slice(routeKey.indexOf(' ')+1).split('?')[0];
+  if(/^\/admin\/(users(?:\/|$)|tickets(?:\/|$)|followups(?:\/|$)|notifications(?:\/|$)|incomplete(?:\/|$)|registrations(?:\/|$))/.test(path))return 'users';
+  if(/^\/admin\/growth\/(?:users|messages|export\.xlsx)(?:\/|$)/.test(path))return 'users';
+  if(/^\/admin\/growth(?:\/|$)/.test(path))return 'marketing';
+  if(/^\/admin\/(academy(?:\/|$)|progress(?:\/|$)|challenges?(?:\/|$))/.test(path))return 'academy';
+  return null;
+}
+async function p60CanAccess(identity:AdminIdentity,routeKey:string):Promise<boolean>{
+  if(identity.role==='SUPER_ADMIN')return true;
+  const assigned=await p60ScopedAdmin(identity.id);
+  if(assigned){
+    if(routeKey==='GET /admin/auth/me')return true;
+    const section=p60RouteSection(routeKey);
+    if(!section)return false;
+    const level=assigned.scopes[section];
+    return routeKey.startsWith('GET ') ? level==='read'||level==='write' : level==='write';
+  }
+  // P60_FALLBACK_PLACEHOLDER: replaced by the installer for the live auth stack.
+  return canAccess(identity.role,routeKey);
+}
+const p60OwnerOnly=async(request:FastifyRequest,reply:FastifyReply)=>{
+  if(!(await adminGuard(request,reply)))return false;
+  const who=(request as unknown as {admin?:AdminIdentity}).admin;
+  if(who?.role!=='SUPER_ADMIN'){
+    reply.code(403).send({error:'super_admin_required'});return false;
+  }
+  return true;
+};
+app.get('/admin/p60/section-admins',async(request,reply)=>{
+  if(!(await p60OwnerOnly(request,reply)))return;
+  const accounts=await prisma.adminUser.findMany({orderBy:{createdAt:'asc'},select:{id:true,email:true,role:true,isActive:true,createdAt:true}});
+  const settings=await prisma.systemSetting.findMany({where:{key:{startsWith:p60ScopeKey}},select:{key:true,value:true}});
+  const telegramMappings=await prisma.systemSetting.findMany({where:{key:{startsWith:p60TgPrefix}},select:{key:true,value:true}});
+  const byTg=new Map<string,string>();
+  for(const row of telegramMappings){const adminId=(row.value as any)?.adminId;if(typeof adminId==='string')byTg.set(adminId,row.key.slice(p60TgPrefix.length));}
+  const byId=new Map(settings.map(x=>[x.key.slice(p60ScopeKey.length),p60Normalized((x.value as any)?.scopes)]));
+  reply.header('cache-control','no-store');
+  return {items:accounts.map(a=>({...a,telegramId:byTg.get(a.id)||null,scopes:byId.get(a.id)||null,sectionScoped:byId.has(a.id)}))};
+});
+app.post('/admin/p60/section-admins',{config:{rateLimit:{max:10,timeWindow:'10 minutes'}}},async(request,reply)=>{
+  if(!(await p60OwnerOnly(request,reply)))return;
+  const parsed=z.object({email:z.string().trim().email().max(200),
+    password:z.string().min(MIN_ADMIN_PASSWORD_LENGTH).max(200),
+    telegramId:p60TgPattern.optional(),
+    scopes:p60ScopeSchema}).strict().safeParse(request.body);
+  if(!parsed.success)return reply.code(400).send({error:'invalid_scope_admin'});
+  if(Object.values(parsed.data.scopes).every(x=>x==='none'))return reply.code(400).send({error:'one_section_required'});
+  const email=parsed.data.email.trim().toLowerCase();
+  const taken=await prisma.adminUser.findUnique({where:{email},select:{id:true}});
+  if(taken)return reply.code(409).send({error:'email_exists'});
+  if(parsed.data.telegramId && await prisma.systemSetting.findUnique({where:{key:p60TgPrefix+parsed.data.telegramId}}))
+    return reply.code(409).send({error:'telegram_id_already_assigned'});
+  const hash=await hashPassword(parsed.data.password);
+  const actor=adminIdOf(request);
+  try{
+    const created=await prisma.$transaction(async tx=>{
+      const admin=await tx.adminUser.create({data:{email,passwordHash:hash,role:'USER_MANAGER',isActive:true}});
+      await tx.systemSetting.create({data:{key:p60ScopeKey+admin.id,value:{version:1,scopes:parsed.data.scopes,createdAt:new Date().toISOString()} as any}});
+      if(parsed.data.telegramId)await tx.systemSetting.create({data:{key:p60TgPrefix+parsed.data.telegramId,value:{adminId:admin.id} as any}});
+      await tx.auditLog.create({data:{adminUserId:actor,action:'P60_SECTION_ADMIN_CREATED',entityType:'AdminUser',entityId:admin.id,
+        metadata:{scopes:parsed.data.scopes}}});
+      return {id:admin.id,email:admin.email,scopes:parsed.data.scopes};
+    });
+    return reply.code(201).send({ok:true,item:created});
+  }catch(e){
+    if((e as {code?:string}).code==='P2002')return reply.code(409).send({error:'email_exists'});
+    throw e;
+  }
+});
+app.patch('/admin/p60/section-admins/:id',async(request,reply)=>{
+  if(!(await p60OwnerOnly(request,reply)))return;
+  const params=z.object({id:z.string().min(1).max(100)}).safeParse(request.params);
+  const body=z.object({scopes:p60ScopeSchema,isActive:z.boolean(),telegramId:p60TgPattern.nullable().optional()}).strict().safeParse(request.body);
+  if(!params.success||!body.success)return reply.code(400).send({error:'invalid_request'});
+  const admin=await prisma.adminUser.findUnique({where:{id:params.data.id},select:{id:true,email:true,role:true}});
+  if(!admin)return reply.code(404).send({error:'admin_not_found'});
+  if(admin.role==='SUPER_ADMIN')return reply.code(403).send({error:'owner_is_immutable'});
+  const before=await p60ScopedAdmin(admin.id);
+  if(body.data.telegramId){
+    const existing=await prisma.systemSetting.findUnique({where:{key:p60TgPrefix+body.data.telegramId}});
+    if(existing && (existing.value as any)?.adminId!==admin.id)return reply.code(409).send({error:'telegram_id_already_assigned'});
+  }
+  await prisma.$transaction(async tx=>{
+    if(body.data.telegramId!==undefined){
+      const mapped=await tx.systemSetting.findMany({where:{key:{startsWith:p60TgPrefix}},select:{key:true,value:true}});
+      for(const row of mapped)if((row.value as any)?.adminId===admin.id && row.key!==p60TgPrefix+body.data.telegramId)
+        await tx.systemSetting.delete({where:{key:row.key}});
+      if(body.data.telegramId)await tx.systemSetting.upsert({where:{key:p60TgPrefix+body.data.telegramId},
+        create:{key:p60TgPrefix+body.data.telegramId,value:{adminId:admin.id} as any},
+        update:{value:{adminId:admin.id} as any}});
+    }
+    await tx.systemSetting.upsert({where:{key:p60ScopeKey+admin.id},
+      create:{key:p60ScopeKey+admin.id,value:{version:1,scopes:body.data.scopes,updatedAt:new Date().toISOString()} as any},
+      update:{value:{version:1,scopes:body.data.scopes,updatedAt:new Date().toISOString()} as any}});
+    await tx.adminUser.update({where:{id:admin.id},data:{isActive:body.data.isActive}});
+    await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'P60_SECTION_ADMIN_UPDATED',entityType:'AdminUser',entityId:admin.id,
+      metadata:{before:before?.scopes||null,after:body.data.scopes,isActive:body.data.isActive}}});
+  });
+  return {ok:true};
+});
+// === END TENX_P60_SECTION_RBAC_V1 ===
+
+// === TENX_P61_MINIAPP_PROFILE_ADMIN_AUTH_V1 ===
+// A signed Telegram WebApp identity is mandatory. No query-string Telegram IDs or client-side role claims.
+// P60 section grants and all per-route API authorization remain authoritative.
+app.post('/admin/p61/auth/telegram', { config: { rateLimit: { max: 8, timeWindow: '10 minutes' } } }, async (request, reply) => {
+  reply.header('cache-control', 'no-store');
+  const b = z.object({ initData: z.string().min(1).max(10000) }).strict().safeParse(request.body);
+  if (!b.success) return reply.code(400).send({ error: 'invalid_input' });
+  const signingSecret = adminSecret();
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!signingSecret || !botToken) return reply.code(503).send({ error: 'admin_login_unavailable' });
+  // A short verification window limits replay risk; reopen the Mini App for a fresh initData if expired.
+  const proof = validateTelegramInitData(b.data.initData, botToken, 3600);
+  if (!proof.ok) return reply.code(401).send({ error: 'invalid_or_expired_telegram_session' });
+  const telegramId = String(proof.user.id);
+  const mapping = await prisma.systemSetting.findUnique({ where: { key: 'P38_ADMIN_TG_' + telegramId } });
+  const mappedAdminId = (mapping?.value && typeof mapping.value === 'object' && !Array.isArray(mapping.value))
+    ? (mapping.value as { adminId?: unknown }).adminId : null;
+  if (typeof mappedAdminId !== 'string') return reply.code(403).send({ error: 'telegram_admin_not_linked' });
+  const account = await prisma.adminUser.findUnique({ where: { id: mappedAdminId },
+    select: { id: true, email: true, role: true, isActive: true, passwordHash: true } });
+  if (!account || !account.isActive) return reply.code(403).send({ error: 'admin_inactive' });
+  const row = account.role === 'SUPER_ADMIN' ? null :
+    await prisma.systemSetting.findUnique({ where: { key: 'TENX_P60_ADMIN_SCOPE_' + account.id } });
+  const scopes = account.role === 'SUPER_ADMIN'
+    ? { users: 'write', marketing: 'write', academy: 'write' }
+    : p60Normalized((row?.value as { scopes?: unknown } | null)?.scopes);
+  // Accounts without explicit P60 grants cannot access the Mini App admin interface.
+  if (!Object.values(scopes).some(level => level === 'read' || level === 'write'))
+    return reply.code(403).send({ error: 'no_admin_sections_assigned' });
+  const expires = Math.floor(Date.now() / 1000) + 1800;
+  const token = signSession({ sub: account.id, role: account.role,
+    pv: passwordVersion(account.passwordHash), exp: expires }, signingSecret);
+  await prisma.auditLog.create({data:{adminUserId:account.id,action:'P61_TELEGRAM_MINIAPP_ADMIN_LOGIN',entityType:'AdminUser',entityId:account.id,
+    metadata:{telegramId,scopes},ipAddress:request.ip}});
+  return { token, admin: { email: account.email, role: account.role }, scopes,
+    expiresAt: new Date(expires * 1000).toISOString() };
+});
+// === END TENX_P61_MINIAPP_PROFILE_ADMIN_AUTH_V1 ===
+
+// TENX_P62_HOME_STUDIO_API_V1 -- existing adminGuard & Prisma, no schema migration.
+const p62fs = await import('node:fs');
+const p62path = await import('node:path');
+const p62crypto = await import('node:crypto');
+const p62Root = process.cwd();
+const p62Key = 'TENX_P62_HOME_STUDIO_V1';
+const p62Logo = '/uploads/challenge-organizers/mmtrade-logo-custom-p45.png';
+const p62MediaDir = p62path.join(p62Root, 'public', 'uploads', 'home-studio');
+const p62TempDir = p62path.join(p62Root, '.p62-home-studio', 'uploads');
+const p62Route = '/admin/home-studio';
+const p62T = z.enum(['1','2','3']);
+const p62Path = z.string().max(1200).refine((v) => v === '' || v === '#video' ||
+  (/^\/(?!\/)[a-zA-Z0-9_./?=&%#-]*$/.test(v)) ||
+  (/^https:\/\/[a-zA-Z0-9.-]+(?::\d{2,5})?(?:\/[a-zA-Z0-9~!$&'()*+,;=:@%/?#.-]*)?$/.test(v)), 'invalid_url');
+const p62Style = z.object({
+  color:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  bg:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  radius:z.number().min(0).max(80).optional(),
+  padding:z.number().min(0).max(80).optional(),
+  opacity:z.number().min(0.05).max(1).optional(),
+  parallax:z.number().min(0).max(60).optional(),
+  align:z.enum(['left','right','center']).optional(),
+  variant:z.enum(['filled','outline']).optional()
+}).strict();
+const p62Step = z.object({
+  id:z.string().min(1).max(70),title:z.string().max(140),
+  subtitle:z.string().max(300).optional(),icon:z.string().max(30).optional(),
+  url:p62Path.optional()
+}).strict();
+const p62Block = z.object({
+  id:z.string().regex(/^[a-zA-Z0-9_-]{1,70}$/),
+  type:z.enum(['video','headline','steps','button','features','progress','sculpture','image','text','divider','spacer']),
+  title:z.string().max(300).optional(), subtitle:z.string().max(500).optional(),
+  text:z.string().max(3500).optional(), url:p62Path.optional(),
+  media:p62Path.optional(),poster:p62Path.optional(),icon:z.string().max(30).optional(),
+  visible:z.boolean().optional(),style:p62Style.optional(),
+  steps:z.array(p62Step).max(12).optional()
+}).strict();
+const p62Draft = z.object({
+  logo:z.literal(p62Logo),
+  blocks:z.array(p62Block).max(35)
+}).strict().superRefine((d,ctx)=>{
+  const ids=d.blocks.map(b=>b.id);
+  if(new Set(ids).size!==ids.length)ctx.addIssue({code:'custom',message:'duplicate_block_id'});
+});
+function p62Defaults():any{
+  return JSON.parse(p62fs.readFileSync(p62path.join(p62Root,'public','miniapp','p62','presets.json'),'utf8'));
+}
+async function p62State():Promise<any>{
+  const r=await prisma.systemSetting.findUnique({where:{key:p62Key},select:{value:true}});
+  const base=p62Defaults();
+  if(!r||!r.value||typeof r.value!=='object'||Array.isArray(r.value))return base;
+  const x=r.value as any;
+  if(!x.drafts?.['1']||!x.drafts?.['2']||!x.drafts?.['3'])return base;
+  return JSON.parse(JSON.stringify(x));
+}
+async function p62Save(state:any,actor:string|null,action:string,metadata:any={}){
+  await prisma.$transaction(async tx=>{
+    await tx.systemSetting.upsert({
+      where:{key:p62Key},
+      create:{key:p62Key,value:state as Prisma.InputJsonValue},
+      update:{value:state as Prisma.InputJsonValue}
+    });
+    await tx.auditLog.create({data:{adminUserId:actor,action,entityType:'HomeStudio',metadata}});
+  });
+}
+async function p62Owner(request:FastifyRequest,reply:FastifyReply):Promise<boolean>{
+  if(!(await adminGuard(request,reply)))return false;
+  const identity=(request as unknown as {admin?:{id:string|null;role:string}}).admin;
+  if(identity?.role!=='SUPER_ADMIN'){reply.code(403).send({error:'super_admin_required'});return false;}
+  return true;
+}
+app.get('/public/home-studio',async(_request,reply)=>{
+  const s=await p62State();
+  reply.header('Cache-Control','no-store');
+  return {active:s.active||null,published:s.published||null,revision:s.revision||0};
+});
+app.get(p62Route,async(request,reply)=>{
+  if(!(await p62Owner(request,reply)))return;
+  reply.header('Cache-Control','no-store');
+  return await p62State();
+});
+app.put('/admin/home-studio/draft/:theme',async(request,reply)=>{
+  if(!(await p62Owner(request,reply)))return;
+  const params=z.object({theme:p62T}).safeParse(request.params);
+  const body=z.object({draft:p62Draft}).strict().safeParse(request.body);
+  if(!params.success||!body.success)return reply.code(400).send({error:'invalid_draft',message:'المان یا لینک نامعتبر است.'});
+  const s=await p62State();
+  s.drafts[params.data.theme]=body.data.draft;
+  const actor=(request as any).admin;
+  await p62Save(s,actor.id,'P62_HOME_DRAFT_SAVED',{theme:params.data.theme,blocks:body.data.draft.blocks.length});
+  return {ok:true,draft:body.data.draft,revision:s.revision};
+});
+app.post('/admin/home-studio/publish',async(request,reply)=>{
+  if(!(await p62Owner(request,reply)))return;
+  const b=z.object({theme:p62T}).strict().safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:'invalid_theme'});
+  const state=await p62State();
+  const draft=p62Draft.safeParse(state.drafts[b.data.theme]);
+  if(!draft.success)return reply.code(409).send({error:'invalid_saved_draft'});
+  state.active=b.data.theme;
+  state.published=JSON.parse(JSON.stringify(draft.data));
+  state.revision=Number(state.revision||0)+1;
+  state.history=(Array.isArray(state.history)?state.history:[]).concat([{
+    revision:state.revision,theme:b.data.theme,at:new Date().toISOString(),draft:state.published
+  }]).slice(-25);
+  const actor=(request as any).admin;
+  await p62Save(state,actor.id,'P62_HOME_PUBLISHED',{theme:state.active,revision:state.revision});
+  return {ok:true,active:state.active,revision:state.revision,history:state.history};
+});
+app.post('/admin/home-studio/restore',async(request,reply)=>{
+  if(!(await p62Owner(request,reply)))return;
+  const b=z.object({revision:z.number().int().positive()}).strict().safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:'invalid_revision'});
+  const state=await p62State();
+  const snap=(Array.isArray(state.history)?state.history:[]).find((x:any)=>x.revision===b.data.revision);
+  if(!snap)return reply.code(404).send({error:'revision_not_found'});
+  const d=p62Draft.safeParse(snap.draft);
+  if(!d.success)return reply.code(409).send({error:'snapshot_invalid'});
+  state.active=snap.theme;state.published=JSON.parse(JSON.stringify(d.data));
+  state.revision=Number(state.revision||0)+1;
+  state.history=state.history.concat([{
+    revision:state.revision,theme:state.active,at:new Date().toISOString(),draft:state.published
+  }]).slice(-25);
+  const actor=(request as any).admin;
+  await p62Save(state,actor.id,'P62_HOME_RESTORED',{sourceRevision:b.data.revision,revision:state.revision});
+  return {ok:true,active:state.active,revision:state.revision,history:state.history};
+});
+// Read binary payloads as small buffers; large videos are uploaded in 192 KiB chunks.
+app.addContentTypeParser('application/octet-stream',{parseAs:'buffer',bodyLimit:384*1024},(_req,body,done)=>done(null,body));
+const p62UploadId=z.string().regex(/^[a-f0-9]{32}$/);
+const p62UploadMeta=z.object({id:p62UploadId,kind:z.enum(['video','image']),name:z.string(),size:z.number(),received:z.number(),next:z.number(),createdAt:z.number()});
+function p62UploadPaths(id:string){return {
+  part:p62path.join(p62TempDir,id+'.part'),
+  meta:p62path.join(p62TempDir,id+'.json')
+};}
+function p62ReadUpload(id:string){
+  const p=p62UploadPaths(id);
+  if(!p62fs.existsSync(p.meta))return null;
+  try{return p62UploadMeta.parse(JSON.parse(p62fs.readFileSync(p.meta,'utf8')))}catch{return null;}
+}
+app.post('/admin/home-studio/media/begin',async(request,reply)=>{
+  if(!(await p62Owner(request,reply)))return;
+  const b=z.object({
+    name:z.string().min(1).max(180),kind:z.enum(['video','image']),
+    size:z.number().int().min(1).max(180*1024*1024),
+    type:z.string().max(100).optional()
+  }).strict().safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:'invalid_file'});
+  if(b.data.kind==='image'&&b.data.size>12*1024*1024)return reply.code(413).send({error:'image_too_large'});
+  p62fs.mkdirSync(p62TempDir,{recursive:true,mode:0o700});
+  const id=p62crypto.randomBytes(16).toString('hex');const paths=p62UploadPaths(id);
+  p62fs.writeFileSync(paths.part,Buffer.alloc(0),{flag:'wx',mode:0o600});
+  const meta={id,name:b.data.name,kind:b.data.kind,size:b.data.size,received:0,next:0,createdAt:Date.now()};
+  p62fs.writeFileSync(paths.meta,JSON.stringify(meta),{flag:'wx',mode:0o600});
+  return {ok:true,uploadId:id,chunkSize:192*1024};
+});
+app.post('/admin/home-studio/media/:uploadId/:index',{
+  bodyLimit:384*1024,config:{rateLimit:{max:1800,timeWindow:'10 minutes'}}
+},async(request,reply)=>{
+  if(!(await p62Owner(request,reply)))return;
+  const p=z.object({uploadId:p62UploadId,index:z.coerce.number().int().min(0).max(5000)}).safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_upload_id'});
+  const current=p62ReadUpload(p.data.uploadId);if(!current)return reply.code(404).send({error:'upload_not_found'});
+  if(Date.now()-current.createdAt>24*3600000)return reply.code(410).send({error:'upload_expired'});
+  if(p.data.index!==current.next)return reply.code(409).send({error:'invalid_chunk_order'});
+  const bytes=request.body;
+  if(!Buffer.isBuffer(bytes)||bytes.length===0||bytes.length>192*1024)return reply.code(400).send({error:'invalid_chunk'});
+  if(current.received+bytes.length>current.size)return reply.code(413).send({error:'upload_oversize'});
+  const paths=p62UploadPaths(current.id);
+  p62fs.appendFileSync(paths.part,bytes);
+  current.received+=bytes.length;current.next+=1;
+  p62fs.writeFileSync(paths.meta,JSON.stringify(current));
+  return {ok:true,received:current.received,remaining:current.size-current.received};
+});
+app.post('/admin/home-studio/media/:uploadId/finish',async(request,reply)=>{
+  if(!(await p62Owner(request,reply)))return;
+  const p=z.object({uploadId:p62UploadId}).safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_upload_id'});
+  const info=p62ReadUpload(p.data.uploadId);if(!info)return reply.code(404).send({error:'upload_not_found'});
+  if(info.received!==info.size)return reply.code(409).send({error:'upload_incomplete'});
+  const paths=p62UploadPaths(info.id);
+  const signature=Buffer.alloc(16);const fd=p62fs.openSync(paths.part,'r');
+  try{p62fs.readSync(fd,signature,0,16,0)}finally{p62fs.closeSync(fd)}
+  let ext='';
+  if(info.kind==='video'){
+    if(signature.subarray(4,8).toString('ascii')==='ftyp')ext='mp4';
+    else if(signature.subarray(0,4).equals(Buffer.from([0x1a,0x45,0xdf,0xa3])))ext='webm';
+  }else{
+    if(signature.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))ext='png';
+    else if(signature.subarray(0,3).equals(Buffer.from([255,216,255])))ext='jpg';
+    else if(signature.subarray(0,4).toString('ascii')==='RIFF'&&signature.subarray(8,12).toString('ascii')==='WEBP')ext='webp';
+  }
+  if(!ext)return reply.code(415).send({error:'unsupported_file_content'});
+  p62fs.mkdirSync(p62MediaDir,{recursive:true});
+  const basename='p62-'+p62crypto.randomBytes(16).toString('hex')+'.'+ext;
+  p62fs.renameSync(paths.part,p62path.join(p62MediaDir,basename));
+  p62fs.unlinkSync(paths.meta);
+  const actor=(request as any).admin;
+  await prisma.auditLog.create({data:{adminUserId:actor.id,action:'P62_HOME_MEDIA_UPLOADED',entityType:'HomeStudioMedia',metadata:{name:basename,size:info.size,kind:info.kind}}});
+  return {ok:true,url:'/uploads/home-studio/'+basename,bytes:info.size};
+});
+// END TENX_P62_HOME_STUDIO_API_V1
 
 app.post('/admin/auth/login', { config: { rateLimit: { max: 8, timeWindow: '10 minutes' } } }, async (request, reply) => {
   const secret = adminSecret();
@@ -205,7 +581,7 @@ app.post('/admin/auth/login', { config: { rateLimit: { max: 8, timeWindow: '10 m
 app.get('/admin/auth/me', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
   const identity = (request as unknown as { admin: AdminIdentity }).admin;
-  return { email: identity.email, role: identity.role, legacyToken: identity.legacy };
+  return { email: identity.email, role: identity.role, legacyToken: identity.legacy, p60Scopes: (await p60ScopedAdmin(identity.id))?.scopes ?? null };
 });
 
 app.get('/admin/admins', async (request, reply) => {
@@ -316,6 +692,177 @@ async function teamAuth(request: FastifyRequest, reply: FastifyReply, superOnly 
 
   return actor;
 }
+
+
+// TENX_P37_SUPER_SESSION_ONLY
+async function p37SuperSession(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  const secret = adminSecret();
+  const header = request.headers.authorization;
+
+  if (!secret || !header?.startsWith('Bearer ')) {
+    reply.code(401).send({ error: 'unauthorized' });
+    return null;
+  }
+
+  const token = header.slice(7).trim();
+  const session = verifySession(token, secret);
+  if (!session) {
+    reply.code(401).send({ error: 'session_required' });
+    return null;
+  }
+
+  const admin = await prisma.adminUser.findUnique({
+    where: { id: session.sub }
+  });
+
+  if (!admin?.isActive ||
+      passwordVersion(admin.passwordHash) !== session.pv) {
+    reply.code(401).send({ error: 'invalid_session' });
+    return null;
+  }
+
+  if (admin.role !== 'SUPER_ADMIN') {
+    reply.code(403).send({ error: 'super_admin_required' });
+    return null;
+  }
+
+  return admin;
+}
+// END TENX_P37_SUPER_SESSION_ONLY
+
+// TENX_P37_SUPER_APPROVAL
+
+// TENX_P37_SHARED_WORKFLOW_TX
+async function p37ChangeWorkflow(
+ userId: string,
+ d: {
+  step: typeof teamSteps[number];
+  approved: boolean;
+  version: number;
+  accountId?: string;
+  note?: string;
+ },
+ actor: { adminUserId?: string; telegramAdminId?: string }
+) {
+ const fields = [
+  'accountCreated','depositCompleted',
+  'copyConnected','challengeParticipant'
+ ] as const;
+ const index = teamSteps.indexOf(d.step);
+ const field = fields[index];
+
+ return prisma.$transaction(async tx => {
+  const user = await tx.user.findUnique({
+   where:{id:userId},select:{id:true}
+  });
+  if(!user) return {error:'user_not_found',status:404};
+
+  let current = await tx.eplanetUserWorkflow.findUnique({
+   where:{userId}
+  });
+  if(!current) {
+   if(d.version!==0)
+    return {error:'version_conflict',status:409};
+   if(d.step!=='ACCOUNT_CREATED' || !d.approved)
+    return {error:'previous_step_not_approved',status:409};
+   if(!d.accountId?.trim())
+    return {error:'account_id_required',status:400};
+   await tx.eplanetUserWorkflow.createMany({
+    data:[{userId}],skipDuplicates:true
+   });
+   current = await tx.eplanetUserWorkflow.findUnique({
+    where:{userId}
+   });
+  }
+  if(!current) throw new Error('workflow_create_failed');
+  if(current.version!==d.version)
+   return {error:'version_conflict',status:409};
+  if(current[field]===d.approved)
+   return {error:'step_already_in_requested_state',status:409};
+  if(d.approved && fields.slice(0,index).some(f=>!current![f]))
+   return {error:'previous_step_not_approved',status:409};
+  if(!d.approved && fields.slice(index+1).some(f=>current![f]))
+   return {error:'revoke_later_steps_first',status:409};
+
+  const accountId=d.accountId||current.accountId;
+  if(d.step==='ACCOUNT_CREATED' && d.approved && !accountId)
+   return {error:'account_id_required',status:400};
+
+  const changed=await tx.eplanetUserWorkflow.updateMany({
+   where:{userId,version:d.version,[field]:!d.approved},
+   data:{
+    [field]:d.approved,
+    ...(d.step==='ACCOUNT_CREATED'?{accountId}:{}),
+    ...(d.note!==undefined?{note:d.note}:{}),
+    version:{increment:1}
+   }
+  });
+  if(changed.count!==1)
+   return {error:'version_conflict',status:409};
+
+  await tx.auditLog.create({
+   data:{
+    ...(actor.adminUserId?{adminUserId:actor.adminUserId}:{}),
+    userId,
+    action:'EPLANET_STEP_UPDATED',
+    entityType:'EplanetUserWorkflow',
+    entityId:current.id,
+    metadata:{
+     source:actor.adminUserId?'SUPER_ADMIN':'TELEGRAM_TEAM',
+     ...(actor.telegramAdminId?{telegramAdminId:actor.telegramAdminId}:{}),
+     step:d.step,approved:d.approved,
+     previousVersion:d.version
+    }
+   }
+  });
+  const workflow=await tx.eplanetUserWorkflow.findUnique({
+   where:{userId}
+  });
+  return {ok:true,workflow};
+ });
+}
+// END TENX_P37_SHARED_WORKFLOW_TX
+
+app.put('/admin/team/workflow/:id/step', async (request, reply) => {
+  const actor = await p37SuperSession(request, reply);
+  if (!actor) return;
+
+  const params = z.object({
+    id: z.string().min(1).max(100)
+  }).safeParse(request.params);
+
+  const parsed = z.object({
+    step: z.enum(teamSteps),
+    approved: z.boolean(),
+    version: z.number().int().min(0),
+    accountId: z.string().trim().max(100).optional(),
+    note: z.string().trim().max(500).optional()
+  }).strict().safeParse(request.body);
+
+  if (!params.success || !parsed.success)
+    return reply.code(400).send({ error: 'invalid_request' });
+
+  const d = parsed.data;
+  const userId = params.data.id;
+  const fields = [
+    'accountCreated', 'depositCompleted',
+    'copyConnected', 'challengeParticipant'
+  ] as const;
+  const index = teamSteps.indexOf(d.step);
+  const field = fields[index];
+
+  const result = await p37ChangeWorkflow(
+    userId, d, {adminUserId:actor.id}
+  );
+  if ('error' in result)
+    return reply.code(result.status ?? 409).send({error:result.error});
+  return result;
+});
+// END TENX_P37_SUPER_APPROVAL
+
 
 app.get('/admin/team/access', async (request, reply) => {
   const actor = await teamAuth(request, reply);
@@ -433,139 +980,54 @@ app.get('/admin/team/users', async (request, reply) => {
       phone: true,
       registrationStage: true,
       registrationSource: true,
-      createdAt: true
+      createdAt: true,
+      eplanetWorkflow: true
     },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    take: 50,
+    take: 51,
     ...(parsed.data.cursor ? {
       skip: 1,
       cursor: { id: parsed.data.cursor }
     } : {})
   });
 
-  const settings = await prisma.systemSetting.findMany({
-    where: {
-      key: { in: users.map(u => teamUserKey(u.id)) }
-    }
-  });
+  const hasMore = users.length > 50;
+  const page = users.slice(0, 50);
+  const nextCursor = hasMore ? page[page.length - 1].id : null;
 
-  const state = new Map(settings.map(s => [s.key, s.value]));
-
+  // TENX_P37_UNIFIED_READ
   return {
-    items: users.map(u => ({
+    items: page.map(u => ({
       ...u,
-      team: state.get(teamUserKey(u.id)) || {}
+      team: {
+        ACCOUNT_CREATED: {
+          approved: u.eplanetWorkflow?.accountCreated || false,
+          accountId: u.eplanetWorkflow?.accountId || ''
+        },
+        DEPOSIT_COMPLETED: {
+          approved: u.eplanetWorkflow?.depositCompleted || false
+        },
+        COPY_CONNECTED: {
+          approved: u.eplanetWorkflow?.copyConnected || false
+        },
+        CHALLENGE_PARTICIPANT: {
+          approved: u.eplanetWorkflow?.challengeParticipant || false
+        }
+      }
     })),
     nextCursor: users.length === 50 ? users[49].id : null
   };
 });
 
+// TENX_P37_LEGACY_WRITE_DISABLED
 app.put('/admin/team/users/:id/step', async (request, reply) => {
   const actor = await teamAuth(request, reply);
   if (!actor) return;
 
-  const params = z.object({
-    id: z.string().min(1).max(100)
-  }).safeParse(request.params);
-
-  const body = z.object({
-    step: z.enum(teamSteps),
-    approved: z.boolean(),
-    accountId: z.string().trim().max(100).optional(),
-    note: z.string().trim().max(500).optional()
-  }).strict().safeParse(request.body);
-
-  if (!params.success || !body.success) {
-    return reply.code(400).send({ error: 'invalid_request' });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: params.data.id },
-    select: { id: true }
+  return reply.code(410).send({
+    error: 'legacy_workflow_disabled',
+    message: 'Use the P37 ePlanet workflow'
   });
-
-  if (!user) {
-    return reply.code(404).send({ error: 'user_not_found' });
-  }
-
-  const key = teamUserKey(user.id);
-  const current = await prisma.systemSetting.findUnique({
-    where: { key }
-  });
-
-  const previous =
-    current?.value &&
-    typeof current.value === 'object' &&
-    !Array.isArray(current.value)
-      ? current.value as Record<string, any>
-      : {};
-
-  const step = body.data.step;
-  const index = teamSteps.indexOf(step);
-  const approved = body.data.approved;
-
-  if (
-    approved &&
-    teamSteps.slice(0, index).some(s => previous[s]?.approved !== true)
-  ) {
-    return reply.code(409).send({
-      error: 'previous_step_not_approved'
-    });
-  }
-
-  if (
-    !approved &&
-    teamSteps.slice(index + 1).some(s => previous[s]?.approved === true)
-  ) {
-    return reply.code(409).send({
-      error: 'revoke_later_steps_first'
-    });
-  }
-
-  const accountId = body.data.accountId ||
-    previous.ACCOUNT_CREATED?.accountId || '';
-
-  if (step === 'ACCOUNT_CREATED' && approved && !accountId) {
-    return reply.code(400).send({
-      error: 'account_id_required'
-    });
-  }
-
-  const next = {
-    ...previous,
-    [step]: {
-      approved,
-      ...(step === 'ACCOUNT_CREATED' ? { accountId } : {}),
-      note: body.data.note || '',
-      by: actor.id,
-      at: new Date().toISOString()
-    }
-  };
-
-  await prisma.$transaction(async tx => {
-    await tx.systemSetting.upsert({
-      where: { key },
-      create: { key, value: next },
-      update: { value: next }
-    });
-
-    await tx.auditLog.create({
-      data: {
-        adminUserId: actor.id,
-        userId: user.id,
-        action: 'TEAM_STEP_UPDATED',
-        entityType: 'User',
-        entityId: user.id,
-        metadata: {
-          step,
-          approved,
-          note: body.data.note || ''
-        }
-      }
-    });
-  });
-
-  return { ok: true, team: next };
 });
 
 app.get('/admin/team/panel', async (_request, reply) => {
@@ -580,12 +1042,182 @@ app.get('/admin/team/panel', async (_request, reply) => {
 });
 // END TENX_TEAM_ADMIN_P36
 
+
+// TENX_P37_TEAM_API
+app.post('/miniapp/team/me', async (request, reply) => {
+  const body = z.object({
+    initData: z.string().min(1).max(10000)
+  }).strict().safeParse(request.body);
+  if (!body.success)
+    return reply.code(400).send({ error: 'invalid_request' });
+
+  const result = await authenticateTeamAdmin(
+    prisma, body.data.initData,
+    process.env.TELEGRAM_BOT_TOKEN || ''
+  );
+  if (!result.ok)
+    return reply.code(
+      result.error === 'team_access_denied' ? 403 : 401
+    ).send({ error: result.error });
+
+  return { admin: result.admin };
+});
+
+app.post('/miniapp/team/users', async (request, reply) => {
+  const body = z.object({
+    initData: z.string().min(1).max(10000),
+    q: z.string().max(100).optional(),
+    cursor: z.string().optional()
+  }).strict().safeParse(request.body);
+  if (!body.success)
+    return reply.code(400).send({ error: 'invalid_request' });
+
+  const actor = await authenticateTeamAdmin(
+    prisma, body.data.initData,
+    process.env.TELEGRAM_BOT_TOKEN || ''
+  );
+  if (!actor.ok)
+    return reply.code(
+      actor.error === 'team_access_denied' ? 403 : 401
+    ).send({ error: actor.error });
+
+  const q = body.data.q?.trim();
+  const items = await prisma.user.findMany({
+    where: q ? { OR: [
+      { firstName: { contains: q } },
+      { lastName: { contains: q } },
+      { username: { contains: q } },
+      { telegramId: { contains: q } },
+      { phone: { contains: q } }
+    ] } : {},
+    select: {
+      id: true, telegramId: true, username: true,
+      firstName: true, lastName: true, phone: true,
+      registrationStage: true, createdAt: true,
+      eplanetWorkflow: true
+    },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: 50,
+    ...(body.data.cursor ? {
+      skip: 1, cursor: { id: body.data.cursor }
+    } : {})
+  });
+
+  return {
+    items,
+    nextCursor: items.length === 50 ? items[49].id : null
+  };
+});
+// END TENX_P37_TEAM_API
+
+// TENX_P37_EPLANET_APPROVAL
+app.post('/miniapp/team/approve', async (request, reply) => {
+  const parsed = z.object({
+    initData: z.string().min(1).max(10000),
+    userId: z.string().min(1).max(100),
+    step: z.enum(teamSteps),
+    approved: z.boolean(),
+    version: z.number().int().min(0),
+    accountId: z.string().trim().max(100).optional(),
+    note: z.string().trim().max(500).optional()
+  }).strict().safeParse(request.body);
+
+  if (!parsed.success)
+    return reply.code(400).send({ error: 'invalid_request' });
+
+  const d = parsed.data;
+  const auth = await authenticateTeamAdmin(
+    prisma, d.initData,
+    process.env.TELEGRAM_BOT_TOKEN || ''
+  );
+  if (!auth.ok)
+    return reply.code(403).send({ error: auth.error });
+
+  if (!['USER_MANAGER', 'CHALLENGE_MANAGER'].includes(auth.admin.role))
+    return reply.code(403).send({ error: 'approval_permission_required' });
+
+  const result = await p37ChangeWorkflow(
+    d.userId, d, {telegramAdminId:auth.admin.id}
+  );
+  if ('error' in result)
+    return reply.code(result.status ?? 409).send({error:result.error});
+  return result;
+});
+// END TENX_P37_EPLANET_APPROVAL
+
+// TENX_P37_TELEGRAM_ADMINS
+app.get('/admin/team/telegram-admins', async (request, reply) => {
+  const actor = await p37SuperSession(request, reply);
+  if (!actor) return;
+
+  const items = await prisma.telegramTeamAdmin.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 200
+  });
+
+  return { ok: true, items };
+});
+
+app.put('/admin/team/telegram-admins', async (request, reply) => {
+  const actor = await p37SuperSession(request, reply);
+  if (!actor) return;
+
+  const parsed = z.object({
+    telegramId: z.string().regex(/^[1-9][0-9]{0,19}$/),
+    displayName: z.string().trim().min(1).max(100),
+    role: z.enum([
+      'USER_MANAGER', 'CHALLENGE_MANAGER',
+      'SUPPORT', 'ANALYST'
+    ]),
+    isActive: z.boolean()
+  }).strict().safeParse(request.body);
+
+  if (!parsed.success)
+    return reply.code(400).send({ error: 'invalid_request' });
+
+  const d = parsed.data;
+
+  const result = await prisma.$transaction(async tx => {
+    const admin = await tx.telegramTeamAdmin.upsert({
+      where: { telegramId: d.telegramId },
+      create: d,
+      update: {
+        displayName: d.displayName,
+        role: d.role,
+        isActive: d.isActive
+      }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        adminUserId: actor.id,
+        action: 'TELEGRAM_TEAM_ADMIN_UPDATED',
+        entityType: 'TelegramTeamAdmin',
+        entityId: admin.id,
+        metadata: {
+          telegramId: d.telegramId,
+          role: d.role,
+          isActive: d.isActive
+        }
+      }
+    });
+
+    return admin;
+  });
+
+  return { ok: true, admin: result };
+});
+// END TENX_P37_TELEGRAM_ADMINS
+
+
+
+
 app.get('/admin/panel', async (_request, reply) => {
   const { readFileSync, existsSync } = await import('node:fs');
   const { join } = await import('node:path');
   const file = [join(process.cwd(), 'apps/api/public/admin.html'), join(process.cwd(), 'public/admin.html')].find((p) => existsSync(p));
   if (!file) return reply.code(404).send({ error: 'panel_file_missing' });
-  reply.header('content-security-policy', "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:");
+  reply.header('content-security-policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:");
   reply.header('cache-control', 'no-store');
   return reply.type('text/html; charset=utf-8').send(readFileSync(file, 'utf-8'));
 });
@@ -605,7 +1237,7 @@ app.get('/admin/editor/:slug', async (request, reply) => {
 
   if (!file) return reply.code(404).send({ error: 'panel_file_missing' });
 
-  reply.header('content-security-policy', "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:");
+  reply.header('content-security-policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:");
   reply.header('cache-control', 'no-store');
   return reply.type('text/html; charset=utf-8').send(readFileSync(file, 'utf-8'));
 });
@@ -877,7 +1509,170 @@ app.get('/admin', async (_request, reply) => {
   reply.type('text/html; charset=utf-8');
   return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پنل مدیریت 10X</title><style>
   :root{font-family:Tahoma,Arial,sans-serif;color:#e9edf5;background:#0b1020}*{box-sizing:border-box}body{margin:0;padding:24px}main{max-width:1100px;margin:auto}.card{background:#151d31;border:1px solid #2b3650;border-radius:16px;padding:18px;margin:14px 0}h1{margin:0 0 8px}p{color:#aab6cc}input,button{font:inherit;border-radius:9px;padding:11px;border:1px solid #35435f}input{background:#0d1426;color:#fff;min-width:260px}button{background:#e5b94b;color:#171717;cursor:pointer;font-weight:bold}button.secondary{background:#25314a;color:#fff}form{display:flex;gap:8px;flex-wrap:wrap} .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.stat{padding:14px;background:#0d1426;border-radius:12px}.num{font-size:28px;font-weight:bold;margin-top:8px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{text-align:right;padding:12px;border-bottom:1px solid #2b3650;font-size:13px}.tablewrap{overflow:auto}.muted{color:#aab6cc}.error{color:#ff9c9c}.ok{color:#9fe0b2}@media(max-width:600px){body{padding:12px}input{min-width:100%}}
-  </style></head><body><main><h1>پنل مدیریت 10X</h1><p>مرکز کنترل کامل: <a href='/admin/control' style='color:#e5b94b'>ورود به پنل عملیاتی 10X</a> — داشبورد ساده و خروجی CSV نیز در همین صفحه در دسترس است.</p><section class="card"><form id="auth"><input id="token" type="password" autocomplete="off" placeholder="ADMIN_API_TOKEN" required minlength="32"><button>اتصال امن</button><button class="secondary" type="button" id="clear">پاک‌کردن</button></form><p id="message" class="muted">توکن مدیر فقط در حافظه همین صفحه نگهداری می‌شود.</p></section><section class="card"><h2>خلاصه ثبت‌نام</h2><div id="stats" class="stats"><div class="stat">پس از اتصال، اطلاعات نمایش داده می‌شود.</div></div></section><section class="card"><h2>کاربران</h2><form id="search"><input id="q" placeholder="جست‌وجوی نام، نام کاربری یا شناسه تلگرام"><button>جست‌وجو</button><button class="secondary" type="button" id="export">خروجی ثبت‌نام ناقص CSV</button></form><div class="tablewrap"><table><thead><tr><th>نام</th><th>شناسه تلگرام</th><th>تلفن</th><th>مرحله</th><th>ثبت‌نام</th><th>آخرین فعالیت</th></tr></thead><tbody id="rows"><tr><td colspan="6">برای مشاهده، ابتدا متصل شوید.</td></tr></tbody></table></div></section></main><script>
+
+
+/* TENX_P54_EXECUTIVE_UI_V1 -- Shared administrative visual language */
+@font-face{font-family:DoranFaNum;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-display:swap;font-style:normal;font-weight:400 900}
+:root{color-scheme:dark;--p54-deep:#07120d;--p54-card:#13281c;--p54-jade:#51d59a;--p54-copper:#d2a977;--p54-line:#315842}
+html{color-scheme:dark;scrollbar-color:#37644b #06140d}
+body{
+ background:radial-gradient(ellipse 75% 50% at 100% 0%,rgba(36,118,77,.23),transparent 70%),
+ radial-gradient(ellipse 60% 48% at 0% 100%,rgba(149,95,52,.14),transparent 73%),
+ linear-gradient(150deg,#06110c,#0b1b12 64%,#07140e)!important;
+ color:#edf8f0!important;font:14px/1.85 "DoranFaNum","Doran",Vazirmatn,Tahoma,Arial,sans-serif!important;
+ min-height:100vh;overflow-x:hidden;
+}
+main{position:relative;max-width:1240px;padding:clamp(15px,2.3vw,34px)!important}
+main>h1{
+ position:relative;overflow:hidden;color:#f3fff4!important;
+ font-size:clamp(22px,3vw,32px)!important;line-height:1.6;
+ padding:22px 24px 27px;margin:7px 0 18px!important;
+ border:1px solid rgba(211,167,103,.4);border-radius:22px;
+ background:linear-gradient(113deg,#173824,#0d2519 70%,#262a1c);
+ box-shadow:0 18px 45px #0005;
+}
+main>h1::after{
+ content:'MATIN FUTURE  /  EXECUTIVE CONTROL';display:block;margin-top:5px;
+ color:#d3ae7d;font:600 10px/1.4 system-ui,sans-serif;letter-spacing:1.4px;
+ direction:ltr;text-align:right;
+}
+.card,section.card{
+ background:linear-gradient(151deg,rgba(20,44,30,.99),rgba(11,28,19,.99))!important;
+ border:1px solid rgba(122,181,138,.28)!important;border-radius:19px!important;
+ box-shadow:0 15px 39px #0005,inset 0 1px 0 rgba(255,255,255,.04)!important;
+ padding:clamp(16px,2vw,23px)!important;margin:14px 0!important;
+}
+.card h2,.card h3{color:#efdfbf;font-weight:800;border-bottom:1px solid rgba(196,158,107,.28);padding-bottom:10px}
+p,.muted,.mut{color:#a5c1ae!important}
+label{color:#cde6d4}
+input:not([type=checkbox]):not([type=radio]),textarea,select{
+ background:#0a1d13!important;border:1px solid #3a684f!important;
+ color:#f2fff6!important;border-radius:12px!important;min-height:44px!important;
+ padding:10px 13px!important;box-shadow:inset 0 2px 8px #0003;
+}
+input::placeholder,textarea::placeholder{color:#8fa996;opacity:1}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{
+ outline:2px solid #d9b27b!important;outline-offset:2px!important;
+}
+button{
+ background:linear-gradient(135deg,#248156,#155b3e)!important;
+ border:1px solid rgba(103,222,157,.51)!important;
+ border-radius:12px!important;padding:10px 16px!important;min-height:44px;
+ font-weight:750!important;color:#f8fff9!important;cursor:pointer;
+ box-shadow:0 6px 17px #0005,inset 0 1px 0 rgba(255,255,255,.12)!important;
+ transition:transform .18s,filter .18s;
+}
+button:not(:disabled):hover{filter:brightness(1.12);transform:translateY(-1px)}
+button.secondary,button.sec{background:#1d3327!important;border-color:#456c50!important;color:#e4f3e8!important}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{gap:11px!important}
+.wrap,.table,.tablewrap{overflow-x:auto;max-width:100%;border:1px solid #31543d;border-radius:15px}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{background:linear-gradient(90deg,#193b2a,#123022)!important;color:#e2be87!important;font-weight:700}
+th,td{padding:13px!important;border-bottom:1px solid #31503b!important}
+tbody tr:hover{background:rgba(42,112,73,.23)}
+.ok,.status{color:#67e8a4!important}.bad,.error{color:#ff969b!important}
+#stats .stat{border:1px solid rgba(105,170,122,.35);border-radius:15px;background:#173625;padding:15px;box-shadow:inset 0 1px 0 #fff1}
+.num{color:#e6c695;font-size:30px!important}
+summary{cursor:pointer;color:#ddc199}
+@media(max-width:720px){
+ body{padding:0!important}main{padding:14px!important}
+ main>h1{padding:16px 17px 22px!important;border-radius:16px}
+ .card{border-radius:15px!important;padding:14px!important}
+ input:not([type=checkbox]):not([type=radio]),textarea,select{max-width:100%!important;min-width:0!important}
+ .row{align-items:stretch;gap:8px!important}
+ .row>*{max-width:100%}
+ th,td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none!important;transform:none!important}}
+/* END TENX_P54_EXECUTIVE_UI_V1 */
+
+
+
+/* TENX_P55_IMPERIAL_RESERVE_V1 -- legacy and team admin shared theme */
+@font-face{font-family:DoranFaNum;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-display:swap;font-style:normal;font-weight:400 900}
+:root{color-scheme:dark;--ir-bg:#070f0c;--ir-card:#12261b;--ir-copper:#bf9678;--ir-ivory:#f0eadd;--ir-line:#3b4c3f}
+html{color-scheme:dark;scrollbar-color:#425a47 #08130c}
+body{
+ background:radial-gradient(ellipse at 100% 0%,rgba(43,93,63,.19),transparent 65%),
+ linear-gradient(155deg,#07110d,#0b1b13 60%,#08140e)!important;
+ color:var(--ir-ivory)!important;
+ font:14px/1.85 "DoranFaNum","Doran",Vazirmatn,Tahoma,Arial,sans-serif!important;
+ min-height:100vh;overflow-x:hidden;
+}
+main{max-width:1240px;padding:clamp(15px,2.3vw,32px)!important}
+main>h1{
+ position:relative;padding:25px 25px 28px;margin:5px 0 18px!important;
+ background:linear-gradient(125deg,#1a3426,#12241b)!important;
+ border:1px solid rgba(194,151,116,.46)!important;
+ border-radius:18px!important;color:#f0e8d9!important;
+ box-shadow:0 17px 44px #0006!important;
+ font-size:clamp(22px,2.7vw,31px)!important;
+}
+main>h1::after{
+ content:'MATIN FUTURE / IMPERIAL RESERVE';display:block;margin-top:9px;
+ color:#bf9678;font:600 10px/1.5 system-ui,sans-serif;letter-spacing:2px;
+ direction:ltr;text-align:right;
+}
+.card,section.card{
+ background:linear-gradient(152deg,#152d21,#0e2017)!important;
+ border:1px solid rgba(180,152,116,.27)!important;
+ border-radius:17px!important;
+ box-shadow:0 13px 34px #0004,inset 0 1px rgba(252,235,197,.035)!important;
+ padding:clamp(16px,2vw,24px)!important;margin:15px 0!important;
+}
+.card h2,.card h3{
+ color:#ead3b7!important;border-bottom:1px solid rgba(194,154,118,.25)!important;
+ padding-bottom:12px;font-weight:800!important;
+}
+p,.muted,.mut{color:#adbead!important}
+label{color:#d4dcca!important}
+input:not([type=checkbox]):not([type=radio]),select,textarea{
+ background:#0a1b12!important;color:#f7f1e6!important;
+ border:1px solid #415747!important;border-radius:11px!important;
+ min-height:44px!important;padding:10px 13px!important;
+ box-shadow:inset 0 1px 5px #0003!important;
+}
+input::placeholder,textarea::placeholder{color:#8fa293!important;opacity:1}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{
+ outline:2px solid #c59b78!important;outline-offset:2px!important;
+}
+button{
+ background:linear-gradient(120deg,#2c6048,#214635)!important;
+ color:#f9f4eb!important;border:1px solid rgba(166,173,133,.52)!important;
+ border-radius:11px!important;padding:10px 16px!important;
+ min-height:44px!important;font-weight:750!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.07),0 5px 16px #0003!important;
+ transition:filter .18s,transform .18s;
+}
+button.secondary,button.sec{background:#1b3426!important;border-color:#796b58!important;color:#e1e4d7!important}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{gap:11px!important}
+.wrap,.table,.tablewrap{max-width:100%;overflow-x:auto;border:1px solid #3d5441!important;border-radius:14px!important}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{
+ background:#1b3427!important;color:#e3bd9b!important;
+ border-bottom:1px solid rgba(193,154,111,.43)!important;font-weight:750!important;
+}
+th,td{padding:13px!important;border-bottom:1px solid rgba(161,178,142,.17)!important}
+tbody tr:hover{background:rgba(53,91,66,.28)!important}
+.ok,.status{color:#a4d4b4!important}.bad,.error{color:#e1a09a!important}
+#stats .stat{background:#1b3527!important;border:1px solid #52644c!important;border-radius:13px!important;padding:17px!important}
+.num{color:#e7d0b3!important;font-size:31px!important}
+summary{color:#d9b99a!important;cursor:pointer}
+@media(max-width:720px){
+ body{padding:0!important}main{padding:14px!important}
+ main>h1{padding:18px!important;border-radius:15px!important}
+ .card{border-radius:14px!important;padding:15px!important}
+ input:not([type=checkbox]):not([type=radio]),select,textarea{min-width:0!important;max-width:100%!important}
+ .row{align-items:stretch;gap:8px!important}
+ .row>*{max-width:100%}
+ th,td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none!important;transform:none!important}}
+/* END TENX_P55_IMPERIAL_RESERVE_V1 */
+
+</style></head><body><main><h1>پنل مدیریت 10X</h1><p>مرکز کنترل کامل: <a href='/admin/control' style='color:#e5b94b'>ورود به پنل عملیاتی 10X</a> — داشبورد ساده و خروجی CSV نیز در همین صفحه در دسترس است.</p><section class="card"><form id="auth"><input id="token" type="password" autocomplete="off" placeholder="ADMIN_API_TOKEN" required minlength="32"><button>اتصال امن</button><button class="secondary" type="button" id="clear">پاک‌کردن</button></form><p id="message" class="muted">توکن مدیر فقط در حافظه همین صفحه نگهداری می‌شود.</p></section><section class="card"><h2>خلاصه ثبت‌نام</h2><div id="stats" class="stats"><div class="stat">پس از اتصال، اطلاعات نمایش داده می‌شود.</div></div></section><section class="card"><h2>کاربران</h2><form id="search"><input id="q" placeholder="جست‌وجوی نام، نام کاربری یا شناسه تلگرام"><button>جست‌وجو</button><button class="secondary" type="button" id="export">خروجی ثبت‌نام ناقص CSV</button></form><div class="tablewrap"><table><thead><tr><th>نام</th><th>شناسه تلگرام</th><th>تلفن</th><th>مرحله</th><th>ثبت‌نام</th><th>آخرین فعالیت</th></tr></thead><tbody id="rows"><tr><td colspan="6">برای مشاهده، ابتدا متصل شوید.</td></tr></tbody></table></div></section></main><script>
   let token='';const $=id=>document.getElementById(id);const msg=(t,c='muted')=>{$('message').textContent=t;$('message').className=c};
   async function api(path){const r=await fetch(path,{headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error((await r.json().catch(()=>({error:'request_failed'}))).error||'request_failed');return r;}
   async function load(){try{const [s,u]=await Promise.all([api('/admin/summary').then(r=>r.json()),api('/admin/users').then(r=>r.json())]);$('stats').replaceChildren();[['کل کاربران',s.totalUsers],['ثبت‌نام اولیه تکمیل',s.registeredUsers],['ثبت‌نام ناقص',s.incompleteRegistrations],['کاربران جدید ۲۴ ساعت اخیر',s.newLast24Hours]].forEach(([label,value])=>{const d=document.createElement('div');d.className='stat';const l=document.createElement('div');l.textContent=label;const n=document.createElement('div');n.className='num';n.textContent=value;d.append(l,n);$('stats').append(d)});render(u.items);msg('اتصال برقرار است.','ok')}catch(e){msg('خطا در دریافت اطلاعات: '+e.message,'error')}}
@@ -892,6 +1687,169 @@ app.get('/admin/control', async (_request, reply) => {
   return `<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>مرکز کنترل 10X</title>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:20px;background:#0b1020;color:#edf2ff;font:14px Tahoma,Arial}main{max-width:1200px;margin:auto}.card{background:#151d31;border:1px solid #2b3650;border-radius:14px;padding:18px;margin:14px 0}h1,h2{margin-top:0}p,.muted{color:#aab6cc}input,select,textarea,button{font:inherit;padding:10px;border-radius:8px;border:1px solid #394766;margin:4px}input,select,textarea{background:#0d1426;color:#fff;max-width:100%}button{background:#e5b94b;color:#111;font-weight:bold;cursor:pointer}button.secondary{background:#25314a;color:#fff}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.table{overflow:auto}table{width:100%;border-collapse:collapse;min-width:780px}td,th{text-align:right;padding:10px;border-bottom:1px solid #2b3650;font-size:12px}.status{color:#9fe0b2}.msg{min-height:24px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1}.hide{display:none}
+
+
+/* TENX_P54_EXECUTIVE_UI_V1 -- Shared administrative visual language */
+@font-face{font-family:DoranFaNum;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-display:swap;font-style:normal;font-weight:400 900}
+:root{color-scheme:dark;--p54-deep:#07120d;--p54-card:#13281c;--p54-jade:#51d59a;--p54-copper:#d2a977;--p54-line:#315842}
+html{color-scheme:dark;scrollbar-color:#37644b #06140d}
+body{
+ background:radial-gradient(ellipse 75% 50% at 100% 0%,rgba(36,118,77,.23),transparent 70%),
+ radial-gradient(ellipse 60% 48% at 0% 100%,rgba(149,95,52,.14),transparent 73%),
+ linear-gradient(150deg,#06110c,#0b1b12 64%,#07140e)!important;
+ color:#edf8f0!important;font:14px/1.85 "DoranFaNum","Doran",Vazirmatn,Tahoma,Arial,sans-serif!important;
+ min-height:100vh;overflow-x:hidden;
+}
+main{position:relative;max-width:1240px;padding:clamp(15px,2.3vw,34px)!important}
+main>h1{
+ position:relative;overflow:hidden;color:#f3fff4!important;
+ font-size:clamp(22px,3vw,32px)!important;line-height:1.6;
+ padding:22px 24px 27px;margin:7px 0 18px!important;
+ border:1px solid rgba(211,167,103,.4);border-radius:22px;
+ background:linear-gradient(113deg,#173824,#0d2519 70%,#262a1c);
+ box-shadow:0 18px 45px #0005;
+}
+main>h1::after{
+ content:'MATIN FUTURE  /  EXECUTIVE CONTROL';display:block;margin-top:5px;
+ color:#d3ae7d;font:600 10px/1.4 system-ui,sans-serif;letter-spacing:1.4px;
+ direction:ltr;text-align:right;
+}
+.card,section.card{
+ background:linear-gradient(151deg,rgba(20,44,30,.99),rgba(11,28,19,.99))!important;
+ border:1px solid rgba(122,181,138,.28)!important;border-radius:19px!important;
+ box-shadow:0 15px 39px #0005,inset 0 1px 0 rgba(255,255,255,.04)!important;
+ padding:clamp(16px,2vw,23px)!important;margin:14px 0!important;
+}
+.card h2,.card h3{color:#efdfbf;font-weight:800;border-bottom:1px solid rgba(196,158,107,.28);padding-bottom:10px}
+p,.muted,.mut{color:#a5c1ae!important}
+label{color:#cde6d4}
+input:not([type=checkbox]):not([type=radio]),textarea,select{
+ background:#0a1d13!important;border:1px solid #3a684f!important;
+ color:#f2fff6!important;border-radius:12px!important;min-height:44px!important;
+ padding:10px 13px!important;box-shadow:inset 0 2px 8px #0003;
+}
+input::placeholder,textarea::placeholder{color:#8fa996;opacity:1}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{
+ outline:2px solid #d9b27b!important;outline-offset:2px!important;
+}
+button{
+ background:linear-gradient(135deg,#248156,#155b3e)!important;
+ border:1px solid rgba(103,222,157,.51)!important;
+ border-radius:12px!important;padding:10px 16px!important;min-height:44px;
+ font-weight:750!important;color:#f8fff9!important;cursor:pointer;
+ box-shadow:0 6px 17px #0005,inset 0 1px 0 rgba(255,255,255,.12)!important;
+ transition:transform .18s,filter .18s;
+}
+button:not(:disabled):hover{filter:brightness(1.12);transform:translateY(-1px)}
+button.secondary,button.sec{background:#1d3327!important;border-color:#456c50!important;color:#e4f3e8!important}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{gap:11px!important}
+.wrap,.table,.tablewrap{overflow-x:auto;max-width:100%;border:1px solid #31543d;border-radius:15px}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{background:linear-gradient(90deg,#193b2a,#123022)!important;color:#e2be87!important;font-weight:700}
+th,td{padding:13px!important;border-bottom:1px solid #31503b!important}
+tbody tr:hover{background:rgba(42,112,73,.23)}
+.ok,.status{color:#67e8a4!important}.bad,.error{color:#ff969b!important}
+#stats .stat{border:1px solid rgba(105,170,122,.35);border-radius:15px;background:#173625;padding:15px;box-shadow:inset 0 1px 0 #fff1}
+.num{color:#e6c695;font-size:30px!important}
+summary{cursor:pointer;color:#ddc199}
+@media(max-width:720px){
+ body{padding:0!important}main{padding:14px!important}
+ main>h1{padding:16px 17px 22px!important;border-radius:16px}
+ .card{border-radius:15px!important;padding:14px!important}
+ input:not([type=checkbox]):not([type=radio]),textarea,select{max-width:100%!important;min-width:0!important}
+ .row{align-items:stretch;gap:8px!important}
+ .row>*{max-width:100%}
+ th,td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none!important;transform:none!important}}
+/* END TENX_P54_EXECUTIVE_UI_V1 */
+
+
+
+/* TENX_P55_IMPERIAL_RESERVE_V1 -- legacy and team admin shared theme */
+@font-face{font-family:DoranFaNum;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-display:swap;font-style:normal;font-weight:400 900}
+:root{color-scheme:dark;--ir-bg:#070f0c;--ir-card:#12261b;--ir-copper:#bf9678;--ir-ivory:#f0eadd;--ir-line:#3b4c3f}
+html{color-scheme:dark;scrollbar-color:#425a47 #08130c}
+body{
+ background:radial-gradient(ellipse at 100% 0%,rgba(43,93,63,.19),transparent 65%),
+ linear-gradient(155deg,#07110d,#0b1b13 60%,#08140e)!important;
+ color:var(--ir-ivory)!important;
+ font:14px/1.85 "DoranFaNum","Doran",Vazirmatn,Tahoma,Arial,sans-serif!important;
+ min-height:100vh;overflow-x:hidden;
+}
+main{max-width:1240px;padding:clamp(15px,2.3vw,32px)!important}
+main>h1{
+ position:relative;padding:25px 25px 28px;margin:5px 0 18px!important;
+ background:linear-gradient(125deg,#1a3426,#12241b)!important;
+ border:1px solid rgba(194,151,116,.46)!important;
+ border-radius:18px!important;color:#f0e8d9!important;
+ box-shadow:0 17px 44px #0006!important;
+ font-size:clamp(22px,2.7vw,31px)!important;
+}
+main>h1::after{
+ content:'MATIN FUTURE / IMPERIAL RESERVE';display:block;margin-top:9px;
+ color:#bf9678;font:600 10px/1.5 system-ui,sans-serif;letter-spacing:2px;
+ direction:ltr;text-align:right;
+}
+.card,section.card{
+ background:linear-gradient(152deg,#152d21,#0e2017)!important;
+ border:1px solid rgba(180,152,116,.27)!important;
+ border-radius:17px!important;
+ box-shadow:0 13px 34px #0004,inset 0 1px rgba(252,235,197,.035)!important;
+ padding:clamp(16px,2vw,24px)!important;margin:15px 0!important;
+}
+.card h2,.card h3{
+ color:#ead3b7!important;border-bottom:1px solid rgba(194,154,118,.25)!important;
+ padding-bottom:12px;font-weight:800!important;
+}
+p,.muted,.mut{color:#adbead!important}
+label{color:#d4dcca!important}
+input:not([type=checkbox]):not([type=radio]),select,textarea{
+ background:#0a1b12!important;color:#f7f1e6!important;
+ border:1px solid #415747!important;border-radius:11px!important;
+ min-height:44px!important;padding:10px 13px!important;
+ box-shadow:inset 0 1px 5px #0003!important;
+}
+input::placeholder,textarea::placeholder{color:#8fa293!important;opacity:1}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{
+ outline:2px solid #c59b78!important;outline-offset:2px!important;
+}
+button{
+ background:linear-gradient(120deg,#2c6048,#214635)!important;
+ color:#f9f4eb!important;border:1px solid rgba(166,173,133,.52)!important;
+ border-radius:11px!important;padding:10px 16px!important;
+ min-height:44px!important;font-weight:750!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.07),0 5px 16px #0003!important;
+ transition:filter .18s,transform .18s;
+}
+button.secondary,button.sec{background:#1b3426!important;border-color:#796b58!important;color:#e1e4d7!important}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{gap:11px!important}
+.wrap,.table,.tablewrap{max-width:100%;overflow-x:auto;border:1px solid #3d5441!important;border-radius:14px!important}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{
+ background:#1b3427!important;color:#e3bd9b!important;
+ border-bottom:1px solid rgba(193,154,111,.43)!important;font-weight:750!important;
+}
+th,td{padding:13px!important;border-bottom:1px solid rgba(161,178,142,.17)!important}
+tbody tr:hover{background:rgba(53,91,66,.28)!important}
+.ok,.status{color:#a4d4b4!important}.bad,.error{color:#e1a09a!important}
+#stats .stat{background:#1b3527!important;border:1px solid #52644c!important;border-radius:13px!important;padding:17px!important}
+.num{color:#e7d0b3!important;font-size:31px!important}
+summary{color:#d9b99a!important;cursor:pointer}
+@media(max-width:720px){
+ body{padding:0!important}main{padding:14px!important}
+ main>h1{padding:18px!important;border-radius:15px!important}
+ .card{border-radius:14px!important;padding:15px!important}
+ input:not([type=checkbox]):not([type=radio]),select,textarea{min-width:0!important;max-width:100%!important}
+ .row{align-items:stretch;gap:8px!important}
+ .row>*{max-width:100%}
+ th,td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none!important;transform:none!important}}
+/* END TENX_P55_IMPERIAL_RESERVE_V1 */
+
 </style><body><main><h1>مرکز کنترل 10X</h1><p>مدیریت تنظیمات اجرایی، کاربران، پشتیبانی و گزارش فعالیت‌ها</p>
 <section class="card"><h2>ورود مدیر</h2><div class="row"><input id="email" type="email" placeholder="ایمیل مدیر" autocomplete="username"><input id="password" type="password" placeholder="رمز عبور" autocomplete="current-password"><button id="login">ورود</button><button class="secondary" id="clear">خروج</button></div><details><summary class="muted">ورود اضطراری با ADMIN_API_TOKEN</summary><div class="row"><input id="token" type="password" placeholder="ADMIN_API_TOKEN" autocomplete="off"><button class="secondary" id="connect">اتصال با توکن</button></div></details><div id="msg" class="msg muted">با ایمیل و رمز مدیر وارد شو.</div></section>
 <section class="card"><h2>وضعیت سامانه</h2><div id="stats" class="grid"><div>پس از اتصال بارگذاری می‌شود.</div></div><div class="row"><a href="/admin/automation" target="_blank" style="color:#e5b94b">رفتن به پنل اتوماسیون و پیام‌ها ↗</a></div></section>
@@ -982,6 +1940,513 @@ function auditSetup(){
 $('loadLogs').onclick=()=>{try{auditSetup();}catch(e){msg('خطا: '+e.message)}};
 </script></body></html>`;
 });
+
+// === TENX_P50_GROWTH_TRACKING_V1_START ===
+const growthDefaultCampaigns = [
+  {code:'campaign01',name:'Campaign 01',kind:'CAMPAIGN',active:true},
+  {code:'blogger01',name:'Blogger 01',kind:'BLOGGER',active:true},
+  {code:'telegram01',name:'Telegram Channel 01',kind:'TELEGRAM_CHANNEL',active:true},
+  {code:'instagram01',name:'Instagram 01',kind:'INSTAGRAM',active:true},
+  {code:'matin_channel',name:'Matin Channel',kind:'TELEGRAM_CHANNEL',active:true},
+  {code:'mohammadjavad_channel',name:'Mohammadjavad Channel',kind:'TELEGRAM_CHANNEL',active:true}
+];
+const growthCampaignKey='TENX_GROWTH_CAMPAIGNS_V1';
+const growthInactivePrefix='TENX_GROWTH_INACTIVE_';
+const growthKinds=['CAMPAIGN','BLOGGER','TELEGRAM_CHANNEL','INSTAGRAM','OTHER'] as const;
+const growthStatusKeys=['REGISTERED','ACCOUNT_CREATED','DEPOSIT_COMPLETED','COPY_CONNECTED','CHALLENGE_PARTICIPANT'] as const;
+const growthCanWrite=(request:FastifyRequest, roles:string[]) => {
+  const role=(request as unknown as {admin?:{role?:string}}).admin?.role;
+  const scoped=(request as unknown as {p60Scopes?:P60ScopeRecord}).p60Scopes;
+  if(scoped){const routeSection=p60RouteSection(`${request.method} ${request.routeOptions.url??request.url}`);
+    return scoped[routeSection==='users'?'users':'marketing']==='write';}
+  return role==='SUPER_ADMIN'||(Boolean(role)&&roles.includes(role!));
+};
+// TENX_P58_CAMPAIGN_LIFECYCLE_V1
+async function growthCampaigns(){
+  const r=await prisma.systemSetting.findUnique({where:{key:growthCampaignKey}});
+  const items=(!r || !Array.isArray(r.value))?growthDefaultCampaigns:(r.value as any[]);
+  return items.filter((x:any)=>x&&typeof x.code==='string'&&typeof x.name==='string')
+    .slice(0,200).map((x:any)=>({code:String(x.code),name:String(x.name),kind:String(x.kind||'OTHER'),active:x.active!==false,
+      expiresAt:typeof x.expiresAt==='string'?x.expiresAt:null,
+      archivedAt:typeof x.archivedAt==='string'?x.archivedAt:null}));
+}
+function growthCampaignState(c:any):'ACTIVE'|'PAUSED'|'EXPIRED'|'ARCHIVED'{
+  if(c.archivedAt)return 'ARCHIVED';
+  if(c.expiresAt && (!Number.isFinite(Date.parse(String(c.expiresAt))) || Date.parse(String(c.expiresAt))<=Date.now()))return 'EXPIRED';
+  return c.active===false?'PAUSED':'ACTIVE';
+}
+// TENX_P57_DIRECT_BOT_LINKS_V1: user-confirmed bot identity, verified against getMe when available.
+async function growthBotIdentity():Promise<{username:string|null,verification:'VERIFIED'|'MISMATCH'|'UNVERIFIED'}>{
+  const expected='ChallangeMMTrade10X_bot';
+  const token=process.env.TELEGRAM_BOT_TOKEN;
+  if(!token)return {username:expected,verification:'UNVERIFIED'};
+  try{
+    const response=await fetch('https://api.telegram.org/bot'+token+'/getMe',{signal:AbortSignal.timeout(3500)});
+    const data=await response.json() as any;
+    const actual=data?.result?.username;
+    if(data?.ok&&typeof actual==='string'&&/^[a-zA-Z0-9_]{5,32}$/.test(actual)){
+      if(actual.toLowerCase()!==expected.toLowerCase()){
+        return {username:null,verification:'MISMATCH'};
+      }
+      return {username:actual,verification:'VERIFIED'};
+    }
+  }catch{ /* API/Telegram may be temporarily unreachable; keep links available, visibly unverified. */ }
+  return {username:expected,verification:'UNVERIFIED'};
+}
+async function growthInactiveIds():Promise<string[]>{
+  const rows=await prisma.systemSetting.findMany({where:{key:{startsWith:growthInactivePrefix}},select:{key:true,value:true}});
+  return rows.filter(r=>(r.value as any)?.inactive===true).map(r=>r.key.slice(growthInactivePrefix.length));
+}
+function growthCutoff(){return new Date(Date.now()-30*86400000);}
+function growthTodayRange(){
+  // Iran uses UTC+03:30 year-round in 2026; database datetimes are stored in UTC.
+  const offset=210*60000;
+  const now=Date.now();
+  const beginning=Math.floor((now+offset)/86400000)*86400000-offset;
+  return {gte:new Date(beginning),lt:new Date(beginning+86400000)};
+}
+function growthUserWhere(query:Record<string,any>,inactive:string[]):any {
+  const and:any[]=[];
+  const q=String(query.q||'').trim().slice(0,100);
+  if(q)and.push({OR:[
+    {telegramId:{contains:q}},{username:{contains:q}},{firstName:{contains:q}},
+    {lastName:{contains:q}},{phone:{contains:q}},
+    {eplanetWorkflow:{is:{accountId:{contains:q}}}}
+  ]});
+  const source=String(query.source||'').trim();
+  if(source && /^[a-z0-9_-]{3,32}$/.test(source))and.push({registrationSource:'campaign:'+source});
+  const st=String(query.status||'');
+  if(st==='REGISTERED')and.push({registrationStatus:{in:['REGISTERED','COMPLETE']}});
+  else if(st==='ACCOUNT_CREATED')and.push({eplanetWorkflow:{is:{accountCreated:true}}});
+  else if(st==='DEPOSIT_COMPLETED')and.push({eplanetWorkflow:{is:{depositCompleted:true}}});
+  else if(st==='COPY_CONNECTED')and.push({eplanetWorkflow:{is:{copyConnected:true}}});
+  else if(st==='CHALLENGE_PARTICIPANT')and.push({eplanetWorkflow:{is:{challengeParticipant:true}}});
+  else if(st==='INACTIVE')and.push({OR:[{lastActivityAt:{lt:growthCutoff()}},...(inactive.length?[{id:{in:inactive}}]:[])]});
+  else if(st==='ACTIVE')and.push({lastActivityAt:{gte:growthCutoff()},...(inactive.length?{id:{notIn:inactive}}:{})});
+  return and.length?{AND:and}:{};
+}
+const growthUserSelect={
+  id:true,telegramId:true,username:true,firstName:true,lastName:true,phone:true,
+  registrationStatus:true,registrationStage:true,registrationSource:true,
+  registeredAt:true,createdAt:true,lastActivityAt:true,
+  eplanetWorkflow:{select:{accountId:true,accountCreated:true,depositCompleted:true,copyConnected:true,challengeParticipant:true,note:true,updatedAt:true}},
+  telegramAccount:{select:{chatId:true}}
+} as const;
+function growthSafeUser(u:any,inactiveIds:string[]){
+  return {...u,manualInactive:inactiveIds.includes(u.id),
+    isInactive:inactiveIds.includes(u.id)||new Date(u.lastActivityAt).getTime()<growthCutoff().getTime(),
+    canMessage:Boolean(u.telegramAccount?.chatId)};
+}
+async function growthLog(request:FastifyRequest,action:string,userId:string|null,metadata:object){
+  await prisma.auditLog.create({data:{adminUserId:adminIdOf(request),userId:userId||undefined,action,
+    entityType:'Growth',entityId:userId||undefined,metadata:metadata as any}});
+}
+// === TENX_P59_IMPERIAL_ANALYTICS_V1 ===
+// Cohort analytics: arrival timestamp (User.createdAt) determines the period;
+// stage flags describe their CURRENT state, not the date each stage happened.
+const p59TzShift = 210 * 60000; // Asia/Tehran UTC+03:30 (2026)
+const p59DateRegex = /^\d{4}-\d{2}-\d{2}$/;
+const p59Day = 86400000;
+function p59DayStr(ms:number){return new Date(ms).toISOString().slice(0,10);}
+function p59ValidDate(s:string){return p59DateRegex.test(s) && Number.isFinite(Date.parse(s+'T00:00:00Z')) && p59DayStr(Date.parse(s+'T00:00:00Z'))===s;}
+function p59Bucket(ms:number, granularity:'day'|'week'|'month'){
+  const local=new Date(ms+p59TzShift);
+  const label=local.toISOString().slice(0,10);
+  if(granularity==='day')return label;
+  if(granularity==='month')return label.slice(0,7);
+  const weekday=local.getUTCDay(); // Iran's week starts Saturday
+  return p59DayStr(local.getTime()-((weekday+1)%7)*p59Day);
+}
+function p59Range(raw:unknown){
+  const q=z.object({from:z.string().optional(),to:z.string().optional(),
+    granularity:z.enum(['day','week','month']).optional(),
+    source:z.string().regex(/^[a-z0-9_-]{3,32}$/).optional()}).strict().safeParse(raw);
+  if(!q.success)return null;
+  const iranNow=Date.now()+p59TzShift;
+  const today=p59DayStr(iranNow);
+  const to=q.data.to||today;
+  if(!p59ValidDate(to))return null;
+  const from=q.data.from||p59DayStr(Date.parse(to+'T00:00:00Z')-29*p59Day);
+  if(!p59ValidDate(from)||!p59ValidDate(to))return null;
+  const start=Date.parse(from+'T00:00:00Z');
+  const end=Date.parse(to+'T00:00:00Z');
+  const days=Math.round((end-start)/p59Day)+1;
+  if(days<1||days>366||end>Date.parse(today+'T00:00:00Z'))return null;
+  const granularity=q.data.granularity|| (days<=45?'day':days<=150?'week':'month');
+  const startAt=new Date(start-p59TzShift);
+  const endExclusive=new Date(end+p59Day-p59TzShift);
+  return {from,to,days,granularity,source:q.data.source||'',startAt,endExclusive};
+}
+function p59Rates(x:{arrivals:number,registered:number,accounts:number,deposits:number,copies:number,participants:number}){
+  const stages=[['ورود به ربات',x.arrivals],['ثبت‌نام اولیه',x.registered],['افتتاح حساب',x.accounts],
+    ['شارژ حساب',x.deposits],['اتصال Copy Trading',x.copies],['شرکت‌کننده رسمی',x.participants]] as const;
+  return stages.map(([name,count],i)=>({name,count,
+    fromPrevious:i? (stages[i-1]![1]? Math.round(count/stages[i-1]![1]*1000)/10:null):100,
+    fromArrival:x.arrivals?Math.round(count/x.arrivals*1000)/10:null}));
+}
+const p59Empty=()=>({arrivals:0,registered:0,accounts:0,deposits:0,copies:0,participants:0});
+function p59Step(c:any,u:any){
+  c.arrivals++;
+  if(u.registrationStatus==='REGISTERED'||u.registrationStatus==='COMPLETE')c.registered++;
+  if(u.eplanetWorkflow?.accountCreated)c.accounts++;
+  if(u.eplanetWorkflow?.depositCompleted)c.deposits++;
+  if(u.eplanetWorkflow?.copyConnected)c.copies++;
+  if(u.eplanetWorkflow?.challengeParticipant)c.participants++;
+}
+async function p59Data(q:ReturnType<typeof p59Range>){
+  if(!q)throw new Error('invalid_range');
+  const where:any={createdAt:{gte:q.startAt,lt:q.endExclusive},telegramId:{not:null}};
+  if(q.source)where.registrationSource='campaign:'+q.source;
+  const count=await prisma.user.count({where});
+  if(count>20000)return {error:'cohort_too_large' as const, count};
+  const users=await prisma.user.findMany({where,orderBy:{createdAt:'asc'},take:20000,
+    select:{createdAt:true,registrationStatus:true,registrationSource:true,
+      eplanetWorkflow:{select:{accountCreated:true,depositCompleted:true,copyConnected:true,challengeParticipant:true}}}});
+  const all=p59Empty(),groups=new Map<string,ReturnType<typeof p59Empty>>();
+  const points=new Map<string,ReturnType<typeof p59Empty>>();
+  const heatmap=Array.from({length:7},(_,weekday)=>({weekday,count:0}));
+  let dayIndex=Date.parse(q.from+'T00:00:00Z');
+  const endIndex=Date.parse(q.to+'T00:00:00Z');
+  for(;dayIndex<=endIndex;dayIndex+=p59Day){const bucket=p59Bucket(dayIndex-p59TzShift,q.granularity);if(!points.has(bucket))points.set(bucket,p59Empty());}
+  for(const u of users){
+    p59Step(all,u);
+    const src=String(u.registrationSource||'');
+    const code=src.startsWith('campaign:')?src.slice('campaign:'.length):'__organic__';
+    if(!groups.has(code))groups.set(code,p59Empty());
+    p59Step(groups.get(code)!,u);
+    const bucket=p59Bucket(u.createdAt.getTime(),q.granularity);
+    if(!points.has(bucket))points.set(bucket,p59Empty());
+    p59Step(points.get(bucket)!,u);
+    const wd=new Date(u.createdAt.getTime()+p59TzShift).getUTCDay();
+    heatmap[(wd+1)%7]!.count++;
+  }
+  const catalog=await growthCampaigns();
+  const identities=new Map(catalog.map(c=>[c.code,c]));
+  if(!q.source){for(const c of catalog)if(!groups.has(c.code))groups.set(c.code,p59Empty());}
+  const campaigns=[...groups.entries()].filter(([code])=>code!=='__organic__')
+    .map(([code,counts])=>{const cat=identities.get(code);return {code,name:cat?.name||code,
+      kind:cat?.kind||'UNKNOWN',status:cat?growthCampaignState(cat):'UNKNOWN',...counts,
+      registrationRate:counts.arrivals?Math.round(counts.registered/counts.arrivals*1000)/10:null,
+      copyRate:counts.arrivals?Math.round(counts.copies/counts.arrivals*1000)/10:null};})
+    .sort((a,b)=>b.arrivals-a.arrivals||a.code.localeCompare(b.code));
+  const organic=groups.get('__organic__')||p59Empty();
+  return {range:{from:q.from,to:q.to,granularity:q.granularity,days:q.days,source:q.source||null,timezone:'Asia/Tehran',
+    definition:'کاربران جدید ربات در بازه بر اساس createdAt؛ وضعیت مراحل، وضعیت فعلی همین گروه از کاربران است.'},
+    totals:all,organic,cohortFunnel:p59Rates(all),
+    trend:[...points.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([date,counts])=>({date,...counts})),
+    weekdayHeatmap:heatmap,campaigns,campaignOptions:catalog.map(c=>({code:c.code,name:c.name,status:growthCampaignState(c)})),asOf:new Date().toISOString(),
+    note:'نمودار ورود بر اساس تاریخ ثبت کاربر در ربات است. مرحله‌های ePlanet تاریخچه روزانه ندارند و به شکل وضعیت فعلی کوهورت نشان داده می‌شوند. تعداد کلیک خام لینک در دسترس نیست.'};
+}
+app.get('/admin/growth/analytics',async(request:FastifyRequest,reply:FastifyReply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  const q=p59Range(request.query);
+  if(!q)return reply.code(400).send({error:'invalid_range',message:'بازه معتبر نیست؛ حداکثر ۳۶۶ روز تا امروز.'});
+  const data=await p59Data(q);
+  if('error'in data)return reply.code(413).send({error:data.error,message:'بازه شامل بیش از ۲۰٬۰۰۰ کاربر است؛ تاریخ را محدود کنید.'});
+  reply.header('cache-control','no-store');return data;
+});
+app.get('/admin/growth/analytics.xlsx',async(request:FastifyRequest,reply:FastifyReply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  const q=p59Range(request.query);
+  if(!q)return reply.code(400).send({error:'invalid_range'});
+  const data=await p59Data(q);
+  if('error'in data)return reply.code(413).send({error:data.error,message:'بازه را محدود کنید.'});
+  const rows:string[][]=[['گزارش تحلیل کمپین‌ها / MATIN FUTURE'],
+    ['از',data.range.from,'تا',data.range.to,'دانه‌بندی',data.range.granularity],
+    ['نوع گزارش','کوهورت ورودی ربات؛ وضعیت مراحل در زمان خروجی'],
+    [],['آمار کلی','تعداد'],
+    ...data.cohortFunnel.map(r=>[r.name,String(r.count)]),[],
+    ['روند دوره‌ای','ورودی','ثبت‌نام‌شده','افتتاح حساب','شارژ حساب','Copy Trading','عضویت رسمی'],
+    ...data.trend.map(r=>[r.date,String(r.arrivals),String(r.registered),String(r.accounts),String(r.deposits),String(r.copies),String(r.participants)]),[],
+    ['نام کمپین','کد','وضعیت','ورودی','ثبت‌نام','افتتاح حساب','شارژ','کپی','شرکت‌کننده','نرخ کپی از ورود'],
+    ...data.campaigns.map(c=>[c.name,c.code,c.status,String(c.arrivals),String(c.registered),String(c.accounts),String(c.deposits),String(c.copies),String(c.participants),c.copyRate===null?'':String(c.copyRate)+'%']),
+    [],['منبع ارگانیک و بدون کمپین',String(data.organic.arrivals)],
+    ['یادداشت',data.note]];
+  const file=growthXlsx(rows);
+  await growthLog(request,'GROWTH_ANALYTICS_EXCEL_EXPORTED',null,{from:q.from,to:q.to,source:q.source||null,total:data.totals.arrivals});
+  reply.header('content-type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  reply.header('content-disposition','attachment; filename="10x-imperial-analytics.xlsx"');
+  reply.header('cache-control','no-store');return reply.send(file);
+});
+// === END TENX_P59_IMPERIAL_ANALYTICS_V1 ===
+
+app.get('/admin/growth/summary',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  const inactive=await growthInactiveIds();
+  const cutoff=growthCutoff();
+  const today=growthTodayRange();
+  const [total,registeredToday,registered,accounts,deposits,copies,participants,recent,manuallyInactive]=await Promise.all([
+    prisma.user.count(),prisma.user.count({where:{registeredAt:today}}),
+    prisma.user.count({where:{registrationStatus:{in:['REGISTERED','COMPLETE']}}}),
+    prisma.eplanetUserWorkflow.count({where:{accountCreated:true}}),
+    prisma.eplanetUserWorkflow.count({where:{depositCompleted:true}}),
+    prisma.eplanetUserWorkflow.count({where:{copyConnected:true}}),
+    prisma.eplanetUserWorkflow.count({where:{challengeParticipant:true}}),
+    prisma.user.count({where:{lastActivityAt:{gte:cutoff},...(inactive.length?{id:{notIn:inactive}}:{})}}),
+    inactive.length?prisma.user.count({where:{id:{in:inactive}}}):Promise.resolve(0)
+  ]);
+  const p57BotIdentity=await growthBotIdentity();
+  const botUsername=p57BotIdentity.username;
+  const campaigns=await growthCampaigns();
+  const details=[];
+  for(const c of campaigns){
+    const where:any={registrationSource:'campaign:'+c.code};
+    const [arrivals,registeredCount,accountCount,depositCount,copyCount,participantCount]=await Promise.all([
+      prisma.user.count({where}),
+      prisma.user.count({where:{...where,registrationStatus:{in:['REGISTERED','COMPLETE']}}}),
+      prisma.eplanetUserWorkflow.count({where:{user:where,accountCreated:true}}),
+      prisma.eplanetUserWorkflow.count({where:{user:where,depositCompleted:true}}),
+      prisma.eplanetUserWorkflow.count({where:{user:where,copyConnected:true}}),
+      prisma.eplanetUserWorkflow.count({where:{user:where,challengeParticipant:true}})
+    ]);
+    const lifecycle=growthCampaignState(c);
+    details.push({...c,arrivals,registered:registeredCount,accounts:accountCount,deposits:depositCount,
+      copies:copyCount,participants:participantCount,status:lifecycle,active:lifecycle==='ACTIVE',
+      link:botUsername&&lifecycle==='ACTIVE'?'https://t.me/'+botUsername+'?start=c_'+c.code:null});
+  }
+  return {stats:{total,registeredToday,registered,accounts,deposits,copies,participants,
+    active:recent,inactive:total-recent,manuallyInactive},
+    // Registered -> account -> deposit -> copy -> participant; denominator explicitly displayed.
+    funnel:[
+      {label:'ثبت‌نام‌شده',count:registered},
+      {label:'افتتاح حساب',count:accounts},
+      {label:'شارژ حساب',count:deposits},
+      {label:'اتصال Copy Trading',count:copies},
+      {label:'شرکت‌کننده رسمی',count:participants}
+    ].map((x,i,a)=>({...x,conversion:i?((a[i-1]!.count>0)?Math.round(1000*x.count/a[i-1]!.count)/10:null):100})),
+    campaigns:details,botUsername,botVerification:p57BotIdentity.verification,asOf:new Date().toISOString(),
+    note:'ورودی کمپین = کاربران یکتایی که از لینک /start ربات وارد شده‌اند؛ کلیک خام نیست. وضعیت فعال = فعالیت طی ۳۰ روز گذشته، به‌جز غیرفعال‌شده‌های دستی.'};
+});
+app.post('/admin/growth/campaigns',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if(!growthCanWrite(request,['MARKETING_MANAGER']))return reply.code(403).send({error:'forbidden'});
+  const b=z.object({name:z.string().trim().min(2).max(80),kind:z.enum(growthKinds),
+    code:z.string().trim().toLowerCase().regex(/^[a-z0-9_-]{3,32}$/)}).strict().safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:'invalid_campaign',details:b.error.flatten()});
+  const campaigns=await growthCampaigns();
+  if(campaigns.some(c=>c.code===b.data.code))return reply.code(409).send({error:'campaign_code_exists'});
+  if(campaigns.length>=200)return reply.code(400).send({error:'campaign_limit'});
+  campaigns.push({...b.data,active:true,expiresAt:null,archivedAt:null});
+  await prisma.systemSetting.upsert({where:{key:growthCampaignKey},create:{key:growthCampaignKey,value:campaigns},update:{value:campaigns}});
+  await growthLog(request,'GROWTH_CAMPAIGN_CREATED',null,{code:b.data.code,name:b.data.name});
+  return {ok:true};
+});
+app.patch('/admin/growth/campaigns/:code',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if(!growthCanWrite(request,['MARKETING_MANAGER']))return reply.code(403).send({error:'forbidden'});
+  const p=z.object({code:z.string().regex(/^[a-z0-9_-]{3,32}$/)}).safeParse(request.params);
+  const b=z.object({active:z.boolean()}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  const all=await growthCampaigns();const item=all.find(x=>x.code===p.data.code);
+  if(!item)return reply.code(404).send({error:'not_found'});
+  if(b.data.active && (item.archivedAt || (item.expiresAt && Date.parse(item.expiresAt)<=Date.now())))
+    return reply.code(409).send({error:'archived_or_expired'});
+  item.active=b.data.active;
+  await prisma.systemSetting.upsert({where:{key:growthCampaignKey},create:{key:growthCampaignKey,value:all},update:{value:all}});
+  await growthLog(request,'GROWTH_CAMPAIGN_STATE',null,{code:item.code,active:item.active});
+  return {ok:true};
+});
+// TENX_P58_CAMPAIGN_LIFECYCLE_V1 — mutates metadata, never deletes campaign history or user attribution.
+app.post('/admin/growth/campaigns/:code/lifecycle',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if(!growthCanWrite(request,['MARKETING_MANAGER']))return reply.code(403).send({error:'forbidden'});
+  const p=z.object({code:z.string().regex(/^[a-z0-9_-]{3,32}$/)}).safeParse(request.params);
+  const b=z.object({action:z.enum(['archive','restore','expire','pause','activate','setExpiry']),
+    expiresAt:z.string().datetime({offset:true}).nullable().optional()}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  const all=await growthCampaigns(),item=all.find(c=>c.code===p.data.code);
+  if(!item)return reply.code(404).send({error:'campaign_not_found'});
+  const before=growthCampaignState(item),now=new Date().toISOString();
+  switch(b.data.action){
+    case 'archive': if(before==='ARCHIVED')return reply.code(409).send({error:'already_archived'});item.archivedAt=now;item.active=false;break;
+    case 'restore': if(before!=='ARCHIVED')return reply.code(409).send({error:'not_archived'});item.archivedAt=null;item.active=false;break;
+    case 'expire': if(before==='ARCHIVED')return reply.code(409).send({error:'archived_campaign'});item.expiresAt=now;item.active=false;break;
+    case 'pause': if(before==='ARCHIVED')return reply.code(409).send({error:'archived_campaign'});item.active=false;break;
+    case 'activate':
+      if(item.archivedAt || (item.expiresAt&&Date.parse(item.expiresAt)<=Date.now()))
+        return reply.code(409).send({error:'archived_or_expired'});
+      item.active=true;break;
+    case 'setExpiry':
+      if(item.archivedAt)return reply.code(409).send({error:'archived_campaign'});
+      if(b.data.expiresAt===undefined)return reply.code(400).send({error:'expiry_required'});
+      if(b.data.expiresAt!==null && Date.parse(b.data.expiresAt)<=Date.now())
+        return reply.code(400).send({error:'expiry_must_be_future'});
+      item.expiresAt=b.data.expiresAt;break;
+  }
+  await prisma.systemSetting.upsert({where:{key:growthCampaignKey},
+    create:{key:growthCampaignKey,value:all},update:{value:all}});
+  await growthLog(request,'GROWTH_CAMPAIGN_LIFECYCLE',null,{code:item.code,action:b.data.action,before,after:growthCampaignState(item),expiresAt:item.expiresAt,archivedAt:item.archivedAt});
+  return {ok:true,item:{code:item.code,status:growthCampaignState(item),expiresAt:item.expiresAt,archivedAt:item.archivedAt}};
+});
+
+app.get('/admin/growth/users',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  const b=z.object({q:z.string().max(100).optional(),source:z.string().regex(/^[a-z0-9_-]{3,32}$/).optional(),
+    status:z.string().max(50).optional(),cursor:z.string().max(64).optional(),
+    limit:z.coerce.number().int().min(1).max(100).default(50)}).safeParse(request.query);
+  if(!b.success)return reply.code(400).send({error:'invalid_query'});
+  const inactive=await growthInactiveIds();const where=growthUserWhere(b.data,inactive);
+  const [items,total]=await Promise.all([
+    prisma.user.findMany({where,select:growthUserSelect,orderBy:{createdAt:'desc'},take:b.data.limit,
+      ...(b.data.cursor?{cursor:{id:b.data.cursor},skip:1}:{})}),
+    prisma.user.count({where})
+  ]);
+  return {items:items.map(x=>growthSafeUser(x,inactive)),total,
+    nextCursor:items.length===b.data.limit?items[items.length-1]?.id:null};
+});
+app.get('/admin/growth/users/:id',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  const p=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_id'});
+  const user=await prisma.user.findUnique({where:{id:p.data.id},select:growthUserSelect});
+  if(!user)return reply.code(404).send({error:'not_found'});
+  const history=await prisma.registrationStageEvent.findMany({where:{userId:user.id},orderBy:{createdAt:'desc'},take:30,
+    select:{stage:true,createdAt:true,detail:true}});
+  return {item:growthSafeUser(user,await growthInactiveIds()),history};
+});
+app.patch('/admin/growth/users/:id/workflow',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if(!growthCanWrite(request,['USER_MANAGER']))return reply.code(403).send({error:'forbidden'});
+  const p=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  const b=z.object({status:z.enum(growthStatusKeys),accountId:z.string().trim().max(100).nullable().optional(),
+    note:z.string().trim().max(500).nullable().optional(),confirmReset:z.boolean().optional()}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  const user=await prisma.user.findUnique({where:{id:p.data.id},include:{eplanetWorkflow:true}});
+  if(!user)return reply.code(404).send({error:'not_found'});
+  const level=growthStatusKeys.indexOf(b.data.status);
+  const existing=user.eplanetWorkflow;
+  const oldLevel=existing?.challengeParticipant?4:existing?.copyConnected?3:existing?.depositCompleted?2:existing?.accountCreated?1:0;
+  if(level<oldLevel&&!b.data.confirmReset)return reply.code(409).send({error:'confirm_regression_required'});
+  const accountId=(b.data.accountId===undefined?existing?.accountId:b.data.accountId)??null;
+  if(level>=1&&!accountId)return reply.code(400).send({error:'account_id_required'});
+  if(accountId){
+    const conflict=await prisma.eplanetUserWorkflow.findFirst({where:{accountId,userId:{not:user.id}},select:{userId:true}});
+    if(conflict)return reply.code(409).send({error:'account_id_already_assigned'});
+  }
+  if(user.registrationStatus==='STARTED'||user.registrationStatus==='PHONE_PENDING'){
+    await prisma.user.update({where:{id:user.id},data:{registrationStatus:'REGISTERED',registrationStage:'REGISTERED',registeredAt:user.registeredAt??new Date()}});
+  }
+  const updated=await prisma.eplanetUserWorkflow.upsert({where:{userId:user.id},
+    create:{userId:user.id,accountId,accountCreated:level>=1,depositCompleted:level>=2,
+      copyConnected:level>=3,challengeParticipant:level>=4,note:b.data.note??null},
+    update:{accountId,accountCreated:level>=1,depositCompleted:level>=2,
+      copyConnected:level>=3,challengeParticipant:level>=4,
+      ...(b.data.note!==undefined?{note:b.data.note}:{})}});
+  await growthLog(request,'GROWTH_WORKFLOW_CHANGED',user.id,{previous:oldLevel,status:b.data.status,accountIdChanged:b.data.accountId!==undefined});
+  return {item:updated};
+});
+app.patch('/admin/growth/users/:id/activity',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if(!growthCanWrite(request,['USER_MANAGER']))return reply.code(403).send({error:'forbidden'});
+  const p=z.object({id:z.string().min(1).max(64)}).safeParse(request.params);
+  const b=z.object({inactive:z.boolean()}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  const exists=await prisma.user.findUnique({where:{id:p.data.id},select:{id:true}});
+  if(!exists)return reply.code(404).send({error:'not_found'});
+  const key=growthInactivePrefix+p.data.id;
+  await prisma.systemSetting.upsert({where:{key},create:{key,value:{inactive:b.data.inactive}},update:{value:{inactive:b.data.inactive}}});
+  await growthLog(request,'GROWTH_ACTIVITY_OVERRIDE',p.data.id,{inactive:b.data.inactive});
+  return {ok:true};
+});
+async function growthSendTelegram(chatId:string,body:string){
+  const token=process.env.TELEGRAM_BOT_TOKEN;
+  if(!token)throw new Error('telegram_bot_not_configured');
+  const res=await fetch('https://api.telegram.org/bot'+token+'/sendMessage',{
+    method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({chat_id:chatId,text:body,disable_web_page_preview:true}),signal:AbortSignal.timeout(10000)
+  });
+  const obj=await res.json() as any;
+  if(!res.ok||!obj?.ok)throw new Error('telegram_send_failed_'+String(obj?.error_code||res.status));
+  return obj.result?.message_id||null;
+}
+app.post('/admin/growth/messages/direct',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if(!growthCanWrite(request,['USER_MANAGER','MARKETING_MANAGER']))return reply.code(403).send({error:'forbidden'});
+  const b=z.object({userId:z.string().min(1).max(64),text:z.string().trim().min(1).max(3500)}).strict().safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:'invalid_request'});
+  const u=await prisma.user.findUnique({where:{id:b.data.userId},include:{telegramAccount:true}});
+  if(!u)return reply.code(404).send({error:'user_not_found'});
+  if(!u.telegramAccount)return reply.code(409).send({error:'user_no_telegram_chat'});
+  try{
+    const messageId=await growthSendTelegram(u.telegramAccount.chatId,b.data.text);
+    await prisma.notification.create({data:{userId:u.id,channel:'TELEGRAM',title:'پیام مدیریت 10X',body:b.data.text,status:'SENT',sentAt:new Date()}});
+    await growthLog(request,'GROWTH_DIRECT_MESSAGE',u.id,{telegramMessageId:messageId});
+    return {ok:true};
+  }catch(e){return reply.code(502).send({error:(e as Error).message});}
+});
+app.post('/admin/growth/messages/bulk',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if(!growthCanWrite(request,['MARKETING_MANAGER']))return reply.code(403).send({error:'forbidden'});
+  const b=z.object({text:z.string().trim().min(1).max(3500),status:z.string().max(50).optional(),
+    source:z.string().regex(/^[a-z0-9_-]{3,32}$/).optional(),purpose:z.literal('SERVICE'),confirmed:z.literal(true),limit:z.number().int().min(1).max(100).default(30)}).strict().safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:'invalid_request'});
+  const where=growthUserWhere(b.data,await growthInactiveIds());
+  const recipients=await prisma.user.findMany({where,select:{id:true,telegramAccount:{select:{chatId:true}}},
+    orderBy:{createdAt:'desc'},take:b.data.limit});
+  let sent=0,failed=0,skipped=0;
+  for(const u of recipients){
+    if(!u.telegramAccount?.chatId){skipped++;continue;}
+    try{
+      await growthSendTelegram(u.telegramAccount.chatId,b.data.text);
+      await prisma.notification.create({data:{userId:u.id,channel:'TELEGRAM',title:'پیام گروهی مدیریت 10X',body:b.data.text,status:'SENT',sentAt:new Date()}});
+      sent++;
+    }catch{failed++;}
+    // Throttle broadcasts to protect the bot against Telegram rate limits.
+    await new Promise(resolve=>setTimeout(resolve,160));
+  }
+  await growthLog(request,'GROWTH_BULK_MESSAGE',null,{sent,failed,skipped,limit:b.data.limit,status:b.data.status||null,source:b.data.source||null});
+  return {sent,failed,skipped,processed:recipients.length};
+});
+// Generate a real .xlsx file using ZIP stored entries, without adding npm dependencies.
+function growthXlsx(rows:string[][]){
+  const xml=(s:string)=>String(s??'').replace(/[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const letters=(n:number)=>{let s='';for(n++;n>0;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;};
+  const sheet='<?xml version="1.0" encoding="utf-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+
+    rows.map((r,ri)=>'<row r="'+(ri+1)+'">'+r.map((v,i)=>'<c r="'+letters(i)+(ri+1)+'" t="inlineStr"><is><t>'+xml(v)+'</t></is></c>').join('')+'</row>').join('')+'</sheetData></worksheet>';
+  const entries:[string,string][]=[
+    ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
+    ['_rels/.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ['xl/workbook.xml','<?xml version="1.0" encoding="utf-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Users" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+    ['xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="utf-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'],
+    ['xl/worksheets/sheet1.xml',sheet]
+  ];
+  const crcTable=Array.from({length:256},(_,n)=>{for(let j=0;j<8;j++)n=n&1?0xEDB88320^(n>>>1):n>>>1;return n>>>0;});
+  const crc=(d:Buffer)=>{let c=0xFFFFFFFF;for(const v of d)c=crcTable[(c^v)&255]!^(c>>>8);return (c^0xFFFFFFFF)>>>0;};
+  const local:Buffer[]=[],central:Buffer[]=[];let offset=0;
+  for(const [name,payload] of entries){
+    const nameBuf=Buffer.from(name),body=Buffer.from(payload,'utf8'),checksum=crc(body);
+    const h=Buffer.alloc(30);h.writeUInt32LE(0x04034b50,0);h.writeUInt16LE(20,4);h.writeUInt32LE(checksum,14);h.writeUInt32LE(body.length,18);h.writeUInt32LE(body.length,22);h.writeUInt16LE(nameBuf.length,26);
+    local.push(h,nameBuf,body);
+    const c=Buffer.alloc(46);c.writeUInt32LE(0x02014b50,0);c.writeUInt16LE(20,4);c.writeUInt16LE(20,6);c.writeUInt32LE(checksum,16);c.writeUInt32LE(body.length,20);c.writeUInt32LE(body.length,24);c.writeUInt16LE(nameBuf.length,28);c.writeUInt32LE(offset,42);
+    central.push(c,nameBuf);offset+=h.length+nameBuf.length+body.length;
+  }
+  const cd=Buffer.concat(central),end=Buffer.alloc(22);end.writeUInt32LE(0x06054b50,0);end.writeUInt16LE(entries.length,8);end.writeUInt16LE(entries.length,10);end.writeUInt32LE(cd.length,12);end.writeUInt32LE(offset,16);
+  return Buffer.concat([...local,cd,end]);
+}
+app.get('/admin/growth/export.xlsx',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  const b=z.object({q:z.string().max(100).optional(),status:z.string().max(50).optional(),source:z.string().regex(/^[a-z0-9_-]{3,32}$/).optional()}).safeParse(request.query);
+  if(!b.success)return reply.code(400).send({error:'invalid_query'});
+  const inactive=await growthInactiveIds(),where=growthUserWhere(b.data,inactive);
+  const count=await prisma.user.count({where});
+  if(count>20000)return reply.code(413).send({error:'export_too_large',message:'خروجی بیش از ۲۰٬۰۰۰ رکورد است؛ لطفاً فیلتر کنید.'});
+  const people=await prisma.user.findMany({where,select:growthUserSelect,orderBy:{createdAt:'desc'},take:20000});
+  const rows=[['User ID','Telegram ID','Username','First Name','Last Name','Phone','Registration Status','Registration Stage','Source','Registered At','Last Activity','Account ID','Account Created','Deposit Completed','Copy Connected','Challenge Participant','Inactive']];
+  for(const u of people){const w=u.eplanetWorkflow;rows.push([
+    u.id,u.telegramId||'',u.username||'',u.firstName||'',u.lastName||'',u.phone||'',
+    u.registrationStatus,u.registrationStage,u.registrationSource||'',u.registeredAt?.toISOString()||'',
+    u.lastActivityAt.toISOString(),w?.accountId||'',String(Boolean(w?.accountCreated)),String(Boolean(w?.depositCompleted)),
+    String(Boolean(w?.copyConnected)),String(Boolean(w?.challengeParticipant)),String(growthSafeUser(u,inactive).isInactive)
+  ]);}
+  const file=growthXlsx(rows);
+  await growthLog(request,'GROWTH_EXCEL_EXPORTED',null,{count:people.length,filtered:Boolean(b.data.q||b.data.status||b.data.source)});
+  reply.header('content-type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  reply.header('content-disposition','attachment; filename="10x-growth-users.xlsx"');
+  reply.header('cache-control','no-store');
+  return reply.send(file);
+});
+// === TENX_P50_GROWTH_TRACKING_V1_END ===
+
 
 app.get('/admin/summary', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
@@ -1287,7 +2752,170 @@ app.get('/admin/registrations/incomplete.csv', async (request, reply) => {
 
 app.get('/admin/automation', async (_request, reply) => {
   reply.type('text/html; charset=utf-8');
-  return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>اتوماسیون 10X</title><style>body{font:15px Tahoma,Arial;background:#0b1020;color:#edf2ff;margin:0;padding:20px}main{max-width:1000px;margin:auto}.card{background:#151d31;border:1px solid #2b3650;border-radius:14px;padding:18px;margin:14px 0}input,textarea,button{font:inherit;padding:10px;border-radius:8px;border:1px solid #394766;margin:4px}input,textarea{background:#0d1426;color:#fff;max-width:100%;width:320px}button{background:#e5b94b;color:#111;font-weight:bold;cursor:pointer}table{width:100%;border-collapse:collapse}td,th{text-align:right;border-bottom:1px solid #2b3650;padding:9px;font-size:13px}.wrap{overflow:auto}.muted{color:#aab6cc}</style></head><body><main><h1>اتوماسیون 10X</h1><p class="muted">یادآورهای ثبت‌نام، پیام‌های تلگرام و پیگیری پشتیبانی. توکن در حافظه صفحه نگهداری می‌شود.</p><section class="card"><input id="token" type="password" placeholder="ADMIN_API_TOKEN (حداقل ۳۲ کاراکتر)" autocomplete="off"><button id="connect">اتصال و بارگذاری</button><p id="msg" class="muted">ابتدا توکن مدیر را وارد کن.</p></section><section class="card"><h2>زمان‌بندی یادآور ثبت‌نام</h2><form id="follow"><input id="uid" placeholder="شناسه داخلی کاربر (User ID)" required><input id="due" type="datetime-local" required><button>ثبت یادآور</button></form></section><section class="card"><h2>ارسال پیام تلگرام</h2><form id="notify"><input id="nuid" placeholder="شناسه داخلی کاربر (User ID)" required><input id="title" placeholder="عنوان پیام" required maxlength="120"><textarea id="body" placeholder="متن پیام" required maxlength="3500"></textarea><button>قرار دادن در صف ارسال</button></form></section><section class="card"><h2>آخرین یادآورها</h2><div class="wrap"><table><thead><tr><th>کاربر</th><th>زمان</th><th>وضعیت</th><th>تلاش</th><th>خطا</th></tr></thead><tbody id="jobs"><tr><td colspan="5">هنوز بارگذاری نشده</td></tr></tbody></table></div></section><section class="card"><h2>آخرین پیام‌ها</h2><div class="wrap"><table><thead><tr><th>کاربر</th><th>عنوان</th><th>وضعیت</th><th>ایجاد</th></tr></thead><tbody id="notes"><tr><td colspan="4">هنوز بارگذاری نشده</td></tr></tbody></table></div></section><section class="card"><h2>درخواست‌های پشتیبانی</h2><form id="reply"><input id="tid" placeholder="شناسه تیکت" required><textarea id="replybody" placeholder="پاسخ مدیر" required maxlength="3500"></textarea><button>ثبت پاسخ و ارسال به تلگرام</button></form><div class="wrap"><table><thead><tr><th>تیکت</th><th>کاربر</th><th>موضوع</th><th>وضعیت</th><th>آخرین پیام</th></tr></thead><tbody id="tickets"><tr><td colspan="5">هنوز بارگذاری نشده</td></tr></tbody></table></div></section></main><script>let token='';const $=id=>document.getElementById(id);try{const s=sessionStorage.getItem('tenx_admin_token');if(s)$('token').value=s}catch(e){}function message(t){$('msg').textContent=t}async function api(path,opts={}){const r=await fetch(path,{...opts,headers:{'content-type':'application/json',authorization:'Bearer '+token,...opts.headers}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||d.error||'request_failed');return d}function row(body,values){const tr=document.createElement('tr');values.forEach(v=>{const td=document.createElement('td');td.textContent=v??'—';tr.append(td)});body.append(tr)}async function load(){const [j,n,t]=await Promise.all([api('/admin/followups'),api('/admin/notifications'),api('/admin/tickets')]);$('jobs').replaceChildren();j.items.forEach(x=>row($('jobs'),[x.userId,new Date(x.dueAt).toLocaleString('fa-IR'),x.status,x.attempts,x.lastError]));if(!j.items.length)row($('jobs'),['—','—','موردی نیست','—','—']);$('notes').replaceChildren();n.items.forEach(x=>row($('notes'),[x.userId,x.title,x.status,new Date(x.createdAt).toLocaleString('fa-IR')]));if(!n.items.length)row($('notes'),['—','—','موردی نیست','—']);$('tickets').replaceChildren();t.items.forEach(x=>row($('tickets'),[x.id,x.user.username||x.user.telegramId||x.user.id,x.subject,x.status,x.messages.length?x.messages[x.messages.length-1].body:'—']));if(!t.items.length)row($('tickets'),['—','—','موردی نیست','—','—']);message('اتصال برقرار شد.')}$('connect').addEventListener('click',async()=>{token=$('token').value;try{await load()}catch(e){message('خطا: '+e.message)}});$('follow').addEventListener('submit',async e=>{e.preventDefault();try{await api('/admin/followups',{method:'POST',body:JSON.stringify({userId:$('uid').value.trim(),dueAt:new Date($('due').value).toISOString()})});await load();message('یادآور ثبت شد.')}catch(e){message('خطا: '+e.message)}});$('notify').addEventListener('submit',async e=>{e.preventDefault();try{await api('/admin/notifications',{method:'POST',body:JSON.stringify({userId:$('nuid').value.trim(),title:$('title').value.trim(),body:$('body').value.trim()})});await load();message('پیام در صف ارسال قرار گرفت.')}catch(e){message('خطا: '+e.message)}});$('reply').addEventListener('submit',async e=>{e.preventDefault();try{await api('/admin/tickets/'+encodeURIComponent($('tid').value.trim())+'/reply',{method:'POST',body:JSON.stringify({body:$('replybody').value.trim()})});$('replybody').value='';await load();message('پاسخ ثبت شد و در صورت وجود حساب تلگرام در صف ارسال قرار گرفت.')}catch(e){message('خطا: '+e.message)}});</script></body></html>`;
+  return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>اتوماسیون 10X</title><style>body{font:15px Tahoma,Arial;background:#0b1020;color:#edf2ff;margin:0;padding:20px}main{max-width:1000px;margin:auto}.card{background:#151d31;border:1px solid #2b3650;border-radius:14px;padding:18px;margin:14px 0}input,textarea,button{font:inherit;padding:10px;border-radius:8px;border:1px solid #394766;margin:4px}input,textarea{background:#0d1426;color:#fff;max-width:100%;width:320px}button{background:#e5b94b;color:#111;font-weight:bold;cursor:pointer}table{width:100%;border-collapse:collapse}td,th{text-align:right;border-bottom:1px solid #2b3650;padding:9px;font-size:13px}.wrap{overflow:auto}.muted{color:#aab6cc}
+
+/* TENX_P54_EXECUTIVE_UI_V1 -- Shared administrative visual language */
+@font-face{font-family:DoranFaNum;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-display:swap;font-style:normal;font-weight:400 900}
+:root{color-scheme:dark;--p54-deep:#07120d;--p54-card:#13281c;--p54-jade:#51d59a;--p54-copper:#d2a977;--p54-line:#315842}
+html{color-scheme:dark;scrollbar-color:#37644b #06140d}
+body{
+ background:radial-gradient(ellipse 75% 50% at 100% 0%,rgba(36,118,77,.23),transparent 70%),
+ radial-gradient(ellipse 60% 48% at 0% 100%,rgba(149,95,52,.14),transparent 73%),
+ linear-gradient(150deg,#06110c,#0b1b12 64%,#07140e)!important;
+ color:#edf8f0!important;font:14px/1.85 "DoranFaNum","Doran",Vazirmatn,Tahoma,Arial,sans-serif!important;
+ min-height:100vh;overflow-x:hidden;
+}
+main{position:relative;max-width:1240px;padding:clamp(15px,2.3vw,34px)!important}
+main>h1{
+ position:relative;overflow:hidden;color:#f3fff4!important;
+ font-size:clamp(22px,3vw,32px)!important;line-height:1.6;
+ padding:22px 24px 27px;margin:7px 0 18px!important;
+ border:1px solid rgba(211,167,103,.4);border-radius:22px;
+ background:linear-gradient(113deg,#173824,#0d2519 70%,#262a1c);
+ box-shadow:0 18px 45px #0005;
+}
+main>h1::after{
+ content:'MATIN FUTURE  /  EXECUTIVE CONTROL';display:block;margin-top:5px;
+ color:#d3ae7d;font:600 10px/1.4 system-ui,sans-serif;letter-spacing:1.4px;
+ direction:ltr;text-align:right;
+}
+.card,section.card{
+ background:linear-gradient(151deg,rgba(20,44,30,.99),rgba(11,28,19,.99))!important;
+ border:1px solid rgba(122,181,138,.28)!important;border-radius:19px!important;
+ box-shadow:0 15px 39px #0005,inset 0 1px 0 rgba(255,255,255,.04)!important;
+ padding:clamp(16px,2vw,23px)!important;margin:14px 0!important;
+}
+.card h2,.card h3{color:#efdfbf;font-weight:800;border-bottom:1px solid rgba(196,158,107,.28);padding-bottom:10px}
+p,.muted,.mut{color:#a5c1ae!important}
+label{color:#cde6d4}
+input:not([type=checkbox]):not([type=radio]),textarea,select{
+ background:#0a1d13!important;border:1px solid #3a684f!important;
+ color:#f2fff6!important;border-radius:12px!important;min-height:44px!important;
+ padding:10px 13px!important;box-shadow:inset 0 2px 8px #0003;
+}
+input::placeholder,textarea::placeholder{color:#8fa996;opacity:1}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{
+ outline:2px solid #d9b27b!important;outline-offset:2px!important;
+}
+button{
+ background:linear-gradient(135deg,#248156,#155b3e)!important;
+ border:1px solid rgba(103,222,157,.51)!important;
+ border-radius:12px!important;padding:10px 16px!important;min-height:44px;
+ font-weight:750!important;color:#f8fff9!important;cursor:pointer;
+ box-shadow:0 6px 17px #0005,inset 0 1px 0 rgba(255,255,255,.12)!important;
+ transition:transform .18s,filter .18s;
+}
+button:not(:disabled):hover{filter:brightness(1.12);transform:translateY(-1px)}
+button.secondary,button.sec{background:#1d3327!important;border-color:#456c50!important;color:#e4f3e8!important}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{gap:11px!important}
+.wrap,.table,.tablewrap{overflow-x:auto;max-width:100%;border:1px solid #31543d;border-radius:15px}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{background:linear-gradient(90deg,#193b2a,#123022)!important;color:#e2be87!important;font-weight:700}
+th,td{padding:13px!important;border-bottom:1px solid #31503b!important}
+tbody tr:hover{background:rgba(42,112,73,.23)}
+.ok,.status{color:#67e8a4!important}.bad,.error{color:#ff969b!important}
+#stats .stat{border:1px solid rgba(105,170,122,.35);border-radius:15px;background:#173625;padding:15px;box-shadow:inset 0 1px 0 #fff1}
+.num{color:#e6c695;font-size:30px!important}
+summary{cursor:pointer;color:#ddc199}
+@media(max-width:720px){
+ body{padding:0!important}main{padding:14px!important}
+ main>h1{padding:16px 17px 22px!important;border-radius:16px}
+ .card{border-radius:15px!important;padding:14px!important}
+ input:not([type=checkbox]):not([type=radio]),textarea,select{max-width:100%!important;min-width:0!important}
+ .row{align-items:stretch;gap:8px!important}
+ .row>*{max-width:100%}
+ th,td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none!important;transform:none!important}}
+/* END TENX_P54_EXECUTIVE_UI_V1 */
+
+
+
+/* TENX_P55_IMPERIAL_RESERVE_V1 -- legacy and team admin shared theme */
+@font-face{font-family:DoranFaNum;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-display:swap;font-style:normal;font-weight:400 900}
+:root{color-scheme:dark;--ir-bg:#070f0c;--ir-card:#12261b;--ir-copper:#bf9678;--ir-ivory:#f0eadd;--ir-line:#3b4c3f}
+html{color-scheme:dark;scrollbar-color:#425a47 #08130c}
+body{
+ background:radial-gradient(ellipse at 100% 0%,rgba(43,93,63,.19),transparent 65%),
+ linear-gradient(155deg,#07110d,#0b1b13 60%,#08140e)!important;
+ color:var(--ir-ivory)!important;
+ font:14px/1.85 "DoranFaNum","Doran",Vazirmatn,Tahoma,Arial,sans-serif!important;
+ min-height:100vh;overflow-x:hidden;
+}
+main{max-width:1240px;padding:clamp(15px,2.3vw,32px)!important}
+main>h1{
+ position:relative;padding:25px 25px 28px;margin:5px 0 18px!important;
+ background:linear-gradient(125deg,#1a3426,#12241b)!important;
+ border:1px solid rgba(194,151,116,.46)!important;
+ border-radius:18px!important;color:#f0e8d9!important;
+ box-shadow:0 17px 44px #0006!important;
+ font-size:clamp(22px,2.7vw,31px)!important;
+}
+main>h1::after{
+ content:'MATIN FUTURE / IMPERIAL RESERVE';display:block;margin-top:9px;
+ color:#bf9678;font:600 10px/1.5 system-ui,sans-serif;letter-spacing:2px;
+ direction:ltr;text-align:right;
+}
+.card,section.card{
+ background:linear-gradient(152deg,#152d21,#0e2017)!important;
+ border:1px solid rgba(180,152,116,.27)!important;
+ border-radius:17px!important;
+ box-shadow:0 13px 34px #0004,inset 0 1px rgba(252,235,197,.035)!important;
+ padding:clamp(16px,2vw,24px)!important;margin:15px 0!important;
+}
+.card h2,.card h3{
+ color:#ead3b7!important;border-bottom:1px solid rgba(194,154,118,.25)!important;
+ padding-bottom:12px;font-weight:800!important;
+}
+p,.muted,.mut{color:#adbead!important}
+label{color:#d4dcca!important}
+input:not([type=checkbox]):not([type=radio]),select,textarea{
+ background:#0a1b12!important;color:#f7f1e6!important;
+ border:1px solid #415747!important;border-radius:11px!important;
+ min-height:44px!important;padding:10px 13px!important;
+ box-shadow:inset 0 1px 5px #0003!important;
+}
+input::placeholder,textarea::placeholder{color:#8fa293!important;opacity:1}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{
+ outline:2px solid #c59b78!important;outline-offset:2px!important;
+}
+button{
+ background:linear-gradient(120deg,#2c6048,#214635)!important;
+ color:#f9f4eb!important;border:1px solid rgba(166,173,133,.52)!important;
+ border-radius:11px!important;padding:10px 16px!important;
+ min-height:44px!important;font-weight:750!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.07),0 5px 16px #0003!important;
+ transition:filter .18s,transform .18s;
+}
+button.secondary,button.sec{background:#1b3426!important;border-color:#796b58!important;color:#e1e4d7!important}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{gap:11px!important}
+.wrap,.table,.tablewrap{max-width:100%;overflow-x:auto;border:1px solid #3d5441!important;border-radius:14px!important}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{
+ background:#1b3427!important;color:#e3bd9b!important;
+ border-bottom:1px solid rgba(193,154,111,.43)!important;font-weight:750!important;
+}
+th,td{padding:13px!important;border-bottom:1px solid rgba(161,178,142,.17)!important}
+tbody tr:hover{background:rgba(53,91,66,.28)!important}
+.ok,.status{color:#a4d4b4!important}.bad,.error{color:#e1a09a!important}
+#stats .stat{background:#1b3527!important;border:1px solid #52644c!important;border-radius:13px!important;padding:17px!important}
+.num{color:#e7d0b3!important;font-size:31px!important}
+summary{color:#d9b99a!important;cursor:pointer}
+@media(max-width:720px){
+ body{padding:0!important}main{padding:14px!important}
+ main>h1{padding:18px!important;border-radius:15px!important}
+ .card{border-radius:14px!important;padding:15px!important}
+ input:not([type=checkbox]):not([type=radio]),select,textarea{min-width:0!important;max-width:100%!important}
+ .row{align-items:stretch;gap:8px!important}
+ .row>*{max-width:100%}
+ th,td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none!important;transform:none!important}}
+/* END TENX_P55_IMPERIAL_RESERVE_V1 */
+
+</style></head><body><main><h1>اتوماسیون 10X</h1><p class="muted">یادآورهای ثبت‌نام، پیام‌های تلگرام و پیگیری پشتیبانی. توکن در حافظه صفحه نگهداری می‌شود.</p><section class="card"><input id="token" type="password" placeholder="ADMIN_API_TOKEN (حداقل ۳۲ کاراکتر)" autocomplete="off"><button id="connect">اتصال و بارگذاری</button><p id="msg" class="muted">ابتدا توکن مدیر را وارد کن.</p></section><section class="card"><h2>زمان‌بندی یادآور ثبت‌نام</h2><form id="follow"><input id="uid" placeholder="شناسه داخلی کاربر (User ID)" required><input id="due" type="datetime-local" required><button>ثبت یادآور</button></form></section><section class="card"><h2>ارسال پیام تلگرام</h2><form id="notify"><input id="nuid" placeholder="شناسه داخلی کاربر (User ID)" required><input id="title" placeholder="عنوان پیام" required maxlength="120"><textarea id="body" placeholder="متن پیام" required maxlength="3500"></textarea><button>قرار دادن در صف ارسال</button></form></section><section class="card"><h2>آخرین یادآورها</h2><div class="wrap"><table><thead><tr><th>کاربر</th><th>زمان</th><th>وضعیت</th><th>تلاش</th><th>خطا</th></tr></thead><tbody id="jobs"><tr><td colspan="5">هنوز بارگذاری نشده</td></tr></tbody></table></div></section><section class="card"><h2>آخرین پیام‌ها</h2><div class="wrap"><table><thead><tr><th>کاربر</th><th>عنوان</th><th>وضعیت</th><th>ایجاد</th></tr></thead><tbody id="notes"><tr><td colspan="4">هنوز بارگذاری نشده</td></tr></tbody></table></div></section><section class="card"><h2>درخواست‌های پشتیبانی</h2><form id="reply"><input id="tid" placeholder="شناسه تیکت" required><textarea id="replybody" placeholder="پاسخ مدیر" required maxlength="3500"></textarea><button>ثبت پاسخ و ارسال به تلگرام</button></form><div class="wrap"><table><thead><tr><th>تیکت</th><th>کاربر</th><th>موضوع</th><th>وضعیت</th><th>آخرین پیام</th></tr></thead><tbody id="tickets"><tr><td colspan="5">هنوز بارگذاری نشده</td></tr></tbody></table></div></section></main><script>let token='';const $=id=>document.getElementById(id);try{const s=sessionStorage.getItem('tenx_admin_token');if(s)$('token').value=s}catch(e){}function message(t){$('msg').textContent=t}async function api(path,opts={}){const r=await fetch(path,{...opts,headers:{'content-type':'application/json',authorization:'Bearer '+token,...opts.headers}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||d.error||'request_failed');return d}function row(body,values){const tr=document.createElement('tr');values.forEach(v=>{const td=document.createElement('td');td.textContent=v??'—';tr.append(td)});body.append(tr)}async function load(){const [j,n,t]=await Promise.all([api('/admin/followups'),api('/admin/notifications'),api('/admin/tickets')]);$('jobs').replaceChildren();j.items.forEach(x=>row($('jobs'),[x.userId,new Date(x.dueAt).toLocaleString('fa-IR'),x.status,x.attempts,x.lastError]));if(!j.items.length)row($('jobs'),['—','—','موردی نیست','—','—']);$('notes').replaceChildren();n.items.forEach(x=>row($('notes'),[x.userId,x.title,x.status,new Date(x.createdAt).toLocaleString('fa-IR')]));if(!n.items.length)row($('notes'),['—','—','موردی نیست','—']);$('tickets').replaceChildren();t.items.forEach(x=>row($('tickets'),[x.id,x.user.username||x.user.telegramId||x.user.id,x.subject,x.status,x.messages.length?x.messages[x.messages.length-1].body:'—']));if(!t.items.length)row($('tickets'),['—','—','موردی نیست','—','—']);message('اتصال برقرار شد.')}$('connect').addEventListener('click',async()=>{token=$('token').value;try{await load()}catch(e){message('خطا: '+e.message)}});$('follow').addEventListener('submit',async e=>{e.preventDefault();try{await api('/admin/followups',{method:'POST',body:JSON.stringify({userId:$('uid').value.trim(),dueAt:new Date($('due').value).toISOString()})});await load();message('یادآور ثبت شد.')}catch(e){message('خطا: '+e.message)}});$('notify').addEventListener('submit',async e=>{e.preventDefault();try{await api('/admin/notifications',{method:'POST',body:JSON.stringify({userId:$('nuid').value.trim(),title:$('title').value.trim(),body:$('body').value.trim()})});await load();message('پیام در صف ارسال قرار گرفت.')}catch(e){message('خطا: '+e.message)}});$('reply').addEventListener('submit',async e=>{e.preventDefault();try{await api('/admin/tickets/'+encodeURIComponent($('tid').value.trim())+'/reply',{method:'POST',body:JSON.stringify({body:$('replybody').value.trim()})});$('replybody').value='';await load();message('پاسخ ثبت شد و در صورت وجود حساب تلگرام در صف ارسال قرار گرفت.')}catch(e){message('خطا: '+e.message)}});</script></body></html>`;
 });
 
 app.get('/admin/followups', async (request, reply) => {
@@ -1486,6 +3114,180 @@ async function miniUser(initData: string, requireRegistered = true): Promise<{ i
 
 
 // Midnight Emerald P01: authenticated Mini App profile.
+
+// P85R3_PROFILE_LIVE
+app.post('/miniapp/profile/p85', async (request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+
+  const parsed = z.object({
+    initData: z.string().min(1).max(10000)
+  }).safeParse(request.body);
+
+  if (!parsed.success)
+    return reply.code(400).send({error:'invalid_request'});
+
+  const who = await miniUser(parsed.data.initData, false);
+  if ('code' in who)
+    return reply.code(who.code).send({error:who.error});
+
+  const user = await prisma.user.findUnique({
+    where:{id:who.id},
+    select:{
+      telegramId:true,
+      firstName:true,
+      lastName:true,
+      username:true,
+      createdAt:true,
+      registeredAt:true,
+      registrationStatus:true,
+      registrationStage:true,
+      eplanetWorkflow:{
+        select:{
+          accountCreated:true,
+          depositCompleted:true,
+          copyConnected:true,
+          challengeParticipant:true
+        }
+      }
+    }
+  });
+
+  if (!user)
+    return reply.code(404).send({error:'user_not_found'});
+
+  const start = user.registeredAt ?? user.createdAt;
+  const days = Math.max(
+    1,
+    Math.floor((Date.now()-start.getTime())/86400000)+1
+  );
+
+  const workflow = user.eplanetWorkflow;
+  const plan = workflow?.challengeParticipant
+    ? 'شرکت‌کننده چالش 10X'
+    : workflow?.copyConnected
+    ? 'متصل به کپی‌ترید'
+    : workflow?.depositCompleted
+    ? 'حساب شارژ شده'
+    : workflow?.accountCreated
+    ? 'حساب ePlanet افتتاح شده'
+    : '';
+
+  let photoUrl = '';
+
+  try {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (token && user.telegramId) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4500);
+
+      try {
+        const response = await fetch(
+          'https://api.telegram.org/bot' + token +
+          '/getUserProfilePhotos?user_id=' +
+          encodeURIComponent(user.telegramId) + '&limit=1',
+          {signal:controller.signal}
+        );
+
+        if (response.ok) {
+          const photos = await response.json() as any;
+          const sizes = photos?.result?.photos?.[0];
+
+          if (photos.ok && Array.isArray(sizes) && sizes.length) {
+            const candidate = [...sizes].reverse().find(
+              (s:any) => Number(s.file_size||0) <= 180000
+            ) ?? sizes[0];
+
+            const fileResponse = await fetch(
+              'https://api.telegram.org/bot' + token +
+              '/getFile?file_id=' +
+              encodeURIComponent(candidate.file_id),
+              {signal:controller.signal}
+            );
+
+            if (fileResponse.ok) {
+              const file = await fileResponse.json() as any;
+              const filePath = file?.result?.file_path;
+
+              if (file.ok &&
+                  typeof filePath === 'string' &&
+                  /^photos\/[A-Za-z0-9_./-]+\.jpg$/.test(filePath)) {
+                const imageResponse = await fetch(
+                  'https://api.telegram.org/file/bot' +
+                  token + '/' + filePath,
+                  {signal:controller.signal}
+                );
+
+                if (imageResponse.ok) {
+                  const length = Number(
+                    imageResponse.headers.get('content-length')||0
+                  );
+
+                  if (length <= 250000) {
+                    const reader = imageResponse.body?.getReader();
+                    const chunks: Uint8Array[] = [];
+                    let total = 0;
+
+                    if (!reader) throw Error('no_image_body');
+
+                    while (true) {
+                      const part = await reader.read();
+                      if (part.done) break;
+                      total += part.value.byteLength;
+                      if (total > 250000) {
+                        await reader.cancel();
+                        throw Error('image_too_large');
+                      }
+                      chunks.push(part.value);
+                    }
+
+                    const bytes = Buffer.concat(
+                      chunks.map(c => Buffer.from(c))
+                    );
+
+                    if (bytes.length <= 250000 &&
+                        bytes[0] === 0xff &&
+                        bytes[1] === 0xd8) {
+                      photoUrl = 'data:image/jpeg;base64,' +
+                        bytes.toString('base64');
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  } catch (_) {}
+
+  return {
+    ok:true,
+    displayName:[user.firstName,user.lastName]
+      .filter(Boolean).join(' ') || 'کاربر MMTrade',
+    username:user.username||'',
+    photoUrl,
+    activeDays:days,
+    daysMeaning:'membership',
+    active:['REGISTERED','COMPLETE'].includes(
+      user.registrationStatus
+    ),
+    verified:workflow?.challengeParticipant===true,
+    plan,
+    accountStatus:workflow?.challengeParticipant
+      ? 'شرکت‌کننده چالش'
+      : workflow?.copyConnected
+      ? 'کپی‌ترید متصل'
+      : workflow?.depositCompleted
+      ? 'واریز ثبت‌شده'
+      : workflow?.accountCreated
+      ? 'حساب افتتاح‌شده'
+      : 'حساب معاملاتی تأیید نشده'
+  };
+});
+// END_P85R3_PROFILE_LIVE
+
 app.post('/miniapp/profile/save', async (request, reply) => {
   const parsed = z.object({
     initData: z.string().min(1).max(10000),
@@ -4320,3 +6122,7 @@ const shutdown = async () => { await app.close(); await prisma.$disconnect(); pr
 process.once('SIGINT', shutdown); process.once('SIGTERM', shutdown);
 try { await app.listen({ port, host }); app.log.info(`10X API listening on ${host}:${port}`); }
 catch (error) { app.log.error(error); await prisma.$disconnect(); process.exit(1); }
+
+// TENX_P37_311_SECURITY
+
+// TENX_P37_312_PAGINATION_TX

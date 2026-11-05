@@ -22,6 +22,171 @@ th,td{padding:10px;text-align:right;border-bottom:1px solid #254232}
 .ok{color:#50efa4}
 .bad{color:#ff9d9d}
 </style>
+<style id="p54-executive-team">
+
+/* TENX_P54_EXECUTIVE_UI_V1 -- Shared administrative visual language */
+@font-face{font-family:DoranFaNum;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-display:swap;font-style:normal;font-weight:400 900}
+:root{color-scheme:dark;--p54-deep:#07120d;--p54-card:#13281c;--p54-jade:#51d59a;--p54-copper:#d2a977;--p54-line:#315842}
+html{color-scheme:dark;scrollbar-color:#37644b #06140d}
+body{
+ background:radial-gradient(ellipse 75% 50% at 100% 0%,rgba(36,118,77,.23),transparent 70%),
+ radial-gradient(ellipse 60% 48% at 0% 100%,rgba(149,95,52,.14),transparent 73%),
+ linear-gradient(150deg,#06110c,#0b1b12 64%,#07140e)!important;
+ color:#edf8f0!important;font:14px/1.85 "DoranFaNum","Doran",Vazirmatn,Tahoma,Arial,sans-serif!important;
+ min-height:100vh;overflow-x:hidden;
+}
+main{position:relative;max-width:1240px;padding:clamp(15px,2.3vw,34px)!important}
+main>h1{
+ position:relative;overflow:hidden;color:#f3fff4!important;
+ font-size:clamp(22px,3vw,32px)!important;line-height:1.6;
+ padding:22px 24px 27px;margin:7px 0 18px!important;
+ border:1px solid rgba(211,167,103,.4);border-radius:22px;
+ background:linear-gradient(113deg,#173824,#0d2519 70%,#262a1c);
+ box-shadow:0 18px 45px #0005;
+}
+main>h1::after{
+ content:'MATIN FUTURE  /  EXECUTIVE CONTROL';display:block;margin-top:5px;
+ color:#d3ae7d;font:600 10px/1.4 system-ui,sans-serif;letter-spacing:1.4px;
+ direction:ltr;text-align:right;
+}
+.card,section.card{
+ background:linear-gradient(151deg,rgba(20,44,30,.99),rgba(11,28,19,.99))!important;
+ border:1px solid rgba(122,181,138,.28)!important;border-radius:19px!important;
+ box-shadow:0 15px 39px #0005,inset 0 1px 0 rgba(255,255,255,.04)!important;
+ padding:clamp(16px,2vw,23px)!important;margin:14px 0!important;
+}
+.card h2,.card h3{color:#efdfbf;font-weight:800;border-bottom:1px solid rgba(196,158,107,.28);padding-bottom:10px}
+p,.muted,.mut{color:#a5c1ae!important}
+label{color:#cde6d4}
+input:not([type=checkbox]):not([type=radio]),textarea,select{
+ background:#0a1d13!important;border:1px solid #3a684f!important;
+ color:#f2fff6!important;border-radius:12px!important;min-height:44px!important;
+ padding:10px 13px!important;box-shadow:inset 0 2px 8px #0003;
+}
+input::placeholder,textarea::placeholder{color:#8fa996;opacity:1}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{
+ outline:2px solid #d9b27b!important;outline-offset:2px!important;
+}
+button{
+ background:linear-gradient(135deg,#248156,#155b3e)!important;
+ border:1px solid rgba(103,222,157,.51)!important;
+ border-radius:12px!important;padding:10px 16px!important;min-height:44px;
+ font-weight:750!important;color:#f8fff9!important;cursor:pointer;
+ box-shadow:0 6px 17px #0005,inset 0 1px 0 rgba(255,255,255,.12)!important;
+ transition:transform .18s,filter .18s;
+}
+button:not(:disabled):hover{filter:brightness(1.12);transform:translateY(-1px)}
+button.secondary,button.sec{background:#1d3327!important;border-color:#456c50!important;color:#e4f3e8!important}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{gap:11px!important}
+.wrap,.table,.tablewrap{overflow-x:auto;max-width:100%;border:1px solid #31543d;border-radius:15px}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{background:linear-gradient(90deg,#193b2a,#123022)!important;color:#e2be87!important;font-weight:700}
+th,td{padding:13px!important;border-bottom:1px solid #31503b!important}
+tbody tr:hover{background:rgba(42,112,73,.23)}
+.ok,.status{color:#67e8a4!important}.bad,.error{color:#ff969b!important}
+#stats .stat{border:1px solid rgba(105,170,122,.35);border-radius:15px;background:#173625;padding:15px;box-shadow:inset 0 1px 0 #fff1}
+.num{color:#e6c695;font-size:30px!important}
+summary{cursor:pointer;color:#ddc199}
+@media(max-width:720px){
+ body{padding:0!important}main{padding:14px!important}
+ main>h1{padding:16px 17px 22px!important;border-radius:16px}
+ .card{border-radius:15px!important;padding:14px!important}
+ input:not([type=checkbox]):not([type=radio]),textarea,select{max-width:100%!important;min-width:0!important}
+ .row{align-items:stretch;gap:8px!important}
+ .row>*{max-width:100%}
+ th,td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none!important;transform:none!important}}
+/* END TENX_P54_EXECUTIVE_UI_V1 */
+
+</style>
+<style id="p55-imperial-team">
+
+/* TENX_P55_IMPERIAL_RESERVE_V1 -- legacy and team admin shared theme */
+@font-face{font-family:DoranFaNum;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-display:swap;font-style:normal;font-weight:400 900}
+:root{color-scheme:dark;--ir-bg:#070f0c;--ir-card:#12261b;--ir-copper:#bf9678;--ir-ivory:#f0eadd;--ir-line:#3b4c3f}
+html{color-scheme:dark;scrollbar-color:#425a47 #08130c}
+body{
+ background:radial-gradient(ellipse at 100% 0%,rgba(43,93,63,.19),transparent 65%),
+ linear-gradient(155deg,#07110d,#0b1b13 60%,#08140e)!important;
+ color:var(--ir-ivory)!important;
+ font:14px/1.85 "DoranFaNum","Doran",Vazirmatn,Tahoma,Arial,sans-serif!important;
+ min-height:100vh;overflow-x:hidden;
+}
+main{max-width:1240px;padding:clamp(15px,2.3vw,32px)!important}
+main>h1{
+ position:relative;padding:25px 25px 28px;margin:5px 0 18px!important;
+ background:linear-gradient(125deg,#1a3426,#12241b)!important;
+ border:1px solid rgba(194,151,116,.46)!important;
+ border-radius:18px!important;color:#f0e8d9!important;
+ box-shadow:0 17px 44px #0006!important;
+ font-size:clamp(22px,2.7vw,31px)!important;
+}
+main>h1::after{
+ content:'MATIN FUTURE / IMPERIAL RESERVE';display:block;margin-top:9px;
+ color:#bf9678;font:600 10px/1.5 system-ui,sans-serif;letter-spacing:2px;
+ direction:ltr;text-align:right;
+}
+.card,section.card{
+ background:linear-gradient(152deg,#152d21,#0e2017)!important;
+ border:1px solid rgba(180,152,116,.27)!important;
+ border-radius:17px!important;
+ box-shadow:0 13px 34px #0004,inset 0 1px rgba(252,235,197,.035)!important;
+ padding:clamp(16px,2vw,24px)!important;margin:15px 0!important;
+}
+.card h2,.card h3{
+ color:#ead3b7!important;border-bottom:1px solid rgba(194,154,118,.25)!important;
+ padding-bottom:12px;font-weight:800!important;
+}
+p,.muted,.mut{color:#adbead!important}
+label{color:#d4dcca!important}
+input:not([type=checkbox]):not([type=radio]),select,textarea{
+ background:#0a1b12!important;color:#f7f1e6!important;
+ border:1px solid #415747!important;border-radius:11px!important;
+ min-height:44px!important;padding:10px 13px!important;
+ box-shadow:inset 0 1px 5px #0003!important;
+}
+input::placeholder,textarea::placeholder{color:#8fa293!important;opacity:1}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{
+ outline:2px solid #c59b78!important;outline-offset:2px!important;
+}
+button{
+ background:linear-gradient(120deg,#2c6048,#214635)!important;
+ color:#f9f4eb!important;border:1px solid rgba(166,173,133,.52)!important;
+ border-radius:11px!important;padding:10px 16px!important;
+ min-height:44px!important;font-weight:750!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.07),0 5px 16px #0003!important;
+ transition:filter .18s,transform .18s;
+}
+button.secondary,button.sec{background:#1b3426!important;border-color:#796b58!important;color:#e1e4d7!important}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{gap:11px!important}
+.wrap,.table,.tablewrap{max-width:100%;overflow-x:auto;border:1px solid #3d5441!important;border-radius:14px!important}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{
+ background:#1b3427!important;color:#e3bd9b!important;
+ border-bottom:1px solid rgba(193,154,111,.43)!important;font-weight:750!important;
+}
+th,td{padding:13px!important;border-bottom:1px solid rgba(161,178,142,.17)!important}
+tbody tr:hover{background:rgba(53,91,66,.28)!important}
+.ok,.status{color:#a4d4b4!important}.bad,.error{color:#e1a09a!important}
+#stats .stat{background:#1b3527!important;border:1px solid #52644c!important;border-radius:13px!important;padding:17px!important}
+.num{color:#e7d0b3!important;font-size:31px!important}
+summary{color:#d9b99a!important;cursor:pointer}
+@media(max-width:720px){
+ body{padding:0!important}main{padding:14px!important}
+ main>h1{padding:18px!important;border-radius:15px!important}
+ .card{border-radius:14px!important;padding:15px!important}
+ input:not([type=checkbox]):not([type=radio]),select,textarea{min-width:0!important;max-width:100%!important}
+ .row{align-items:stretch;gap:8px!important}
+ .row>*{max-width:100%}
+ th,td{padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none!important;transform:none!important}}
+/* END TENX_P55_IMPERIAL_RESERVE_V1 */
+
+</style>
 </head>
 <body>
 <main>

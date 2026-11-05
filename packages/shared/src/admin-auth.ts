@@ -73,6 +73,8 @@ type Rule = { match: RegExp; read?: readonly AdminRole[]; write?: readonly Admin
 const ALL = ADMIN_ROLES;
 // SUPER_ADMIN always passes. Any route not matched by a rule is SUPER_ADMIN-only (safe default).
 const RULES: Rule[] = [
+  // TENX_P50_GROWTH_AUTH
+  { match: /^\S+ \/admin\/growth(?:\/|$)/, read: ['USER_MANAGER','MARKETING_MANAGER','ANALYST'], write: ['USER_MANAGER','MARKETING_MANAGER'] },
   { match: /^GET \/admin\/auth\/me$/, read: ALL },
   { match: /^GET \/admin\/summary$/, read: ALL },
   { match: /^GET \/admin\/audit-logs$/, read: ['ANALYST'] },

@@ -262,11 +262,40 @@ async function showMainMenu(ctx: any, user: any) {
   });
 }
 
+// === TENX_P50_BOT_ATTRIBUTION_V1_START ===
+const growthBotDefaultCampaigns=[
+  {code:'campaign01',active:true},{code:'blogger01',active:true},
+  {code:'telegram01',active:true},{code:'instagram01',active:true},
+  {code:'matin_channel',active:true},{code:'mohammadjavad_channel',active:true}
+];
+async function growthAttributeStart(ctx:any,userId:string){
+  const raw=String(ctx.match||'').trim();
+  if(!/^c_[a-z0-9_-]{3,32}$/.test(raw))return;
+  const code=raw.slice(2);
+  const row=await prisma.systemSetting.findUnique({where:{key:'TENX_GROWTH_CAMPAIGNS_V1'}});
+  const campaigns=Array.isArray(row?.value)?row.value as any[]:growthBotDefaultCampaigns;
+  if(!campaigns.some((x:any)=>x?.code===code&&x?.active!==false&&!x?.archivedAt&&(!x?.expiresAt||(Number.isFinite(Date.parse(String(x.expiresAt)))&&Date.parse(String(x.expiresAt))>Date.now()))))return; // TENX_P58_CAMPAIGN_LIFECYCLE_V1
+  const current=await prisma.user.findUnique({where:{id:userId},select:{registrationSource:true,registrationStage:true,registeredAt:true,createdAt:true}});
+  if(!current)return;
+  // A campaign must arrive during the initial start, not months after registration.
+  if(current.registeredAt || Date.now()-current.createdAt.getTime()>5*60000)return;
+  // First-touch attribution: a returning user does not overwrite a prior campaign.
+  if(current.registrationSource && !['telegram','unknown',''].includes(current.registrationSource))return;
+  const changed=await prisma.user.updateMany({where:{id:userId,registrationSource:{in:['telegram','unknown','']},createdAt:{gte:new Date(Date.now()-5*60000)},registeredAt:null},
+    data:{registrationSource:'campaign:'+code}});
+  if(changed.count){
+    await prisma.registrationStageEvent.create({data:{userId,stage:current.registrationStage,detail:{source:'campaign:'+code,tracking:'P50_FIRST_TOUCH'}}});
+  }
+}
+// === TENX_P50_BOT_ATTRIBUTION_V1_END ===
+
+
 bot.command('start', async ctx => {
   if (!ctx.from) return;
   if (ctx.chat?.type !== 'private') { await ctx.reply('برای ثبت‌نام و اشتراک‌گذاری امن شماره تلفن، لطفاً ربات را در گفتگوی خصوصی باز کن و /start را بزن.'); return; }  
   try {
     const user = await upsertTelegramUser(ctx);
+    await growthAttributeStart(ctx,user.id).catch(e=>console.error('growth_attribution_failed',e));
     const settings = await getBotSettings();
     const defaultWelcome = `به 10X خوش آمدی، ${ctx.from.first_name || 'دوست عزیز'}!\n\n10X یک مسیر آموزشی برای یادگیری بازار رمزارز، مدیریت ریسک و تمرین مسئولانه است. هیچ سودی تضمین نمی‌شود و معامله‌گری می‌تواند به از دست رفتن سرمایه منجر شود.`;
     const welcome = settings.dynamicConfig.welcomeMessage;
