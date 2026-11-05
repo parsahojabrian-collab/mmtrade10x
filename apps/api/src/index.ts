@@ -4061,7 +4061,7 @@ const blockSchema = z.discriminatedUnion('type', [
     type: z.literal('element'),
     selector: z.string().trim().min(1).max(500),
     deleted: z.boolean().optional(),
-    text: z.string().max(3000).optional(),
+    text: z.string().max(48000).optional(), // Object Studio layer configuration shares the P74 element marker.
     href: safeLink.optional(),
     src: safeLink.optional(),
     alt: z.string().max(200).optional(),

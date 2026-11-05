@@ -758,7 +758,7 @@ const TENX_P51_GROUPS = [
   {id:'reports',name:'داشبورد و گزارش‌ها',symbol:'▦',keys:['overview']},
   {id:'people',name:'کاربران و ارتباطات',symbol:'♙',keys:['users','tickets','outreach','notifications','followups']},
   {id:'marketing',name:'تبلیغات و کمپین‌ها',symbol:'◎',keys:['growth','campaigns','campaign','tracking','advertising','referrals','marketing']},
-  {id:'content',name:'محتوای مینی‌اپ',symbol:'▤',keys:['pages','organizers','homeLinks','bottomNav','editor','media','popups']},
+  {id:'content',name:'محتوای مینی‌اپ',symbol:'▤',keys:['pages','objectStudio','organizers','homeLinks','bottomNav','editor','media','popups']},
   {id:'academy',name:'آکادمی و چالش',symbol:'◇',keys:['academy','progress','challenges','challenge']},
   {id:'robot',name:'ربات و تنظیمات',symbol:'⌘',keys:['bot','settings','integrations']},
   {id:'security',name:'مدیران و امنیت',symbol:'◈',keys:['admins','audit','roles','permissions','sectionPermissions']}
@@ -776,7 +776,7 @@ function TENX_P51_RENDER_MENU(entries, navigate, adminIdentity) {
   const groups=TENX_P51_GROUPS.map(g=>({...g,items:[]}));
   const used=new Set();
   entries.forEach(m=>{
-    let target=groups.find(g=>g.keys.includes(m[0]));
+    let target=groups.find(g=>Array.isArray(g.keys)&&g.keys.includes(m[0]));
     if(!target) {
       const key=String(m[0]||'').toLowerCase(), label=String(m[1]||'');
       if(/campaign|track|growth|referr|تبلیغ|کمپین|رهگیری/.test(key+' '+label))target=groups.find(g=>g.id==='marketing');
@@ -785,7 +785,7 @@ function TENX_P51_RENDER_MENU(entries, navigate, adminIdentity) {
     }
     if(!target) {
       target=groups.find(g=>g.id==='other');
-      if(!target){target={id:'other',name:'سایر بخش‌ها',symbol:'⋯',items:[]};groups.push(target);}
+      if(!target){target={id:'other',name:'سایر بخش‌ها',symbol:'⋯',keys:[],items:[]};groups.push(target);}
     }
     if(used.has(m[0]))return;
     used.add(m[0]);
@@ -834,7 +834,7 @@ function TENX_P51_RENDER_MENU(entries, navigate, adminIdentity) {
 }
 /* END TENX_P51_OWNER_TREE_MENU_V1 */
 
-const MENU=[['overview','نمای کلی',null],['growthAnalytics','تحلیل پیشرفته Imperial Reserve',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['growth','داشبورد کاربران و کمپین‌ها',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['bot','مدیریت ربات',['SUPER_ADMIN']],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['progress','مسیر پیشرفت',['SUPER_ADMIN']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['organizers','برگزارکنندگان چالش',['CONTENT_MANAGER']],['homeLinks','لینک‌های صفحه اصلی',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['sectionPermissions','مدیران سه‌بخشی',['SUPER_ADMIN']],['admins','مدیران و نقش‌ها',[]],['telegramTeam','مدیران تلگرام',['SUPER_ADMIN']],['eplanetWorkflow','تأیید ePlanet',['SUPER_ADMIN']],['bottomNav','نوار پایین Mini App',['SUPER_ADMIN','CONTENT_MANAGER']],['settings','تنظیمات',[]]];
+const MENU=[['overview','نمای کلی',null],['growthAnalytics','تحلیل پیشرفته Imperial Reserve',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['growth','داشبورد کاربران و کمپین‌ها',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['bot','مدیریت ربات',['SUPER_ADMIN']],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['progress','مسیر پیشرفت',['SUPER_ADMIN']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['objectStudio','Object Studio هوم',['SUPER_ADMIN']],['organizers','برگزارکنندگان چالش',['CONTENT_MANAGER']],['homeLinks','لینک‌های صفحه اصلی',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['sectionPermissions','مدیران سه‌بخشی',['SUPER_ADMIN']],['admins','مدیران و نقش‌ها',[]],['telegramTeam','مدیران تلگرام',['SUPER_ADMIN']],['eplanetWorkflow','تأیید ePlanet',['SUPER_ADMIN']],['bottomNav','نوار پایین Mini App',['SUPER_ADMIN','CONTENT_MANAGER']],['settings','تنظیمات',[]]];
 const P60_MENU_SCOPES={users:'users',tickets:'users',outreach:'users',
  growth:'marketing',growthAnalytics:'marketing',academy:'academy',progress:'academy'};
 const ok=m=>{
@@ -848,6 +848,18 @@ const ok=m=>{
 const ROLES=['SUPER_ADMIN','USER_MANAGER','SUPPORT','CONTENT_MANAGER','ACADEMY_MANAGER','CHALLENGE_MANAGER','ANALYST','MARKETING_MANAGER'];
 function table(cols,rows,onrow){return h('div',{class:'tbl'},h('table',{},h('thead',{},h('tr',{},cols.map(c=>h('th',{},c[0])))),h('tbody',{},rows.map(r=>h('tr',{class:onrow?'cl':'',onclick:onrow?()=>onrow(r):null},cols.map(c=>h('td',{},c[1](r))))))))}
 function generic(items){if(!items.length)return h('p',{class:'mut'},'موردی ثبت نشده است.');const ks=Object.keys(items[0]);return table(ks.map(k=>[k,r=>typeof r[k]==='object'&&r[k]?JSON.stringify(r[k]):String(r[k]??'—')]),items)}
+async function navigateManagement(id){
+  if(id==='objectStudio'){
+    if(me?.role!=='SUPER_ADMIN')return;
+    await show('pages');
+    if(cur==='pages'&&typeof window.MMTradeObjectStudioOpen==='function'){
+      await window.MMTradeObjectStudioOpen();
+      document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.id==='n-objectStudio'));
+    }
+    return;
+  }
+  return show(id);
+}
 async function boot(){
 try{me=await api('/auth/me')}catch(e){token='';try{sessionStorage.removeItem('tenx_admin_token')}catch(_e){}$('#app').classList.add('hide');$('#login').classList.remove('hide');$('#lerr').textContent='ورود مجدد لازم است: '+e.message;return}
 $('#login').classList.add('hide');
@@ -867,7 +879,8 @@ if(editorMatch){
     return;
   }
   document.body.classList.add('tenx-editor-standalone');
-  $('#nav').replaceChildren();
+  // Desktop editor retains the complete management navigation; mobile stays focused.
+  TENX_P51_RENDER_MENU(MENU.filter(ok),id=>location.assign('/admin#'+encodeURIComponent(id)),me);
   $('#title').textContent='ویرایشگر صفحه · '+slug;
   $('#view').textContent='در حال بارگذاری ویرایشگر…';
   try{
@@ -879,13 +892,18 @@ if(editorMatch){
   return;
 }
 
-TENX_P51_RENDER_MENU(MENU.filter(ok), show, me);
-const p60First=MENU.find(ok);if(p60First)show(p60First[0]);else $('#view').replaceChildren(h('div',{class:'card'},'برای این حساب دسترسی فعالی تعریف نشده است.'));
+TENX_P51_RENDER_MENU(MENU.filter(ok), navigateManagement, me);
+let menuTarget='';
+try{menuTarget=decodeURIComponent(location.hash.slice(1))}catch(_e){}
+const p60First=MENU.find(m=>m[0]===menuTarget&&ok(m))||MENU.find(ok);
+if(p60First)navigateManagement(p60First[0]);else $('#view').replaceChildren(h('div',{class:'card'},'برای این حساب دسترسی فعالی تعریف نشده است.'));
 }
 let mfViewRequest=0;
 async function show(id){
   if(!VIEWS[id]&&id!=='bot')return;
   const requestId=++mfViewRequest;
+  // Dispose the full-page mountain editor when navigating to another section.
+  window.MMTradeObjectStudioClose?.();
   cur=id;
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.id==='n-'+id));
   const entry=MENU.find(m=>m[0]===id);
@@ -2491,8 +2509,12 @@ async pages(){
  const box=h('div',{});
  const intro=h('div',{class:'card'},h('h3',{},'مدیریت صفحات و پاپ‌آپ‌ها · Studio P40'),
   h('p',{class:'p40-pages-intro'},'فقط صفحه‌هایی که فایل واقعی یا مقصد معتبر در Mini App دارند، در لیست اصلی نمایش داده می‌شوند. رکوردهای بدون صفحه، خودکار از دیتابیس پاک نمی‌شوند.'));
- box.append(intro);
- const pageRows=enabled.map(r=>({ ...r,_audit:MF_P40_PAGE_STATUS[r.slug]||{} }));
+  box.append(intro);
+  if(me?.role==='SUPER_ADMIN')box.append(h('section',{class:'card',style:'margin:12px 0;border:1px solid #b99968;background:linear-gradient(120deg,#0c3025,#10211c);color:#f6eee3'},
+    h('h3',{},'ویرایش هوم · MMTrade Object Studio'),
+    h('p',{},'ویرایش تمام‌صفحه کوه، پله‌ها، آبجکت‌ها، انیمیشن‌ها و پوستر ویدیو؛ با ذخیره پیش‌نویس و انتشار جداگانه.'),
+    h('button',{type:'button',onclick:()=>window.MMTradeObjectStudioOpen?.()},'ورود به ویرایشگر تمام‌صفحه هوم')));
+  const pageRows=enabled.map(r=>({ ...r,_audit:MF_P40_PAGE_STATUS[r.slug]||{} }));
  box.append(h('div',{class:'card',style:'margin:12px 0'},
    h('h3',{},'صفحه‌های قابل ویرایش · '+enabled.length),
    pageRows.length?table([
@@ -6375,7 +6397,7 @@ function render(){
  if(button)button.disabled=!authorized||opening;
  if(status){status.textContent=(authorized?'✓ دسترسی سوپرادمین تأیید شد':authStatus)+(role?' | نقش پنل: '+role:'')}
  if(detail)detail.textContent=errorText;
- if(authorized && !document.getElementById('mf62-studio')){
+ if(authorized && !document.getElementById('mf62-studio') && !document.body.classList.contains('mm-object-fullpage')){
   var title=document.getElementById('title');
   var pages=title&&/صفحه‌ها|صفحات|پاپ‌آپ|ویرایشگر/.test(title.textContent||'');
   var view=document.getElementById('view');
@@ -6574,6 +6596,30 @@ window.addEventListener('beforeunload',e=>{if(!dirty)return;e.preventDefault();e
 
 </script>
 
+<!-- MMTrade desktop nav: keep management sidebar alongside the standalone page editor. -->
+<style id="mmtrade-desktop-nav-r1">
+@media (min-width:801px){
+  html body.tenx-editor-standalone #app:not(.hide){
+    display:grid!important;
+    grid-template-columns:clamp(220px,20vw,285px) minmax(0,1fr)!important;
+    align-items:start;
+  }
+  html body.tenx-editor-standalone #app:not(.hide)>aside,
+  html body:not(.tenx-editor-standalone) #app:not(.hide)>aside{
+    display:block!important;visibility:visible!important;
+    width:auto!important;height:100vh!important;
+    position:sticky!important;top:0!important;
+    overflow-x:hidden!important;overflow-y:auto!important;
+  }
+  html body.tenx-editor-standalone #app:not(.hide)>main{
+    min-width:0!important;width:100%!important;padding:12px 18px!important;
+  }
+  #app:not(.hide)>aside #nav{min-width:0!important;}
+}
+@media (max-width:800px){
+  html body.tenx-editor-standalone #app#app:not(.hide)>aside:has(#nav.tenx-p51-tree){display:none!important;}
+}
+</style>
 <!-- P74_HOME_MATCH_R1 ADMIN START -->
 <style id="p74-studio-style">
 /* P74_HOME_MATCH_R1 inline admin Studio UI */
@@ -6611,11 +6657,122 @@ window.addEventListener('beforeunload',e=>{if(!dirty)return;e.preventDefault();e
 .p76-step-actions{display:flex;flex-wrap:wrap;gap:7px}
 .p76-step-zone .p74admin-group{border-color:#b58e6575}
 
+
+/* Home Object Studio: full page inside the Pages & Popups workspace, not a modal. */
+body.mm-object-fullpage #mf65-dock,body.mm-object-fullpage #mf65-pageentry{display:none!important}
+.p74admin-page{position:relative;width:100%;min-width:0;direction:rtl;color:#f3eee7;background:#071c16;border:1px solid #a98d69;border-radius:16px;padding:12px;box-sizing:border-box}
+.p74admin-page .p74admin-panel{width:100%;max-width:none;height:auto;min-height:calc(100dvh - 200px);overflow:visible;border:0;border-radius:0;padding:8px;box-shadow:none;background:transparent}
+.p74admin-page .p74admin-layout{grid-template-columns:minmax(300px,1fr) minmax(310px,1fr);min-height:680px;align-items:start}
+.p74admin-page .p74admin-form{overflow:visible;max-height:none;min-height:0}
+.p74admin-page .p74admin-screen{position:sticky;top:14px;height:min(80dvh,950px);min-height:450px}
+.p74admin-page .p74admin-preview{height:100%;min-height:350px}
+.p74admin-page .p74admin-actions{position:sticky;bottom:6px;background:#0d281fef;padding:8px;border:1px solid #8e7458;border-radius:12px;z-index:5}
+.p74admin-page .p74admin-field input{min-width:0}
+@media(max-width:820px){.p74admin-page{padding:6px}.p74admin-page .p74admin-panel{min-height:0;padding:5px}.p74admin-page .p74admin-layout{display:flex;flex-direction:column;gap:8px;min-height:0}.p74admin-page .p74admin-screen{order:0;position:relative;top:auto;width:100%;height:min(65dvh,650px);min-height:320px}.p74admin-page .p74admin-form{order:1;width:100%;overflow:visible}.p74admin-page .p74admin-actions{flex-wrap:wrap;justify-content:center}}
+/* Object Studio controls */
+.mm-object-studio{border-color:#6ec19c!important;background:#071c16!important}
+.mm-object-studio .mm-base-warning{color:#f6d0a4;border:1px solid #b8805677;background:#2d2117;padding:9px;border-radius:9px;font-size:12px;line-height:1.8}
+.mm-object-studio .mm-object-buttons{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0}
+.mm-object-studio .mm-object-buttons button{font-size:12px;padding:6px 9px}
+.mm-object-studio .mm-object-list{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto;margin-top:8px}
+.mm-object-studio .mm-object-row{display:flex;gap:4px;padding:4px;border:1px solid #2b6350;border-radius:9px}
+.mm-object-studio .mm-object-row.mm-selected{border-color:#f5c28e;background:#1e3b2f}
+.mm-object-studio .mm-object-row button{padding:4px 8px;font-size:11px}
+.mm-object-studio .mm-object-pick{flex:1;text-align:right;min-width:0}
+.mm-object-studio .mm-object-inspector{margin-top:12px;border-top:1px solid #618a70;padding-top:12px}
+.mm-object-studio .mm-object-inspector h3{font-size:14px}
+.mm-object-studio .mm-object-select{width:100%;border:1px solid #5d806c;color:#fff;background:#09251b;border-radius:7px;padding:8px}
+.mm-object-studio .mm-object-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.mm-object-studio .mm-object-stage{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px;background:#09231c;border-radius:8px;font-size:12px}
+.mm-object-studio .mm-object-stage label{display:flex;gap:3px;align-items:center;white-space:nowrap}
+.mm-object-studio .mm-object-background{border:1px dashed #997c57;padding:8px;border-radius:9px}
+.mm-object-studio input[type=color]{height:37px;padding:3px}
+
+/* Full-page Object Studio: high-contrast video poster controls. */
+.p74admin-page .mm-poster-group{background:#102d24!important;border:2px solid #cbad79!important;color:#f9f3e8!important;padding:16px!important;overflow:visible}
+.p74admin-page .mm-poster-group h3{color:#ffdda7!important;font-size:18px!important;font-weight:800!important;line-height:1.6!important}
+.p74admin-page .mm-poster-group .p74admin-info{color:#f2ede2!important;font-size:14px!important;line-height:1.9!important;margin:9px 0!important}
+body #view .p74admin-page .p74admin-panel button.mm-poster-upload{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:54px!important;margin:12px 0!important;padding:12px 16px!important;background:linear-gradient(135deg,#ffe0a3,#c78d4b)!important;border:2px solid #ffebbf!important;border-radius:13px!important;color:#12251d!important;font-size:16px!important;font-weight:900!important;line-height:1.55!important;text-align:center!important;white-space:normal!important;cursor:pointer!important;opacity:1!important}
+body #view .p74admin-page .p74admin-panel button.mm-poster-upload:hover{filter:brightness(1.08)}
+body #view .p74admin-page .p74admin-panel button.mm-poster-upload:focus-visible{outline:3px solid #58ffc4!important;outline-offset:3px}
+.p74admin-page .mm-poster-group .mm-poster-preview{display:block;width:100%;max-width:520px;aspect-ratio:12/5;object-fit:cover;background:#061710;border:1px solid #c8a16c;border-radius:12px;margin:10px auto}
+.p74admin-page .mm-poster-group .p74admin-field{color:#f8eddf!important;font-size:14px!important;font-weight:700!important;line-height:1.5!important}
+.p74admin-page .mm-poster-group .p74admin-field input{background:#071914!important;color:#fff!important;border:1px solid #8ac2a6!important;font-size:16px!important;min-height:44px!important}
+@media(max-width:820px){.p74admin-page .mm-poster-group{padding:12px!important}body #view .p74admin-page .p74admin-panel button.mm-poster-upload{font-size:16px!important;min-height:56px!important}}
+
+
+/* MM_OBJECT_ACCORDION_R1 */
+.p74admin-group{
+ display:block;
+ overflow:hidden;
+ transition:border-color .18s ease,background .18s ease;
+}
+.p74admin-group>summary.mm-object-accordion-title{
+ list-style:none;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ min-height:42px;
+ margin:-10px;
+ padding:10px;
+ cursor:pointer;
+ user-select:none;
+}
+.p74admin-group>summary.mm-object-accordion-title::-webkit-details-marker{
+ display:none;
+}
+.p74admin-group>summary.mm-object-accordion-title h3{
+ margin:0;
+ color:#f3bc80;
+ font-size:14px;
+ font-weight:850;
+}
+.p74admin-group>summary.mm-object-accordion-title::after{
+ content:'＋';
+ display:grid;
+ place-items:center;
+ width:25px;
+ height:25px;
+ flex:0 0 25px;
+ border:1px solid #668d72;
+ border-radius:8px;
+ color:#b9f2d0;
+ background:#09251b;
+}
+.p74admin-group[open]>summary.mm-object-accordion-title{
+ margin-bottom:8px;
+ border-bottom:1px solid #618a704d;
+}
+.p74admin-group[open]>summary.mm-object-accordion-title::after{
+ content:'−';
+}
+.p74admin-group>summary.mm-object-accordion-title:focus-visible{
+ outline:2px solid #58ffc4;
+ outline-offset:-2px;
+ border-radius:8px;
+}
+
+
+/* P77_PAGE_ELEMENT_EDITOR_R1 */
+.p74admin-page .mm-page-editor-list{display:flex;flex-direction:column;gap:5px}
+.mm-page-element-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;max-height:230px;overflow:auto;margin:9px 0}
+.mm-page-element-row{min-width:0}
+.mm-page-element-row button{width:100%;min-width:0;text-align:right;font-size:12px;padding:7px}
+.mm-page-element-inspector{border-top:1px solid #618a70;padding-top:10px;margin-top:10px}
+.mm-page-selected-title{display:block;color:#ffdda7;margin:5px 0 10px;font-size:14px}
+.mm-page-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.mm-page-editor .mm-object-select{width:100%}
+.mm-page-editor input[type=color]{height:38px;padding:3px}
+@media(max-width:520px){.mm-page-element-list{grid-template-columns:1fr}}
 </style>
+<script src="/miniapp/p74/object-model.js?v=OBJECT_STUDIO_R1"></script>
+<script src="/miniapp/p74/image-optimizer.js?v=OBJECT_STUDIO_OPTIMIZE_R2"></script>
 <script id="p74-studio-script">
 /* P76 dynamic stage editor: 3..8 stage overlays, existing P74 Home draft/publish only. */
 (function(){'use strict';if(window.__P74_STUDIO__)return;window.__P74_STUDIO__=true;
 const MARK='#p74-home-config',TOKEN='tenx_admin_token';
+if(!window.MMTradeObjectModel)throw Error('Object Studio model was not loaded');
 const SEED=[
  ['شروع چالش','/miniapp/challenge.html'],['آموزش‌های کلیدی','/miniapp/academy.html'],
  ['تمرین و اجرا','/miniapp/challenge.html'],['مدیریت ریسک','/miniapp/copy-trading.html'],
@@ -6625,6 +6782,7 @@ const DEF={version:74,enabled:true,brand:'MM trade challenge 10x',tagline:'چا�
  heroEyebrow:'ویدیوی معرفی چالش',heroTitle:'چالش MM',heroSubtitle:'رشد ۱۰ برابری',
  journeyTitle:'مسیر 10X تو از اینجا شروع می‌شود',journeySubtitle:'یک مسیر مرحله‌به‌مرحله برای رشد مهارت، اعتمادبه‌نفس و سرمایه',
  videoUrl:'https://dl.namahub.ir/parsahojabrian/W0OGUlGh',videoDuration:'07:46',
+ videoPoster:'/miniapp/p74/assets/hero_poster.webp',videoFrameWidth:92.8,videoFrameHeight:17.1,videoFrameTop:16.5,
  progressTitle:'پیشرفت شما در چالش',progressHref:'/miniapp/profile.html',ctaText:'مرحله بعدی چالش',ctaHref:'/miniapp/challenge.html',
  stepCount:5,steps:[],nav:[{title:'خانه',href:'/miniapp/index.html'},{title:'آکادمی',href:'/miniapp/academy.html'},{title:'پروفایل',href:'/miniapp/profile.html'}]};
 const el=(t,c='',txt)=>{let a=document.createElement(t);if(c)a.className=c;if(txt!==undefined)a.textContent=txt;return a};
@@ -6640,32 +6798,332 @@ function token(){try{return sessionStorage.getItem(TOKEN)||''}catch(e){return''}
 async function api(route,options={}){if(!token())throw Error('ابتدا وارد پنل شوید');const r=await fetch('/admin'+route,{...options,headers:{'content-type':'application/json',authorization:'Bearer '+token()}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||d.message||'HTTP '+r.status);return d}
 function decodeMarker(blocks){const m=(Array.isArray(blocks)?blocks:[]).filter(b=>b?.type==='element'&&b.selector===MARK);
 if(m.length>1)throw Error('تنظیمات تکراری Home');if(!m.length)return null;let v;try{v=JSON.parse(m[0].text)}catch(e){throw Error('تنظیمات ذخیره‌شده معتبر نیست')};if(v.version!==74)throw Error('نسخه تنظیمات ناسازگار');return v}
-function normalize(raw){const a=clone(DEF);if(!raw||typeof raw!=='object'){a.steps=a.steps.slice(0,5).map((s,i)=>({...s,position:layout(5)[i]}));return a}
- for(const key of ['enabled','brand','tagline','heroEyebrow','heroTitle','heroSubtitle','journeyTitle','journeySubtitle','videoUrl','videoDuration','progressTitle','progressHref','ctaText','ctaHref'])if(raw[key]!==undefined)a[key]=raw[key];
+
+/* P77 page editor config normalization */
+function normalizePageLayout(raw){
+ const out={};if(!raw||typeof raw!=='object')return out;
+ for(const [id,v] of Object.entries(raw).slice(0,40)){
+  if(!/^[a-z0-9_-]{1,48}$/i.test(id)||!v||typeof v!=='object')continue;
+  const x=clamp(v.x,0,99),y=clamp(v.y,0,99);
+  out[id]={x,y,w:clamp(v.w,1,100-x),h:clamp(v.h,1,100-y)};
+ }
+ return out;
+}
+function normalizePageStyles(raw){
+ const out={};if(!raw||typeof raw!=='object')return out;
+ for(const [id,v] of Object.entries(raw).slice(0,40)){
+  if(!/^[a-z0-9_-]{1,48}$/i.test(id)||!v||typeof v!=='object')continue;
+  const s={};
+  for(const k of ['color','background','borderColor'])
+   if(typeof v[k]==='string'&&/^#[0-9a-f]{6}$/i.test(v[k]))s[k]=v[k];
+  for(const [k,min,max] of [['fontSize',8,72],['borderRadius',0,60],
+   ['opacity',0.1,1],['padding',0,48],['letterSpacing',-2,8]]){
+   if(v[k]!==undefined)s[k]=clamp(v[k],min,max);
+  }
+  if([400,700,800].includes(Number(v.fontWeight)))s.fontWeight=Number(v.fontWeight);
+  if(['right','center','left'].includes(v.textAlign))s.textAlign=v.textAlign;
+  if(Object.keys(s).length)out[id]=s;
+ }
+ return out;
+}
+const PAGE_EDITOR_ITEMS=[
+ {id:'brand',title:'بخش برند'},
+ {id:'brand-logo',title:'نشان برند'},
+ {id:'brand-name',title:'نام برند',key:'brand'},
+ {id:'brand-sub',title:'زیرعنوان برند',key:'tagline'},
+ {id:'hero',title:'کادر معرفی ویدیو'},
+ {id:'hero-copy',title:'ناحیه متن ویدیو'},
+ {id:'hero-eyebrow',title:'برچسب ویدیو',key:'heroEyebrow'},
+ {id:'hero-title',title:'عنوان ویدیو',key:'heroTitle'},
+ {id:'hero-subtitle',title:'توضیح ویدیو',key:'heroSubtitle'},
+ {id:'hero-underline',title:'خط تزئینی ویدیو'},
+ {id:'hero-play',title:'دکمه پخش ویدیو'},
+ {id:'hero-badge',title:'زمان ویدیو',key:'videoDuration'},
+ {id:'journey-title',title:'عنوان مسیر',key:'journeyTitle'},
+ {id:'journey-subtitle',title:'توضیح مسیر',key:'journeySubtitle'},
+ {id:'progress-card',title:'کادر پیشرفت',linkKey:'progressHref'},
+ {id:'progress-arrow',title:'فلش پیشرفت',linkKey:'progressHref'},
+ {id:'progress-content',title:'متن پیشرفت'},
+ {id:'progress-title',title:'عنوان پیشرفت',key:'progressTitle'},
+ {id:'progress-ring',title:'دایره درصد پیشرفت'},
+ {id:'cta',title:'دکمه اصلی پایین صفحه',linkKey:'ctaHref'},
+ {id:'cta-chevron',title:'فلش دکمه اصلی',linkKey:'ctaHref'},
+ {id:'cta-text',title:'متن دکمه اصلی',key:'ctaText',linkKey:'ctaHref'},
+ {id:'cta-icon',title:'آیکون دکمه اصلی',linkKey:'ctaHref'},
+ {id:'nav',title:'نوار منوی پایین'},
+ {id:'nav-item-1',title:'آیتم اول منو',navIndex:0},
+ {id:'nav-item-1-text',title:'متن آیتم اول',navIndex:0,key:'title'},
+ {id:'nav-item-2',title:'آیتم دوم منو',navIndex:1},
+ {id:'nav-item-2-text',title:'متن آیتم دوم',navIndex:1,key:'title'},
+ {id:'nav-item-3',title:'آیتم سوم منو',navIndex:2},
+ {id:'nav-item-3-text',title:'متن آیتم سوم',navIndex:2,key:'title'}
+];
+function selectedPageItem(){return PAGE_EDITOR_ITEMS.find(x=>x.id===selectedPageElementId)||null}
+function pageElementObject(def){return def?.navIndex!==undefined?config.nav[def.navIndex]:config}
+function selectPageElement(id){
+ selectedPageElementId=id;selectedPageGeometry=config.pageLayout?.[id]||null;
+ refreshPageElementEditor();
+ frame?.contentWindow?.postMessage({type:'P74_PAGE_ELEMENT_SELECT',id},location.origin);
+}
+function refreshPageElementEditor(){
+ if(!pageElementList||!pageElementInspector||!config)return;
+ pageElementList.replaceChildren();pageElementInspector.replaceChildren();
+ for(const def of PAGE_EDITOR_ITEMS){
+  const row=el('div','mm-page-element-row');
+  const pick=objectButton(def.title,()=>selectPageElement(def.id),
+   'mm-object-pick'+(selectedPageElementId===def.id?' mm-selected':''));
+  row.append(pick);pageElementList.append(row);
+ }
+ const def=selectedPageItem();
+ if(!def){
+  pageElementInspector.append(el('p','p74admin-info',
+   'یک عنصر را از فهرست انتخاب کن یا مستقیماً روی پیش‌نمایش آن را لمس کن.'));
+  return;
+ }
+ pageElementInspector.append(el('strong','mm-page-selected-title','انتخاب‌شده: '+def.title));
+ const contentGroup=heading(pageElementInspector,'محتوا و لینک');
+ const obj=pageElementObject(def);
+ if(def.key)input(contentGroup,'متن یا عنوان',obj,def.key);
+ if(def.linkKey)input(contentGroup,'لینک مقصد',config,def.linkKey,'url');
+ if(def.navIndex!==undefined)input(contentGroup,'لینک مقصد',obj,'href','url');
+ const geometryGroup=heading(pageElementInspector,'موقعیت و اندازه');
+ geometryGroup.append(el('p','p74admin-info',
+  'مقادیر درصدی‌اند. موقعیت نسبت به والد عنصر ذخیره می‌شود و با اندازه صفحه تطبیق پیدا می‌کند.'));
+ const g=selectedPageGeometry||config.pageLayout?.[def.id];
+ if(g){
+  const grid=el('div','mm-page-editor-grid');
+  for(const [key,label,min,max] of [
+   ['x','موقعیت افقی X (%)',0,99],['y','موقعیت عمودی Y (%)',0,99],
+   ['w','عرض (%)',1,100],['h','ارتفاع (%)',1,100]
+  ]){
+   const lab=el('label','p74admin-field');lab.append(el('span','',label));
+   const field=el('input');field.type='number';field.step='0.1';
+   field.min=String(min);field.max=String(max);field.value=String(g[key]);
+   field.addEventListener('change',()=>{
+    const current={...(config.pageLayout[def.id]||g)};
+    current[key]=clamp(field.value,min,max);
+    current.w=clamp(current.w,1,100-current.x);
+    current.h=clamp(current.h,1,100-current.y);
+    config.pageLayout[def.id]=current;selectedPageGeometry=current;
+    refreshPageElementEditor();preview();
+   });
+   lab.append(field);grid.append(lab);
+  }
+  geometryGroup.append(grid);
+ }else{
+  geometryGroup.append(el('p','p74admin-info',
+   'برای خواندن مختصات فعلی، عنصر را یک‌بار در پیش‌نمایش انتخاب کن.'));
+ }
+ const style=config.pageStyles[def.id]||(config.pageStyles[def.id]={});
+ const appearance=heading(pageElementInspector,'رنگ و ظاهر');
+ for(const [key,label,fallback] of [
+  ['color','رنگ متن یا عنصر','#ffffff'],
+  ['background','رنگ پس‌زمینه','#123b2c'],
+  ['borderColor','رنگ کادر','#d7b17d']
+ ]){
+  const lab=el('label','p74admin-field');lab.append(el('span','',label));
+  const pick=el('input');pick.type='color';pick.value=style[key]||fallback;
+  pick.addEventListener('input',()=>{style[key]=pick.value;preview()});
+  lab.append(pick);appearance.append(lab);
+ }
+ const typography=heading(pageElementInspector,'تایپوگرافی و افکت');
+ const addNumber=(key,label,min,max,step)=>{
+  const lab=el('label','p74admin-field');lab.append(el('span','',label));
+  const field=el('input');field.type='number';field.min=String(min);
+  field.max=String(max);field.step=String(step);
+  field.value=style[key]===undefined?'':String(style[key]);
+  field.placeholder='بدون تغییر';
+  field.addEventListener('change',()=>{
+   if(field.value===''){delete style[key]}else style[key]=clamp(field.value,min,max);
+   preview();
+  });
+  lab.append(field);typography.append(lab);
+ };
+ addNumber('fontSize','اندازه فونت (px)',8,72,1);
+ addNumber('borderRadius','گردی گوشه‌ها (px)',0,60,1);
+ addNumber('opacity','شفافیت (۰٫۱ تا ۱)',0.1,1,0.05);
+ addNumber('padding','فاصله داخلی (px)',0,48,1);
+ addNumber('letterSpacing','فاصله حروف (px)',-2,8,0.1);
+ const weight=el('label','p74admin-field');weight.append(el('span','','ضخامت فونت'));
+ const select=el('select','mm-object-select');
+ for(const [value,label] of [['400','معمولی'],['700','ضخیم'],['800','خیلی ضخیم']]){
+  const option=el('option','',label);option.value=value;select.append(option);
+ }
+ select.value=String(style.fontWeight||700);
+ select.addEventListener('change',()=>{style.fontWeight=Number(select.value);preview()});
+ weight.append(select);typography.append(weight);
+ const align=el('label','p74admin-field');align.append(el('span','','تراز متن'));
+ const alignSelect=el('select','mm-object-select');
+ for(const [value,label] of [['right','راست'],['center','وسط'],['left','چپ']]){
+  const option=el('option','',label);option.value=value;alignSelect.append(option);
+ }
+ alignSelect.value=style.textAlign||'right';
+ alignSelect.addEventListener('change',()=>{style.textAlign=alignSelect.value;preview()});
+ align.append(alignSelect);typography.append(align);
+}
+function buildPageElementEditor(){
+ const group=heading(form,'ویرایش مستقیم عناصر صفحه');group.classList.add('mm-page-editor');
+ group.append(el('p','p74admin-info',
+  'عنصر را مستقیماً از پیش‌نمایش انتخاب کن. با کشیدن آن جابه‌جا می‌شود و دستگیره گوشه، اندازه را تغییر می‌دهد.'));
+ pageElementList=el('div','mm-page-element-list');group.append(pageElementList);
+ pageElementInspector=el('section','mm-page-element-inspector');group.append(pageElementInspector);
+ refreshPageElementEditor();
+}
+
+function normalize(raw){const a=clone(DEF);if(!raw||typeof raw!=='object'){a.steps=a.steps.slice(0,5).map((s,i)=>({...s,position:layout(5)[i]}));a.objects=window.MMTradeObjectModel.normalizeObjects();a.backgrounds={};a.pageLayout={};a.pageStyles={};return a}
+ for(const key of ['enabled','brand','tagline','heroEyebrow','heroTitle','heroSubtitle','journeyTitle','journeySubtitle','videoUrl','videoDuration','videoPoster','progressTitle','progressHref','ctaText','ctaHref'])if(raw[key]!==undefined)a[key]=raw[key];
+ a.videoPoster=OBJECT.assetUrl(raw.videoPoster)||DEF.videoPoster;
+ for(const [k,min,max] of [['videoFrameWidth',60,100],['videoFrameHeight',8,32],['videoFrameTop',4,42]]){
+  const v=Number(raw[k]);a[k]=Number.isFinite(v)&&raw[k]!==undefined?Math.max(min,Math.min(max,v)):DEF[k];
+ }
  a.stepCount=count(raw.stepCount??(Array.isArray(raw.steps)?raw.steps.length:5));
  const auto=layout(a.stepCount);
  a.steps=Array.from({length:a.stepCount},(_,i)=>{const seed=clone(DEF.steps[i]);const v=Array.isArray(raw.steps)?raw.steps[i]:null;return{...seed,...(v||{}),position:{...auto[i],...(v?.position||{})}}});
- if(Array.isArray(raw.nav))a.nav=a.nav.map((v,i)=>({...v,...(raw.nav[i]||{})}));return a}
+ if(Array.isArray(raw.nav))a.nav=a.nav.map((v,i)=>({...v,...(raw.nav[i]||{})}));a.objects=window.MMTradeObjectModel.normalizeObjects(raw.objects);a.backgrounds=window.MMTradeObjectModel.backgrounds(raw.backgrounds);a.pageLayout=normalizePageLayout(raw.pageLayout);a.pageStyles=normalizePageStyles(raw.pageStyles);return a}
 let modal=null,frame=null,dataLoaded=false,config=null,statusNode=null,form=null,stepZone=null,stageCounter=null;
+/* Object Studio: editable layers, per-step backgrounds, animations and authenticated upload. */
+const OBJECT=window.MMTradeObjectModel;
+let selectedObjectId=null,objectList=null,objectInspector=null,backgroundLabel=null;
+let selectedPageElementId=null,selectedPageGeometry=null,pageElementList=null,pageElementInspector=null;
+const objectTypes={image:'تصویر',text:'متن',shape:'شکل',light:'نور',flag:'پرچم'};
+const motionNames={none:'بدون انیمیشن',float:'شناور',pulse:'ضربان',spin:'چرخش',glow:'درخشش',sway:'تاب خوردن',drift:'حرکت آرام', 'fade-in':'ظاهر شدن','slide-up':'ورود از پایین',twinkle:'چشمک'};
+function selectedObject(){return config?.objects?.find(o=>o.id===selectedObjectId)||null;}
+function objectButton(text,handler,style=''){const b=el('button',style,text);b.type='button';b.addEventListener('click',handler);return b;}
+function objectNumber(parent,caption,obj,key,min,max,step){
+ const label=el('label','p74admin-field');label.append(el('span','',caption));const input=el('input');input.type='number';input.min=String(min);input.max=String(max);input.step=String(step);input.value=String(obj[key]);
+ input.addEventListener('input',()=>{if(input.value==='')return;obj[key]=Math.min(max,Math.max(min,Number(input.value)||0));preview()});
+ input.addEventListener('change',()=>{const v=OBJECT.normalizeObject(obj,0);if(v){Object.assign(obj,v);input.value=String(obj[key]);preview();}});
+ label.append(input);parent.append(label);
+}
+function objectText(parent,caption,obj,key,max=120){
+ const label=el('label','p74admin-field');label.append(el('span','',caption));const input=el('input');input.value=obj[key]||'';input.maxLength=max;input.addEventListener('input',()=>{obj[key]=input.value;preview()});label.append(input);parent.append(label);
+}
+function objectSelect(parent,caption,obj,key,items){
+ const label=el('label','p74admin-field');label.append(el('span','',caption));const select=el('select','mm-object-select');
+ for(const [key,labelText] of items){const option=el('option','',labelText);option.value=key;select.append(option)}
+ select.value=obj[key];select.addEventListener('change',()=>{obj[key]=select.value;preview()});label.append(select);parent.append(label);
+}
+function refreshObjects(){if(!objectList||!objectInspector||!config)return;
+ objectList.replaceChildren();objectInspector.replaceChildren();
+ for(const obj of [...config.objects].sort((a,b)=>b.z-a.z)){
+  const row=el('div','mm-object-row'+(selectedObjectId===obj.id?' mm-selected':''));
+  const choose=objectButton((obj.visible?'◉ ':'○ ')+obj.name,()=>{selectedObjectId=obj.id;refreshObjects();preview()},'mm-object-pick');
+  const eye=objectButton(obj.visible?'مخفی':'نمایش',()=>{obj.visible=!obj.visible;refreshObjects();preview()});
+  const up=objectButton('↑',()=>{obj.z=Math.min(99,obj.z+1);refreshObjects();preview()});
+  const down=objectButton('↓',()=>{obj.z=Math.max(0,obj.z-1);refreshObjects();preview()});
+  row.append(choose,eye,up,down);objectList.append(row);
+ }
+ const obj=selectedObject();if(!obj){objectInspector.append(el('p','p74admin-info','یک آبجکت را از فهرست انتخاب کن یا آبجکت جدید بساز.'));return}
+ objectInspector.append(el('h3','',obj.name+' — '+objectTypes[obj.type]));
+ objectText(objectInspector,'نام آبجکت',obj,'name',48);
+ if(obj.type==='text'||obj.type==='flag')objectText(objectInspector,'متن',obj,'content',120);
+ if(obj.type==='image')objectText(objectInspector,'آدرس تصویر در سرور',obj,'src',360);
+ if(['text','light','shape','flag'].includes(obj.type)){
+  const lab=el('label','p74admin-field');lab.append(el('span','','رنگ'));const pick=el('input');pick.type='color';pick.value=obj.color;pick.addEventListener('input',()=>{obj.color=pick.value;preview()});lab.append(pick);objectInspector.append(lab);
+ }
+ if(obj.type==='shape')objectSelect(objectInspector,'شکل',obj,'shape',[['rectangle','مستطیل'],['circle','دایره'],['line','خط']]);
+ const row=el('div','mm-object-numbers');objectInspector.append(row);
+ for(const [key,title,min,max,step] of [['x','افقی X (%)',0,98,.5],['y','عمودی Y (%)',0,99,.5],['w','عرض (%)',2,100,.5],['h','ارتفاع (%)',1,100,.5],['rotation','چرخش (°)',-360,360,1],['opacity','شفافیت',0,1,.05],['z','ترتیب لایه',0,99,1]])objectNumber(row,title,obj,key,min,max,step);
+ objectSelect(objectInspector,'انیمیشن',obj,'animation',OBJECT.ANIMATIONS.map(a=>[a,motionNames[a]]));
+ objectNumber(objectInspector,'مدت انیمیشن (ثانیه)',obj,'duration',.3,30,.1);
+ objectNumber(objectInspector,'تأخیر انیمیشن (ثانیه)',obj,'delay',0,30,.1);
+ const vis=el('section','mm-object-stage');vis.append(el('strong','','نمایش در نسخه‌های کوه'));
+ const all=el('label','');const allbox=el('input');allbox.type='checkbox';allbox.checked=obj.stages==='all';allbox.addEventListener('change',()=>{obj.stages=allbox.checked?'all':[config.stepCount];refreshObjects();preview()});all.append(allbox,el('span','','همه مراحل'));vis.append(all);
+ if(obj.stages!=='all')for(const n of OBJECT.sequence()){
+  const lab=el('label','');const cb=el('input');cb.type='checkbox';cb.checked=obj.stages.includes(n);
+  cb.addEventListener('change',()=>{obj.stages=cb.checked?[...new Set([...obj.stages,n])].sort():obj.stages.filter(x=>x!==n);preview()});
+  lab.append(cb,el('span','',n+' پله'));vis.append(lab);
+ }
+ objectInspector.append(vis);
+ const actions=el('div','mm-object-buttons');
+ actions.append(objectButton('کپی آبجکت',()=>{if(config.objects.length>=48)return status('حداکثر ۴۸ آبجکت', 'warn');
+  const duplicate=OBJECT.normalizeObject({...obj,id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:obj.name+' (کپی)',x:Math.min(100-obj.w,obj.x+3),y:Math.min(100-obj.h,obj.y+3),z:Math.min(99,obj.z+1)},config.objects.length);
+  if(!duplicate)return;config.objects.push(duplicate);selectedObjectId=duplicate.id;refreshObjects();preview();}));
+ actions.append(objectButton('حذف آبجکت',()=>{if(!confirm('آبجکت «'+obj.name+'» حذف شود؟'))return;
+  config.objects=config.objects.filter(x=>x.id!==obj.id);selectedObjectId=null;refreshObjects();preview()},'p76-danger'));
+ objectInspector.append(actions);
+}
+async function uploadObjectMedia(file, role='object'){
+ if(!window.MMTradeImageOptimizer)throw Error('ماژول بهینه‌سازی تصویر بارگذاری نشده؛ پنل را دوباره باز کن');
+ const optimized=await window.MMTradeImageOptimizer.optimize(file,{role,onProgress:msg=>status(msg)});
+ file=optimized.file;
+ if(file.size>12*1024*1024)throw Error('حجم تصویر پس از بهینه‌سازی بیش از ۱۲ مگابایت است');
+ status(optimized.summary+'؛ در حال آپلود…');
+ const init=await api('/home-studio/media/begin',{method:'POST',body:JSON.stringify({name:file.name,kind:'image',size:file.size,type:file.type})});
+ if(!init.uploadId)throw Error('خطای شروع بارگذاری');
+ const chunkSize=Math.min(192*1024,Number(init.chunkSize)||192*1024);let i=0;
+ for(let start=0;start<file.size;start+=chunkSize,i++){
+  const bytes=file.slice(start,start+chunkSize);
+  const response=await fetch('/admin/home-studio/media/'+init.uploadId+'/'+i,{method:'POST',headers:{authorization:'Bearer '+token(),'content-type':'application/octet-stream'},body:bytes});
+  if(!response.ok)throw Error('بارگذاری قطعه '+(i+1)+' ناموفق بود: HTTP '+response.status);
+ }
+ const finished=await api('/home-studio/media/'+init.uploadId+'/finish',{method:'POST',body:'{}'});
+ if(!OBJECT.assetUrl(finished.url))throw Error('آدرس تصویر برگشتی قابل استفاده نیست');return {url:finished.url,summary:optimized.summary};
+}
+function buildObjectStudio(){
+ const group=heading(form,'Object Studio — آبجکت‌ها و انیمیشن‌ها');group.classList.add('mm-object-studio');
+ group.append(el('p','p74admin-hint','آبجکت‌ها مستقل از دکمه‌های مراحل هستند؛ جابه‌جایی روی پیش‌نمایش، مخفی‌سازی، حذف و انتخاب انیمیشن از این بخش انجام می‌شود.'));
+ group.append(el('p','mm-base-warning','توجه: پرچم، مکعب و نورهای داخل عکس‌های قدیمی روی خود تصویر حک شده‌اند. برای حذف کامل آن‌ها، تصویر پس‌زمینه بدون این عناصر را برای هر تعداد پله بارگذاری کن.'));
+ const backgrounds=el('section','mm-object-background');backgroundLabel=el('p','p74admin-info');
+ const updateBg=()=>{const path=config.backgrounds?.[String(config.stepCount)];backgroundLabel.textContent=path?'پس‌زمینه مستقل '+config.stepCount+' پله: '+path:'پس‌زمینه فعلی '+config.stepCount+' پله: تصویر قدیمی (دارای عناصر چسبیده به عکس)'};
+ updateBg();backgrounds.append(backgroundLabel);
+ const bgInput=el('input');bgInput.type='file';bgInput.accept='image/png,image/webp,image/jpeg';bgInput.hidden=true;
+ const uploadBg=objectButton('آپلود پس‌زمینه بدون آبجکت برای '+config.stepCount+' پله',()=>bgInput.click());
+ const resetBg=objectButton('بازگشت به تصویر قبلی',()=>{delete config.backgrounds[String(config.stepCount)];updateBg();preview()});
+ bgInput.addEventListener('change',async()=>{const f=bgInput.files?.[0];if(!f)return;uploadBg.disabled=true;
+  try{status('در حال آپلود پس‌زمینه…');const uploaded=await uploadObjectMedia(f,'background');config.backgrounds[String(config.stepCount)]=uploaded.url;updateBg();preview();status('پس‌زمینه آپلود شد؛ '+uploaded.summary+'؛ برای نمایش عمومی انتشار لازم است.','ok')}
+  catch(e){status('خطای آپلود: '+e.message,'warn')}finally{uploadBg.disabled=false;bgInput.value=''}});
+ backgrounds.append(uploadBg,resetBg,bgInput);group.append(backgrounds);
+ const addTools=el('div','mm-object-buttons');const tools=[['image','➕ تصویر'],['text','➕ متن'],['shape','➕ شکل'],['light','➕ نور'],['flag','➕ پرچم']];
+ for(const [type,label] of tools)addTools.append(objectButton(label,()=>{
+   if(config.objects.length>=48)return status('حداکثر ۴۸ آبجکت مجاز است','warn');const obj=OBJECT.make(type);config.objects.push(obj);selectedObjectId=obj.id;refreshObjects();preview();}));
+ const imgInput=el('input');imgInput.type='file';imgInput.accept='image/png,image/webp,image/jpeg';imgInput.hidden=true;
+ addTools.append(objectButton('آپلود تصویر شفاف',()=>imgInput.click()));
+ imgInput.addEventListener('change',async()=>{const f=imgInput.files?.[0];if(!f)return;
+  try{status('در حال آپلود آبجکت…');if(config.objects.length>=48)throw Error('حداکثر ۴۸ آبجکت');const uploaded=await uploadObjectMedia(f,'object');
+    const obj=OBJECT.make('image');obj.src=uploaded.url;obj.name=f.name.slice(0,48);config.objects.push(obj);selectedObjectId=obj.id;refreshObjects();preview();status('آبجکت آپلود شد؛ '+uploaded.summary+'؛ پیش‌نویس را ذخیره کن.','ok')}
+  catch(e){status('خطای آپلود: '+e.message,'warn')}finally{imgInput.value=''}});
+ addTools.append(imgInput);group.append(addTools);
+ const libs=el('div','mm-object-buttons');libs.append(objectButton('مکعب MM',()=>addBuiltIn('cube')),objectButton('سکه MM',()=>addBuiltIn('coin')),objectButton('مکعب کوچک',()=>addBuiltIn('smallcube')));group.append(libs);
+ objectList=el('div','mm-object-list');group.append(objectList);objectInspector=el('section','mm-object-inspector');group.append(objectInspector);
+ refreshObjects();
+}
+function addBuiltIn(type){if(config.objects.length>=48)return status('حداکثر ۴۸ آبجکت مجاز است','warn');
+ const obj=OBJECT.make('image');obj.name=type==='coin'?'سکه MM':type==='smallcube'?'مکعب کوچک':'مکعب MM';obj.src=type==='coin'?'/miniapp/p74/assets/coin.webp':'/miniapp/p74/assets/cube.webp';
+ obj.w=type==='smallcube'?8:20;obj.h=type==='smallcube'?5:12;obj.animation='float';config.objects.push(obj);selectedObjectId=obj.id;refreshObjects();preview();}
+
 function status(t,kind=''){if(statusNode){statusNode.textContent=t;statusNode.dataset.state=kind}}
-function preview(){if(frame?.contentWindow&&config)frame.contentWindow.postMessage({type:'P74_CONFIG_PREVIEW',config:clone(config)},location.origin)}
-function heading(parent,title){const s=el('section','p74admin-group');s.append(el('h3','',title));parent.append(s);return s}
+function preview(){if(frame?.contentWindow&&config)frame.contentWindow.postMessage({type:'P74_CONFIG_PREVIEW',config:clone(config),selectedElementId:selectedPageElementId},location.origin)}
+function heading(parent,title){
+ const s=el('details','p74admin-group');
+ const summary=el('summary','mm-object-accordion-title');
+ summary.append(el('h3','',title));
+ s.append(summary);
+ parent.append(s);
+ return s;
+}
 function input(parent,title,obj,key,kind='text',meta={}){
  const lab=el('label','p74admin-field'),node=el('input');lab.append(el('span','',title));
  node.type=kind==='number'?'number':'text';node.value=obj[key]??'';node.autocomplete='off';
- if(kind==='number'){node.min='0';node.max='100';node.step='0.1';node.style.direction='ltr';node.style.textAlign='left'}
+ if(kind==='number'){const lim=meta.range||(meta.stepIndex===undefined?null:({top:[-178.57,171.57],right:[0,100],width:[18,95],height:[7,28]})[key]);
+  node.min=String(lim?lim[0]:0);node.max=String(lim?lim[1]:100);node.step='0.1';node.style.direction='ltr';node.style.textAlign='left'}
  if(kind==='url')node.placeholder='https:// یا /miniapp/...';
  node.addEventListener('input',()=>{obj[key]=kind==='number'?Number(node.value):node.value;preview()});
  if(meta.stepIndex!==undefined)node.dataset.p76key=meta.stepIndex+':'+key;
  lab.append(node);parent.append(lab);return node}
+// Mountain area is 50%..78% of the full stage. Keep the stored % coordinates backward-compatible.
+function stepNormalize(p){const width=clamp(p.width,18,95),height=clamp(p.height,7,28);
+ const top=Math.max(-50/28*100,Math.min((100-50)/28*100-height,Number(p.top)||0));
+ const right=Math.max(0,Math.min(100-width,Number(p.right)||0));
+ return{top:Math.round(top*100)/100,right:Math.round(right*100)/100,width:Math.round(width*100)/100,height:Math.round(height*100)/100};}
 function redrawSteps(){stepZone.replaceChildren();stageCounter.textContent=''+config.stepCount;
  for(let i=0;i<config.stepCount;i++){
  const item=config.steps[i],s=heading(stepZone,'مرحله '+(i+1));
  input(s,'عنوان',item,'title');input(s,'لینک مرحله',item,'href','url');
- const move=el('p','p75-step-help','روی پیش‌نمایش با انگشت بکشید یا عددهای زیر را تغییر دهید');s.append(move);
+ const move=el('p','p75-step-help','بکشید تا جابه‌جا شود؛ گوشهٔ چپ پایین را بکشید یا با دو انگشت اندازه را تغییر دهید. فاصله از بالا می‌تواند منفی باشد.');s.append(move);
  for(const [name,label] of [['top','فاصله از بالا (%)'],['right','فاصله از راست (%)'],['width','عرض دکمه (%)'],['height','ارتفاع دکمه (%)']]){
  const field=input(s,label,item.position,name,'number',{stepIndex:i});
- field.addEventListener('change',()=>{item.position[name]=Math.round(clamp(item.position[name],0,100)*100)/100;preview()})
+ field.addEventListener('change',()=>{item.position=stepNormalize(item.position);for(const k of ['top','right','width','height']){const f=stepZone.querySelector(`[data-p76key="${i}:${k}"]`);if(f)f.value=String(item.position[k])}preview()})
  }
  const actions=el('div','p76-step-actions');
  const reset=el('button','p75-step-reset','چیدمان خودکار');reset.type='button';reset.addEventListener('click',()=>{item.position=layout(config.stepCount)[i];redrawSteps();preview()});actions.append(reset);
@@ -6681,52 +7139,96 @@ function setCount(v){const next=count(v);if(next===config.stepCount)return;
 function rebuild(){form.replaceChildren();const toggle=el('label','p74admin-switch');const check=el('input');check.type='checkbox';check.checked=config.enabled!==false;check.addEventListener('change',()=>{config.enabled=check.checked;preview()});toggle.append(check,el('span','','نمایش Home جدید پس از انتشار'));form.append(toggle);
  let s=heading(form,'برند');input(s,'نام برند',config,'brand');input(s,'زیرعنوان',config,'tagline');
  s=heading(form,'ویدیو');for(const [k,l] of [['heroEyebrow','برچسب ویدیو'],['heroTitle','عنوان ویدیو'],['heroSubtitle','توضیح ویدیو'],['videoUrl','لینک ویدیوی ناماهاب / MP4'],['videoDuration','زمان نمایشی']])input(s,l,config,k,k==='videoUrl'?'url':'text');
+ s=heading(form,'پوستر ویدیو و اندازه کادر');s.classList.add('mm-poster-group');
+ s.append(el('p','p74admin-info','سایز پیشنهادی طراحی: ۱۴۴۰ × ۶۰۰ پیکسل (نسبت ۲٫۴ به ۱). تصویر به‌صورت خودکار بهینه می‌شود.'));
+ const posterPreview=el('img','mm-poster-preview');posterPreview.src=OBJECT.assetUrl(config.videoPoster)||DEF.videoPoster;posterPreview.alt='پیش‌نمایش پوستر فعلی';posterPreview.loading='lazy';s.append(posterPreview);
+ const posterInput=el('input');posterInput.type='file';posterInput.accept='image/png,image/webp,image/jpeg,image/heic,image/heif,.heic,.heif';posterInput.hidden=true;
+ const posterButton=objectButton('انتخاب تصویر و آپلود پوستر ویدیو',()=>posterInput.click());posterButton.classList.add('mm-poster-upload');
+ s.append(posterButton,posterInput);
+ posterInput.onchange=async()=>{const file=posterInput.files?.[0];if(!file)return;
+  try{const result=await uploadObjectMedia(file,'object');config.videoPoster=result.url;rebuild();preview();status('پوستر تغییر کرد؛ '+result.summary+'؛ برای نمایش عمومی انتشار لازم است.','ok')}
+  catch(e){status('آپلود پوستر: '+e.message,'warn')}finally{posterInput.value=''}};
+ input(s,'آدرس پوستر آپلودشده',config,'videoPoster');
+ for(const [k,label,min,max] of [['videoFrameWidth','عرض کادر ویدیو (%)',60,100],['videoFrameHeight','ارتفاع کادر ویدیو (%)',8,32],['videoFrameTop','فاصله کادر از بالای صفحه (%)',4,42]]){
+  const field=input(s,label,config,k,'number',{range:[min,max]});field.min=String(min);field.max=String(max);
+  field.addEventListener('change',()=>{const v=Number(field.value);config[k]=Number.isFinite(v)?Math.min(max,Math.max(min,v)):DEF[k];field.value=String(config[k]);preview()});
+ }
  s=heading(form,'مسیر چالش');input(s,'تیتر مسیر',config,'journeyTitle');input(s,'زیرتیتر',config,'journeySubtitle');
  s=heading(form,'تعداد پله‌ها و دکمه‌ها');const tools=el('div','p76-count-controls');
  const less=el('button','','− حذف مرحله آخر');less.type='button';less.addEventListener('click',()=>setCount(config.stepCount-1));
  stageCounter=el('strong','p76-stage-count',String(config.stepCount));const add=el('button','','+ افزودن مرحله');add.type='button';add.addEventListener('click',()=>setCount(config.stepCount+1));
  const auto=el('button','p76-layout-btn','چیدمان خودکار همه');auto.type='button';auto.addEventListener('click',()=>{config.steps.forEach((x,i)=>x.position=layout(config.stepCount)[i]);redrawSteps();preview()});
  tools.append(less,stageCounter,add,auto);s.append(tools);stepZone=el('div','p76-step-zone');form.append(stepZone);redrawSteps();
+ buildObjectStudio();
+ buildPageElementEditor();
  s=heading(form,'پیشرفت و CTA');for(const [k,l] of [['progressTitle','عنوان پیشرفت'],['progressHref','لینک پیشرفت'],['ctaText','متن CTA'],['ctaHref','لینک CTA']])input(s,l,config,k,k.toLowerCase().includes('href')?'url':'text');
  s=heading(form,'منوی پایین');for(let i=0;i<3;i++){input(s,'عنوان '+(i+1),config.nav[i],'title');input(s,'لینک '+(i+1),config.nav[i],'href','url')}
 }
-function receive(e){if(!modal||!frame||e.origin!==location.origin||e.source!==frame.contentWindow||e.data?.type!=='P75_STEP_POSITION')return;
+function receive(e){if(!modal||!frame||e.origin!==location.origin||e.source!==frame.contentWindow||!e.data)return;
+ if(e.data.type==='P74_ELEMENT_SELECTED'){
+  selectedPageElementId=String(e.data.id||'');
+  selectedPageGeometry=e.data.layout&&typeof e.data.layout==='object'?e.data.layout:null;
+  refreshPageElementEditor();return
+ }
+ if(e.data.type==='P74_ELEMENT_LAYOUT'){
+  const id=String(e.data.id||''),g=e.data.layout;
+  if(!PAGE_EDITOR_ITEMS.some(x=>x.id===id)||!g)return;
+  config.pageLayout=config.pageLayout||{};
+  config.pageLayout[id]=normalizePageLayout({[id]:g})[id];
+  selectedPageElementId=id;selectedPageGeometry=config.pageLayout[id];
+  refreshPageElementEditor();
+  status('اندازه یا موقعیت عنصر تغییر کرد؛ پیش‌نویس را ذخیره کن.','ok');
+  preview();return
+ }
+ if(e.data.type==='P74_OBJECT_SELECTED'){selectedObjectId=e.data.id;refreshObjects();return}
+ if(e.data.type==='P74_OBJECT_MOVE'){const obj=config?.objects?.find(o=>o.id===e.data.id);if(!obj)return;
+  obj.x=Math.round(Math.max(0,Math.min(100-obj.w,Number(e.data.x)||0))*100)/100;
+  obj.y=Math.round(Math.max(0,Math.min(100-obj.h,Number(e.data.y)||0))*100)/100;
+  selectedObjectId=obj.id;refreshObjects();status('موقعیت آبجکت تغییر کرد؛ پیش‌نویس را ذخیره کن.','ok');return}
+ if(e.data.type!=='P75_STEP_POSITION')return;
  const i=Number(e.data.step),p=e.data.position;if(!Number.isInteger(i)||i<0||i>=config.stepCount||!p)return;
- config.steps[i].position={...config.steps[i].position,...p};
+ config.steps[i].position=stepNormalize({...config.steps[i].position,...p});
  for(const k of ['top','right','width','height']){
  const f=form.querySelector(`[data-p76key="${i}:${k}"]`);if(f&&p[k]!==undefined)f.value=String(p[k])
  }
  status('موقعیت دکمه '+(i+1)+' تغییر کرد؛ ذخیره و انتشار را انجام دهید.','ok')
 }
-function close(){modal?.remove();modal=null;frame=null;dataLoaded=false;config=null;window.removeEventListener('message',receive);document.removeEventListener('keydown',keyesc)}
-function keyesc(e){if(e.key==='Escape')close()}
+function close(){modal?.remove();modal=null;frame=null;dataLoaded=false;config=null;objectList=null;objectInspector=null;selectedObjectId=null;selectedPageElementId=null;selectedPageGeometry=null;pageElementList=null;pageElementInspector=null;document.body.classList.remove('mm-object-fullpage');window.removeEventListener('message',receive)}
 function validate(){if(!config||config.steps.length!==config.stepCount)throw Error('تعداد دکمه‌ها با پله‌ها برابر نیست');
  for(const s of config.steps){if(!String(s.title||'').trim())throw Error('عنوان مرحله خالی است');urlValid(s.href);
  const p=s.position;if(!p)throw Error('موقعیت مرحله تعریف نشده');for(const k of ['top','right','width','height'])if(!Number.isFinite(Number(p[k])))throw Error('موقعیت دکمه نامعتبر است');
- if(p.width<22||p.width>85||p.height<7||p.height>18||p.top<0||p.right<0||p.top+p.height>100||p.right+p.width>100)throw Error('یک دکمه خارج از محدوده تصویر است')}
- for(const s of config.nav)urlValid(s.href);urlValid(config.ctaHref);urlValid(config.progressHref);urlValid(config.videoUrl);return clone(config)}
+ if(p.width<18||p.width>95||p.height<7||p.height>28||p.top<-(50/28*100)-.02||p.right<0||p.top+p.height>(50/28*100)+.02||p.right+p.width>100.02)throw Error('یک دکمه خارج از محدوده تصویر است')}
+ if(!OBJECT.assetUrl(config.videoPoster))throw Error('آدرس پوستر باید به تصویر آپلودشده در سیستم اشاره کند');
+ for(const [k,min,max] of [['videoFrameWidth',60,100],['videoFrameHeight',8,32],['videoFrameTop',4,42]]){
+   if(!Number.isFinite(Number(config[k]))||Number(config[k])<min||Number(config[k])>max)throw Error('اندازه یا جای پوستر نامعتبر است');
+ }
+ for(const s of config.nav)urlValid(s.href);urlValid(config.ctaHref);urlValid(config.progressHref);urlValid(config.videoUrl);const checked=window.MMTradeObjectModel.validateConfig(clone(config));checked.pageLayout=normalizePageLayout(config.pageLayout);checked.pageStyles=normalizePageStyles(config.pageStyles);return checked}
 async function saveDraft(){if(!dataLoaded)throw Error('اطلاعات صفحه هنوز بارگذاری نشده');const d=await api('/content/pages/index/editor');const arr=Array.isArray(d.blocks)?d.blocks:[];decodeMarker(arr);const other=arr.filter(b=>!(b?.type==='element'&&b.selector===MARK));if(other.length>=40)throw Error('ظرفیت بلاک‌های صفحه پر شده');
  const final=validate();final.version=74;other.push({type:'element',selector:MARK,text:JSON.stringify(final)});
  await api('/content/pages/index/draft',{method:'PUT',body:JSON.stringify({title:d.title||null,blocks:other})});return final}
-async function open(){if(modal)close();config=normalize(null);modal=el('div','p74admin-backdrop');modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
- const box=el('section','p74admin-panel'),head=el('header','p74admin-head');head.append(el('strong','','P76 • ویرایش کوه و دکمه‌ها'));const x=el('button','p74admin-close','بستن ✕');x.onclick=close;head.append(x);box.append(head);
- box.append(el('p','p74admin-info','۳ تا ۸ مرحله؛ با افزودن/حذف دکمه، پس‌زمینه متناسب خودکار عوض می‌شود. ارتفاع و جای هر دکمه قابل ویرایش است.'));
+async function open(){
+ if(me?.role!=='SUPER_ADMIN'){toast('این ویرایشگر فقط برای سوپرادمین است.');return}
+ close();const host=document.getElementById('view');if(!host)return;
+ document.body.classList.add('mm-object-fullpage');config=normalize(null);modal=el('section','p74admin-page');
+ const box=el('section','p74admin-panel'),head=el('header','p74admin-head');
+ head.append(el('strong','','MMTrade Object Studio • ویرایش هوم'));
+ const back=el('button','p74admin-close','بازگشت به صفحه‌ها');back.onclick=()=>show('pages');head.append(back);box.append(head);
+ box.append(el('p','p74admin-info','ویرایش مستقیم در بخش صفحه‌ها و پاپ‌آپ‌ها، بدون پنجره شناور. پیش‌نویس مستقل از نسخه عمومی است.'));
  const panel=el('div','p74admin-layout'),aside=el('div','p74admin-form'),screen=el('div','p74admin-screen');panel.append(aside,screen);box.append(panel);form=aside;
- frame=el('iframe','p74admin-preview');frame.src='/miniapp/p74/preview.html?p74Preview=1&stepEdit=1';frame.title='پیش‌نمایش زنده ۳ تا ۸ پله';frame.addEventListener('load',preview);screen.append(frame);
- screen.append(el('div','p74admin-hint','بکشید و رها کنید؛ موقعیت‌ها به نسبت تصویر ثبت می‌شوند.'));rebuild();
+ frame=el('iframe','p74admin-preview');frame.src='/miniapp/p74/preview.html?p74Preview=1&stepEdit=1&v=P77_PAGE_ELEMENT_EDITOR_R1';frame.title='پیش‌نمایش زنده هوم';frame.addEventListener('load',preview);screen.append(frame);
+ screen.append(el('div','p74admin-hint','پیش‌نمایش زنده؛ برای جابه‌جایی لمس کن و برای تغییر اندازه از دو انگشت استفاده کن.'));rebuild();
  const acts=el('div','p74admin-actions'),save=el('button','','ذخیره پیش‌نویس'),publish=el('button','p74admin-primary','انتشار برای کاربران'),reload=el('button','','بارگذاری دوباره');acts.append(save,publish,reload);box.append(acts);statusNode=el('p','p74admin-status','در حال دریافت تنظیمات…');box.append(statusNode);
- modal.append(box);document.body.append(modal);modal.addEventListener('click',e=>{if(e.target===modal)close()});document.addEventListener('keydown',keyesc);window.addEventListener('message',receive);
+ modal.append(box);host.replaceChildren(modal);document.getElementById('title').textContent='صفحه‌ها و پاپ‌آپ‌ها · Object Studio';window.scrollTo?.(0,0);window.addEventListener('message',receive);
  const busy=v=>{save.disabled=publish.disabled=reload.disabled=v};
- const load=async()=>{const d=await api('/content/pages/index/editor');config=normalize(decodeMarker(d.blocks));dataLoaded=true;rebuild();preview();status('تنظیمات Home بارگذاری شد؛ تا انتشار روی کاربران اعمال نمی‌شود.','ok')};
+ const load=async()=>{const d=await api('/content/pages/index/editor');config=normalize(decodeMarker(d.blocks));dataLoaded=true;selectedObjectId=null;rebuild();preview();status('Object Studio بارگذاری شد؛ تا انتشار روی کاربران اعمال نمی‌شود.','ok')};
  save.onclick=async()=>{busy(true);try{await saveDraft();status('پیش‌نویس ذخیره شد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
  publish.onclick=async()=>{if(!confirm('پیش‌نویس Home برای کاربران منتشر شود؟'))return;busy(true);try{await saveDraft();await api('/content/pages/index/publish',{method:'POST',body:'{}'});status('نسخه جدید منتشر شد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
  reload.onclick=async()=>{busy(true);try{await load()}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
  try{await load()}catch(e){status('خطا در بارگذاری: '+e.message,'warn')}
 }
-function watch(){const authorized=Boolean(token())&&Boolean(document.getElementById('nav')||document.getElementById('view'));
- const old=document.getElementById('p74-admin-launch');if(authorized&&!old){const b=el('button','','✦ طراحی هوم P76');b.id='p74-admin-launch';b.type='button';b.onclick=open;document.body.append(b)}else if(!authorized&&old)old.remove()}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{watch();setInterval(watch,1200)});else{watch();setInterval(watch,1200)}
-})();
+ window.MMTradeObjectStudioOpen=open;
+ window.MMTradeObjectStudioClose=close;
+ })();
 
 </script>
 <!-- P74_HOME_MATCH_R1 ADMIN END -->
