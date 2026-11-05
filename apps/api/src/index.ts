@@ -3173,6 +3173,7 @@ app.post('/miniapp/profile/p85', async (request, reply) => {
     : '';
 
   let photoUrl = '';
+  const telegramApiRoot = (process.env.TELEGRAM_API_ROOT || 'https://api.telegram.org').replace(new RegExp('/+$'), '');
 
   try {
     const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -3182,7 +3183,7 @@ app.post('/miniapp/profile/p85', async (request, reply) => {
 
       try {
         const response = await fetch(
-          'https://api.telegram.org/bot' + token +
+          telegramApiRoot + '/bot' + token +
           '/getUserProfilePhotos?user_id=' +
           encodeURIComponent(user.telegramId) + '&limit=1',
           {signal:controller.signal}
@@ -3198,7 +3199,7 @@ app.post('/miniapp/profile/p85', async (request, reply) => {
             ) ?? sizes[0];
 
             const fileResponse = await fetch(
-              'https://api.telegram.org/bot' + token +
+              telegramApiRoot + '/bot' + token +
               '/getFile?file_id=' +
               encodeURIComponent(candidate.file_id),
               {signal:controller.signal}
@@ -3212,7 +3213,7 @@ app.post('/miniapp/profile/p85', async (request, reply) => {
                   typeof filePath === 'string' &&
                   /^photos\/[A-Za-z0-9_./-]+\.jpg$/.test(filePath)) {
                 const imageResponse = await fetch(
-                  'https://api.telegram.org/file/bot' +
+                  telegramApiRoot + '/file/bot' +
                   token + '/' + filePath,
                   {signal:controller.signal}
                 );
