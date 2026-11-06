@@ -1,0 +1,89 @@
+<!doctype html><html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071a15"><title>MMTrade10X · Visual Studio R9</title>
+<link rel="stylesheet" href="./studio.css?v=R9"><style>
+html.mmvs-embedded .header{display:none!important}
+html.mmvs-embedded body{margin:0!important}
+html.mmvs-embedded #app{min-height:100dvh}
+html.mmvs-embedded .workspace{min-height:100dvh}
+</style>
+<script>if(new URLSearchParams(location.search).get('embedded')==='1')document.documentElement.classList.add('mmvs-embedded')</script>
+</head><body>
+<div id="app">
+<header class="header"><div class="brand"><span class="mark">10X</span><div><strong>MMTrade Studio</strong><small>R9 · انتخاب دقیق آبجکت‌ها و انیمیشن‌ساز مستقل</small></div></div><div id="who" class="who">بررسی دسترسی...</div><a href="/admin/panel" class="minor">پنل اصلی</a></header>
+<section id="login" class="login" hidden><h2>ورود مدیر</h2><p>از حساب سوپرادمین استفاده کن؛ گذرواژه فقط به API اصلی ارسال می‌شود.</p><label>ایمیل مدیر<input id="email" type="email" autocomplete="username"></label><label>رمز عبور<input id="password" type="password" autocomplete="current-password"></label><button id="sign-in" class="primary">ورود امن</button><p id="login-error"></p></section>
+<div id="workspace" class="workspace" hidden>
+<nav class="side"><h3>مدیریت</h3><button class="tab active" data-tab="pages">◧ صفحه‌ها</button><button class="tab" data-tab="popups">▣ پاپ‌آپ‌ها</button><button class="tab" data-tab="versions">↶ تاریخچه نسخه‌ها</button><div class="divider"></div><h3>انتخاب صفحه</h3><div id="pages" class="page-list"></div><label class="mmvs-search">جست‌وجوی صفحه<input id="page-search" type="search" placeholder="جست‌وجوی نام صفحه"></label><p class="hint">تنظیمات سوپرادمین، نقش‌ها و کاربران از پنل فعلی مدیریت می‌شوند.</p></nav>
+<main class="work"><div id="page-toolbar" class="toolbar"><div class="labelwrap"><b id="current-title">انتخاب صفحه</b><span id="state" class="state">آماده</span></div><div class="actions"><button id="undo" class="minor" title="برگرداندن تغییر محلی">↶ بازگشت</button><button id="redo" class="minor" title="تکرار تغییر">↷ تکرار</button><button id="export-page" class="minor">خروجی JSON</button><button id="import-page" class="minor">ورود JSON</button><input type="file" id="import-file" accept="application/json,.json" hidden><button id="edit-page-root" class="minor">پس‌زمینه صفحه</button><button id="reload" class="minor">بازخوانی</button><button id="save" class="minor">ذخیره پیش‌نویس</button><button id="publish" class="primary">انتشار برای کاربران</button></div></div>
+<div id="pages-pane" class="pane"><div class="designer"><section class="preview-area"><div class="preview-toolbar"><strong>پیش‌نمایش زنده</strong><div><button id="view-mobile" class="minor active">موبایل</button><button id="view-desktop" class="minor">دسکتاپ</button><button id="refresh-preview" class="minor">بارگذاری مجدد</button></div></div><section id="spatial-panel" class="spatial-panel" aria-label="ویرایش لمسی و آزاد چیدمان">
+ <div class="spatial-head"><strong>✥ جابه‌جایی و تغییر اندازه آزاد</strong><span id="spatial-state" class="state">آماده</span></div>
+ <div class="spatial-toolbar"><button id="spatial-mode" type="button" class="primary">✋ فعال‌سازی جابه‌جایی</button>
+ <label class="spatial-check"><input id="spatial-grid" type="checkbox"> آهنربای شبکه ۸ پیکسلی</label>
+ <button id="spatial-save" class="minor" type="button">ذخیره چیدمان</button><button id="spatial-publish" class="primary" type="button">انتشار چیدمان</button></div>
+ <div class="spatial-fields"><span id="spatial-chosen" class="spatial-chosen">روی عنصر در پیش‌نمایش بزن</span>
+ <label>افقی X <input id="spatial-x" type="number" min="-4000" max="4000" step="1"></label>
+ <label>عمودی Y <input id="spatial-y" type="number" min="-4000" max="4000" step="1"></label>
+ <label>اندازه <input id="spatial-scale" type="number" min="0.2" max="4" step="0.05"></label>
+ <button id="spatial-reset" class="minor" type="button">بازنشانی عنصر</button>
+</div>
+ <div class="spatial-object-tools" aria-label="کنترل عنصر انتخاب‌شده">
+ <div class="spatial-object-row">
+  <button id="spatial-lock" type="button" class="minor" title="قفل مانع حرکت و تغییر اندازه می‌شود">🔓 قفل عنصر</button>
+  <button id="spatial-hide" type="button" class="minor" title="حذف موقت از صفحه؛ قابل بازگردانی">◉ مخفی‌کردن</button>
+  <button id="spatial-to-front" type="button" class="minor">⇈ جلوترین لایه</button>
+  <button id="spatial-forward" type="button" class="minor">↑ یک لایه جلو</button>
+  <button id="spatial-backward" type="button" class="minor">↓ یک لایه عقب</button>
+  <button id="spatial-to-back" type="button" class="minor">⇊ عقب‌ترین لایه</button>
+ </div>
+ <div class="spatial-object-row spatial-advanced">
+  <label>ترتیب لایه Z<input id="spatial-z" type="number" min="-1000" max="20000" step="1"></label>
+  <label>شفافیت<input id="spatial-opacity" type="number" min="0.05" max="1" step="0.05"></label>
+  <span id="spatial-object-tip">هر عنصر را انتخاب کن تا ابزارها فعال شوند.</span>
+ </div>
+ <div class="spatial-object-row spatial-nudge" aria-label="جابه‌جایی دقیق">
+  <span>حرکت دقیق:</span>
+  <button id="spatial-nudge-up" type="button" class="minor" aria-label="یک پیکسل بالا">↑</button>
+  <button id="spatial-nudge-down" type="button" class="minor" aria-label="یک پیکسل پایین">↓</button>
+  <button id="spatial-nudge-right" type="button" class="minor" aria-label="یک پیکسل راست">→</button>
+  <button id="spatial-nudge-left" type="button" class="minor" aria-label="یک پیکسل چپ">←</button>
+  <small>Shift + جهت: ۱۰ پیکسل</small>
+ </div>
+ </div>
+ <details id="spatial-animation-panel" class="spatial-animation-panel" open>
+  <summary>✦ تعریف انیمیشن برای عنصر انتخاب‌شده</summary>
+  <div class="mmvs-animation-grid">
+    <label>نوع حرکت
+      <select id="spatial-animation-kind"><option value="none">بدون انیمیشن سفارشی</option><option value="float">شناوری بالا/پایین</option><option value="spin">چرخش ۳۶۰ درجه</option><option value="sway">تاب‌خوردن</option><option value="pulse">تپش و تغییر اندازه</option></select>
+    </label>
+    <label>مدت هر دور (ثانیه)<input id="spatial-animation-duration" type="number" min="0.4" max="30" step="0.1" value="3"></label>
+    <label>شدت حرکت (پیکسل/درجه/٪)<input id="spatial-animation-amplitude" type="number" min="1" max="150" step="1" value="18"></label>
+    <label>تأخیر شروع (ثانیه)<input id="spatial-animation-delay" type="number" min="0" max="10" step="0.1" value="0"></label>
+    <label class="spatial-check"><input id="spatial-animation-loop" type="checkbox" checked> تکرار مداوم</label>
+  </div>
+  <div class="spatial-object-row">
+    <button id="spatial-animation-apply" type="button" class="primary">اعمال انیمیشن به آبجکت</button>
+    <button id="spatial-animation-remove" type="button" class="minor">حذف حرکت سفارشی</button>
+    <button id="spatial-animation-toggle" type="button" class="minor">⏸ توقف پیش‌نمایش حرکت</button>
+  </div>
+  <p id="spatial-animation-tip" class="spatial-layer-hint">این حرکت به انیمیشن‌های CSS قبلی اضافه می‌شود. پس از ذخیره و انتشار برای کاربران فعال خواهد شد.</p>
+ </details>
+ <details class="spatial-overlap-panel" open><summary>↕ آبجکت‌های هم‌پوشان با عنصر انتخاب‌شده <span id="spatial-overlap-count"></span></summary>
+ <div id="spatial-overlap-list" class="spatial-overlap-list"></div>
+ <p class="spatial-layer-hint">از این فهرست می‌توان آبجکتی را که پشت بقیه قرار گرفته انتخاب کرد. ترتیب Z داخل محدوده لایه‌بندی والد اثر دارد.</p>
+ </details>
+ <details id="spatial-layer-panel" class="spatial-layer-panel" open>
+  <summary>✦ لایه‌های تصویری و آبجکت‌های تزئینی <span id="spatial-layer-count">(در حال اسکن)</span></summary>
+  <div class="spatial-layer-tools"><input id="spatial-layer-search" type="search" placeholder="جست‌وجو: کره، SVG، Canvas، سکه، عکس، ..." aria-label="جست‌وجوی لایه‌ها"><button id="spatial-layer-refresh" type="button" class="minor">↻ اسکن دوباره</button></div>
+  <div id="spatial-layer-list" class="spatial-layer-list" role="listbox" aria-label="آبجکت‌های قابل انتخاب"></div>
+  <p class="spatial-layer-hint">انتخاب آبجکت‌های مخفی یا قفل‌شده هم از این لیست ممکن است؛ با Z ترتیب هم‌پوشانی را تنظیم کن. اجزای درون یک Canvas یا تصویر تخت به‌صورت مستقل قابل انتخاب نیستند.</p>
+</details>
+<p id="spatial-note" class="spatial-note">یک انگشت: جابه‌جایی | دو انگشت: تغییر اندازه | روی خودِ عنصر: قفل، مخفی، جلو/عقب | حذف = مخفی‌کردن قابل بازگشت.</p>
+ <details><summary>تاریخچه چیدمان</summary><div id="spatial-versions"></div></details>
+ </section><div id="preview-holder" class="preview-holder"><iframe id="frame" title="نمایش صفحه" sandbox="allow-same-origin allow-scripts allow-forms" referrerpolicy="same-origin"></iframe></div><small class="hint">در پیش‌نمایش روی یک متن، تصویر یا دکمه کلیک کن تا تنظیماتش باز شود. پیش‌نمایش، اطلاعات واقعی کاربران را نمایش نمی‌دهد.</small></section><aside class="inspector"><h3>ویرایش عنصر انتخاب‌شده</h3><p class="hint">تغییرها ابتدا در پیش‌نمایش اعمال می‌شوند و تا انتشار، برای کاربران قابل مشاهده نیستند.</p><div id="selected" class="selected">هنوز عنصری انتخاب نشده</div><div id="props"></div><div class="element-actions"><button id="hide-element" class="minor">حذف/بازگردانی عنصر</button><button id="remove-edit" class="minor">حذف تنظیمات این عنصر</button></div><div class="divider"></div><h3>تغییرات این صفحه</h3><div id="edits" class="edits"></div></aside></div>
+<section class="panel mmvs-library"><div class="mmvs-library-head"><div><h3>کتابخانه محتوای صفحه</h3><p class="hint">بخش‌های جدید به انتهای محتوای صفحه اضافه می‌شوند؛ اجزای اصلی R4 دست‌نخورده می‌مانند.</p></div><span id="block-count" class="mmvs-count">۰/۴۰</span></div>
+<div class="mmvs-block-tools"><label>عنوان مدیریتی صفحه<input id="page-title" maxlength="200" placeholder="عنوان اختیاری"></label><label>نوع المان جدید<select id="block-type"><option value="heading">عنوان</option><option value="text">متن</option><option value="image">تصویر</option><option value="button">دکمه</option><option value="banner">بنر</option><option value="progress">نوار پیشرفت</option><option value="divider">جداکننده</option></select></label><button id="add-block" class="primary">+ افزودن المان</button></div>
+<div class="mmvs-block-layout"><div><h4>ترتیب المان‌های محتوا</h4><div id="blocks-list" class="mmvs-block-list"></div></div><div><h4>تنظیمات المان</h4><div id="block-properties" class="mmvs-block-props"><p class="hint">یک المان را انتخاب کن.</p></div></div></div></section></div>
+<div id="popups-pane" class="pane" hidden><div class="two"><section class="panel"><h3>فهرست پاپ‌آپ‌ها</h3><input id="popup-search" type="search" placeholder="جست‌وجوی پاپ‌آپ"><div class="mmvs-popup-filters"><select id="popup-filter-page"><option value="">تمام صفحه‌ها</option></select><select id="popup-filter-status"><option value="">همه وضعیت‌ها</option><option value="PUBLISHED">فعال</option><option value="DRAFT">پیش‌نویس</option></select></div><div id="popup-list"></div><button id="popup-new" class="minor">+ ساخت پاپ‌آپ جدید</button></section><section class="panel"><h3>تنظیمات پاپ‌آپ</h3><form id="popup-form"><label>عنوان<input name="title" maxlength="200" required></label><label>متن<textarea name="body" maxlength="2000" required rows="4"></textarea></label><label>آدرس تصویر (HTTPS یا مسیر داخلی)<input name="imageUrl" dir="ltr"></label><label>آپلود مستقیم تصویر (PNG/JPG/WebP تا ۱۲MB)<input type="file" id="popup-upload" accept="image/png,image/jpeg,image/webp"><small id="popup-upload-status" class="hint"></small></label><label>متن دکمه<input name="buttonText" maxlength="80"></label><label>لینک دکمه<input name="buttonUrl" dir="ltr"></label><label>صفحه نمایش<select name="pageSlug" id="popup-page"></select></label><label>دفعات نمایش<select name="frequency"><option value="ONCE">یک بار برای هر کاربر</option><option value="EVERY_VISIT">هر بار ورود</option></select></label><label>وضعیت<select name="status"><option value="DRAFT">پیش‌نویس (غیرفعال)</option><option value="PUBLISHED">منتشرشده (فعال)</option></select></label><div class="actions"><button class="primary" type="submit">ذخیره پاپ‌آپ</button><button type="button" id="popup-preview" class="minor">پیش‌نمایش پاپ‌آپ</button><button type="button" id="popup-duplicate" class="minor">کپی به‌عنوان پیش‌نویس</button><button type="button" id="popup-disable" class="minor">غیرفعال‌سازی سریع</button><button type="button" id="popup-delete" class="danger">حذف</button></div></form><p class="hint">API فعلی فقط یک پاپ‌آپ واجدشرایط را در هر درخواست صفحه برمی‌گرداند. زمان‌بندی و هدف‌گیری پیشرفته نیازمند توسعه جداست.</p></section></div></div>
+<div id="versions-pane" class="pane" hidden><section class="panel"><h3>تاریخچه نسخه‌های صفحه انتخابی</h3><p class="hint">بازگردانی نسخه منتشرشده ممکن است بلافاصله محتوای کاربران را تغییر دهد. قبل از تأیید، وضعیت نسخه را بررسی کن.</p><div id="version-list"></div></section></div>
+</main></div><div id="notice" role="status" aria-live="polite"></div>
+</div><script src="./studio.js?v=R81" defer></script><script src="./spatial.js?v=R9" defer></script></body></html>

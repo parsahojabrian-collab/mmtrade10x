@@ -1,0 +1,20 @@
+(()=>{'use strict';
+const $=id=>document.getElementById(id),token=(()=>{try{return sessionStorage.getItem('tenx_admin_token')||''}catch{return''}})();let objects=[],selected=null,changed=false;
+const msg=(m)=>{$('notice').textContent=m};const fields=['type','anim','text','src','x','y','w','rot','opacity','z'];
+const bounds={x:[0,100],y:[0,100],w:[5,100],rot:[-180,180],opacity:[0,100],z:[0,100]};
+const clean=(key,val)=>{const r=bounds[key];if(!r)return String(val||'');const n=Number(val);return Number.isFinite(n)?Math.max(r[0],Math.min(r[1],n)):r[0]};
+async function api(path,method='GET',payload){const response=await fetch(path,{method,headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:payload?JSON.stringify(payload):undefined,cache:'no-store'});const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'HTTP '+response.status);return data}
+function render(){const select=$('selector');select.replaceChildren();objects.forEach(o=>{const el=document.createElement('option');el.value=o.id;el.textContent=o.type+' — '+o.id;select.append(el)});if(!objects.some(o=>o.id===selected))selected=objects[0]?.id||null;select.value=selected||'';const obj=objects.find(o=>o.id===selected);for(const name of fields){$(name).disabled=!obj;$(name).value=obj?(obj[name]??''):''}['copy','delete'].forEach(name=>$(name).disabled=!obj);preview()}
+function preview(){const frame=$('frame');frame.contentWindow?.postMessage({type:'MM_STAGE1_SCENE_PREVIEW',items:objects},location.origin)}
+function mark(){changed=true;msg('تغییرات فقط در پیش‌نمایش هستند؛ برای نگهداری ذخیره پیش‌نویس را بزن.');preview()}
+for(const name of fields){$(name).addEventListener('input',()=>{const o=objects.find(o=>o.id===selected);if(!o)return;o[name]=clean(name,$(name).value);mark()})}
+$('selector').addEventListener('change',e=>{selected=e.target.value;render()});
+$('add').onclick=()=>{if(objects.length>=32)return msg('حداکثر ۳۲ آبجکت مجاز است.');const id='layer_'+Date.now();objects.push({id,type:'text',text:'آبجکت جدید',x:50,y:50,w:26,rot:0,opacity:100,z:12,anim:'float'});selected=id;render();mark()};
+$('copy').onclick=()=>{const x=objects.find(o=>o.id===selected);if(!x||objects.length>=32)return;const id='layer_'+Date.now();objects.push({...x,id,x:Math.min(100,x.x+6),y:Math.min(100,x.y+6)});selected=id;render();mark()};
+$('delete').onclick=()=>{objects=objects.filter(o=>o.id!==selected);selected=objects[0]?.id||null;render();mark()};
+$('frame').addEventListener('load',preview);
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('frame').contentWindow)return;const d=e.data;if(d?.type!=='MM_STAGE1_OBJECT_MOVED')return;const o=objects.find(o=>o.id===d.id);if(!o)return;o.x=clean('x',d.x);o.y=clean('y',d.y);selected=o.id;$('selector').value=selected;$('x').value=o.x;$('y').value=o.y;changed=true;msg('موقعیت آبجکت تغییر کرد؛ ذخیره پیش‌نویس را بزن.')});
+$('draft').onclick=async()=>{if(!token)return msg('اول در همین مرورگر وارد پنل مدیریت شو.');try{const r=await api('/admin/challenge/stage1/scene','PUT',{items:objects.map(o=>{const x={...o};if(x.type!=='image')delete x.src;if(!x.src)delete x.src;return x})});changed=false;msg('پیش‌نویس '+r.count+' آبجکت ذخیره شد. طراحی عمومی هنوز تغییر نکرده.')}catch(e){msg('خطا در ذخیره: '+e.message)}};
+$('publish').onclick=async()=>{if(changed)return msg('اول پیش‌نویس را ذخیره کن.');if(!confirm('این تنظیمات برای همه کاربران منتشر شود؟'))return;try{await api('/admin/challenge/stage1/scene/publish','POST');msg('لایه‌ها برای کاربران منتشر شدند.')}catch(e){msg('خطای انتشار: '+e.message)}};
+(async()=>{if(!token)return msg('ابتدا وارد /admin شو، سپس در همان تب آدرس این استودیو را باز کن.');try{const [data,defaults]=await Promise.all([api('/admin/challenge/stage1/scene'),fetch('./scene-defaults.json').then(r=>r.json())]);objects=Array.isArray(data.items)?data.items:defaults;selected=objects[0]?.id||null;render();msg('اتصال مدیریت برقرار است.')}catch(e){msg('دسترسی به پنل: '+e.message)}})();
+})();

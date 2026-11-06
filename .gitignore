@@ -62,3 +62,4 @@ patch_*.py
 tenx_*.py
 q*_final_*.sh
 P[0-9]*_*.py
+/backups/deleted-pages/

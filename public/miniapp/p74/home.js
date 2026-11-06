@@ -128,6 +128,27 @@ const P77_PAGE_ITEMS=[
  ['nav-item-3-text','متن آیتم سوم','.p74-nav a:nth-child(3) span']
 ];
 function pageNode(stage,selector){try{return stage.querySelector(selector)}catch(e){return null}}
+/* TENX_PAGE_GEOMETRY_PADDING_BOX_R1
+ * CSS percentage offsets/sizes are relative to the containing block's padding box.
+ * Measure against that same box (excluding borders and accounting for scroll).
+ */
+function pageElementGeometry(node,fallbackStage){
+ if(!node)return null;
+ const host=node.offsetParent||fallbackStage;
+ if(!host||typeof host.getBoundingClientRect!=='function')return null;
+ const hostRect=host.getBoundingClientRect(),r=node.getBoundingClientRect();
+ const width=Number(host.clientWidth)||Number(hostRect.width)||0;
+ const height=Number(host.clientHeight)||Number(hostRect.height)||0;
+ if(!width||!height)return null;
+ const originLeft=hostRect.left+(Number(host.clientLeft)||0)-(Number(host.scrollLeft)||0);
+ const originTop=hostRect.top+(Number(host.clientTop)||0)-(Number(host.scrollTop)||0);
+ const clampPct=(value,min,max)=>Math.round(Math.max(min,Math.min(max,value))*100)/100;
+ const w=clampPct(r.width*100/width,1,100);
+ const h=clampPct(r.height*100/height,1,100);
+ const x=clampPct((r.left-originLeft)*100/width,0,100-w);
+ const y=clampPct((r.top-originTop)*100/height,0,100-h);
+ return{x,y,w,h};
+}
 function applyPageLayout(stage,cfg){
  for(const item of P77_PAGE_ITEMS){
   const v=cfg.pageLayout?.[item[0]],node=pageNode(stage,item[2]);
@@ -168,14 +189,7 @@ function enablePageEditor(stage,cfg){
  const overlays=[];
  const clampPct=(v,min,max)=>Math.round(Math.max(min,Math.min(max,v))*100)/100;
  function hostOf(node){return node.offsetParent||stage}
- function geometry(node){
-  const host=hostOf(node),hr=host.getBoundingClientRect(),r=node.getBoundingClientRect();
-  if(!hr.width||!hr.height)return null;
-  const x=(r.left-hr.left)*100/hr.width,y=(r.top-hr.top)*100/hr.height;
-  return{x:clampPct(x,0,99),y:clampPct(y,0,99),
-   w:clampPct(r.width*100/hr.width,1,100),
-   h:clampPct(r.height*100/hr.height,1,100)};
- }
+ function geometry(node){return pageElementGeometry(node,stage)}
  function writeGeometry(node,g){
   node.style.position='absolute';node.style.transform='none';
   node.style.left=g.x+'%';node.style.top=g.y+'%';
@@ -222,9 +236,11 @@ function enablePageEditor(stage,cfg){
    if(e.pointerType==='mouse'&&e.button!==0)return;
    e.preventDefault();e.stopPropagation();select(item.id,true);
    const host=hostOf(item.node),hr=host.getBoundingClientRect(),g=geometry(item.node);
-   if(!g||!hr.width||!hr.height)return;
+   const hostWidth=Number(host.clientWidth)||hr.width;
+   const hostHeight=Number(host.clientHeight)||hr.height;
+   if(!g||!hostWidth||!hostHeight)return;
    entry.gesture={pointer:e.pointerId,mode:e.target===grip?'resize':'move',
-    startX:e.clientX,startY:e.clientY,hostWidth:hr.width,hostHeight:hr.height,
+    startX:e.clientX,startY:e.clientY,hostWidth,hostHeight,
     original:{...g},changed:false};
    try{hit.setPointerCapture(e.pointerId)}catch(_){}
   });
@@ -434,7 +450,7 @@ const title=elem('h2','p74-journey-title');title.textContent=cfg.journeyTitle;co
 const mountain=elem('section','p74-mountain-area');mountain.setAttribute('aria-label',`مسیر ${cfg.stepCount} مرحله‌ای چالش`);
 const completed=isPreview?new Set([1,2]):completedStages(payload,cfg.stepCount);let currentStep=1;while(currentStep<=cfg.stepCount&&completed.has(currentStep))currentStep++;
 const editorDrag=isPreview&&params.get('stepEdit')==='1';if(editorDrag)root.classList.add('p75-editing');else root.classList.remove('p75-editing');
-for(let i=cfg.stepCount-1;i>=0;i--){const step=cfg.steps[i];const link=makeLink('p74-step',step.href);const pos=safePosition(step.position,autoPositions(cfg.stepCount)[i]);
+for(let i=cfg.stepCount-1;i>=0;i--){const step=cfg.steps[i];const link=makeLink('p74-step',i===0?'/miniapp/p74/learning/stage1.html':i===1?'/miniapp/p74/learning/stage2.html':step.href);const pos=safePosition(step.position,autoPositions(cfg.stepCount)[i]);
 link.dataset.step=String(i+1);link.dataset.state=completed.has(i+1)?'completed':(i+1===currentStep?'current':'upcoming');
 link.setAttribute('aria-label','مرحله '+(i+1)+': '+step.title);link.style.top=pos.top+'%';link.style.right=pos.right+'%';link.style.width=pos.width+'%';link.style.height=pos.height+'%';
 link.append(elem('span','p74-step-number',String(i+1)),elem('span','p74-step-label',step.title),elem('span','p74-step-icon',i===0?'▷':i===1?'▤':i===2?'▥':i===3?'♢':'↗'));
@@ -445,8 +461,41 @@ const cta=makeLink('p74-cta',cfg.ctaHref);cta.append(elem('span','p74-cta-chevro
 const nav=elem('nav','p74-nav');nav.setAttribute('aria-label','منوی اصلی Mini App');for(let i=0;i<3;i++){const n=cfg.nav[i];const a=makeLink('',n.href);if(i===0)a.setAttribute('aria-current','page');a.append(icon(['home','academy','profile'][i]),elem('span','',n.title));nav.append(a)}root.append(nav);
 if(isPreview&&editorDrag)enablePageEditor(stage,cfg);
  if(isPreview)root.dataset.preview='1';return root}
-function receivePublished(e){if(isPreview)return;const data=e?.detail||{};const meta=extract(data.blocks);if(!meta){document.getElementById('p74-app')?.remove();document.documentElement.classList.remove('p74-enabled');return}document.documentElement.classList.add('p74-enabled');render(meta,data)}
+function receivePublished(e){if(isPreview)return;Promise.resolve(window.__MM_PAGE_GATE_READY__).then(()=>{if(window.__MM_PAGE_GATE_REDIRECT__||window.__MM_PAGE_ENGINE__!=='p74')return;const data=e?.detail||{};const meta=extract(data.blocks);if(!meta){document.getElementById('p74-app')?.remove();document.documentElement.classList.remove('p74-enabled');return}document.documentElement.classList.add('p74-enabled');render(meta,data)});}
 window.addEventListener('tenx:data',receivePublished);
+/* MM_P74_ENTRY_R103_CLIENT_BEGIN */
+// Recover the published home even when Telegram initData is absent or
+// the initial tenx:data event precedes this script's listener.
+(function bootstrapPublishedP74(){
+  if (isPreview) return;
+  const diag = { status: 'waiting_for_page_gate' };
+  window.__MM_P74_ENTRY_DIAG__ = diag;
+  const run = function(){
+    if (window.__MM_PAGE_GATE_REDIRECT__) { diag.status='redirecting'; return; }
+    if (window.__MM_PAGE_ENGINE__ && window.__MM_PAGE_ENGINE__ !== 'p74') {
+      diag.status='another_engine_selected'; return;
+    }
+    if (document.getElementById('p74-app')) { diag.status='already_rendered'; return; }
+    diag.status='fetching_published_home';
+    fetch('/public/p74-home-config',{cache:'no-store',credentials:'same-origin'})
+      .then(function(res){if(!res.ok)throw Error('HTTP_'+res.status);return res.json()})
+      .then(function(data){
+        if (document.getElementById('p74-app')) { diag.status='already_rendered'; return; }
+        if (!data || data.enabled !== true || !data.config || data.config.version !== 74) {
+          diag.status = 'not_published'; return;
+        }
+        receivePublished({detail:{blocks:[{
+          type:'element',selector:MARK,text:JSON.stringify(data.config)
+        }]}});
+        diag.status = document.getElementById('p74-app') ? 'rendered' : 'render_failed';
+      }).catch(function(e){diag.status='fetch_failed';diag.error=String(e?.message||e).slice(0,150);console.warn('P74 published home bootstrap failed', e)});
+  };
+  const gate = window.__MM_PAGE_GATE_READY__;
+  if (gate && typeof gate.then === 'function') gate.then(run,run);
+  else run();
+})();
+/* MM_P74_ENTRY_R103_CLIENT_END */
+
 window.addEventListener('message',e=>{
  if(!isPreview||e.origin!==location.origin||e.source!==window.parent||!e.data)return;
  if(e.data.type==='P74_PAGE_ELEMENT_SELECT'){
@@ -459,9 +508,7 @@ window.addEventListener('message',e=>{
    const item=P77_PAGE_ITEMS.find(x=>x[0]===window.__P77_SELECTED_ELEMENT__);
    const node=item?pageNode(document.querySelector('.p74-page'),item[2]):null;
    if(node){
-    const host=node.offsetParent||document.querySelector('.p74-page');
-    const hr=host.getBoundingClientRect(),r=node.getBoundingClientRect();
-    const layout=hr.width&&hr.height?{x:(r.left-hr.left)*100/hr.width,y:(r.top-hr.top)*100/hr.height,w:r.width*100/hr.width,h:r.height*100/hr.height}:null;
+    const layout=pageElementGeometry(node,document.querySelector('.p74-page'));
     window.parent.postMessage({type:'P74_ELEMENT_SELECTED',id:window.__P77_SELECTED_ELEMENT__,layout},location.origin);
    }
   }
@@ -473,7 +520,9 @@ window.addEventListener('message',e=>{
 });
 function ready(){if(isPreview){render(DEFAULT,null);return} // In production, the current Home stays untouched until the published marker exists.
 setTimeout(()=>{if(current||document.getElementById('p74-app'))return;const initData=window.Telegram?.WebApp?.initData;if(!initData)return;fetch('/content/page',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:'index',initData})}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{if(!current)receivePublished({detail:d})}).catch(()=>{})},1100)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();
+/* MMTRADE_PAGE_LIFECYCLE_R10_HOME_GUARD */
+const gatedReady=()=>Promise.resolve(window.__MM_PAGE_GATE_READY__).then(()=>{if(!window.__MM_PAGE_GATE_REDIRECT__&&(isPreview||window.__MM_PAGE_ENGINE__==='p74'))ready()});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',gatedReady);else gatedReady();
 window.P74StepGeometry={STEP_GEOMETRY,stepPosition,stepWithinStage,stepDrag,stepResize,stepPinch};
 window.P74={version:VERSION,defaults:copy(DEFAULT),autoPositions,renderPreview:obj=>{if(isPreview)render(obj,null)}};
 })();

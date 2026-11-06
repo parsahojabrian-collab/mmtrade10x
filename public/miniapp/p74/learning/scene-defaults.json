@@ -1,0 +1,74 @@
+[
+  {
+    "id": "candles",
+    "type": "candles",
+    "x": 59,
+    "y": 53,
+    "w": 76,
+    "rot": 0,
+    "opacity": 100,
+    "anim": "none",
+    "z": 3,
+    "text": ""
+  },
+  {
+    "id": "orb",
+    "type": "orb",
+    "x": 22,
+    "y": 52,
+    "w": 37,
+    "rot": 0,
+    "opacity": 75,
+    "anim": "pulse",
+    "z": 1,
+    "text": ""
+  },
+  {
+    "id": "coin",
+    "type": "coin",
+    "x": 20,
+    "y": 64,
+    "w": 26,
+    "rot": 0,
+    "opacity": 100,
+    "anim": "float",
+    "z": 6,
+    "text": ""
+  },
+  {
+    "id": "bars",
+    "type": "bars",
+    "x": 71,
+    "y": 82,
+    "w": 38,
+    "rot": 0,
+    "opacity": 95,
+    "anim": "rise",
+    "z": 4,
+    "text": ""
+  },
+  {
+    "id": "ring",
+    "type": "ring",
+    "x": 73,
+    "y": 35,
+    "w": 31,
+    "rot": 0,
+    "opacity": 50,
+    "anim": "spin",
+    "z": 1,
+    "text": ""
+  },
+  {
+    "id": "label",
+    "type": "label",
+    "x": 47,
+    "y": 18,
+    "w": 45,
+    "rot": 0,
+    "opacity": 95,
+    "anim": "shimmer",
+    "z": 8,
+    "text": ""
+  }
+]

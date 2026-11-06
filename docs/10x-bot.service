@@ -1,0 +1,22 @@
+[Unit]
+Description=10X Telegram Bot
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=10x
+Group=10x
+WorkingDirectory=/opt/10x
+EnvironmentFile=/opt/10x/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /opt/10x/dist/apps/bot/src/index.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/10x
+
+[Install]
+WantedBy=multi-user.target

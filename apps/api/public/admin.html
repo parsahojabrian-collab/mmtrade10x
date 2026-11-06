@@ -724,6 +724,8 @@ body h4 {
 @media(max-width:780px){.mf62-studio-layout{display:flex;flex-direction:column}.mf62-side,.mf62-stage{width:100%;max-height:none;position:static}.mf62-stage{order:-1}.mf62-preview-frame{height:640px}.mf62-studio .mf62-toolbar-actions button{flex:1;font-size:11px;padding:9px 5px}.mf62-choice-head{justify-content:center}.mf62-choice-head h2{width:100%;text-align:center}}
 
 </style>
+<link rel="stylesheet" href="/miniapp/p74/studio/route-manager.css?v=MMR6">
+<link rel="stylesheet" href="/miniapp/p74/studio/page-manager.css?v=R10">
 </head><body>
 <div id="login" class="center"><div class="card" style="width:min(380px,100%)"><h2 style="margin-top:0">ورود به پنل 10X</h2>
 <div class="row" style="flex-direction:column;align-items:stretch"><input id="em" type="email" placeholder="ایمیل" autocomplete="username"><input id="pw" type="password" placeholder="رمز عبور" autocomplete="current-password"><button id="go">ورود</button></div>
@@ -834,7 +836,27 @@ function TENX_P51_RENDER_MENU(entries, navigate, adminIdentity) {
 }
 /* END TENX_P51_OWNER_TREE_MENU_V1 */
 
-const MENU=[['overview','نمای کلی',null],['growthAnalytics','تحلیل پیشرفته Imperial Reserve',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['growth','داشبورد کاربران و کمپین‌ها',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['bot','مدیریت ربات',['SUPER_ADMIN']],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['progress','مسیر پیشرفت',['SUPER_ADMIN']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['objectStudio','Object Studio هوم',['SUPER_ADMIN']],['organizers','برگزارکنندگان چالش',['CONTENT_MANAGER']],['homeLinks','لینک‌های صفحه اصلی',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['sectionPermissions','مدیران سه‌بخشی',['SUPER_ADMIN']],['admins','مدیران و نقش‌ها',[]],['telegramTeam','مدیران تلگرام',['SUPER_ADMIN']],['eplanetWorkflow','تأیید ePlanet',['SUPER_ADMIN']],['bottomNav','نوار پایین Mini App',['SUPER_ADMIN','CONTENT_MANAGER']],['settings','تنظیمات',[]]];
+/* MMVS_SUPERADMIN_R21_GROUP */
+try {
+  if (typeof TENX_P51_GROUPS !== 'undefined' && Array.isArray(TENX_P51_GROUPS)) {
+    const mmvsGroup = TENX_P51_GROUPS.find(group => group && group.id === 'content');
+    if (mmvsGroup && Array.isArray(mmvsGroup.keys) && !mmvsGroup.keys.includes('visualStudio')) {
+      mmvsGroup.keys.push('visualStudio');
+    }
+  }
+} catch (_mmvsGroupError) { /* menu fallback keeps the section reachable */ }
+
+/* MMTRADE_ROUTE_MANAGER_R6_ADMIN */
+try {
+  const group=TENX_P51_GROUPS.find(x=>x?.id==='content');
+  if(group&&!group.keys.includes('routeManager'))group.keys.push('routeManager');
+} catch(_r6Error) { /* retain the existing menu if absent */ }
+
+/* MMTRADE_PAGE_LIFECYCLE_R10_ADMIN */
+try {const g=TENX_P51_GROUPS.find(x=>x&&x.id==='content');
+  if(g&&!g.keys.includes('pageManager'))g.keys.push('pageManager');}catch(_r10ignore){}
+
+const MENU=[['pageManager','مدیریت صفحات و صفحه شروع',['SUPER_ADMIN']],['routeManager','مدیریت لینک و آدرس صفحه',['SUPER_ADMIN']],['visualStudio','استودیوی بصری صفحات و پاپ‌آپ‌ها',['SUPER_ADMIN']],['overview','نمای کلی',null],['growthAnalytics','تحلیل پیشرفته Imperial Reserve',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['growth','داشبورد کاربران و کمپین‌ها',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['bot','مدیریت ربات',['SUPER_ADMIN']],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['progress','مسیر پیشرفت',['SUPER_ADMIN']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['objectStudio','Object Studio هوم',['SUPER_ADMIN']],['organizers','برگزارکنندگان چالش',['CONTENT_MANAGER']],['homeLinks','لینک‌های صفحه اصلی',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['sectionPermissions','مدیران سه‌بخشی',['SUPER_ADMIN']],['admins','مدیران و نقش‌ها',[]],['telegramTeam','مدیران تلگرام',['SUPER_ADMIN']],['eplanetWorkflow','تأیید ePlanet',['SUPER_ADMIN']],['bottomNav','نوار پایین Mini App',['SUPER_ADMIN','CONTENT_MANAGER']],['settings','تنظیمات',[]]];
 const P60_MENU_SCOPES={users:'users',tickets:'users',outreach:'users',
  growth:'marketing',growthAnalytics:'marketing',academy:'academy',progress:'academy'};
 const ok=m=>{
@@ -870,10 +892,7 @@ const editorMatch=location.pathname.match(/^\/admin\/editor\/([^/]+)$/);
 if(editorMatch){
   let slug='';
   try{slug=decodeURIComponent(editorMatch[1])}catch(e){}
-  if(!MF_P40_AVAILABLE.includes(slug)){
-    $('#view').textContent='صفحه نامعتبر است.';
-    return;
-  }
+  const isCustomEditorPage=!MF_P40_AVAILABLE.includes(slug);
   if(!['SUPER_ADMIN','CONTENT_MANAGER'].includes(me.role)){
     $('#view').textContent='دسترسی به ویرایشگر ندارید.';
     return;
@@ -884,7 +903,8 @@ if(editorMatch){
   $('#title').textContent='ویرایشگر صفحه · '+slug;
   $('#view').textContent='در حال بارگذاری ویرایشگر…';
   try{
-    const data=await api('/content/pages/'+encodeURIComponent(slug)+'/editor');
+    const data=await api((isCustomEditorPage?'/custom-pages/':'/content/pages/')+encodeURIComponent(slug)+'/editor');
+    if(isCustomEditorPage)data.isCustom=true;
     editPage(data);
   }catch(e){
     $('#view').replaceChildren(h('div',{class:'card'},'خطا در بارگذاری صفحه: '+e.message));
@@ -918,6 +938,31 @@ async function show(id){
 }
 const STAGES={};
 const VIEWS={
+async pageManager(){
+ if(!me||me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'دسترسی به سوپرادمین لازم است.');
+ if(!window.MMPageR10)return h('div',{class:'card'},'ماژول مدیریت صفحات بارگذاری نشده است؛ صفحه را دوباره باز کن.');
+ return window.MMPageR10.mount({api,toast});
+},
+
+async routeManager(){
+  if(!me||me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'دسترسی به این بخش فقط برای سوپرادمین است.');
+  if(!window.MMRouteR6)return h('div',{class:'card'},'ماژول مدیریت لینک بارگذاری نشده است؛ صفحه را به‌روز کن.');
+  return window.MMRouteR6.mount({api,toast,h});
+},
+
+  /* MMVS_SUPERADMIN_R2_INTEGRATION */
+  async visualStudio(){
+    if(!me||me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'فقط سوپرادمین اجازه دسترسی به استودیو را دارد.');
+    const wrap=h('section',{class:'mmvs-superadmin-section',style:'width:100%;min-width:0;display:grid;gap:10px'});
+    const info=h('div',{class:'card',style:'background:linear-gradient(115deg,#102b22,#183b2c);border-color:#af8c60;color:#f2e8d9'},
+      h('h2',{style:'margin:0 0 6px;font-size:18px'},'استودیوی بصری MMTrade10X'),
+      h('p',{style:'margin:0;line-height:1.8'},'ویرایش صفحات و پاپ‌آپ‌ها، پیش‌نمایش و انتشار — در پنل اصلی سوپرادمین.'));
+    const frame=h('iframe',{src:'/miniapp/p74/studio/index.html?embedded=1&v=MMVS_R9',title:'استودیوی بصری مینی‌اپ',loading:'eager',
+      style:'display:block;width:100%;height:max(780px,calc(100dvh - 215px));min-height:780px;border:1px solid #947750;border-radius:16px;background:#061710'});
+    wrap.append(info,frame);
+    return wrap;
+  },
+
 // TENX_P60_SECTION_RBAC_PANEL_V1
 async sectionPermissions(){
   if(me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'دسترسی محدود است.');
@@ -2500,10 +2545,13 @@ async organizers(){
 },
 
 async pages(){
- const[p,q]=await Promise.all([api('/content/pages'),api('/content/popups')]);
+ const[p,q,c,bk]=await Promise.all([api('/content/pages'),api('/content/popups'),api('/custom-pages'),api('/custom-pages/backups').catch(()=>({items:[]}))]);
  const writable=['SUPER_ADMIN','CONTENT_MANAGER'].includes(me.role);
- const enabled=(p.items||[]).filter(x=>MF_P40_AVAILABLE.includes(x.slug));
- const missing=(p.items||[]).filter(x=>!MF_P40_AVAILABLE.includes(x.slug));
+ const core=(p.items||[]).filter(x=>!x.isCustom);
+ const enabled=core.filter(x=>MF_P40_AVAILABLE.includes(x.slug));
+ const missing=core.filter(x=>!MF_P40_AVAILABLE.includes(x.slug));
+ const customPages=c.items||[];
+ const pageBackups=bk.items||[];
  const live=(q.items||[]).filter(x=>MF_P40_AVAILABLE.includes(x.pageSlug));
  const orphan=(q.items||[]).filter(x=>!MF_P40_AVAILABLE.includes(x.pageSlug));
  const box=h('div',{});
@@ -2524,9 +2572,40 @@ async pages(){
     ['وضعیت',r=>h('span',{class:'tag '+(r.status==='PUBLISHED'?'ok':'warn')},r.status)],
     ['عملیات',r=>h('div',{class:'row'},
       writable&&h('button',{class:'sec',onclick:()=>location.assign('/admin/editor/'+encodeURIComponent(r.slug))},'ویرایش دیداری'),
+      writable&&h('button',{class:'sec',onclick:()=>tenxDuplicateCustomPage(r)},'کپی مستقل'),
       h('button',{class:'sec',onclick:()=>pageHistory(r.slug)},'نسخه‌ها'),
       h('a',{target:'_blank',rel:'noopener noreferrer',href:r._audit.preview||'/miniapp'},'نمایش'))]
    ],pageRows):h('p',{class:'mut'},'هیچ فایل صفحه‌ای در مسیر شناسایی‌شده پیدا نشد.')));
+ const customCard=h('div',{class:'card',style:'margin:12px 0;border:1px solid #41634d'},
+   h('div',{class:'row',style:'justify-content:space-between;align-items:center'},
+     h('h3',{},'صفحات سفارشی و کپی‌های مستقل · '+customPages.length),
+     writable&&h('button',{onclick:()=>tenxCreateCustomPage(null)},'+ صفحه جدید')),
+   h('p',{class:'mut'},'این صفحات پوسته مستقل Mini App دارند و محتوای بلوک‌ها و تاریخچه‌شان از صفحه اصلی جداست. لینک عمومی با الگوی /p/نامک منتشر می‌شود.'));
+ if(customPages.length){
+   customCard.append(table([
+     ['عنوان',r=>h('div',{},h('b',{},r.title||r.slug),h('div',{class:'mut'},r.slug))],
+     ['لینک انتشار',r=>h('a',{href:r.publicPath,target:'_blank',rel:'noopener noreferrer'},r.publicPath)],
+     ['وضعیت',r=>h('span',{class:'tag '+(r.status==='PUBLISHED'?'ok':'warn')},r.status)],
+     ['عملیات',r=>h('div',{class:'row'},
+       writable&&h('button',{class:'sec',onclick:()=>location.assign('/admin/editor/'+encodeURIComponent(r.slug))},'ویرایش'),
+       writable&&h('button',{class:'sec',onclick:()=>tenxDuplicateCustomPage(r)},'Duplicate'),
+       me?.role==='SUPER_ADMIN'&&h('button',{class:'sec',onclick:()=>tenxChangeCustomPageRoute(r)},'تغییر لینک'),
+       me?.role==='SUPER_ADMIN'&&h('button',{class:'bad',onclick:()=>tenxDeleteCustomPage(r)},'حذف کامل'))]
+   ],customPages));
+ }else customCard.append(h('p',{class:'mut'},'هنوز صفحه سفارشی ساخته نشده است.'));
+ box.append(customCard);
+ if(me?.role==='SUPER_ADMIN'){
+   const backupCard=h('div',{class:'card',style:'margin:12px 0'},h('h3',{},'بکاپ صفحات حذف‌شده · '+pageBackups.length),
+     h('p',{class:'mut'},'بکاپ‌ها در پوشه خصوصی backups/deleted-pages نگهداری می‌شوند و از مسیر عمومی وب قابل دریافت نیستند.'));
+   if(pageBackups.length)backupCard.append(table([
+     ['صفحه',b=>h('div',{},h('b',{},b.title||b.slug),h('div',{class:'mut'},b.slug))],
+     ['لینک قبلی',b=>b.publicPath||'—'],['زمان بکاپ',b=>b.createdAt?fa(b.createdAt):'—'],
+     ['عملیات',b=>h('button',{class:'sec',onclick:()=>tenxRestoreCustomPage(b)},'بازیابی')]
+   ],pageBackups));
+   else backupCard.append(h('p',{class:'mut'},'بکاپ حذف‌شده‌ای ثبت نشده است.'));
+   box.append(backupCard);
+ }
+
  box.append(h('div',{class:'card',style:'margin-bottom:12px'},
   h('div',{class:'row',style:'justify-content:space-between'},h('h3',{},'پاپ‌آپ‌های متصل به صفحه'),
     writable&&h('button',{onclick:()=>editPopup(null)},'+ پاپ‌آپ جدید')),
@@ -2729,9 +2808,43 @@ const MF_P40_PAGE_LABELS={"index":"خانه","academy":"آکادمی","crypto":"
 const MF_P40_AVAILABLE=Object.keys(MF_P40_PAGE_STATUS).filter(s=>MF_P40_PAGE_STATUS[s].available);
 if(MF_P40_PAGE_STATUS.profile?.available)MF_P40_PAGE_STATUS.profile.preview='/profile?adminPreview=1';
 const SLUGS=['index','academy','crypto','copy-trading','challenge','support','profile','mmtrade10x'];
-async function pageHistory(slug){try{const d=await api('/content/pages/'+encodeURIComponent(slug)+'/versions');const rows=d.items||[];const box=h('div',{class:'card'},h('div',{class:'row',style:'justify-content:space-between'},h('b',{},'تاریخچه نسخه: '+slug),h('button',{class:'sec',onclick:()=>$('#drawer').classList.add('hide')},'بستن')),rows.length?table([['نسخه',v=>'#'+v.version],['وضعیت',v=>v.status],['زمان',v=>fa(v.createdAt)],['مدیر',v=>v.createdBy?.email||'—'],['',v=>h('button',{class:'sec',onclick:async()=>{if(!confirm('نسخه #'+v.version+' بازگردانی شود؟'))return;try{await api('/content/pages/'+encodeURIComponent(slug)+'/rollback',{method:'POST',body:JSON.stringify({versionId:v.id})});toast('نسخه بازگردانی شد.');$('#drawer').classList.add('hide');if(location.pathname.startsWith('/admin/editor/'))location.reload();else show('pages')}catch(e){toast('خطا: '+e.message)}}},'بازگردانی')]],rows):h('p',{class:'mut'},'هنوز نسخه‌ای ذخیره نشده است.'));const d0=$('#drawer');d0.classList.remove('hide');d0.replaceChildren(box)}catch(e){toast('خطا در دریافت تاریخچه: '+e.message)}}
+async function tenxCreateCustomPage(source){
+  const suggested=source?'copy-'+String(source.slug||'page').replace(/[^a-z0-9-]/g,'-'):'new-page';
+  const slug=prompt('شناسه داخلی صفحه (فقط حروف کوچک انگلیسی، عدد و خط تیره):',suggested);
+  if(!slug)return;
+  const title=prompt('عنوان صفحه:',source?(source.title||source.slug)+' - کپی':'صفحه جدید 10X');
+  if(!title)return;
+  const publicSlug=prompt('نامک لینک انتشار (آدرس نهایی /p/نامک):',slug);
+  if(!publicSlug)return;
+  try{
+    await api('/custom-pages',{method:'POST',body:JSON.stringify({slug:slug.trim(),title:title.trim(),publicSlug:publicSlug.trim(),...(source?{sourceSlug:source.slug}:{})})});
+    toast('صفحه مستقل ساخته شد. محتوای صفحه مبدأ تغییر نمی‌کند.');
+    location.assign('/admin/editor/'+encodeURIComponent(slug.trim()));
+  }catch(e){toast('خطا در ساخت صفحه: '+e.message)}
+}
+async function tenxDuplicateCustomPage(source){return tenxCreateCustomPage(source)}
+async function tenxChangeCustomPageRoute(row){
+  const publicSlug=prompt('نامک جدید لینک انتشار را وارد کن. لینک قبلی به لینک جدید هدایت می‌شود:',row.publicSlug||'');
+  if(!publicSlug||publicSlug===row.publicSlug)return;
+  try{const r=await api('/custom-pages/'+encodeURIComponent(row.slug)+'/route',{method:'POST',body:JSON.stringify({publicSlug:publicSlug.trim()})});toast('لینک انتشار تغییر کرد: '+r.publicPath);await show('pages')}
+  catch(e){toast('خطا در تغییر لینک: '+e.message)}
+}
+async function tenxDeleteCustomPage(row){
+  const typed=prompt('برای حذف کامل صفحه و تمام نسخه‌های آن، شناسه زیر را عیناً وارد کن. ابتدا بکاپ خصوصی و قابل‌بازیابی ساخته می‌شود:\n'+row.slug,'');
+  if(typed!==row.slug)return;
+  try{const result=await api('/custom-pages/'+encodeURIComponent(row.slug),{method:'DELETE'});toast('حذف کامل شد. بکاپ: '+result.backupId);await show('pages')}
+  catch(e){toast('حذف انجام نشد: '+e.message)}
+}
+async function tenxRestoreCustomPage(backup){
+  if(!confirm('صفحه «'+(backup.title||backup.slug)+'» با داده‌ها و تاریخچه موجود در بکاپ بازیابی شود؟'))return;
+  try{const result=await api('/custom-pages/restore',{method:'POST',body:JSON.stringify({backupId:backup.backupId})});toast('صفحه بازیابی شد: '+result.publicPath);await show('pages')}
+  catch(e){toast('بازیابی انجام نشد: '+e.message)}
+}
+
+async function pageHistory(slug,isCustom=false){try{const base=isCustom?'/custom-pages/':'/content/pages/';const d=await api(base+encodeURIComponent(slug)+'/versions');const rows=d.items||[];const box=h('div',{class:'card'},h('div',{class:'row',style:'justify-content:space-between'},h('b',{},'تاریخچه نسخه: '+slug),h('button',{class:'sec',onclick:()=>$('#drawer').classList.add('hide')},'بستن')),rows.length?table([['نسخه',v=>'#'+v.version],['وضعیت',v=>v.status],['زمان',v=>fa(v.createdAt)],['مدیر',v=>v.createdBy?.email||'—'],['',v=>h('button',{class:'sec',onclick:async()=>{if(!confirm('نسخه #'+v.version+' بازگردانی شود؟'))return;try{await api(base+encodeURIComponent(slug)+'/rollback',{method:'POST',body:JSON.stringify({versionId:v.id})});toast('نسخه بازگردانی شد.');$('#drawer').classList.add('hide');if(location.pathname.startsWith('/admin/editor/'))location.reload();else show('pages')}catch(e){toast('خطا: '+e.message)}}},'بازگردانی')]],rows):h('p',{class:'mut'},'هنوز نسخه‌ای ذخیره نشده است.'));const d0=$('#drawer');d0.classList.remove('hide');d0.replaceChildren(box)}catch(e){toast('خطا در دریافت تاریخچه: '+e.message)}}
 function editPage(r){
   const isStandalone = location.pathname.startsWith('/admin/editor/');
+  const pageApiBase = r.isCustom ? '/custom-pages/' : '/content/pages/';
   const d = isStandalone ? $('#view') : $('#drawer');
   let publishedStatus = r.published?.status || r.status || 'DRAFT';
   const blocks = JSON.parse(JSON.stringify(r.blocks || []));
@@ -2743,6 +2856,7 @@ function editPage(r){
     banner: [['title','عنوان بنر','text'],['text','متن بنر','textarea'],['url','لینک بنر','text']],
     progress: [['kind','نوع پیشرفت','select'],['title','عنوان','text']],
     divider: [],
+    html: [['html','کد HTML سفارشی (بدون JavaScript)','textarea']],
     mm10_step: [
       ['id','شناسه ثابت مرحله','text'],
       ['title','عنوان مرحله','text'],
@@ -2777,6 +2891,7 @@ function editPage(r){
   const labels = {
     heading:'عنوان', text:'متن', image:'تصویر', button:'دکمه',
     banner:'بنر', progress:'نوار پیشرفت', divider:'جداکننده',
+    html:'سکشن HTML سفارشی',
     element:'عنصر موجود صفحه',
     mm10_step:'مرحله آموزشی MMTrade10X'
   };
@@ -2988,7 +3103,7 @@ function editPage(r){
 
   undoBtn.onclick = undoEdit;
   redoBtn.onclick = redoEdit;
-  historyBtn.onclick = () => pageHistory(r.slug);
+  historyBtn.onclick = () => pageHistory(r.slug,!!r.isCustom);
 
   actions.append(undoBtn,redoBtn,historyBtn,saveBtn,publishBtn,closeBtn);
   updateHistoryButtons();
@@ -3349,6 +3464,7 @@ function editPage(r){
       banner:{type:t,title:'بنر جدید',text:''},
       progress:{type:t,kind:'registration',title:''},
       divider:{type:t},
+      html:{type:t,html:'<section dir="rtl" style="padding:16px;border-radius:14px;background-color:#10251b;color:#ffffff"><h2>سکشن جدید</h2><p>محتوای خود را اینجا ویرایش کنید.</p></section>'},
       mm10_step:{
         type:t,
         id:'step-'+Date.now().toString(36),
@@ -3945,6 +4061,9 @@ function editPage(r){
       n=el('h2',{style:{fontSize:'25px',margin:'12px 0',overflowWrap:'anywhere'}},b.text||'عنوان');
     } else if(b.type==='text'){
       n=el('p',{style:{fontSize:'15px',lineHeight:'1.9',whiteSpace:'pre-wrap',overflowWrap:'anywhere'}},b.text||'متن');
+    } else if(b.type==='html'){
+      n=el('section',{class:'tenx-custom-html',style:{padding:'8px',border:'1px dashed #d4a84f',borderRadius:'8px',minHeight:'36px'}});
+      if(window.TenxSafeHtml)window.TenxSafeHtml.append(n,b.html||'');else n.textContent=b.html||'';
     } else if(b.type==='image'){
       n=el('div',{style:{margin:'12px 0'}});
       const img=el('img',{src:p45LogoUrl(b.url)||'/',alt:b.alt||'',style:{
@@ -4281,6 +4400,11 @@ function editPage(r){
         n = node('h2', 'tenx-preview-block', b.text || '');
       } else if (b.type === 'text') {
         n = node('p', 'muted btxt tenx-preview-block tenx-preview-text', b.text || '');
+      } else if (b.type === 'html') {
+        n = node('section', 'tenx-preview-block tenx-preview-html tenx-custom-html');
+        const safeHtml = doc.defaultView && doc.defaultView.TenxSafeHtml;
+        if (safeHtml && typeof safeHtml.append === 'function') safeHtml.append(n, b.html || '');
+        else n.textContent = b.html || '';
       } else if (b.type === 'divider') {
         n = node('hr', 'bdiv tenx-preview-divider');
       } else if (b.type === 'image') {
@@ -4733,6 +4857,7 @@ function editPage(r){
         if(!b.selector||b.selector.length>500){errors.push(n+'انتخابگر CSS نامعتبر است.');return}
         try{document.querySelector(b.selector)}catch(_e){errors.push(n+'انتخابگر CSS قابل تفسیر نیست.');}
       }
+      if(b.type==='html'&&(!String(b.html||'').trim()||String(b.html).length>16000))errors.push(n+'کد HTML باید بین ۱ تا ۱۶۰۰۰ کاراکتر باشد.');
       if(b.type==='mm10_step'&&!/^[a-zA-Z0-9_-]{1,64}$/.test(b.id||''))errors.push(n+'شناسه مرحله معتبر نیست.');
       for(const key of ['url','src','href'])if(b[key]!==undefined&&!safe(b[key]))errors.push(n+'آدرس '+key+' معتبر نیست.');
       if((b.type==='image'||b.type==='button')&&!safe(b.url))errors.push(n+'لینک اجباری است.');
@@ -4751,7 +4876,7 @@ function editPage(r){
     publishBtn.disabled=true;
 
     try{
-      await api('/content/pages/'+encodeURIComponent(r.slug)+'/draft',{
+      await api(pageApiBase+encodeURIComponent(r.slug)+'/draft',{
         method:'PUT',
         body:JSON.stringify({
           title:titleInput.value.trim()||null,
@@ -4785,7 +4910,7 @@ function editPage(r){
     try{
       await saveDraft();
 
-      const result=await api('/content/pages/'+encodeURIComponent(r.slug)+'/publish',{
+      const result=await api(pageApiBase+encodeURIComponent(r.slug)+'/publish',{
         method:'POST',
         body:JSON.stringify({})
       });
@@ -4894,6 +5019,152 @@ $('#go').onclick=async()=>{
   finally{btn.disabled=false;btn.textContent=oldLabel}
 };
 $('#out').onclick=()=>{token='';try{sessionStorage.removeItem('tenx_admin_token')}catch(e){}location.reload()};
+
+/* TENX_PAGE_FILES_MANAGER_R1_UI */
+MENU.push(['pageFiles','مدیریت فایل‌های HTML',['SUPER_ADMIN']]);
+VIEWS.pageFiles = async function(){
+  if(me?.role!=='SUPER_ADMIN') return h('div',{class:'card'},'فقط سوپرادمین به مدیریت فایل‌ها دسترسی دارد.');
+  const root=h('section',{class:'pfm-root'});
+  const style=document.createElement('style');
+  style.textContent=`
+    .pfm-root{display:grid;gap:14px;color:var(--ink)}
+    .pfm-hero{padding:20px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(125deg,rgba(25,112,72,.18),rgba(184,142,91,.09))}
+    .pfm-hero h2{margin:0 0 6px;font-size:20px}.pfm-hero p{margin:0;color:var(--mut);line-height:1.9}
+    .pfm-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+    .pfm-stat{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);min-width:0}
+    .pfm-stat b{display:block;font-size:22px}.pfm-stat small{color:var(--mut)}
+    .pfm-toolbar{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,240px) auto auto;gap:8px}
+    .pfm-toolbar input,.pfm-toolbar select{min-width:0;width:100%}
+    .pfm-tabs{display:flex;gap:7px;flex-wrap:wrap}
+    .pfm-tabs button{background:transparent;color:var(--ink);border:1px solid var(--line)}
+    .pfm-tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+    .pfm-layout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(300px,.95fr);gap:12px;align-items:start}
+    .pfm-list,.pfm-detail{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:10px;min-width:0}
+    .pfm-file{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;text-align:right;align-items:center;background:transparent;color:var(--ink);border:1px solid transparent;border-bottom:1px solid var(--line);border-radius:8px;padding:11px}
+    .pfm-file:hover,.pfm-file.selected{background:rgba(42,150,98,.09);border-color:var(--line)}
+    .pfm-file strong{display:block;overflow-wrap:anywhere}.pfm-file small{display:block;color:var(--mut);font-size:11px;overflow-wrap:anywhere}
+    .pfm-tag{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:2px 8px;font-size:10px;color:var(--mut);white-space:nowrap}
+    .pfm-warning{padding:10px;border-radius:10px;background:rgba(217,119,6,.10);border:1px solid rgba(217,119,6,.35);line-height:1.8}
+    .pfm-ref{padding:9px 0;border-bottom:1px solid var(--line);font-size:12px;overflow-wrap:anywhere}
+    .pfm-ref code{display:block;white-space:pre-wrap;color:var(--mut);font-size:11px}
+    .pfm-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+    .pfm-actions button{min-height:38px}
+    .pfm-preview{width:100%;height:420px;border:1px solid var(--line);border-radius:10px;background:#fff}
+    .pfm-empty{padding:24px;text-align:center;color:var(--mut)}
+    @media(max-width:850px){.pfm-layout{grid-template-columns:1fr}.pfm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.pfm-toolbar{grid-template-columns:1fr 1fr}.pfm-preview{height:330px}}
+    @media(max-width:430px){.pfm-toolbar{grid-template-columns:1fr}.pfm-file{grid-template-columns:1fr}.pfm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  `;
+  root.append(style);
+  let items=[],trash=[],counts={},selected=null,detail=null,tab='files',category='all',query='';
+  const categoryNames={
+    'miniapp-source':'سورس مینی‌اپ','live-miniapp':'مینی‌اپ منتشرشده',
+    admin:'پنل‌ها و رابط مدیریت','academy-archive':'نسخه‌ها و آرشیو آکادمی',
+    public:'سایر فایل‌های عمومی',application:'بخش‌های داخلی برنامه',
+    tests:'تست‌ها',generated:'خروجی‌های ساخته‌شده',project:'سایر فایل‌های پروژه'
+  };
+  const stats=h('div',{class:'pfm-stats'});
+  const tabs=h('div',{class:'pfm-tabs'});
+  const search=h('input',{type:'search',placeholder:'جست‌وجوی نام یا مسیر فایل…',oninput:e=>{query=e.target.value;renderList();}});
+  const categorySelect=h('select',{onchange:e=>{category=e.target.value;renderList();}});
+  const refresh=h('button',{type:'button',class:'sec',onclick:()=>load()},'بازخوانی');
+  const toolbar=h('div',{class:'pfm-toolbar'},search,categorySelect,
+    h('button',{type:'button',class:'sec',onclick:()=>{tab='files';renderList();}},'فایل‌ها'),
+    h('button',{type:'button',class:'sec',onclick:()=>{tab='trash';renderList();}},'آرشیو'));
+  const list=h('div',{class:'pfm-list'});
+  const detailPane=h('div',{class:'pfm-detail'},h('div',{class:'pfm-empty'},'برای مشاهده جزئیات، یک فایل را انتخاب کن.'));
+  root.append(h('div',{class:'pfm-hero'},
+    h('h2',{},'مدیریت فایل‌های HTML پروژه'),
+    h('p',{},'فهرست یکپارچه فایل‌های HTML سورس پروژه و نسخه زنده مینی‌اپ؛ همراه با دسته‌بندی، پیش‌نمایش، بررسی وابستگی، آرشیو و بازیابی. حذف مستقیم فایل فعال بدون بررسی وابستگی مجاز نیست.')),
+    stats,toolbar,tabs,h('div',{class:'pfm-layout'},list,detailPane));
+  function button(label,fn,klass='sec'){return h('button',{type:'button',class:klass,onclick:fn},label);}
+  function renderStats(){
+    const vals=[
+      ['کل فایل‌های HTML',counts.all??items.length],
+      ['سورس مینی‌اپ',counts['miniapp-source']??0],
+      ['نسخه زنده مینی‌اپ',counts['live-miniapp']??0],
+      ['آرشیوها',trash.length]
+    ];
+    stats.replaceChildren(...vals.map(([label,value])=>h('div',{class:'pfm-stat'},h('small',{},label),h('b',{},Number(value).toLocaleString('fa-IR')))));
+  }
+  function renderTabs(){
+    const options=[['all','همه'],['miniapp-source','سورس مینی‌اپ'],['live-miniapp','نسخه زنده'],['admin','پنل مدیریت'],['academy-archive','آرشیو آکادمی'],['public','عمومی'],['application','بخش برنامه'],['tests','تست‌ها'],['generated','خروجی ساخته‌شده'],['project','سایر پروژه']];
+    tabs.replaceChildren(...options.map(([value,label])=>button(label,()=>{category=value;categorySelect.value=value;tab='files';renderTabs();renderList();},category===value?'on':'')));
+    categorySelect.replaceChildren(...options.map(([value,label])=>h('option',{value},label)));
+    categorySelect.value=category;
+  }
+  function renderList(){
+    if(tab==='trash'){
+      list.replaceChildren(h('h3',{},'آرشیو و فایل‌های قابل بازیابی'));
+      if(!trash.length){list.append(h('div',{class:'pfm-empty'},'آرشیوی وجود ندارد.'));return;}
+      trash.forEach(item=>{
+        const row=h('div',{class:'pfm-file'},
+          h('span',{},h('strong',{},item.path),h('small',{},item.rootLabel+' · '+fa(item.archivedAt))),
+          h('span',{class:'pfm-actions'},
+            button('بازیابی',async()=>{if(!confirm('فایل به مسیر اصلی بازگردد؟'))return;try{await api('/page-files-trash/'+encodeURIComponent(item.id)+'/restore',{method:'POST',body:'{}'});toast('فایل بازیابی شد');await load();}catch(e){toast('خطا: '+e.message);}},''),
+            button('حذف دائمی',async()=>{const phrase=prompt('برای حذف غیرقابل‌بازگشت، عبارت DELETE را وارد کن.');if(phrase!=='DELETE')return;try{await api('/page-files-trash/'+encodeURIComponent(item.id),{method:'DELETE',body:JSON.stringify({confirmation:'DELETE'})});toast('فایل برای همیشه حذف شد');await load();}catch(e){toast('خطا: '+e.message);}},'bad')));
+        list.append(row);
+      });
+      return;
+    }
+    const filtered=items.filter(item=>(category==='all'||item.category===category)&&
+      (!query||item.path.toLowerCase().includes(query.toLowerCase())||item.rootLabel.toLowerCase().includes(query.toLowerCase())));
+    list.replaceChildren(h('div',{class:'row',style:'justify-content:space-between;padding:7px'},h('b',{},'فایل‌ها ('+filtered.length+')'),refresh));
+    if(!filtered.length){list.append(h('div',{class:'pfm-empty'},'فایلی با این فیلتر پیدا نشد.'));return;}
+    filtered.forEach(item=>{
+      const row=h('button',{type:'button',class:'pfm-file'+(selected===item.id?' selected':''),
+        onclick:()=>select(item.id)},
+        h('span',{},h('strong',{},item.path),h('small',{},item.rootLabel+' · '+item.categoryLabel+' · '+(item.size/1024).toFixed(1)+' KB')),
+        h('span',{class:'pfm-tag'},item.protected?'سیستمی': 'قابل مدیریت'));
+      list.append(row);
+    });
+  }
+  async function select(id){
+    selected=id;detail=null;renderList();
+    detailPane.replaceChildren(h('div',{class:'pfm-empty'},'در حال دریافت جزئیات و بررسی لینک‌های وابسته…'));
+    try{detail=await api('/page-files/'+encodeURIComponent(id));renderDetail();}
+    catch(e){detailPane.replaceChildren(h('div',{class:'pfm-warning'},'دریافت جزئیات ناموفق بود: '+e.message));}
+  }
+  function renderDetail(){
+    if(!detail)return;
+    const item=detail.item;
+    const refs=detail.references||[];
+    const actions=h('div',{class:'pfm-actions'},
+      button('کپی مسیر',async()=>{try{await navigator.clipboard.writeText(item.path);toast('مسیر کپی شد');}catch(e){toast('کپی مسیر در این مرورگر پشتیبانی نشد');}}),
+      button('پیش‌نمایش',()=>{const frame=detailPane.querySelector('iframe');if(frame)frame.scrollIntoView({behavior:'smooth',block:'center'});}));
+    if(!item.protected)actions.append(button('انتقال به آرشیو',async()=>{
+      if(!confirm('فایل از مسیر فعلی خارج و به آرشیو قابل‌بازیابی منتقل شود؟'))return;
+      let confirmPath;
+      if(refs.length){confirmPath=prompt('این فایل '+refs.length+' ارجاع احتمالی دارد. برای ادامه، مسیر دقیق فایل را وارد کن:\n'+item.path);if(confirmPath!==item.path)return;}
+      try{await api('/page-files/'+encodeURIComponent(item.id)+'/archive',{method:'POST',body:JSON.stringify({confirmPath})});toast('فایل به آرشیو منتقل شد؛ لینک‌های ارجاع‌شده را از بخش وابستگی بررسی کن.');selected=null;detail=null;await load();}
+      catch(e){toast('آرشیو ناموفق: '+e.message);}
+    },'bad'));
+    const warning=item.protected?h('div',{class:'pfm-warning'},'فایل محافظت‌شده است: '+item.protectionReason):refs.length?h('div',{class:'pfm-warning'},'این فایل '+refs.length+' ارجاع احتمالی دارد. قبل از آرشیو، مسیرهای وابسته را بررسی کن.'):h('p',{class:'mut'},'ارجاع متنی شناخته‌شده‌ای پیدا نشد؛ این موضوع تضمین نمی‌کند که ارجاع پویا یا مسیر ساخته‌شده در زمان اجرا وجود ندارد.');
+    const refNodes=refs.length?refs.map(ref=>h('div',{class:'pfm-ref'},h('b',{},ref.root+' · '+ref.path+':'+ref.line),h('code',{},ref.excerpt))):[h('p',{class:'mut'},'ارجاعی پیدا نشد.')];
+    const frame=h('iframe',{class:'pfm-preview',title:'پیش‌نمایش ایمن HTML',sandbox:''});
+    const csp='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: https:; style-src \'unsafe-inline\' https:; font-src data: https:; form-action \'none\'; base-uri \'none\'">';
+    frame.srcdoc=csp+detail.content;
+    detailPane.replaceChildren(
+      h('div',{},h('h3',{},item.path),h('p',{class:'mut'},item.rootLabel+' · '+item.categoryLabel),
+        h('p',{class:'mut'},'اندازه: '+(item.size/1024).toFixed(1)+' KB · آخرین تغییر: '+fa(item.modifiedAt)),
+        h('p',{class:'mut'},'SHA-256: '+(item.sha256||'برای فایل بزرگ محاسبه نشده')),
+        warning,actions,
+        h('h4',{},'ارجاع‌ها و وابستگی‌های متنی ('+refs.length+')'),...refNodes,
+        h('h4',{},'پیش‌نمایش ایمن (اجرای JavaScript غیرفعال است)'),frame));
+  }
+  async function load(){
+    try{
+      const [data,archived]=await Promise.all([api('/page-files'),api('/page-files-trash')]);
+      items=data.items||[];counts=data.counts||{};trash=archived.items||[];
+      renderStats();renderTabs();renderList();
+      if(selected){const exists=items.some(x=>x.id===selected);if(exists)await select(selected);else{selected=null;detail=null;detailPane.replaceChildren(h('div',{class:'pfm-empty'},'یک فایل را برای مشاهده جزئیات انتخاب کن.'));}}
+    }catch(e){list.replaceChildren(h('div',{class:'pfm-warning'},'خطا در دریافت فهرست فایل‌ها: '+e.message));}
+  }
+  renderStats();renderTabs();renderList();await load();
+  return root;
+};
+/* END TENX_PAGE_FILES_MANAGER_R1_UI */
+
+
 if(token)boot();
 </script>
 <section id="tenx-real-bot-manager" class="hide" style="padding:20px;margin:20px 0;border:1px solid #8885;border-radius:14px">
@@ -5548,6 +5819,26 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
 .p40-editor-shell .tenx-studio-responsive-layout{grid-template-columns:minmax(300px,380px) minmax(0,1fr)!important;align-items:start!important;gap:14px!important}
 .p40-editor-shell .tenx-studio-inspector-panel{background:#0e2018!important;border:1px solid #305841!important;border-radius:15px!important;max-height:calc(100vh - 150px);overflow-y:auto;overflow-x:hidden;position:sticky;top:80px}
 .p40-editor-shell .tenx-studio-stage-panel{background:#14251d!important;border:1px solid #305841!important;border-radius:15px!important;min-width:0;overflow:hidden}
+
+/* TENX_EDITOR_PREVIEW_STICKY_DESKTOP_R1 */
+@media (min-width: 761px) {
+  .p40-editor-shell .tenx-studio-stage-panel {
+    position: sticky !important;
+    top: 80px !important;
+    align-self: start !important;
+    max-height: calc(100vh - 96px);
+    z-index: 5;
+  }
+}
+
+/* Keep existing mobile tab behavior */
+@media (max-width: 760px) {
+  .p40-editor-shell .tenx-studio-stage-panel {
+    position: static !important;
+    max-height: none;
+  }
+}
+
 .p40-editor-shell .tenx-studio-stage-panel iframe{border-radius:10px;box-shadow:0 10px 35px #0007}
 .p40-editor-shell .tenx-studio-inspector-panel h3{font-size:15px!important;color:#e8fbee!important;margin:17px 0 8px}
 .p40-editor-shell .tenx-studio-inspector-panel select,.p40-editor-shell .tenx-studio-inspector-panel input,.p40-editor-shell .tenx-studio-inspector-panel textarea{width:100%;min-width:0;background:#0b1c14!important;border:1px solid #3b5a49!important;color:#e8fbed!important;border-radius:9px!important}
@@ -5662,8 +5953,8 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
     try {
       if (typeof TENX_P51_RENDER_MENU === 'function' &&
           typeof MENU !== 'undefined' && typeof ok === 'function' &&
-          typeof show === 'function' && typeof me !== 'undefined' && me) {
-        TENX_P51_RENDER_MENU(MENU.filter(ok), show, me);
+          typeof navigateManagement === 'function' && typeof me !== 'undefined' && me) {
+        TENX_P51_RENDER_MENU(MENU.filter(ok), navigateManagement, me);
       }
     } catch (e) {
       console.error('P52 owner menu recovery failed:', e);
@@ -5793,8 +6084,8 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
       g.items.forEach(item=>{
         const btn=element('button','p53-item'+(item[0]===active?' p53-active':''),item[1]);
         btn.type='button';btn.addEventListener('click',()=>{
-          if(typeof show==='function'){
-            try{const p=show(item[0]);if(p&&typeof p.catch==='function')p.catch(err=>console.error('P53 navigation error',err));}
+          if(typeof navigateManagement==='function'){
+            try{const p=navigateManagement(item[0]);if(p&&typeof p.catch==='function')p.catch(err=>console.error('P53 navigation error',err));}
             catch(err){console.error('P53 navigation error',err)}
           }else{
             const link=byId('n-'+item[0]);if(link)link.click();
@@ -6766,6 +7057,7 @@ body #view .p74admin-page .p74admin-panel button.mm-poster-upload:focus-visible{
 .mm-page-editor input[type=color]{height:38px;padding:3px}
 @media(max-width:520px){.mm-page-element-list{grid-template-columns:1fr}}
 </style>
+<script src="/miniapp/safe-html.js?v=TENX_SAFE_CUSTOM_HTML_R1"></script>
 <script src="/miniapp/p74/object-model.js?v=OBJECT_STUDIO_R1"></script>
 <script src="/miniapp/p74/image-optimizer.js?v=OBJECT_STUDIO_OPTIMIZE_R2"></script>
 <script id="p74-studio-script">
@@ -7232,4 +7524,6 @@ async function open(){
 
 </script>
 <!-- P74_HOME_MATCH_R1 ADMIN END -->
+<script defer src="/miniapp/p74/studio/route-manager.js?v=MMR6"></script>
+<script defer src="/miniapp/p74/studio/page-manager.js?v=R10"></script>
 </body></html>

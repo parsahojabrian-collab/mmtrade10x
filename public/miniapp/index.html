@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
+  <script>
+(function () {
+  'use strict';
+  var params = new URLSearchParams(window.location.search);
+
+  // Keep the real user flow, but never redirect the admin preview.
+  if (
+    params.get('view') === 'mmtrade10x' &&
+    params.get('adminPreview') !== '1'
+  ) {
+    window.location.replace('/miniapp/p74/learning/stage1.html');
+  }
+})();
+</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="theme-color" content="#070a09">
@@ -1317,6 +1331,7 @@
 
 <link rel="stylesheet" href="/miniapp/p74/home.css?v=P76_HOME_FULLPAGE_R1">
 <!-- P74_HOME_MATCH_R1 HEAD END -->
+<script src="/miniapp/p74/studio/page-gate.js?v=R10" data-mm-page-r10="1"></script>
 </head>
 <body>
   <main class="home-shell">
@@ -1581,12 +1596,12 @@
           if (placeholder) {
             placeholder.id = 'mmtrade10x';
             placeholder.label = 'MMTrade10X';
-            placeholder.href = '/miniapp/index.html?view=mmtrade10x';
+            placeholder.href = '/miniapp/p74/learning/stage1.html';
           } else if (!items.some(function(x){return x.id === 'mmtrade10x';})) {
             items.push({
               id:'mmtrade10x',
               label:'MMTrade10X',
-              href:'/miniapp/index.html?view=mmtrade10x',
+              href:'/miniapp/p74/learning/stage1.html',
               icon:'trophy'
             });
           }
@@ -3005,6 +3020,7 @@ var wf = user.eplanetWorkflow || {};
   })();
   </script>
   <script src="/miniapp/10x-onboarding.js?v=p01"></script>
+<script src="/miniapp/safe-html.js?v=TENX_SAFE_CUSTOM_HTML_R1"></script>
 <script src="/miniapp/blocks.js"></script>
 <!-- TENX_Q10_Q12_R8_START -->
 <script id="tenx-q10-q12-preview-loader">
@@ -3729,7 +3745,10 @@ var wf = user.eplanetWorkflow || {};
 
 
 <!-- P74_HOME_MATCH_R1 BODY START -->
-<script defer src="/miniapp/p74/home.js?v=P76_HOME_FULLPAGE_R1"></script>
+<script defer src="/miniapp/p74/home.js?v=MM_P74_ENTRY_R103_20261107"></script>
 <!-- P74_HOME_MATCH_R1 BODY END -->
+<script defer src="/miniapp/p74/studio/bridge.js?v=MMVS_R9" data-mmvs-bridge="R3"></script>
+<script defer src="/miniapp/p74/studio/spatial-bridge.js?v=MMVS_R91" data-mmvs-spatial="R4"></script>
+<script defer src="/miniapp/p74/studio/link-resolver.js?v=MMR6" data-mmtrade-route-r6="1"></script>
 </body>
 </html>
