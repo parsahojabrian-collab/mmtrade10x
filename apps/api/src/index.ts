@@ -1,3 +1,4 @@
+import { contentRevision, assertContentRevision, withContentLock, ContentConflict } from './content-workflow.js';
 import { authenticateTeamAdmin } from './team-auth-p37.js';
 import { randomInt as quizCryptoRandomInt } from 'node:crypto';
 import 'dotenv/config';
@@ -4809,7 +4810,7 @@ app.patch('/admin/page-lifecycle/:slug',async(request,reply)=>{
  const body=r10EditSchema.extend({expectedVersion:z.number().int().min(0)}).safeParse(request.body);
  if(!params.success||!body.success)return reply.code(400).send({error:'invalid_request'});
  const slug=params.data.slug;
- const result=await prisma.$transaction(async tx=>{
+ const result=await withContentLock(prisma,slug,async tx=>{
   const state=await r10Read(tx);
   if(state.version!==body.data.expectedVersion)return {error:'stale_version'};
   const builtin=r10Builtins.includes(slug),page=state.custom.find(p=>p.slug===slug);
@@ -4855,28 +4856,34 @@ app.get('/admin/page-lifecycle/:slug/draft',async(request,reply)=>{
  const state=await r10Read();const page=state.custom.find(x=>x.slug===slug);
  if(!page)return reply.code(404).send({error:'custom_page_not_found'});
  const [draft,published]=await Promise.all([prisma.contentPageDraft.findUnique({where:{slug}}),prisma.contentPage.findUnique({where:{slug}})]);
- return {slug,title:page.title,blocks:draft?.blocks??published?.blocks??[],status:page.status};
+ return {slug,title:draft?.title??published?.title??page.title,blocks:draft?.blocks??published?.blocks??[],revision:contentRevision(draft??published),status:page.status};
 });
 app.put('/admin/page-lifecycle/:slug/draft',async(request,reply)=>{
  if(!(await r10Owner(request,reply)))return;
  const slug=String((request.params as any).slug||'');
- const v=z.object({title:z.string().trim().min(1).max(120),blocks:z.array(blockSchema).max(40)}).strict().safeParse(request.body);
+ const v=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(),title:z.string().trim().min(1).max(120),blocks:z.array(blockSchema).max(40)}).strict().safeParse(request.body);
  if(!v.success)return reply.code(400).send({error:'invalid_blocks',details:v.error.flatten()});
  const state=await r10Read();if(!state.custom.some(x=>x.slug===slug))return reply.code(404).send({error:'custom_page_not_found'});
- await prisma.$transaction(async tx=>{
-  await tx.contentPageDraft.upsert({where:{slug},create:{slug,title:v.data.title,blocks:toInputJson(v.data.blocks as unknown as Prisma.JsonValue)},update:{title:v.data.title,blocks:toInputJson(v.data.blocks as unknown as Prisma.JsonValue)}});
+ const saved=await withContentLock(prisma,slug,async tx=>{
+  const current=await tx.contentPageDraft.findUnique({where:{slug}})??await tx.contentPage.findUnique({where:{slug}});
+  assertContentRevision(current,v.data.expectedRevision);
+  const saved=await tx.contentPageDraft.upsert({where:{slug},create:{slug,title:v.data.title,blocks:toInputJson(v.data.blocks as unknown as Prisma.JsonValue)},update:{title:v.data.title,blocks:toInputJson(v.data.blocks as unknown as Prisma.JsonValue)}});
   await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'R10_PAGE_DRAFT_SAVED',entityType:'PageLifecycle',entityId:slug}});
+  return saved;
  });
- return {ok:true};
+ return {ok:true,revision:contentRevision(saved)};
 });
 app.post('/admin/page-lifecycle/:slug/publish',async(request,reply)=>{
  if(!(await r10Owner(request,reply)))return;
  const slug=String((request.params as any).slug||'');
- const result=await prisma.$transaction(async tx=>{
+ const body=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict().safeParse(request.body??{});
+ if(!body.success)return reply.code(400).send({error:'invalid_request'});
+ const result=await withContentLock(prisma,slug,async tx=>{
   const state=await r10Read(tx);
   const page=state.custom.find(x=>x.slug===slug);
   if(!page)return {error:'custom_page_not_found'};
   const draft=await tx.contentPageDraft.findUnique({where:{slug}});
+  assertContentRevision(draft,body.data.expectedRevision);
   const validated=draft&&z.array(blockSchema).max(40).safeParse(draft.blocks);
   if(!draft||!validated||!validated.success)return {error:'draft_invalid_or_missing'};
   await tx.contentPage.upsert({where:{slug},create:{slug,title:draft.title,blocks:toInputJson(validated.data as unknown as Prisma.JsonValue),status:'PUBLISHED'},update:{title:draft.title,blocks:toInputJson(validated.data as unknown as Prisma.JsonValue),status:'PUBLISHED'}});
@@ -4939,8 +4946,8 @@ type MmvsSpatialState = {version:1;revision:number;published:MmvsSpatialLayout;d
 const mmvsSpatialEmpty = ():MmvsSpatialLayout => ({items:[]});
 const mmvsSpatialKey = (slug:string) => 'MMVS_SPATIAL_R4_'+slug;
 const mmvsSpatialCopy = <T>(obj:T):T => JSON.parse(JSON.stringify(obj));
-async function mmvsSpatialRead(slug:string):Promise<MmvsSpatialState>{
-  const row=await prisma.systemSetting.findUnique({where:{key:mmvsSpatialKey(slug)},select:{value:true}});
+async function mmvsSpatialRead(slug:string,db:Prisma.TransactionClient|PrismaClient=prisma):Promise<MmvsSpatialState>{
+  const row=await db.systemSetting.findUnique({where:{key:mmvsSpatialKey(slug)},select:{value:true}});
   const value:any=row?.value;
   if(!value || typeof value!=='object' || Array.isArray(value) || value.version!==1) return {version:1,revision:0,published:mmvsSpatialEmpty(),draft:null,history:[]};
   const published=mmvsSpatialLayout.safeParse(value.published);
@@ -4949,14 +4956,12 @@ async function mmvsSpatialRead(slug:string):Promise<MmvsSpatialState>{
   return {version:1,revision:value.revision,published:published.data,draft:draft?draft.data:null,
     history:Array.isArray(value.history)?value.history.slice(-25):[]};
 }
-async function mmvsSpatialWrite(slug:string,state:MmvsSpatialState,request:FastifyRequest,action:string){
-  await prisma.$transaction(async tx=>{
+async function mmvsSpatialWrite(slug:string,state:MmvsSpatialState,request:FastifyRequest,action:string,tx:Prisma.TransactionClient){
     await tx.systemSetting.upsert({where:{key:mmvsSpatialKey(slug)},
       create:{key:mmvsSpatialKey(slug),value:state as unknown as Prisma.InputJsonValue},
       update:{value:state as unknown as Prisma.InputJsonValue}});
     await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action,entityType:'VisualStudioSpatial',entityId:slug,
       metadata:{revision:state.revision,items:(state.draft??state.published).items.length}}});
-  });
 }
 async function mmvsSpatialOwner(request:FastifyRequest,reply:FastifyReply){
   if(!(await adminGuard(request,reply)))return false;
@@ -4982,39 +4987,45 @@ app.put('/admin/mmvs/layout/:slug/draft',async(request,reply)=>{
   const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
   const b=z.object({expectedRevision:z.number().int().min(0),layout:mmvsSpatialLayout}).strict().safeParse(request.body);
   if(!p.success||!b.success)return reply.code(400).send({error:'invalid_spatial_layout'});
-  const current=await mmvsSpatialRead(p.data.slug);
+  return withContentLock(prisma,p.data.slug,async tx=>{
+  const current=await mmvsSpatialRead(p.data.slug,tx);
   if(current.revision!==b.data.expectedRevision)return reply.code(409).send({error:'spatial_revision_conflict'});
   current.draft=mmvsSpatialCopy(b.data.layout);current.revision++;
-  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_DRAFT_SAVED');
+  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_DRAFT_SAVED',tx);
   return {ok:true,revision:current.revision};
+  });
 });
 app.post('/admin/mmvs/layout/:slug/publish',async(request,reply)=>{
   if(!(await mmvsSpatialOwner(request,reply)))return;
   const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
   const b=z.object({expectedRevision:z.number().int().min(0)}).strict().safeParse(request.body);
   if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
-  const current=await mmvsSpatialRead(p.data.slug);
+  return withContentLock(prisma,p.data.slug,async tx=>{
+  const current=await mmvsSpatialRead(p.data.slug,tx);
   if(current.revision!==b.data.expectedRevision)return reply.code(409).send({error:'spatial_revision_conflict'});
   if(!current.draft)return reply.code(409).send({error:'spatial_draft_not_found'});
   current.published=mmvsSpatialCopy(current.draft);current.draft=null;current.revision++;
   current.history=[...current.history,{revision:current.revision,at:new Date().toISOString(),layout:mmvsSpatialCopy(current.published)}].slice(-25);
-  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_PUBLISHED');
+  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_PUBLISHED',tx);
   return {ok:true,revision:current.revision};
+  });
 });
 app.post('/admin/mmvs/layout/:slug/restore',async(request,reply)=>{
   if(!(await mmvsSpatialOwner(request,reply)))return;
   const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
   const b=z.object({expectedRevision:z.number().int().min(0),revision:z.number().int().positive()}).strict().safeParse(request.body);
   if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
-  const current=await mmvsSpatialRead(p.data.slug);
+  return withContentLock(prisma,p.data.slug,async tx=>{
+  const current=await mmvsSpatialRead(p.data.slug,tx);
   if(current.revision!==b.data.expectedRevision)return reply.code(409).send({error:'spatial_revision_conflict'});
   const snap=current.history.find((x:any)=>x.revision===b.data.revision);
   if(!snap)return reply.code(404).send({error:'spatial_version_not_found'});
   const parsed=mmvsSpatialLayout.safeParse(snap.layout);
   if(!parsed.success)return reply.code(409).send({error:'spatial_version_invalid'});
   current.draft=mmvsSpatialCopy(parsed.data);current.revision++;
-  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_RESTORED_TO_DRAFT');
+  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_RESTORED_TO_DRAFT',tx);
   return {ok:true,revision:current.revision};
+  });
 });
 // MMVS_SPATIAL_R4_API_END
 
@@ -5186,7 +5197,7 @@ app.get('/admin/custom-pages/:slug/editor', async (request, reply) => {
   return {
     slug: p.data.slug, title: source?.title ?? meta.title,
     blocks: Array.isArray(source?.blocks) ? source.blocks : [], hasDraft: Boolean(draft),
-    draftUpdatedAt: draft?.updatedAt ?? null,
+    draftUpdatedAt: draft?.updatedAt ?? null, revision: contentRevision(source),
     isCustom: true, publicSlug: meta.publicSlug, publicPath: '/p/' + meta.publicSlug,
     published: { title: published?.title ?? null, blocks: Array.isArray(published?.blocks) ? published.blocks : [],
       status: published?.status ?? 'DRAFT', updatedAt: published?.updatedAt ?? null }
@@ -5196,12 +5207,14 @@ app.get('/admin/custom-pages/:slug/editor', async (request, reply) => {
 app.put('/admin/custom-pages/:slug/draft', async (request, reply) => {
   if (!(await tenxCustomPageWriter(request, reply))) return;
   const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
-  const b = z.object({ title: z.string().trim().max(200).nullable().optional(), blocks: z.array(blockSchema).max(40) }).strict().safeParse(request.body);
+  const b = z.object({ expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(), title: z.string().trim().max(200).nullable().optional(), blocks: z.array(blockSchema).max(40) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request', details: b.success ? undefined : b.error.flatten() });
   if (!(await tenxCustomPagesRead()).some(x => x.slug === p.data.slug)) return reply.code(404).send({ error: 'page_not_found' });
   const blocks = JSON.parse(JSON.stringify(b.data.blocks));
   const title = b.data.title ?? null;
-  const saved = await prisma.$transaction(async tx => {
+  const saved = await withContentLock(prisma,p.data.slug,async tx => {
+    const current=await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}})??await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    assertContentRevision(current,b.data.expectedRevision);
     const draft = await tx.contentPageDraft.upsert({ where: { slug: p.data.slug },
       create: { slug: p.data.slug, title, blocks }, update: { title, blocks } });
     const latest = await tx.contentPageVersion.aggregate({ where: { pageSlug: p.data.slug }, _max: { version: true } });
@@ -5210,7 +5223,7 @@ app.put('/admin/custom-pages/:slug/draft', async (request, reply) => {
     await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'CUSTOM_PAGE_DRAFT_SAVED', entityType: 'ContentPageDraft', entityId: p.data.slug } });
     return draft;
   });
-  return { ok: true, updatedAt: saved.updatedAt };
+  return { ok: true, updatedAt: saved.updatedAt, revision:contentRevision(saved) };
 });
 
 app.post('/admin/custom-pages/:slug/publish', async (request, reply) => {
@@ -5218,9 +5231,12 @@ app.post('/admin/custom-pages/:slug/publish', async (request, reply) => {
   const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
   if (!p.success) return reply.code(400).send({ error: 'invalid_request' });
   if (!(await tenxCustomPagesRead()).some(x => x.slug === p.data.slug)) return reply.code(404).send({ error: 'page_not_found' });
-  const published = await prisma.$transaction(async tx => {
+  const body=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict().safeParse(request.body??{});
+  if(!body.success)return reply.code(400).send({error:'invalid_request'});
+  const published = await withContentLock(prisma,p.data.slug,async tx => {
     const draft = await tx.contentPageDraft.findUnique({ where: { slug: p.data.slug } });
     if (!draft) return null;
+    assertContentRevision(draft,body.data.expectedRevision);
     const page = await tx.contentPage.upsert({ where: { slug: p.data.slug },
       create: { slug: p.data.slug, title: draft.title, blocks: toInputJson(draft.blocks), status: 'PUBLISHED' },
       update: { title: draft.title, blocks: toInputJson(draft.blocks), status: 'PUBLISHED' } });
@@ -5251,7 +5267,7 @@ app.post('/admin/custom-pages/:slug/rollback', async (request, reply) => {
   const b = z.object({ versionId: z.string().min(1).max(64) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request' });
   if (!(await tenxCustomPagesRead()).some(x => x.slug === p.data.slug)) return reply.code(404).send({ error: 'page_not_found' });
-  const result = await prisma.$transaction(async tx => {
+  const result = await withContentLock(prisma,p.data.slug,async tx => {
     const target = await tx.contentPageVersion.findFirst({ where: { id: b.data.versionId, pageSlug: p.data.slug } });
     if (!target) return null;
     if (target.status === 'DRAFT') {
@@ -5741,6 +5757,7 @@ app.get('/admin/content/pages/:slug/editor', async (request, reply) => {
     title: source?.title ?? null,
     blocks: Array.isArray(source?.blocks) ? source.blocks : [],
     hasDraft: Boolean(draft),
+    revision: contentRevision(source),
     draftUpdatedAt: draft?.updatedAt ?? null,
     published: {
       title: published?.title ?? null,
@@ -5756,6 +5773,7 @@ app.put('/admin/content/pages/:slug/draft', async (request, reply) => {
 
   const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
   const b = z.object({
+    expectedRevision: z.string().regex(/^[a-f0-9]{64}$/).optional(),
     title: z.string().trim().max(200).nullable().optional(),
     blocks: z.array(blockSchema).max(40)
   }).strict().safeParse(request.body);
@@ -5770,7 +5788,10 @@ app.put('/admin/content/pages/:slug/draft', async (request, reply) => {
   const blocks = JSON.parse(JSON.stringify(b.data.blocks));
   const title = b.data.title ?? null;
 
-  const saved = await prisma.$transaction(async (tx) => {
+  const saved = await withContentLock(prisma,p.data.slug,async (tx) => {
+    const current=await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}});
+    const source=current??await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    assertContentRevision(source,b.data.expectedRevision);
     const draft = await tx.contentPageDraft.upsert({
       where: { slug: p.data.slug },
       create: { slug: p.data.slug, title, blocks },
@@ -5805,7 +5826,7 @@ app.put('/admin/content/pages/:slug/draft', async (request, reply) => {
     return draft;
   });
 
-  return { ok: true, updatedAt: saved.updatedAt };
+  return { ok: true, updatedAt: saved.updatedAt, revision: contentRevision(saved) };
 });
 
 app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
@@ -5814,12 +5835,31 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
   const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
   if (!p.success) return reply.code(400).send({ error: 'invalid_request' });
 
-  const published = await prisma.$transaction(async (tx) => {
-    const draft = await tx.contentPageDraft.findUnique({
-      where: { slug: p.data.slug }
-    });
+  const body=z.object({
+    expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(),
+    spatialExpectedRevision:z.number().int().min(0).optional()
+  }).strict().safeParse(request.body??{});
+  if(!body.success)return reply.code(400).send({error:'invalid_request'});
+  if(body.data.spatialExpectedRevision!==undefined&&(request as any).admin?.role!=='SUPER_ADMIN')return reply.code(403).send({error:'super_admin_required'});
+  const published = await withContentLock(prisma,p.data.slug,async (tx) => {
+    const draft = await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}})
+      ?? (body.data.spatialExpectedRevision!==undefined?await tx.contentPage.findUnique({where:{slug:p.data.slug}}):null);
 
     if (!draft) return null;
+    assertContentRevision(draft,body.data.expectedRevision);
+    let spatialRevision:number|undefined;
+    // Content and spatial publication share this transaction: either both commit or neither does.
+    if(body.data.spatialExpectedRevision!==undefined){
+      const spatial=await mmvsSpatialRead(p.data.slug,tx);
+      if(spatial.revision!==body.data.spatialExpectedRevision)throw new ContentConflict('spatial_revision_conflict');
+      spatialRevision=spatial.revision;
+      if(spatial.draft){
+        spatial.published=mmvsSpatialCopy(spatial.draft);spatial.draft=null;spatial.revision++;
+        spatial.history=[...spatial.history,{revision:spatial.revision,at:new Date().toISOString(),layout:mmvsSpatialCopy(spatial.published)}].slice(-25);
+        await mmvsSpatialWrite(p.data.slug,spatial,request,'MMVS_SPATIAL_PUBLISHED',tx);
+        spatialRevision=spatial.revision;
+      }
+    }
 
     const page = await tx.contentPage.upsert({
       where: { slug: p.data.slug },
@@ -5862,14 +5902,14 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
       }
     });
 
-    return page;
+    return {...page,spatialRevision};
   });
 
   if (!published) {
     return reply.code(409).send({ error: 'draft_not_found' });
   }
 
-  return { ok: true, status: published.status, updatedAt: published.updatedAt };
+  return { ok: true, status: published.status, updatedAt: published.updatedAt, spatialRevision:published.spatialRevision };
 });
 
 app.put('/admin/content/pages/:slug', async (request, reply) => {
@@ -5878,7 +5918,7 @@ app.put('/admin/content/pages/:slug', async (request, reply) => {
   const b = z.object({ title: z.string().trim().max(200).nullable().optional(), status: z.enum(['DRAFT', 'PUBLISHED']), blocks: z.array(blockSchema).max(40) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request', details: b.success ? undefined : b.error.flatten() });
   const blocks = JSON.parse(JSON.stringify(b.data.blocks));
-  const saved = await prisma.$transaction(async (tx) => {
+  const saved = await withContentLock(prisma,p.data.slug,async (tx) => {
     const page = await tx.contentPage.upsert({
       where: { slug: p.data.slug },
       create: { slug: p.data.slug, status: b.data.status, blocks, ...pick('title', b.data.title) },
@@ -5913,7 +5953,7 @@ app.post('/admin/content/pages/:slug/rollback', async (request, reply) => {
   const b = z.object({ versionId: z.string().min(1).max(64) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request' });
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await withContentLock(prisma,p.data.slug,async (tx) => {
     const target = await tx.contentPageVersion.findFirst({
       where: { id: b.data.versionId, pageSlug: p.data.slug }
     });
@@ -7733,6 +7773,8 @@ app.post('/progress/path', async (request, reply) => {
 // ---- END PROGRESS_API_V1 ----
 
 app.setErrorHandler((error: any, request, reply) => {
+  if(error instanceof ContentConflict)return reply.code(409).send({error:error.code,message:'نسخه صفحه تغییر کرده است؛ تغییرات محلی را نگه دارید و نسخه جدید را بررسی کنید.'});
+
   if (error instanceof z.ZodError) return reply.code(400).send({ error: 'invalid_request' });
   const status = Number(error?.statusCode);
   if (status >= 400 && status < 500) {

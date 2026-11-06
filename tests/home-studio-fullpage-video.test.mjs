@@ -14,7 +14,7 @@ test('Object Studio is a regular full-page editor reachable through Pages & Popu
  assert.doesNotMatch(admin,/modal\.setAttribute\('aria-modal','true'\)/);
 });
 test('navigation cleans up the editor and its listener, old studio dock is hidden while editing',()=>{
- assert.match(admin,/window\.MMTradeObjectStudioClose\?\.\(\)/);
+ assert.match(admin,/window\.MMTradeObjectStudioClose\?\.\(true\)/);
  assert.match(admin,/window\.removeEventListener\('message',receive\)/);
  assert.match(admin,/body\.mm-object-fullpage #mf65-dock/);
 });

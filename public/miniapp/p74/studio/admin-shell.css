@@ -1,0 +1,24 @@
+/* Shared visual tokens for the canonical admin shell. */
+body.mm-admin-shell{--bg:#07130f;--card:#10221b;--ink:#edf5ef;--mut:#a3bbae;--line:#2c493b;--pri:#237d57;--ok:#6cdbac;--warn:#e5bb76;--bad:#ff9b91;--admin-gold:#dbba85;color-scheme:dark;font-family:Doran,Vazirmatn,Tahoma,sans-serif}
+body.mm-admin-shell #app>main>header{position:relative;gap:16px;padding:8px 0 20px;border-bottom:1px solid var(--line);margin-bottom:24px;background:none}
+body.mm-admin-shell .mm-admin-eyebrow{font-size:12px;color:var(--mut);display:block;margin-bottom:4px}
+body.mm-admin-shell .mm-admin-heading h1{font-size:22px;line-height:1.5;margin:0}
+body.mm-admin-shell #app>aside>h2{letter-spacing:2px;color:var(--admin-gold);padding:10px 8px 20px}
+body.mm-admin-shell input:focus-visible,body.mm-admin-shell textarea:focus-visible,body.mm-admin-shell select:focus-visible,body.mm-admin-shell button:focus-visible,body.mm-admin-shell a:focus-visible{outline:2px solid #86dcb3;outline-offset:3px}
+body.mm-admin-shell #view .card{box-shadow:none;border-color:var(--line)}
+body.mm-admin-shell #app>main>header #who{font-size:12px;overflow-wrap:anywhere}
+body.mm-admin-shell #toast{max-width:min(90vw,520px);background:#163d2b;color:#f1fff7;border:1px solid #5eaf83;line-height:1.9}
+body.mm-admin-shell #nav .tenx-p51-head{min-height:48px}
+body.mm-admin-shell #nav .tenx-p51-children a{min-height:44px;display:flex;align-items:center}
+body.mm-admin-shell #nav .tenx-p51-children a.on{box-shadow:inset -3px 0 var(--admin-gold)}
+@media(min-width:801px){body.mm-admin-shell #app:not(.hide)>main{padding:24px 28px;min-width:0}body.mm-admin-shell #app:not(.hide)>aside{border-inline-end:1px solid var(--line)}}
+@media(max-width:800px){body.mm-admin-shell #app>main>header{align-items:flex-start;flex-wrap:wrap;padding-bottom:12px}body.mm-admin-shell .mm-admin-heading h1{font-size:19px}body.mm-admin-shell #app>main>header>.row{justify-content:space-between;width:100%}}
+body.mm-admin-shell:not(.tenx-editor-standalone) #app>main>header{background:#10221b;border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-height:0}
+body.mm-admin-shell:not(.tenx-editor-standalone) #app>aside{background:#0b1a13}
+body.mm-admin-shell .mf-owner-chip{border:1px solid #3e7556;border-radius:20px;padding:3px 10px;font-size:11px;color:#91d9ae}
+body.mm-admin-shell #app>aside #nav.tenx-p51-tree .tenx-p51-group{border-color:var(--line);background:#10221b;border-radius:12px}
+body.mm-admin-shell #app>aside #nav.tenx-p51-tree .tenx-p51-group[data-open=true]{border-color:#6f8364}
+body.mm-admin-shell #app>aside #nav.tenx-p51-tree .tenx-p51-head{color:var(--ink);background:transparent}
+body.mm-admin-shell #nav a{text-decoration:none}
+body.mm-admin-shell #app>aside #nav.tenx-p51-tree .tenx-p51-children a.on{background:#204a33;color:#f2fff6}
+body.mm-admin-shell #view .stat{min-height:110px}

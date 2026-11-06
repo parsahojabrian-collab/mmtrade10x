@@ -6,7 +6,7 @@ import { runInNewContext } from 'node:vm';
 const admin = readFileSync(new URL('../apps/api/public/admin.html', import.meta.url), 'utf8');
 const mobile = admin.match(/<script id="p53-owner-mobile-js">([\s\S]*?)<\/script>/)[1];
 const render = mobile.slice(mobile.indexOf('  function render(items){'), mobile.indexOf('  function refresh(){'));
-const navigate = admin.slice(admin.indexOf('async function navigateManagement(id){'), admin.indexOf('async function boot(){'));
+const navigate = admin.slice(admin.indexOf('async function navigateManagement('), admin.indexOf('async function boot(){'));
 
 class Element {
   children = [];

@@ -11,7 +11,7 @@
   let animationPlaying=true;
   let page='academy', revision=0, published={items:[]}, draft=null;
   let doc={items:[]}, initial='{"items":[]}', dirty=false;
-  let mode=false,grid=false,selected='',ready=false,loading=false,history=[],session=0;
+  let mode=false,grid=false,selected='',ready=false,loading=false,history=[],session=0,publishing=false;
   let layerItems=[], overlapItems=[];
   let touchedSelection=null;
   const isValid = x => !!x && typeof x.selector==='string' && x.selector.length<=500 &&
@@ -47,9 +47,9 @@
       title.textContent=dirty?'چیدمان ذخیره‌نشده':draft?'پیش‌نویس چیدمان موجود':'چیدمان منتشرشده';
       title.classList.toggle('dirty',dirty);
     }
-    $('spatial-save').disabled=!dirty||loading;
-    $('spatial-publish').disabled=loading||(!dirty&&!draft);
-    $('spatial-reset').disabled=!selected||loading;
+    $('spatial-save').disabled=!dirty||loading||publishing;
+    $('spatial-publish').disabled=loading||publishing||(!dirty&&!draft);
+    $('spatial-reset').disabled=!selected||loading||publishing;
   }
   function renderLayers(){
     const root=$('spatial-layer-list');if(!root)return;
@@ -94,22 +94,22 @@
     const locked=!!p.locked;
     for(const k of ['x','y','scale']){
       const el=$('spatial-'+k);if(!el)continue;
-      el.value=String(p[k]);el.disabled=!selectedEnough||loading||locked;
+      el.value=String(p[k]);el.disabled=!selectedEnough||loading||publishing||locked;
     }
     $('spatial-chosen').textContent=selected||'برای انتخاب، روی عنصر در پیش‌نمایش بزن';
     const lock=$('spatial-lock');if(lock){
-      lock.textContent=locked?'🔒 بازکردن قفل':'🔓 قفل عنصر';lock.disabled=!selectedEnough||loading;
+      lock.textContent=locked?'🔒 بازکردن قفل':'🔓 قفل عنصر';lock.disabled=!selectedEnough||loading||publishing;
       lock.classList.toggle('mmvs-locked',locked);
     }
-    const hide=$('spatial-hide');if(hide){hide.textContent=p.hidden?'↩ بازگردانی به صفحه':'◉ مخفی/حذف از صفحه';hide.disabled=!selectedEnough||loading;hide.classList.toggle('mmvs-hidden',!!p.hidden)}
+    const hide=$('spatial-hide');if(hide){hide.textContent=p.hidden?'↩ بازگردانی به صفحه':'◉ مخفی/حذف از صفحه';hide.disabled=!selectedEnough||loading||publishing;hide.classList.toggle('mmvs-hidden',!!p.hidden)}
     for(const id of ['spatial-forward','spatial-backward','spatial-to-front','spatial-to-back']){
-      const e=$(id);if(e)e.disabled=!selectedEnough||loading||locked;
+      const e=$(id);if(e)e.disabled=!selectedEnough||loading||publishing||locked;
     }
     for(const id of ['spatial-nudge-up','spatial-nudge-down','spatial-nudge-left','spatial-nudge-right']){
-      const e=$(id);if(e)e.disabled=!selectedEnough||loading||locked;
+      const e=$(id);if(e)e.disabled=!selectedEnough||loading||publishing||locked;
     }
-    const z=$('spatial-z');if(z){z.value=p.zIndex??'';z.placeholder='پیش‌فرض';z.disabled=!selectedEnough||loading||locked}
-    const op=$('spatial-opacity');if(op){op.value=p.opacity??1;op.disabled=!selectedEnough||loading||locked}
+    const z=$('spatial-z');if(z){z.value=p.zIndex??'';z.placeholder='پیش‌فرض';z.disabled=!selectedEnough||loading||publishing||locked}
+    const op=$('spatial-opacity');if(op){op.value=p.opacity??1;op.disabled=!selectedEnough||loading||publishing||locked}
     const tip=$('spatial-object-tip');if(tip){tip.textContent=p.hidden?'این عنصر برای کاربران مخفی می‌شود؛ با «بازگردانی» دوباره نمایش بده.':locked?'قفل فعال است: حرکت و تغییر اندازه غیرفعال؛ انیمیشن باقی می‌ماند.':'تنظیم لایه و شفافیت، انیمیشن اصلی عنصر را متوقف نمی‌کند.'}
     const a=p.animation||null;
     const aKind=$('spatial-animation-kind');if(aKind)aKind.value=a?.kind||'none';
@@ -118,10 +118,10 @@
     const aDelay=$('spatial-animation-delay');if(aDelay)aDelay.value=String((a?.delayMs??0)/1000);
     const aLoop=$('spatial-animation-loop');if(aLoop)aLoop.checked=a?.loop!==false;
     for(const id of ['spatial-animation-kind','spatial-animation-duration','spatial-animation-amplitude','spatial-animation-delay','spatial-animation-loop','spatial-animation-apply','spatial-animation-remove']){
-      const el=$(id);if(el)el.disabled=!selectedEnough||loading||locked;
+      const el=$(id);if(el)el.disabled=!selectedEnough||loading||publishing||locked;
     }
     const aniTip=$('spatial-animation-tip');if(aniTip)aniTip.textContent=locked?'ابتدا قفل آبجکت را باز کن تا بتوانی انیمیشنش را تغییر بدهی.':a?'✦ '+a.kind+' · برای انتشار، «ذخیره چیدمان» و «انتشار چیدمان» را بزن.':'نوع حرکت را انتخاب و روی «اعمال انیمیشن» بزن. حرکت CSS قبلی حذف نمی‌شود.';
-    $('spatial-reset').disabled=!selectedEnough||loading;
+    $('spatial-reset').disabled=!selectedEnough||loading||publishing;
     renderLayers();renderOverlap();
   }
   function preview(){
@@ -156,7 +156,7 @@
     renderProps();send('MMVS_SPATIAL_PICK',{selector:s});
   }
   function edit(mutator,allowWhenLocked=false){
-    if(!selected||loading)return;
+    if(!selected||loading||publishing)return;
     const p={...current()};
     if(p.locked&&!allowWhenLocked){toast('این عنصر قفل است؛ ابتدا قفل را باز کن.',true);return}
     mutator(p);
@@ -164,7 +164,7 @@
   }
   function setLock(){edit(p=>{p.locked=!p.locked},true)}
   function animateSelection(){
-    if(!selected||loading)return;
+    if(!selected||loading||publishing)return;
     const kind=$('spatial-animation-kind')?.value;
     if(kind==='none'){edit(p=>{delete p.animation});toast('انیمیشن سفارشی برداشته شد.');return}
     const dur=Number($('spatial-animation-duration')?.value),amp=Number($('spatial-animation-amplitude')?.value),delay=Number($('spatial-animation-delay')?.value);
@@ -222,16 +222,17 @@
     toast('یک عنصر را انتخاب کن؛ روی خودش قفل، مخفی‌کردن و جلو/عقب بردن لایه را داری.');
   }
   async function save(){
-    if(!dirty)return true;if(loading)return false;loading=true;state();
+    if(!dirty)return true;if(loading||publishing)return false;loading=true;state();
     try{
-      const result=await api('/draft','PUT',{expectedRevision:revision,layout:clone(doc)});
-      revision=result.revision;draft=clone(doc);initial=JSON.stringify(doc);state();
+      const snapshot=clone(doc);
+      const result=await api('/draft','PUT',{expectedRevision:revision,layout:snapshot});
+      revision=result.revision;draft=snapshot;initial=JSON.stringify(snapshot);state();
       toast('چیدمان ذخیره شد؛ هنوز منتشر نشده.');return true;
     }catch(e){toast('خطای ذخیره: '+e.message,true);throw e}
     finally{loading=false;state()}
   }
   async function publish(){
-    if(loading)return false;if(dirty&&!(await save()))return false;if(!draft)return true;
+    if(loading||publishing)return false;if(dirty&&!(await save()))return false;if(!draft)return true;
     loading=true;state();
     try{
       const result=await api('/publish','POST',{expectedRevision:revision});
@@ -253,7 +254,8 @@
     };
     $('spatial-grid').onchange=e=>{grid=e.target.checked;send('MMVS_SPATIAL_MODE',{enabled:mode,grid})};
     $('spatial-save').onclick=()=>save().catch(()=>{});
-    $('spatial-publish').onclick=async()=>{if(!confirm('تنظیمات چیدمان، لایه‌ها و نمایش عناصر برای کاربران منتشر شود؟'))return;try{await publish()}catch{}};
+    $('spatial-publish').textContent='انتشار صفحه و چیدمان';
+    $('spatial-publish').onclick=()=>window.MMVSWorkspace?.publish();
     $('spatial-reset').onclick=selectClear;
     $('spatial-lock').onclick=setLock;$('spatial-hide').onclick=setHidden;
     $('spatial-animation-apply').onclick=animateSelection;
@@ -297,7 +299,7 @@
       }else if(d.type==='MMVS_SPATIAL_SELECTED' && d.item?.selector){
         choose(d.item.selector);touchedSelection=d.item;
       }else if(d.type==='MMVS_SPATIAL_COMMIT' && d.item?.selector){
-        if(!mode||loading||savedFor(d.item.selector).locked)return;
+        if(!mode||loading||publishing||savedFor(d.item.selector).locked)return;
         put({...savedFor(d.item.selector),...d.item},false);
       }else if(d.type==='MMVS_SPATIAL_ACTION'){
         if(d.selector!==selected)choose(d.selector);
@@ -316,6 +318,8 @@
   }
   function start(){bind();state();renderProps();$('frame')?.addEventListener('load',()=>{ready=true;preview()})}
   window.MMVS_Spatial={loadPage:load,saveIfDirty:save,publishIfPending:publish,
-    hasPending:()=>Boolean(dirty||draft),refresh:preview,isDirty:()=>dirty};
+    hasPending:()=>Boolean(dirty||draft),refresh:preview,isDirty:()=>JSON.stringify(doc)!==initial,
+    acceptPublished:next=>{if(Number.isInteger(next)){revision=next;published=clone(draft||published);draft=null;state()}},
+    isBusy:()=>loading||publishing,getRevision:()=>loading?undefined:revision,setPublishing:value=>{publishing=value;state();renderProps()}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
