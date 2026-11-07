@@ -117,3 +117,12 @@
 .spatial-animation-panel .spatial-object-row button{flex:1 1 155px;min-height:44px;white-space:normal}
 .mmvs-layer-animated .mmvs-layer-emoji{filter:drop-shadow(0 0 5px #edba6f)}
 @media(max-width:520px){.mmvs-animation-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.spatial-animation-panel{padding:8px}.mmvs-animation-grid label:first-child{grid-column:1/-1}.spatial-animation-panel .spatial-object-row button{flex:1 1 45%}}
+
+/* Shared release workflow: status, read-only history review and mobile layer controls. */
+.toolbar{position:sticky;top:0;z-index:20;background:#10271d;border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:0 6px 18px #0003}
+.state[data-state=busy]{color:#e8ce99}.state[data-state=review]{color:#bad9ff}.state[data-state=draft]{color:#93e6b5}.state[data-state=published]{color:#b7cdbf}
+.release-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}.release-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.release-preview{display:flex;justify-content:space-between;gap:14px;align-items:center;background:#142d42;border:1px solid #739fc0;border-radius:12px;padding:14px;margin:12px 0}.release-preview[hidden]{display:none}.release-preview p{margin:5px 0 0;font-size:12px;color:#c1dbed}
+.version-item{gap:14px;flex-wrap:wrap}.version-item strong,.version-item small{display:block}.version-item small{line-height:1.9}.release-warning{color:#eac58c;font-size:12px;max-width:44em}
+.spatial-tools>summary{color:var(--gold);font-weight:700;cursor:pointer;padding:6px 0}.spatial-tools[open]>summary{margin-bottom:10px}.spatial-tools .spatial-fields{margin-bottom:10px}
+@media(max-width:650px){.toolbar{top:0;gap:8px;padding:10px}.toolbar .labelwrap{width:100%}.toolbar .actions{width:100%;display:flex;flex-wrap:wrap;gap:6px}.toolbar .actions button{flex:1 1 28%;min-height:42px}.release-preview{align-items:stretch;flex-direction:column}.release-preview button{min-height:44px}.release-actions{width:100%}.release-actions button{flex:1;min-height:44px}.version-item{align-items:stretch}.spatial-layer-list{max-height:144px}.spatial-tools>summary{min-height:44px;display:flex;align-items:center}.release-heading h3{font-size:17px}}

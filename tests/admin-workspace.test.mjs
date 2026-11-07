@@ -8,7 +8,7 @@ const studio=read('public/miniapp/p74/studio/studio.js');
 const operations=studio.slice(studio.indexOf('function setOperation('),studio.indexOf('async function loadPopups('));
 function controller(extra={}){
  const controls={save:{},publish:{},reload:{}};
- const scope={busy:false,canWrite:()=>true,page:'index',pageRequestId:1,title:'First',blocks:[{type:'text',text:'First'}],initial:'',
+ const scope={reviewSnapshot:null,document:{querySelector:()=>null},busy:false,canWrite:()=>true,page:'index',pageRequestId:1,title:'First',blocks:[{type:'text',text:'First'}],initial:'',
   editor:{hasDraft:true,revision:'a'.repeat(64)},window:{},clone:structuredClone,validateAllBlocks(){},syncDirty(){},toast(){},confirm:()=>true,
   $:id=>controls[id],loadPage:async()=>{},...extra};
  scope.dirty=()=>JSON.stringify({title:scope.title,blocks:scope.blocks})!==scope.initial;

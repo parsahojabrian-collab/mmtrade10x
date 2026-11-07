@@ -969,7 +969,7 @@ async routeManager(){
     const info=h('div',{class:'card',style:'background:linear-gradient(115deg,#102b22,#183b2c);border-color:#af8c60;color:#f2e8d9'},
       h('h2',{style:'margin:0 0 6px;font-size:18px'},'استودیوی بصری MMTrade10X'),
       h('p',{style:'margin:0;line-height:1.8'},'ویرایش صفحات و پاپ‌آپ‌ها، پیش‌نمایش و انتشار — در پنل اصلی سوپرادمین.'));
-    const frame=h('iframe',{src:'/miniapp/p74/studio/index.html?embedded=1&v=ADMIN_MAIN_R1&page='+encodeURIComponent(selectedStudioPage),title:'استودیوی بصری مینی‌اپ',loading:'eager',
+    const frame=h('iframe',{src:'/miniapp/p74/studio/index.html?embedded=1&v=STUDIO_RELEASE_R1&page='+encodeURIComponent(selectedStudioPage),title:'استودیوی بصری مینی‌اپ',loading:'eager',
       style:'display:block;width:100%;height:max(780px,calc(100dvh - 215px));min-height:780px;border:1px solid #947750;border-radius:16px;background:#061710'});
     wrap.append(info,frame);
     window.MMAdminWorkspace?.register('visualStudio',{active:()=>wrap.isConnected,dirty:()=>!!frame.contentWindow?.MMVSWorkspace?.isDirty(),busy:()=>!!frame.contentWindow?.MMVSWorkspace?.isBusy()});

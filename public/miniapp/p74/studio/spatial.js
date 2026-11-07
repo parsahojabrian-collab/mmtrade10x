@@ -8,7 +8,7 @@
   const prohibited = s => new Set(['#p74-app','#mf62-home','#mmvs-root','#app','main.home-shell','.stage-page','.stage-shell']).has(String(s||'').trim());
   const animationKinds = new Set(['float','spin','sway','pulse']);
   const animationValid = a => a && animationKinds.has(a.kind) && Number.isInteger(a.durationMs) && a.durationMs>=400 && a.durationMs<=30000 && Number.isFinite(a.amplitude) && a.amplitude>=1 && a.amplitude<=150 && Number.isInteger(a.delayMs) && a.delayMs>=0 && a.delayMs<=10000 && typeof a.loop==='boolean';
-  let animationPlaying=true;
+  let animationPlaying=true,reviewLayout=null;
   let page='academy', revision=0, published={items:[]}, draft=null;
   let doc={items:[]}, initial='{"items":[]}', dirty=false;
   let mode=false,grid=false,selected='',ready=false,loading=false,history=[],session=0,publishing=false;
@@ -47,9 +47,10 @@
       title.textContent=dirty?'چیدمان ذخیره‌نشده':draft?'پیش‌نویس چیدمان موجود':'چیدمان منتشرشده';
       title.classList.toggle('dirty',dirty);
     }
-    $('spatial-save').disabled=!dirty||loading||publishing;
-    $('spatial-publish').disabled=loading||publishing||(!dirty&&!draft);
-    $('spatial-reset').disabled=!selected||loading||publishing;
+    $('spatial-save').disabled=!dirty||loading||publishing||!!reviewLayout;
+    $('spatial-publish').disabled=loading||publishing||!!reviewLayout||(!dirty&&!draft);
+    $('spatial-reset').disabled=!selected||loading||publishing||!!reviewLayout;
+    window.dispatchEvent(new Event('mmvs:state'));
   }
   function renderLayers(){
     const root=$('spatial-layer-list');if(!root)return;
@@ -94,22 +95,22 @@
     const locked=!!p.locked;
     for(const k of ['x','y','scale']){
       const el=$('spatial-'+k);if(!el)continue;
-      el.value=String(p[k]);el.disabled=!selectedEnough||loading||publishing||locked;
+      el.value=String(p[k]);el.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;
     }
     $('spatial-chosen').textContent=selected||'برای انتخاب، روی عنصر در پیش‌نمایش بزن';
     const lock=$('spatial-lock');if(lock){
-      lock.textContent=locked?'🔒 بازکردن قفل':'🔓 قفل عنصر';lock.disabled=!selectedEnough||loading||publishing;
+      lock.textContent=locked?'🔒 بازکردن قفل':'🔓 قفل عنصر';lock.disabled=!selectedEnough||loading||publishing||!!reviewLayout;
       lock.classList.toggle('mmvs-locked',locked);
     }
-    const hide=$('spatial-hide');if(hide){hide.textContent=p.hidden?'↩ بازگردانی به صفحه':'◉ مخفی/حذف از صفحه';hide.disabled=!selectedEnough||loading||publishing;hide.classList.toggle('mmvs-hidden',!!p.hidden)}
+    const hide=$('spatial-hide');if(hide){hide.textContent=p.hidden?'↩ بازگردانی به صفحه':'◉ مخفی/حذف از صفحه';hide.disabled=!selectedEnough||loading||publishing||!!reviewLayout;hide.classList.toggle('mmvs-hidden',!!p.hidden)}
     for(const id of ['spatial-forward','spatial-backward','spatial-to-front','spatial-to-back']){
-      const e=$(id);if(e)e.disabled=!selectedEnough||loading||publishing||locked;
+      const e=$(id);if(e)e.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;
     }
     for(const id of ['spatial-nudge-up','spatial-nudge-down','spatial-nudge-left','spatial-nudge-right']){
-      const e=$(id);if(e)e.disabled=!selectedEnough||loading||publishing||locked;
+      const e=$(id);if(e)e.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;
     }
-    const z=$('spatial-z');if(z){z.value=p.zIndex??'';z.placeholder='پیش‌فرض';z.disabled=!selectedEnough||loading||publishing||locked}
-    const op=$('spatial-opacity');if(op){op.value=p.opacity??1;op.disabled=!selectedEnough||loading||publishing||locked}
+    const z=$('spatial-z');if(z){z.value=p.zIndex??'';z.placeholder='پیش‌فرض';z.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked}
+    const op=$('spatial-opacity');if(op){op.value=p.opacity??1;op.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked}
     const tip=$('spatial-object-tip');if(tip){tip.textContent=p.hidden?'این عنصر برای کاربران مخفی می‌شود؛ با «بازگردانی» دوباره نمایش بده.':locked?'قفل فعال است: حرکت و تغییر اندازه غیرفعال؛ انیمیشن باقی می‌ماند.':'تنظیم لایه و شفافیت، انیمیشن اصلی عنصر را متوقف نمی‌کند.'}
     const a=p.animation||null;
     const aKind=$('spatial-animation-kind');if(aKind)aKind.value=a?.kind||'none';
@@ -118,17 +119,17 @@
     const aDelay=$('spatial-animation-delay');if(aDelay)aDelay.value=String((a?.delayMs??0)/1000);
     const aLoop=$('spatial-animation-loop');if(aLoop)aLoop.checked=a?.loop!==false;
     for(const id of ['spatial-animation-kind','spatial-animation-duration','spatial-animation-amplitude','spatial-animation-delay','spatial-animation-loop','spatial-animation-apply','spatial-animation-remove']){
-      const el=$(id);if(el)el.disabled=!selectedEnough||loading||publishing||locked;
+      const el=$(id);if(el)el.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;
     }
     const aniTip=$('spatial-animation-tip');if(aniTip)aniTip.textContent=locked?'ابتدا قفل آبجکت را باز کن تا بتوانی انیمیشنش را تغییر بدهی.':a?'✦ '+a.kind+' · برای انتشار، «ذخیره چیدمان» و «انتشار چیدمان» را بزن.':'نوع حرکت را انتخاب و روی «اعمال انیمیشن» بزن. حرکت CSS قبلی حذف نمی‌شود.';
-    $('spatial-reset').disabled=!selectedEnough||loading||publishing;
+    $('spatial-reset').disabled=!selectedEnough||loading||publishing||!!reviewLayout;
     renderLayers();renderOverlap();
   }
   function preview(){
-    send('MMVS_SPATIAL_PREVIEW',{layout:clone(doc)});
-    send('MMVS_SPATIAL_MODE',{enabled:mode,grid});
+    send('MMVS_SPATIAL_PREVIEW',{layout:clone(reviewLayout||doc)});
+    send('MMVS_SPATIAL_MODE',{enabled:reviewLayout?false:mode,grid});
     send('MMVS_SPATIAL_ANIMATION_PLAY',{playing:animationPlaying});
-    if(selected)send('MMVS_SPATIAL_PICK',{selector:selected});
+    if(selected&&!reviewLayout)send('MMVS_SPATIAL_PICK',{selector:selected});
     scanLayers();
   }
   function put(p,sendSet=true){
@@ -156,7 +157,7 @@
     renderProps();send('MMVS_SPATIAL_PICK',{selector:s});
   }
   function edit(mutator,allowWhenLocked=false){
-    if(!selected||loading||publishing)return;
+    if(!selected||loading||publishing||!!reviewLayout)return;
     const p={...current()};
     if(p.locked&&!allowWhenLocked){toast('این عنصر قفل است؛ ابتدا قفل را باز کن.',true);return}
     mutator(p);
@@ -164,7 +165,7 @@
   }
   function setLock(){edit(p=>{p.locked=!p.locked},true)}
   function animateSelection(){
-    if(!selected||loading||publishing)return;
+    if(!selected||loading||publishing||!!reviewLayout)return;
     const kind=$('spatial-animation-kind')?.value;
     if(kind==='none'){edit(p=>{delete p.animation});toast('انیمیشن سفارشی برداشته شد.');return}
     const dur=Number($('spatial-animation-duration')?.value),amp=Number($('spatial-animation-amplitude')?.value),delay=Number($('spatial-animation-delay')?.value);
@@ -201,9 +202,9 @@
     const list=$('spatial-versions');if(!list)return;list.replaceChildren();
     for(const version of [...history].reverse().slice(0,15)){
       const b=document.createElement('button');b.type='button';b.className='minor';
-      b.textContent='نسخه چیدمان '+version.revision+' · '+new Date(version.at).toLocaleString('fa-IR');
+      b.textContent='فقط چیدمان قدیمی '+version.revision+' · '+new Date(version.at).toLocaleString('fa-IR');
       b.onclick=async()=>{
-        if(!confirm('این نسخه به‌عنوان پیش‌نویس بازیابی شود؟'))return;
+        if(!confirm('فقط چیدمان به پیش‌نویس برمی‌گردد و محتوا تغییر نمی‌کند. برای بازیابی هماهنگ از تاریخچه نسخه‌ها استفاده کنید. ادامه می‌دهید؟'))return;
         try{await api('/restore','POST',{expectedRevision:revision,revision:version.revision});await load(page);toast('نسخه در پیش‌نویس بازیابی شد؛ برای کاربران هنوز منتشر نشده')}catch(e){toast('خطای بازیابی: '+e.message,true)}
       };
       list.append(b);
@@ -222,7 +223,7 @@
     toast('یک عنصر را انتخاب کن؛ روی خودش قفل، مخفی‌کردن و جلو/عقب بردن لایه را داری.');
   }
   async function save(){
-    if(!dirty)return true;if(loading||publishing)return false;loading=true;state();
+    if(!dirty)return true;if(loading||publishing||!!reviewLayout)return false;loading=true;state();
     try{
       const snapshot=clone(doc);
       const result=await api('/draft','PUT',{expectedRevision:revision,layout:snapshot});
@@ -232,7 +233,7 @@
     finally{loading=false;state()}
   }
   async function publish(){
-    if(loading||publishing)return false;if(dirty&&!(await save()))return false;if(!draft)return true;
+    if(loading||publishing||!!reviewLayout)return false;if(dirty&&!(await save()))return false;if(!draft)return true;
     loading=true;state();
     try{
       const result=await api('/publish','POST',{expectedRevision:revision});
@@ -249,7 +250,7 @@
     const modeBtn=$('spatial-mode');modeBtn.onclick=()=>{
       mode=!mode;modeBtn.classList.toggle('active',mode);
       modeBtn.textContent=mode?'✋ جابه‌جایی روشن':'✋ فعال‌سازی جابه‌جایی';
-      send('MMVS_SPATIAL_MODE',{enabled:mode,grid});
+      send('MMVS_SPATIAL_MODE',{enabled:reviewLayout?false:mode,grid});
       toast(mode?'برای ویرایش، روی عنصر بزن؛ منوی شناور و دستگیره ظاهر می‌شوند.':'حالت پیمایش عادی صفحه فعال شد.');
     };
     $('spatial-grid').onchange=e=>{grid=e.target.checked;send('MMVS_SPATIAL_MODE',{enabled:mode,grid})};
@@ -299,7 +300,7 @@
       }else if(d.type==='MMVS_SPATIAL_SELECTED' && d.item?.selector){
         choose(d.item.selector);touchedSelection=d.item;
       }else if(d.type==='MMVS_SPATIAL_COMMIT' && d.item?.selector){
-        if(!mode||loading||publishing||savedFor(d.item.selector).locked)return;
+        if(!mode||loading||publishing||!!reviewLayout||savedFor(d.item.selector).locked)return;
         put({...savedFor(d.item.selector),...d.item},false);
       }else if(d.type==='MMVS_SPATIAL_ACTION'){
         if(d.selector!==selected)choose(d.selector);
@@ -316,8 +317,8 @@
     });
     window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
   }
-  function start(){bind();state();renderProps();$('frame')?.addEventListener('load',()=>{ready=true;preview()})}
-  window.MMVS_Spatial={loadPage:load,saveIfDirty:save,publishIfPending:publish,
+  function start(){bind();if(window.matchMedia('(max-width:650px)').matches)$('spatial-tools').open=false;state();renderProps();$('frame')?.addEventListener('load',()=>{ready=true;preview()})}
+  window.MMVS_Spatial={review:layout=>{reviewLayout=layout?clone(layout):null;preview();state();renderProps()},getDraftLayout:()=>clone(doc),loadPage:load,saveIfDirty:save,publishIfPending:publish,
     hasPending:()=>Boolean(dirty||draft),refresh:preview,isDirty:()=>JSON.stringify(doc)!==initial,
     acceptPublished:next=>{if(Number.isInteger(next)){revision=next;published=clone(draft||published);draft=null;state()}},
     isBusy:()=>loading||publishing,getRevision:()=>loading?undefined:revision,setPublishing:value=>{publishing=value;state();renderProps()}};

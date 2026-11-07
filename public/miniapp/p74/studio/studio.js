@@ -21,12 +21,19 @@ const props=[
 ];
 let token='',role='',page='academy',editor=null,blocks=[],initial='',title=null,selected='',chosenPopup=null,popups=[],tab='pages',ready=false,busy=false,noticeTimer=0,pendingPopup=null;
 let undoStack=[],redoStack=[],selectedBlockIndex=-1,pageRequestId=0,popupBusy=false;
+let reviewSnapshot=null,operationLabel='در حال ذخیره…';
 const requestedPage=new URLSearchParams(location.search).get('page');if(PAGES.some(p=>p[0]===requestedPage))page=requestedPage;
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function textEl(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=String(text);return e}
 function toast(t,error=false){const n=$('notice');n.textContent=t;n.className='show'+(error?' error':'');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>n.className='',6500)}
 function dirty(){return JSON.stringify({title,blocks})!==initial}
-function syncDirty(){const d=dirty();$('state').textContent=busy?'در حال ذخیره…':d?'تغییرات ذخیره‌نشده':'ذخیره شده';$('state').classList.toggle('dirty',d);return d}
+function syncDirty(){
+ const spatial=window.MMVS_Spatial,changed=dirty()||!!spatial?.isDirty();
+ const pending=!!editor&&(JSON.stringify({title,blocks})!==JSON.stringify({title:editor.published?.title??null,blocks:editor.published?.blocks||[]})||!!spatial?.hasPending());
+ const state=reviewSnapshot?'review':busy||spatial?.isBusy()?'busy':changed?'dirty':pending?'draft':'published';
+ const labels={review:'پیش‌نمایش نسخه تاریخی · فقط خواندنی',busy:operationLabel,dirty:'تغییرات ذخیره‌نشده',draft:'پیش‌نویس ذخیره‌شده · آماده انتشار',published:'هماهنگ با نسخه عمومی'};
+ $('state').textContent=labels[state];$('state').dataset.state=state;$('state').classList.toggle('dirty',changed);return changed;
+}
 function canWrite(){return role==='SUPER_ADMIN'}
 function headers(){return {'authorization':'Bearer '+token,'content-type':'application/json'}}
 async function api(path,method='GET',body){if(!token)throw Error('نشست مدیریت در دسترس نیست');const r=await fetch('/admin'+path,{method,headers:headers(),cache:'no-store',body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401)showLogin();throw Error(data.message||data.error||('HTTP '+r.status))}return data}
@@ -34,10 +41,17 @@ function showLogin(){token='';role='';sessionStorage.removeItem('tenx_admin_toke
 async function authenticate(t){token=t;const me=await api('/auth/me');role=me.role||'';if(!canWrite())throw Error('استودیوی یکپارچه فقط برای SUPER_ADMIN فعال است؛ انتشار برای نقش‌های دیگر مجاز نیست.');$('who').textContent=me.email+' · '+role;$('login').hidden=true;$('workspace').hidden=false;sessionStorage.setItem('tenx_admin_token',token);await loadPage(page)}
 function chooseTab(t){tab=t;$all('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));for(const x of ['pages','popups','versions'])$(x+'-pane').hidden=x!==t;$('page-toolbar').hidden=t!=='pages';if(t==='popups')loadPopups().catch(e=>toast(e.message,true));if(t==='versions')loadVersions().catch(e=>toast(e.message,true))}
 function drawPageList(){const list=$('pages');list.replaceChildren();const query=String($('page-search')?.value||'').trim().toLowerCase();for(const [slug,label] of PAGES){if(query&&!String(label+' '+slug).toLowerCase().includes(query))continue;let b=textEl('button',page===slug?'active':'',label);b.onclick=()=>{if(busy||window.MMVS_Spatial?.isBusy())return toast('عملیات در حال انجام است',true);if((dirty()||window.MMVS_Spatial?.isDirty())&&!confirm('تغییرات ذخیره نشده‌اند. صفحه عوض شود؟'))return;loadPage(slug).catch(e=>toast(e.message,true))};list.append(b)} }
-function previewUrl(){const p=PAGES.find(p=>p[0]===page);const url=new URL(p?.[2]||'/miniapp/index.html',location.origin);url.searchParams.set('visualPreview','1');url.searchParams.set('adminPreview','1');if(page==='index')url.searchParams.set('p74Preview','1');url.searchParams.set('vs',Date.now().toString());return url.pathname+url.search}
-function postPreview(){if(!ready)return;try{$('frame').contentWindow.postMessage({type:'MMVS_PREVIEW',blocks:clone(blocks)},location.origin)}catch(e){}}
+function previewUrl(){const p=PAGES.find(p=>p[0]===page);const url=new URL(page==='profile'?'/miniapp/p74/profile/preview.html':p?.[2]||'/miniapp/index.html',location.origin);url.searchParams.set('visualPreview','1');url.searchParams.set('adminPreview','1');if(page==='index')url.searchParams.set('p74Preview','1');url.searchParams.set('vs',Date.now().toString());return url.pathname+url.search}
+function postPreview(){if(!ready)return;try{
+ const items=reviewSnapshot?.blocks||blocks,target=$('frame').contentWindow;
+ for(const [selector,type] of [['#p74-home-config','P74_CONFIG_PREVIEW'],['#p77-profile-config','P77_CONFIG_PREVIEW']]){
+  const marker=items.find(b=>b.type==='element'&&b.selector===selector);
+  if(marker?.text)target.postMessage({type,config:JSON.parse(marker.text)},location.origin);
+ }
+ target.postMessage({type:'MMVS_PREVIEW',blocks:clone(items)},location.origin);
+ }catch(e){toast('پیش‌نمایش تنظیمات باز نشد: '+e.message,true)}}
 function reloadFrame(){ready=false;$('frame').src=previewUrl();window.MMVS_Spatial?.refresh()}
-async function loadPage(slug){const request=++pageRequestId;const r=await api('/content/pages/'+encodeURIComponent(slug)+'/editor');if(request!==pageRequestId)return;page=slug;editor=r;blocks=clone(r.blocks||[]);title=r.title??null;initial=JSON.stringify({title,blocks});undoStack=[];redoStack=[];selectedBlockIndex=-1;drawPageList();$('current-title').textContent=PAGES.find(x=>x[0]===page)?.[1]||page;$('selected').textContent='روی یک عنصر پیش‌نمایش کلیک کن';selected='';$('props').replaceChildren();$('page-title').value=title??'';syncDirty();drawEdits();drawContentBlocks();reloadFrame();window.MMVS_Spatial?.loadPage(slug).catch(e=>toast('موتور چیدمان فعال نیست: '+e.message,true));if(r.hasDraft)toast('پیش‌نویس قبلی این صفحه بارگذاری شد');}
+async function loadPage(slug){const request=++pageRequestId;const r=await api('/content/pages/'+encodeURIComponent(slug)+'/editor');if(request!==pageRequestId)return;if(reviewSnapshot)exitReleasePreview();page=slug;editor=r;blocks=clone(r.blocks||[]);title=r.title??null;initial=JSON.stringify({title,blocks});undoStack=[];redoStack=[];selectedBlockIndex=-1;drawPageList();$('current-title').textContent=PAGES.find(x=>x[0]===page)?.[1]||page;$('selected').textContent='روی یک عنصر پیش‌نمایش کلیک کن';selected='';$('props').replaceChildren();$('page-title').value=title??'';syncDirty();drawEdits();drawContentBlocks();reloadFrame();window.MMVS_Spatial?.loadPage(slug).catch(e=>toast('موتور چیدمان فعال نیست: '+e.message,true));if(r.hasDraft)toast('پیش‌نویس قبلی این صفحه بارگذاری شد');}
 function elementBlock(s){return blocks.find(b=>b.type==='element'&&b.selector===s)}
 function editBlock(s){let found=elementBlock(s);if(!found){found={type:'element',selector:s};blocks.push(found)}return found}
 function drawEdits(){const list=$('edits');list.replaceChildren();const items=blocks.filter(b=>b.type==='element'&&!b.selector.startsWith('#p74-home-config')&&!b.selector.startsWith('#p77-profile-config'));for(const b of items){let btn=textEl('button','minor',b.selector+(b.deleted?' (حذف‌شده)':''));btn.onclick=()=>{selected=b.selector;showInspector()};list.append(btn)}if(!items.length)list.append(textEl('p','hint','تغییری ثبت نشده است'));}
@@ -65,8 +79,9 @@ function showInspector(info){const b=elementBlock(selected)||{};$('selected').te
   wrap.append(input,status);box.append(wrap)
  }
 }
-function setOperation(value){busy=value;for(const id of ['save','publish','reload'])$(id).disabled=value;syncDirty()}
+function setOperation(value,label='در حال ذخیره…'){busy=value;operationLabel=label;for(const id of ['save','publish','reload'])$(id).disabled=value||(!!reviewSnapshot&&id!=='reload');document.querySelector('.toolbar')?.setAttribute('aria-busy',String(value));syncDirty()}
 async function saveDraft(){
+ if(reviewSnapshot)throw Error('ابتدا از پیش‌نمایش نسخه تاریخی خارج شوید');
  if(!canWrite())throw Error('مجوز انتشار نداری');
  if(busy||window.MMVS_Spatial?.isBusy())throw Error('عملیات دیگری در حال انجام است؛ صبر کنید');
  const slug=page,session=pageRequestId,snapshot=clone({title,blocks});
@@ -86,6 +101,7 @@ async function saveDraft(){
 }
 async function publish(){
  if(!canWrite())return;
+ if(reviewSnapshot)return toast('ابتدا از پیش‌نمایش نسخه تاریخی خارج شوید',true);
  if(busy||window.MMVS_Spatial?.isBusy())return toast('عملیات دیگری در حال انجام است؛ صبر کنید',true);
  if(!confirm('محتوا و چیدمان همین نسخه برای کاربران منتشر شود؟'))return;
  try{
@@ -93,7 +109,7 @@ async function publish(){
   if((dirty()||spatial?.isDirty())&&!(await saveDraft()))return;
   if(dirty()||spatial?.isDirty())throw Error('هنگام ذخیره تغییر جدیدی ایجاد شد؛ آن را ذخیره و دوباره منتشر کنید');
   if(!editor?.hasDraft&&!spatial?.hasPending())throw Error('هیچ پیش‌نویسی برای انتشار وجود ندارد');
-  setOperation(true);spatial?.setPublishing(true);
+  setOperation(true,'در حال انتشار محتوا و چیدمان…');spatial?.setPublishing(true);
   const expectedSpatial=spatial?.getRevision();
   const res=await api('/content/pages/'+page+'/publish','POST',{
     expectedRevision:editor.revision,
@@ -115,18 +131,38 @@ async function savePopup(e){e?.preventDefault();if(!canWrite()||popupBusy)return
 if(d.status==='PUBLISHED'&&popups.some(p=>p.pageSlug===d.pageSlug&&p.status==='PUBLISHED'&&p.id!==chosenPopup)){if(!confirm('پاپ‌آپ فعال دیگری در این صفحه وجود دارد؛ API فعلی اولین مورد را نمایش می‌دهد. ادامه می‌دهی؟'))return}
 const saved=await api('/content/popups'+(chosenPopup?'/'+encodeURIComponent(chosenPopup):''),chosenPopup?'PATCH':'POST',d);chosenPopup=saved.id;await loadPopups();fillPopup(saved);toast('پاپ‌آپ با موفقیت ذخیره شد')}catch(e){toast(e.message,true)}finally{popupBusy=false}}
 async function deletePopup(){if(!chosenPopup)return;if(!confirm('این پاپ‌آپ و سابقه مشاهده آن برای کاربران حذف شود؟'))return;try{await api('/content/popups/'+encodeURIComponent(chosenPopup),'DELETE');chosenPopup=null;fillPopup(null);await loadPopups();toast('پاپ‌آپ حذف شد')}catch(e){toast(e.message,true)}}
-async function loadVersions(){const d=await api('/content/pages/'+page+'/versions');const host=$('version-list');host.replaceChildren();for(const v of d.items||[]){const row=textEl('div','version-item');let summary=textEl('div','');summary.append(textEl('strong','',`نسخه ${v.version} · ${v.status}`),textEl('small','',new Date(v.createdAt).toLocaleString('fa-IR')+' · '+(v.createdBy?.email||'')));let b=textEl('button','minor','بازگردانی');b.onclick=async()=>{if(!confirm('نسخه '+v.version+' را بازگردانی کنیم؟ ممکن است بلافاصله روی کاربران اثر بگذارد.'))return;try{await api('/content/pages/'+page+'/rollback','POST',{versionId:v.id});toast('نسخه بازگردانی شد');await loadVersions();}catch(e){toast(e.message,true)}};row.append(summary,b);host.append(row)}if(!host.children.length)host.append(textEl('p','hint','نسخه‌ای ثبت نشده'))}
+function showReleasePreview(snapshot){
+ reviewSnapshot=snapshot;
+ const banner=$('release-preview');banner.hidden=false;
+ const contentChanged=JSON.stringify({title,blocks})!==JSON.stringify({title:snapshot.title,blocks:snapshot.blocks});
+ const layoutChanged=JSON.stringify(window.MMVS_Spatial?.getDraftLayout())!==JSON.stringify(snapshot.layout);
+ $('release-preview-title').textContent='پیش‌نمایش نسخه '+snapshot.version+' · فقط خواندنی';
+ $('release-preview-detail').textContent=(contentChanged?'محتوا متفاوت است':'محتوا یکسان است')+' · '+(layoutChanged?'چیدمان متفاوت است':'چیدمان یکسان است')+' · پیش‌نویس فعلی حفظ شده است.';
+ document.querySelector('.inspector').inert=true;document.querySelector('.mmvs-library').inert=true;$('spatial-panel').inert=true;
+ window.MMVS_Spatial?.review(snapshot.layout);chooseTab('pages');reloadFrame();setOperation(false);
+}
+function exitReleasePreview(){
+ reviewSnapshot=null;$('release-preview').hidden=true;
+ document.querySelector('.inspector').inert=false;document.querySelector('.mmvs-library').inert=false;$('spatial-panel').inert=false;
+ window.MMVS_Spatial?.review(null);reloadFrame();setOperation(busy);
+}
+const releaseHistory=window.MMStudioReleaseHistory.create({api,
+ context:()=>({page,session:pageRequestId,busy:busy||!!window.MMVS_Spatial?.isBusy(),dirty:dirty()||!!window.MMVS_Spatial?.isDirty(),revision:editor?.revision,spatialRevision:window.MMVS_Spatial?.getRevision()}),
+ setBusy:setOperation,onPreview:showReleasePreview,
+ onRestored:async()=>{exitReleasePreview();await loadPage(page);chooseTab('pages')},notify:toast});
+async function loadVersions(){await releaseHistory.load()}
+
 
 /* MMVS R3 visual controls, content library and secure media uploads. */
 const CONTENT_TYPES={heading:'عنوان',text:'متن',image:'تصویر',button:'دکمه',banner:'بنر',progress:'نوار پیشرفت',divider:'جداکننده',mm10_step:'مرحله چالش'};
 const RESERVED_SELECTOR=/^#p\d+[a-z0-9_-]*-(?:home-|profile-)?config$/i;
 const safeUrl=x=>/^(https:\/\/\S+|\/(?!\/)\S*)$/.test(String(x||''));
 function snapshot(){return JSON.stringify({title,blocks})}
-function checkpoint(){const v=snapshot();if(undoStack[undoStack.length-1]!==v)undoStack.push(v);if(undoStack.length>55)undoStack.shift();redoStack=[];updateHistoryButtons()}
+function checkpoint(){if(reviewSnapshot)throw Error('پیش‌نمایش نسخه تاریخی فقط خواندنی است');const v=snapshot();if(undoStack[undoStack.length-1]!==v)undoStack.push(v);if(undoStack.length>55)undoStack.shift();redoStack=[];updateHistoryButtons()}
 function updateHistoryButtons(){$('undo').disabled=!undoStack.length;$('redo').disabled=!redoStack.length}
 function restoreLocal(value){const d=JSON.parse(value);title=d.title??null;blocks=d.blocks;$('page-title').value=title??'';selectedBlockIndex=-1;selected='';$('props').replaceChildren();drawEdits();drawContentBlocks();syncDirty();reloadFrame();updateHistoryButtons()}
-function undo(){if(!undoStack.length)return;redoStack.push(snapshot());restoreLocal(undoStack.pop())}
-function redo(){if(!redoStack.length)return;undoStack.push(snapshot());restoreLocal(redoStack.pop())}
+function undo(){if(reviewSnapshot)return;if(!undoStack.length)return;redoStack.push(snapshot());restoreLocal(undoStack.pop())}
+function redo(){if(reviewSnapshot)return;if(!redoStack.length)return;undoStack.push(snapshot());restoreLocal(redoStack.pop())}
 function isReserved(b){return b?.type==='element'&&RESERVED_SELECTOR.test(String(b.selector||''))}
 function contentIndices(){return blocks.map((b,i)=>({b,i})).filter(x=>Object.hasOwn(CONTENT_TYPES,x.b?.type)&&x.b.type!=='element')}
 function labelOf(b){return b.type==='heading'||b.type==='text'?String(b.text||'').slice(0,65):b.type==='image'?String(b.url||''):b.type==='button'?String(b.text||''):b.type==='banner'?String(b.title||''):b.type==='progress'?String(b.title||'پیشرفت'):b.type==='mm10_step'?String(b.title||'مرحله'):b.type==='divider'?'خط جداکننده':b.type}
@@ -201,7 +237,7 @@ function bindExtended(){
  $('popup-disable').onclick=async()=>{const obj=popups.find(x=>x.id===chosenPopup);if(!obj||obj.status!=='PUBLISHED'||!confirm('این پاپ‌آپ فوراً غیرفعال شود؟'))return;try{await api('/content/popups/'+encodeURIComponent(obj.id),'PATCH',{status:'DRAFT'});await loadPopups();toast('پاپ‌آپ غیرفعال شد')}catch(e){toast(e.message,true)}};
 }
 
-function bind(){bindExtended();for(const b of $all('.tab'))b.onclick=()=>chooseTab(b.dataset.tab);$('reload').onclick=()=>{if((dirty()||window.MMVS_Spatial?.isDirty())&&!confirm('تغییرات محلی حذف شوند؟'))return;loadPage(page).catch(e=>toast(e.message,true))};$('refresh-preview').onclick=reloadFrame;$('save').onclick=()=>saveDraft().catch(e=>toast(e.message,true));$('publish').onclick=publish;$('view-mobile').onclick=()=>{$('preview-holder').classList.remove('desktop');$('view-mobile').classList.add('active');$('view-desktop').classList.remove('active')};$('view-desktop').onclick=()=>{$('preview-holder').classList.add('desktop');$('view-desktop').classList.add('active');$('view-mobile').classList.remove('active')};$('hide-element').onclick=()=>{if(!selected)return;checkpoint();const b=editBlock(selected);b.deleted=!b.deleted;drawEdits();syncDirty();postPreview();};$('remove-edit').onclick=()=>{if(!selected)return;checkpoint();blocks=blocks.filter(b=>!(b.type==='element'&&b.selector===selected));drawEdits();showInspector();syncDirty();reloadFrame()};$('popup-new').onclick=()=>{fillPopup(null);drawPopups()};$('popup-form').addEventListener('submit',savePopup);$('popup-delete').onclick=deletePopup;$('popup-preview').onclick=()=>{const pop=popupData();pendingPopup=pop;chooseTab('pages');if(pop.pageSlug!==page){loadPage(pop.pageSlug).then(()=>{if(ready){$('frame').contentWindow?.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pendingPopup},location.origin);pendingPopup=null}}).catch(e=>toast(e.message,true))}else if(ready){$('frame').contentWindow?.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pop},location.origin);pendingPopup=null}toast('پیش‌نمایش پاپ‌آپ آماده شد')};$('sign-in').onclick=async()=>{try{const data=await fetch('/admin/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});const r=await data.json();if(!data.ok)throw Error(r.message||r.error||'ورود ناموفق');$('password').value='';await authenticate(r.token)}catch(e){$('login-error').textContent=e.message}};
+function bind(){bindExtended();$('release-preview-exit').onclick=exitReleasePreview;$('release-checkpoint').onclick=()=>releaseHistory.checkpoint();$('release-refresh').onclick=loadVersions;window.addEventListener('mmvs:state',syncDirty);for(const b of $all('.tab'))b.onclick=()=>chooseTab(b.dataset.tab);$('reload').onclick=()=>{if(reviewSnapshot){exitReleasePreview();return}if((dirty()||window.MMVS_Spatial?.isDirty())&&!confirm('تغییرات محلی حذف شوند؟'))return;loadPage(page).catch(e=>toast(e.message,true))};$('refresh-preview').onclick=reloadFrame;$('save').onclick=()=>saveDraft().catch(e=>toast(e.message,true));$('publish').onclick=publish;$('view-mobile').onclick=()=>{$('preview-holder').classList.remove('desktop');$('view-mobile').classList.add('active');$('view-desktop').classList.remove('active')};$('view-desktop').onclick=()=>{$('preview-holder').classList.add('desktop');$('view-desktop').classList.add('active');$('view-mobile').classList.remove('active')};$('hide-element').onclick=()=>{if(!selected)return;checkpoint();const b=editBlock(selected);b.deleted=!b.deleted;drawEdits();syncDirty();postPreview();};$('remove-edit').onclick=()=>{if(!selected)return;checkpoint();blocks=blocks.filter(b=>!(b.type==='element'&&b.selector===selected));drawEdits();showInspector();syncDirty();reloadFrame()};$('popup-new').onclick=()=>{fillPopup(null);drawPopups()};$('popup-form').addEventListener('submit',savePopup);$('popup-delete').onclick=deletePopup;$('popup-preview').onclick=()=>{const pop=popupData();pendingPopup=pop;chooseTab('pages');if(pop.pageSlug!==page){loadPage(pop.pageSlug).then(()=>{if(ready){$('frame').contentWindow?.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pendingPopup},location.origin);pendingPopup=null}}).catch(e=>toast(e.message,true))}else if(ready){$('frame').contentWindow?.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pop},location.origin);pendingPopup=null}toast('پیش‌نمایش پاپ‌آپ آماده شد')};$('sign-in').onclick=async()=>{try{const data=await fetch('/admin/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});const r=await data.json();if(!data.ok)throw Error(r.message||r.error||'ورود ناموفق');$('password').value='';await authenticate(r.token)}catch(e){$('login-error').textContent=e.message}};
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('frame').contentWindow||!e.data||typeof e.data!=='object')return;if(e.data.type==='MMVS_READY'){ready=true;postPreview();if(pendingPopup){$('frame').contentWindow.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pendingPopup},location.origin);pendingPopup=null}}else if(e.data.type==='MMVS_SELECT'){chooseElement(e.data.element)}});window.MMVSWorkspace={isDirty:()=>dirty()||!!window.MMVS_Spatial?.isDirty(),isBusy:()=>busy||!!window.MMVS_Spatial?.isBusy(),publish};window.addEventListener('beforeunload',e=>{if(dirty()||window.MMVS_Spatial?.isDirty()||busy){e.preventDefault();e.returnValue=''}});
 for(const [slug,name] of PAGES){const op=textEl('option','',name);op.value=slug;$('popup-page').append(op)}fillPopup(null);}
 bind();const saved=sessionStorage.getItem('tenx_admin_token');if(saved)authenticate(saved).catch(e=>{showLogin();toast(e.message,true)});else showLogin();

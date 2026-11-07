@@ -1,3 +1,4 @@
+import { recordStudioRelease, studioReleaseKey } from './studio-releases.js';
 import { contentRevision, assertContentRevision, withContentLock, ContentConflict } from './content-workflow.js';
 import { authenticateTeamAdmin } from './team-auth-p37.js';
 import { randomInt as quizCryptoRandomInt } from 'node:crypto';
@@ -5731,6 +5732,76 @@ app.delete('/admin/page-files-trash/:id', async (request, reply) => {
 /* TENX_PAGE_FILES_MANAGER_R1_API_END */
 
 
+// Canonical paired history: old content-only versions remain visible but cannot be restored as a pair.
+const studioSnapshotSchema=z.object({
+  format:z.literal(1),slug:mmvsSpatialSlug,contentVersionId:z.string(),version:z.number().int().positive(),
+  title:z.string().nullable(),blocks:z.array(blockSchema).max(40),layout:mmvsSpatialLayout,capturedAt:z.string()
+});
+const studioReleaseParams=z.object({slug:mmvsSpatialSlug,id:z.string().min(1).max(64)});
+async function readStudioSnapshot(tx:Prisma.TransactionClient|PrismaClient,slug:string,id:string){
+  const row=await tx.systemSetting.findUnique({where:{key:studioReleaseKey(slug,id)},select:{value:true}});
+  const parsed=studioSnapshotSchema.safeParse(row?.value);
+  if(!parsed.success||parsed.data.slug!==slug||parsed.data.contentVersionId!==id)throw new ContentConflict('paired_snapshot_unavailable');
+  return parsed.data;
+}
+app.get('/admin/mmvs/releases/:slug',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_page'});
+  reply.header('cache-control','no-store');
+  const versions=await prisma.contentPageVersion.findMany({where:{pageSlug:p.data.slug,status:'PUBLISHED'},orderBy:{version:'desc'},take:50,
+    select:{id:true,version:true,title:true,createdAt:true,createdBy:{select:{email:true}}}});
+  const keys=versions.map(v=>studioReleaseKey(p.data.slug,v.id));
+  const paired=await prisma.systemSetting.findMany({where:{key:{in:keys}},select:{key:true}});
+  const available=new Set(paired.map(row=>row.key));
+  return {items:versions.map(v=>({...v,paired:available.has(studioReleaseKey(p.data.slug,v.id))}))};
+});
+app.get('/admin/mmvs/releases/:slug/:id',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=studioReleaseParams.safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_release'});
+  reply.header('cache-control','no-store');
+  return await readStudioSnapshot(prisma,p.data.slug,p.data.id);
+});
+app.post('/admin/mmvs/releases/:slug/checkpoint',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  const b=z.object({expectedPublishedRevision:z.string().regex(/^[a-f0-9]{64}$/),spatialExpectedRevision:z.number().int().min(0)}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  return await withContentLock(prisma,p.data.slug,async tx=>{
+    const page=await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    if(!page||page.status!=='PUBLISHED')throw new ContentConflict('published_page_not_found');
+    assertContentRevision(page,b.data.expectedPublishedRevision);
+    const spatial=await mmvsSpatialRead(p.data.slug,tx);
+    if(spatial.revision!==b.data.spatialExpectedRevision)throw new ContentConflict('spatial_revision_conflict');
+    const latest=await tx.contentPageVersion.aggregate({where:{pageSlug:p.data.slug},_max:{version:true}});
+    const version=await tx.contentPageVersion.create({data:{pageSlug:p.data.slug,version:(latest._max.version??0)+1,title:page.title,blocks:toInputJson(page.blocks),status:'PUBLISHED',createdByAdminId:adminIdOf(request)}});
+    await recordStudioRelease(tx,p.data.slug,version,spatial.published);
+    await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'STUDIO_RELEASE_CHECKPOINT_CREATED',entityType:'ContentPage',entityId:p.data.slug,metadata:{version:version.version,versionId:version.id}}});
+    return {ok:true,id:version.id,version:version.version};
+  });
+});
+app.post('/admin/mmvs/releases/:slug/:id/restore',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=studioReleaseParams.safeParse(request.params);
+  const b=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/),spatialExpectedRevision:z.number().int().min(0)}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  return await withContentLock(prisma,p.data.slug,async tx=>{
+    const current=await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}})??await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    assertContentRevision(current,b.data.expectedRevision);
+    const spatial=await mmvsSpatialRead(p.data.slug,tx);
+    if(spatial.revision!==b.data.spatialExpectedRevision)throw new ContentConflict('spatial_revision_conflict');
+    const snapshot=await readStudioSnapshot(tx,p.data.slug,p.data.id);
+    const draft=await tx.contentPageDraft.upsert({where:{slug:p.data.slug},create:{slug:p.data.slug,title:snapshot.title,blocks:toInputJson(snapshot.blocks)},update:{title:snapshot.title,blocks:toInputJson(snapshot.blocks)}});
+    spatial.draft=mmvsSpatialCopy(snapshot.layout);spatial.revision++;
+    await mmvsSpatialWrite(p.data.slug,spatial,request,'MMVS_SPATIAL_RESTORED_TO_DRAFT',tx);
+    const latest=await tx.contentPageVersion.aggregate({where:{pageSlug:p.data.slug},_max:{version:true}});
+    await tx.contentPageVersion.create({data:{pageSlug:p.data.slug,version:(latest._max.version??0)+1,title:draft.title,blocks:toInputJson(draft.blocks),status:'DRAFT',createdByAdminId:adminIdOf(request)}});
+    await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'STUDIO_RELEASE_RESTORED_TO_DRAFT',entityType:'ContentPage',entityId:p.data.slug,metadata:{sourceVersionId:snapshot.contentVersionId,sourceVersion:snapshot.version,spatialRevision:spatial.revision}}});
+    return {ok:true,revision:contentRevision(draft),spatialRevision:spatial.revision};
+  });
+});
+
 app.get('/admin/content/pages', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
   const rows = await prisma.contentPage.findMany();
@@ -5760,6 +5831,7 @@ app.get('/admin/content/pages/:slug/editor', async (request, reply) => {
     revision: contentRevision(source),
     draftUpdatedAt: draft?.updatedAt ?? null,
     published: {
+      revision: contentRevision(published),
       title: published?.title ?? null,
       blocks: Array.isArray(published?.blocks) ? published.blocks : [],
       status: published?.status ?? 'DRAFT',
@@ -5881,7 +5953,7 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
       _max: { version: true }
     });
 
-    await tx.contentPageVersion.create({
+    const version=await tx.contentPageVersion.create({
       data: {
         pageSlug: p.data.slug,
         version: (latest._max.version ?? 0) + 1,
@@ -5891,6 +5963,9 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
         createdByAdminId: adminIdOf(request)
       }
     });
+
+    const publishedLayout=await mmvsSpatialRead(p.data.slug,tx);
+    await recordStudioRelease(tx,p.data.slug,version,publishedLayout.published);
 
     await tx.auditLog.create({
       data: {
@@ -7773,7 +7848,7 @@ app.post('/progress/path', async (request, reply) => {
 // ---- END PROGRESS_API_V1 ----
 
 app.setErrorHandler((error: any, request, reply) => {
-  if(error instanceof ContentConflict)return reply.code(409).send({error:error.code,message:'نسخه صفحه تغییر کرده است؛ تغییرات محلی را نگه دارید و نسخه جدید را بررسی کنید.'});
+  if(error instanceof ContentConflict){const messages:Record<string,string>={paired_snapshot_unavailable:'این نسخه snapshot هماهنگ محتوا و چیدمان ندارد.',published_page_not_found:'این صفحه هنوز نسخه عمومی منتشرشده ندارد.'};return reply.code(409).send({error:error.code,message:messages[error.code]||'نسخه صفحه تغییر کرده است؛ تغییرات محلی را نگه دارید و نسخه جدید را بررسی کنید.'});}
 
   if (error instanceof z.ZodError) return reply.code(400).send({ error: 'invalid_request' });
   const status = Number(error?.statusCode);
