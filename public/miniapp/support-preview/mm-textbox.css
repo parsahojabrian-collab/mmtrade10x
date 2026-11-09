@@ -1,0 +1,316 @@
+/*
+ MMTRADE R14 - PNG LIQUID GLASS ENGINE
+ Layout: existing support.css
+ Material: transparent PNG
+ Bottom navigation: untouched
+*/
+
+.app-shell .mm-textbox {
+    position: relative !important;
+    isolation: isolate !important;
+
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 100% 100% !important;
+    background-clip: border-box !important;
+
+    border-color: transparent !important;
+    border-style: solid !important;
+    border-width: 0 !important;
+
+    box-shadow: none !important;
+    filter: none !important;
+
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* Disable older CSS-generated glass reflections */
+
+.app-shell .mm-textbox::before,
+.app-shell .mm-textbox::after {
+    content: none !important;
+    display: none !important;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+/* PRIMARY */
+
+.app-shell .new-ticket.mm-textbox--primary {
+    background-image:
+        url("./assets/textboxes/mm-textbox-primary.png")
+        !important;
+}
+
+/* TICKETS */
+
+.app-shell #ticketsBtn.mm-textbox--secondary {
+    background-image:
+        url("./assets/textboxes/mm-textbox-tickets.png")
+        !important;
+}
+
+/* FAQ */
+
+.app-shell #faqBtn.mm-textbox--secondary {
+    background-image:
+        url("./assets/textboxes/mm-textbox-faq.png")
+        !important;
+}
+
+/* QUICK SUPPORT */
+
+.app-shell .quick-help.mm-textbox--support {
+    background-image:
+        url("./assets/textboxes/mm-textbox-support.png")
+        !important;
+}
+
+/* Keep text and icons visible */
+
+.app-shell .mm-textbox > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Keep quick-support buttons interactive */
+
+.app-shell .quick-help .chips button {
+    position: relative;
+    z-index: 2;
+}
+
+/*
+ No width, height, padding, margin or radius changes.
+ No modifications to bottom navigation.
+*/
+
+/* MMTRADE_SUPPORT_R15_START */
+
+/*
+ R15 Geometry Calibration
+ - Preserve PNG glass materials
+ - Preserve R8 base layout
+ - Preserve hero and bottom navigation
+*/
+
+/* Main ticket card */
+
+.app-shell .new-ticket.mm-textbox--primary {
+    min-height: clamp(94px, 13.5dvh, 118px);
+    background-size: 100% 100% !important;
+}
+
+/* Two secondary cards */
+
+.app-shell .glass-card.mm-textbox--secondary {
+    height: clamp(108px, 15dvh, 140px);
+    background-size: 100% 100% !important;
+}
+
+/* Quick support: fit the glass frame around content */
+
+.app-shell .quick-help.mm-textbox--support {
+    box-sizing: border-box !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    padding:
+        15px
+        13px
+        18px !important;
+
+    margin-top: 13px !important;
+
+    overflow: visible !important;
+
+    background-size: 100% 100% !important;
+}
+
+/* Quick-support heading */
+
+.app-shell .quick-help.mm-textbox--support h2,
+.app-shell .quick-help.mm-textbox--support h3 {
+    margin-top: 0 !important;
+    margin-bottom: 12px !important;
+}
+
+/* Quick-support button grid */
+
+.app-shell .quick-help.mm-textbox--support .chips {
+    display: grid !important;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr)) !important;
+
+    gap: 9px 10px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Internal buttons */
+
+.app-shell .quick-help.mm-textbox--support .chips button {
+    box-sizing: border-box !important;
+
+    min-width: 0 !important;
+    min-height: 37px !important;
+
+    padding: 7px 9px !important;
+
+    position: relative;
+    z-index: 2;
+}
+
+/*
+ Reduce extra vertical space only within support content.
+ Bottom navigation position and styles remain untouched.
+*/
+
+.app-shell .main-actions {
+    padding-bottom: 0 !important;
+}
+
+/* MMTRADE_SUPPORT_R15_END */
+
+/* MMTRADE_R16_QUICK_BUTTONS_START */
+
+/*
+ Four quick-support buttons reuse the primary
+ ticket-card PNG, scaled to their own dimensions.
+*/
+
+.app-shell .quick-help.mm-textbox--support .chips button {
+    box-sizing: border-box !important;
+
+    background-color: transparent !important;
+
+    background-image:
+        url("./assets/textboxes/mm-textbox-primary.png")
+        !important;
+
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 100% 100% !important;
+
+    border: 0 !important;
+    box-shadow: none !important;
+
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+
+    position: relative !important;
+    z-index: 2 !important;
+
+    min-height: 37px !important;
+    overflow: hidden !important;
+}
+
+/* Remove older CSS glow overlays on quick buttons */
+
+.app-shell .quick-help.mm-textbox--support .chips button::before,
+.app-shell .quick-help.mm-textbox--support .chips button::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Keep text and icons above PNG */
+
+.app-shell .quick-help.mm-textbox--support .chips button > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* MMTRADE_R16_QUICK_BUTTONS_END */
+
+/* MMTRADE_R17_START */
+
+/* Optimized transparent liquid-glass assets */
+
+.app-shell .new-ticket.mm-textbox--primary {
+  background-image:
+    url("./assets/textboxes/mm-textbox-primary.webp")
+    !important;
+}
+
+.app-shell #ticketsBtn.mm-textbox--secondary {
+  background-image:
+    url("./assets/textboxes/mm-textbox-tickets.webp")
+    !important;
+}
+
+.app-shell #faqBtn.mm-textbox--secondary {
+  background-image:
+    url("./assets/textboxes/mm-textbox-faq.webp")
+    !important;
+}
+
+.app-shell .quick-help.mm-textbox--support {
+  background-image:
+    url("./assets/textboxes/mm-textbox-support.webp")
+    !important;
+}
+
+.app-shell .quick-help.mm-textbox--support .chips button {
+  background-image:
+    url("./assets/textboxes/mm-textbox-primary.webp")
+    !important;
+}
+
+/* MMTRADE_R17_END */
+
+/* MMTRADE_R18_HERO_SHADE_START */
+
+/*
+ Reduce dark overlay over headset.
+ Preserve text readability and hero geometry.
+*/
+
+.app-shell .hero .hero-shade {
+    background:
+        linear-gradient(
+            0deg,
+            #021a16 0%,
+            transparent 20%
+        ),
+        linear-gradient(
+            90deg,
+            rgba(2,26,22,0.96) 0%,
+            rgba(2,26,22,0.74) 15%,
+            rgba(2,26,22,0.32) 36%,
+            rgba(2,26,22,0.08) 55%,
+            transparent 70%
+        ) !important;
+}
+
+/* MMTRADE_R18_HERO_SHADE_END */
+
+/* MMTRADE_R19_START */
+
+/*
+ Hero shadow refinement.
+ No image movement, resizing or geometry changes.
+*/
+
+.app-shell .hero .hero-shade {
+  background:
+    linear-gradient(
+      0deg,
+      rgba(2,26,22,0.88) 0%,
+      rgba(2,26,22,0.25) 9%,
+      transparent 19%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(2,26,22,0.60) 0%,
+      rgba(2,26,22,0.38) 14%,
+      rgba(2,26,22,0.12) 30%,
+      rgba(2,26,22,0.03) 43%,
+      transparent 55%
+    ) !important;
+}
+
+/* MMTRADE_R19_END */

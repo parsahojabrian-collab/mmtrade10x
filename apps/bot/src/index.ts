@@ -63,6 +63,13 @@ function builtinLabel(id: string): string {
   return BUILTIN_BUTTON_CACHE.find(x => x.id === id)?.label
     || DEFAULT_BUILTIN_BUTTONS.find(x => x.id === id)!.label;
 }
+function hearsBuiltin(id: string, handler: (ctx: any) => Promise<unknown>) {
+  bot.on('message:text', async (ctx, next) => {
+    await getBotSettings().catch(() => undefined);
+    if (ctx.message.text.trim() === builtinLabel(id)) return handler(ctx);
+    return next();
+  });
+}
 type BotSettings = {
   channelIds: string[];
   channelLinks: string[];
@@ -78,7 +85,14 @@ const DEFAULT_DYNAMIC_CONFIG: DynamicBotConfig = {
   customMenu: [],
   builtInButtons: DEFAULT_BUILTIN_BUTTONS
 };
+let SETTINGS_CACHE: { at: number; value: BotSettings } | null = null;
 async function getBotSettings(): Promise<BotSettings> {
+  if (SETTINGS_CACHE && Date.now() - SETTINGS_CACHE.at < 10_000) return SETTINGS_CACHE.value;
+  const value = await loadBotSettings();
+  SETTINGS_CACHE = { at: Date.now(), value };
+  return value;
+}
+async function loadBotSettings(): Promise<BotSettings> {
   const rows = await prisma.systemSetting.findMany({ where: { key: { in: ['REQUIRED_CHANNELS', 'REQUIRED_CHANNEL_LINKS', 'ALLOW_NO_REQUIRED_CHANNELS', 'MINI_APP_URL', 'BOT_CONTROL_CONFIG', 'PAGE_PATH_academy'] } } });
   const saved = Object.fromEntries(rows.map(row => [row.key, row.value])) as Record<string, unknown>;
   const channels = String(saved.REQUIRED_CHANNELS ?? process.env.REQUIRED_CHANNELS ?? '');
@@ -329,7 +343,7 @@ bot.command('start', async ctx => {
 });
 
 bot.callbackQuery('noop', async ctx => { await ctx.answerCallbackQuery({ text: 'این لینک هنوز توسط مدیر تنظیم نشده است.' }); });
-bot.hears(builtinLabel('membership_check'), async ctx => {
+hearsBuiltin('membership_check', async (ctx: any) => {
   try {
     const user = await upsertTelegramUser(ctx);
     const settings = await getBotSettings();
@@ -362,13 +376,15 @@ bot.callbackQuery('check_membership', async ctx => {
   } catch (error) { console.error('membership check failed', error); await ctx.reply('بررسی عضویت انجام نشد. لطفاً بعداً تلاش کن.'); }
 });
 
-bot.hears(builtinLabel('consent_yes'), async ctx => {
+hearsBuiltin('consent_yes', async (ctx: any) => {
   await handleConsentYes(ctx);
 });
-bot.hears(builtinLabel('consent_no'), async ctx => {
-  const user = await upsertTelegramUser(ctx);
-  await setStage(user.id, RegistrationStage.CONSENT_PENDING, { consentDeclined: true });
-  await ctx.reply('بدون رضایت، شماره تلفن دریافت نمی‌شود. هر زمان آماده بودی با /start می‌توانی ادامه بدهی.');
+hearsBuiltin('consent_no', async (ctx: any) => {
+  try {
+    const user = await upsertTelegramUser(ctx);
+    await setStage(user.id, RegistrationStage.CONSENT_PENDING, { consentDeclined: true });
+    await ctx.reply('بدون رضایت، شماره تلفن دریافت نمی‌شود. هر زمان آماده بودی با /start می‌توانی ادامه بدهی.');
+  } catch (error) { console.error('consent decline failed', error); }
 });
 
 async function handleConsentYes(ctx: any) {
@@ -382,7 +398,8 @@ async function handleConsentYes(ctx: any) {
       await ctx.reply('قبل از ادامه ثبت‌نام، عضویت کانال‌های الزامی باید تأیید شود.', { reply_markup: await channelKeyboard() });
       return;
     }
-    await prisma.userConsent.create({ data: { userId: user.id, type: 'PRIVACY_PROCESSING', channel: 'TELEGRAM', granted: true, wordingVersion: 'telegram-registration-v1' } });
+    const existingConsent = await prisma.userConsent.findFirst({ where: { userId: user.id, type: 'PRIVACY_PROCESSING', channel: 'TELEGRAM', granted: true, wordingVersion: 'telegram-registration-v1' }, select: { id: true } });
+    if (!existingConsent) await prisma.userConsent.create({ data: { userId: user.id, type: 'PRIVACY_PROCESSING', channel: 'TELEGRAM', granted: true, wordingVersion: 'telegram-registration-v1' } });
     await setStage(user.id, RegistrationStage.PHONE_PENDING);
     const keyboard = new Keyboard().requestContact(builtinLabel('share_phone')).resized().oneTime();
     await ctx.reply('برای ثبت‌نام، دکمه زیر را بزن تا شماره تلفنت را مستقیماً از طریق قابلیت رسمی تلگرام ارسال کنی. شماره تایپ‌شده یا شماره شخص دیگر پذیرفته نمی‌شود.', { reply_markup: keyboard });
@@ -394,9 +411,11 @@ bot.callbackQuery('consent_yes', async ctx => {
 });
 bot.callbackQuery('consent_no', async ctx => {
   await ctx.answerCallbackQuery();
-  const user = await upsertTelegramUser(ctx);
-  await setStage(user.id, RegistrationStage.CONSENT_PENDING, { consentDeclined: true });
-  await ctx.reply('بدون رضایت، شماره تلفن دریافت نمی‌شود. هر زمان آماده بودی با /start می‌توانی ادامه بدهی.');
+  try {
+    const user = await upsertTelegramUser(ctx);
+    await setStage(user.id, RegistrationStage.CONSENT_PENDING, { consentDeclined: true });
+    await ctx.reply('بدون رضایت، شماره تلفن دریافت نمی‌شود. هر زمان آماده بودی با /start می‌توانی ادامه بدهی.');
+  } catch (error) { console.error('consent decline failed', error); }
 });
 
 bot.on('message:contact', async ctx => {
@@ -423,6 +442,24 @@ bot.on('message:contact', async ctx => {
       // Merge a website pre-registration (same phone, no Telegram id) into this verified Telegram account.
       const webOnly = await tx.user.findMany({ where: { telegramId: null, id: { not: user.id }, phone: { in: phoneVariants(phone) } }, select: { id: true } });
       for (const web of webOnly) {
+        const webFlow = await tx.eplanetUserWorkflow.findUnique({ where: { userId: web.id }, select: { id: true } });
+        if (webFlow) {
+          const myFlow = await tx.eplanetUserWorkflow.findUnique({ where: { userId: user.id }, select: { id: true } });
+          if (myFlow) {
+            await tx.auditLog.create({ data: { userId: user.id, action: 'WEB_PREREGISTRATION_MERGE_SKIPPED', entityType: 'User', entityId: web.id, metadata: { reason: 'both_accounts_have_eplanet_workflow' } } });
+            continue;
+          }
+          await tx.eplanetUserWorkflow.update({ where: { id: webFlow.id }, data: { userId: user.id } });
+        }
+        const mineLessons = new Set((await tx.lessonProgress.findMany({ where: { userId: user.id }, select: { lessonId: true } })).map(x => x.lessonId));
+        const webLessons = await tx.lessonProgress.findMany({ where: { userId: web.id }, select: { id: true, lessonId: true } });
+        const movable = webLessons.filter(x => !mineLessons.has(x.lessonId)).map(x => x.id);
+        if (movable.length) await tx.lessonProgress.updateMany({ where: { id: { in: movable } }, data: { userId: user.id } });
+        await tx.academyQuizAttempt.updateMany({ where: { userId: web.id }, data: { userId: user.id } });
+        await tx.userProgressEvent.updateMany({ where: { userId: web.id }, data: { userId: user.id } });
+        if (!(await tx.userProgressAssignment.findUnique({ where: { userId: user.id }, select: { id: true } }))) {
+          await tx.userProgressAssignment.updateMany({ where: { userId: web.id }, data: { userId: user.id } });
+        }
         await tx.userConsent.updateMany({ where: { userId: web.id }, data: { userId: user.id } });
         await tx.registrationStageEvent.updateMany({ where: { userId: web.id }, data: { userId: user.id } });
         await tx.auditLog.updateMany({ where: { userId: web.id }, data: { userId: user.id } });
@@ -438,11 +475,13 @@ bot.on('message:contact', async ctx => {
   } catch (error) { console.error('contact handling failed', error); await ctx.reply('ذخیره ثبت‌نام با خطا مواجه شد. لطفاً دوباره تلاش کن یا با پشتیبانی تماس بگیر.'); }
 });
 
-bot.hears(builtinLabel('registration_status'), async ctx => {
-  const user = await upsertTelegramUser(ctx);
-  await ctx.reply(`وضعیت ثبت‌نام: ${stageLabel(user.registrationStage)}\nشناسه داخلی: ${user.id}\nآخرین فعالیت: ${user.lastActivityAt.toISOString()}`);
+hearsBuiltin('registration_status', async (ctx: any) => {
+  try {
+    const user = await upsertTelegramUser(ctx);
+    await ctx.reply(`وضعیت ثبت‌نام: ${stageLabel(user.registrationStage)}\nشناسه داخلی: ${user.id}\nآخرین فعالیت: ${user.lastActivityAt.toISOString()}`);
+  } catch (error) { console.error('registration status failed', error); await ctx.reply('دریافت وضعیت انجام نشد. لطفاً دوباره تلاش کن.'); }
 });
-bot.hears(builtinLabel('academy'), async ctx => {
+hearsBuiltin('academy', async (ctx: any) => {
   const settings = await getBotSettings();
   if (!settings.miniAppUrl) { await ctx.reply('آکادمی داخل Mini App باز می‌شود، ولی لینک Mini App هنوز توسط مدیر تنظیم نشده است.'); return; }
   const base = settings.miniAppUrl.endsWith('/') ? settings.miniAppUrl : settings.miniAppUrl + '/';
@@ -450,7 +489,7 @@ bot.hears(builtinLabel('academy'), async ctx => {
     reply_markup: new InlineKeyboard().webApp('🎓 ورود به آکادمی', new URL(settings.academyPath || '/academy', base).toString())
   });
 });
-bot.hears(builtinLabel('challenge'), async ctx => {
+hearsBuiltin('challenge', async (ctx: any) => {
     const settings = await getBotSettings();
     const lessonId = settings.dynamicConfig.challengeLessonId;
     if (!settings.miniAppUrl) {
@@ -472,7 +511,7 @@ bot.hears(builtinLabel('challenge'), async ctx => {
       reply_markup: new InlineKeyboard().webApp('🏆 مشاهده درس چالش', lessonUrl.toString())
     });
   });
-bot.hears(builtinLabel('support'), async ctx => {
+hearsBuiltin('support', async (ctx: any) => {
   try {
     const user = await upsertTelegramUser(ctx);
     const activeStatuses = ['OPEN', 'IN_PROGRESS', 'WAITING_USER'] as const;
@@ -503,7 +542,7 @@ bot.command('closesupport', async ctx => {
   try { const user = await upsertTelegramUser(ctx); const ticket = await prisma.supportTicket.findFirst({ where: { userId: user.id, status: { in: ['OPEN','IN_PROGRESS','WAITING_USER'] } }, orderBy: { createdAt: 'desc' } }); if (!ticket) { await ctx.reply('گفتگوی بازی پیدا نشد.'); return; } await prisma.supportTicket.update({ where: { id: ticket.id }, data: { status: 'CLOSED' } }); await prisma.supportMessage.create({ data: { ticketId: ticket.id, senderType: 'SYSTEM', body: 'کاربر گفتگو را بست.' } }); await ctx.reply('گفتگوی پشتیبانی بسته شد. هر زمان لازم بود دوباره از منوی پشتیبانی اقدام کن.'); } catch (error) { console.error('support ticket close failed', error); await ctx.reply('بستن گفتگو انجام نشد.'); }
 });
 
-bot.hears(builtinLabel('miniapp'), async ctx => {
+hearsBuiltin('miniapp', async (ctx: any) => {
   const settings = await getBotSettings();
   if (settings.miniAppUrl) {
     await ctx.reply('برای ورود به مینی‌اپ از این لینک استفاده کن:', {
@@ -516,6 +555,10 @@ bot.hears(builtinLabel('miniapp'), async ctx => {
 bot.on('message:text', async (ctx, next) => {
   const body = ctx.message.text.trim();
   if (!body || body.startsWith('/')) return next();
+  try {
+    const cfg = (await getBotSettings()).dynamicConfig;
+    if (cfg.enabled && cfg.customMenu.some(i => i.enabled && i.label?.trim() === body)) return next();
+  } catch { /* ignore */ }
   try { const user = await upsertTelegramUser(ctx); const ticket = await prisma.supportTicket.findFirst({ where: { userId: user.id, status: { in: ['OPEN','IN_PROGRESS','WAITING_USER'] } }, orderBy: { createdAt: 'desc' } }); if (!ticket) return next(); if (body.length > 3500) { await ctx.reply('پیام پشتیبانی حداکثر ۳۵۰۰ نویسه است. لطفاً کوتاه‌تر ارسال کن.'); return; } await prisma.supportMessage.create({ data: { ticketId: ticket.id, senderType: 'USER', body } }); await prisma.supportTicket.update({ where: { id: ticket.id }, data: { status: 'OPEN' } }); await ctx.reply('پیامت در درخواست پشتیبانی ثبت شد.'); } catch (error) { console.error('support message save failed', error); await ctx.reply('ذخیره پیام پشتیبانی انجام نشد.'); }
 });
 async function sendDynamicMenuItem(ctx: any, item: DynamicBotConfig['customMenu'][number], settings: BotSettings) {
@@ -626,8 +669,10 @@ bot.on('message:text', async (ctx, next) => {
 });
 
 bot.command('menu', async ctx => {
-  const user = await upsertTelegramUser(ctx);
-  await showMainMenu(ctx, user);
+  try {
+    const user = await upsertTelegramUser(ctx);
+    await showMainMenu(ctx, user);
+  } catch (error) { console.error('menu failed', error); await ctx.reply('نمایش منو انجام نشد. لطفاً دوباره تلاش کن.'); }
 });
 bot.catch(error => { console.error('unhandled Telegram update error', error); });
 

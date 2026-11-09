@@ -62,3 +62,31 @@ patch_*.py
 tenx_*.py
 q*_final_*.sh
 P[0-9]*_*.py
+/backups/deleted-pages/
+
+# Secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Private data and backups
+.owner-*.json
+backups/
+.p62-home-studio/
+*.tar.gz
+*.sql.gz
+
+# Generated files
+node_modules/
+dist/
+build/
+coverage/
+.next/
+__pycache__/
+*.pyc
+.DS_Store
+nowSeconds
+=

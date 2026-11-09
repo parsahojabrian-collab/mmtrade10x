@@ -1,0 +1,126 @@
+/* MMVS_MEDIA_GALLERY_LAYOUT_R2
+   Gallery-only mobile width/scroll fix. The document and editor canvas are untouched.
+   One scroll owner: the media overlay. Do not make the grid a second scroll region. */
+#mmvs-media-overlay[hidden] { display: none !important; }
+#mmvs-media-overlay:not([hidden]) {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: max(10px, env(safe-area-inset-top))
+           max(10px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom))
+           max(10px, env(safe-area-inset-left)) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  scrollbar-gutter: stable;
+}
+#mmvs-media-overlay, #mmvs-media-overlay * { box-sizing: border-box !important; }
+#mmvs-media-overlay > *,
+#mmvs-media-overlay .mmvs-media-panel {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+#mmvs-media-overlay .mmvs-media-panel,
+#mmvs-media-overlay > :first-child {
+  position: relative !important;
+  flex: none !important;
+  width: min(100%, 720px) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+#mmvs-media-overlay .mmvs-media-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 8px 0 20px !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+  align-content: start !important;
+  overflow: visible !important;
+  touch-action: pan-y !important;
+}
+#mmvs-media-overlay .mmvs-media-grid > * {
+  position: relative !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+#mmvs-media-overlay .mmvs-media-thumb {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 146px !important;
+  min-height: 146px !important;
+  padding: 6px !important;
+  overflow: hidden !important;
+}
+#mmvs-media-overlay .mmvs-media-thumb img,
+#mmvs-media-overlay .mmvs-media-grid img {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 134px !important;
+  min-height: 0 !important;
+  max-height: 134px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  flex: none !important;
+}
+#mmvs-media-overlay input,
+#mmvs-media-overlay select,
+#mmvs-media-overlay textarea,
+#mmvs-media-overlay button,
+#mmvs-media-overlay label {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+#mmvs-media-overlay input[type="file"] {
+  display: block !important;
+  width: 100% !important;
+  font-size: 14px !important;
+  white-space: normal !important;
+}
+#mmvs-media-overlay img { max-width: 100% !important; }
+#mmvs-media-overlay .mmvs-media-grid > * :is(p,small,span,label) {
+  overflow-wrap: anywhere !important;
+}
+@media (min-width: 720px) {
+  #mmvs-media-overlay .mmvs-media-grid { grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
+}
+@media (max-width: 390px) {
+  #mmvs-media-overlay:not([hidden]) { padding-left: 8px !important; padding-right: 8px !important; }
+  #mmvs-media-overlay .mmvs-media-grid { gap: 7px !important; }
+  #mmvs-media-overlay .mmvs-media-thumb { height: 126px !important; min-height: 126px !important; }
+  #mmvs-media-overlay .mmvs-media-thumb img,
+  #mmvs-media-overlay .mmvs-media-grid img { height: 114px !important; max-height: 114px !important; }
+}

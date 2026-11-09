@@ -1,0 +1,54 @@
+/* MMTrade Stage 1 Reference R3 -- additive, no API changes */
+:root{--ref-bg:#02160f;--ref-cream:#f2d69d;--ref-line:#ae945b;--ref-green:#16eb7e}
+body{background:#020d0a;color:#f2e7cc}
+.stage{max-width:480px;padding:0 13px 102px;background:radial-gradient(ellipse at 50% 18%,#0d372a 0,transparent 42%),linear-gradient(180deg,#011b14,#00120d 67%,#03110c)}
+.stage::before{content:"";pointer-events:none;position:absolute;z-index:0;inset:0;background:radial-gradient(ellipse at 50% 3%,#12815325,transparent 20%),linear-gradient(115deg,transparent 55%,#15bd6110 67%,transparent 79%);}
+.stage> *{position:relative;z-index:1}
+.stage header{height:84px;margin:0 0 2px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.stage header .brand{font-family:Arial,Tahoma,sans-serif;direction:ltr;font-weight:900;font-size:clamp(20px,5vw,29px);color:#eac680;letter-spacing:-.7px;font-style:italic;text-shadow:0 1px 1px #fff5,0 5px 15px #0008;white-space:nowrap}
+.stage header .brand b{background:linear-gradient(180deg,#83ffad,#00a348);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.stage header .brand::before{content:"▂▅▇";display:inline-block;color:#e6c16f;font-size:18px;vertical-align:middle;margin-right:5px;letter-spacing:-3px;transform:skew(-12deg)}
+.stage .back{height:52px;width:52px;display:grid;place-items:center;font-size:29px;color:#ecd49b;border:1px solid #4b8c72;background:linear-gradient(135deg,#0b4733,#031c14);border-radius:16px;box-shadow:inset 0 1px 5px #ceffce24}
+.stage .stage-pill{border:1px solid #b69b5c;border-radius:11px;padding:9px 11px;color:#ffe3a9;font-size:12px;background:linear-gradient(130deg,#052a1b,#09281e);white-space:nowrap;box-shadow:0 0 15px #0ec65a12}
+.stage .eyebrow{text-align:center;font-size:12px;color:#e6bc71;margin:0;}
+.stage .eyebrow::before{content:"◆";display:block;color:#f2dca3;font-size:20px;line-height:1.2;margin:1px 0 4px}
+.stage h1.heading{font-size:clamp(25px,6.5vw,37px);line-height:1.55;margin:3px 0 0;font-weight:900;color:#e6c88b;text-align:center;text-shadow:0 2px 7px #000b}
+.stage .subhead{font-size:clamp(11px,2.85vw,14px);color:#e2e2d3;text-align:center;line-height:1.75;margin:1px 5px 0}
+.stage .hero.ref-r3-hero{height:auto!important;aspect-ratio:941/285;border:none!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;background:none!important;isolation:isolate;max-width:100%;margin:0 -13px 3px;width:calc(100% + 26px)}
+.stage .hero.ref-r3-hero::before,.stage .hero.ref-r3-hero::after{display:none!important}
+.ref-r3-hero .ref-r3-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1}
+.ref-r3-hero .object{display:none!important}
+.ref-r3-hero .hero-note{display:none!important}
+.ref-r3-candles{position:absolute;z-index:3;right:11.7%;top:18%;width:25%;height:45%;display:flex;align-items:flex-end;justify-content:space-evenly;pointer-events:none;opacity:.68}
+.ref-r3-candles i{display:block;width:5%;height:var(--h);background:var(--c);position:relative;box-shadow:0 0 9px var(--c);transform-origin:center 100%;animation:ref-flicker var(--t) ease-in-out infinite alternate;animation-delay:var(--delay)}
+.ref-r3-candles i::before{content:"";position:absolute;top:-18%;bottom:-18%;width:1px;background:var(--c);left:50%;transform:translateX(-50%)}
+@keyframes ref-flicker{0%{transform:scaleY(.82) translateY(1px);opacity:.5}100%{transform:scaleY(1.13) translateY(-2px);opacity:.95}}
+.stage .lesson-heading{margin:10px 3px 8px;display:flex;gap:12px}
+.stage .lesson-heading h2{font-size:15px;color:#e3c489;margin:0}
+.stage .lesson-heading small{font-size:10px}
+.stage .lessons{display:flex;flex-direction:column;gap:10px}
+.stage .lesson{border:1px solid #aa8a53;border-radius:17px;background:linear-gradient(110deg,#09271ee8,#0b271ceb,#06190eeb);box-shadow:inset 0 1px 10px #d0a15c11,0 3px 11px #0007;overflow:hidden}
+.stage .lesson-head{min-height:96px;gap:8px;direction:rtl;align-items:center;padding:9px 10px}
+.stage .lesson-icon{order:0;flex:0 0 64px;width:64px;height:64px;border:0;background:none;padding:0;overflow:hidden;border-radius:14px}
+.stage .lesson-icon img{display:block;width:100%;height:100%;object-fit:contain}
+.stage .status{order:1;flex:0 0 18px;width:18px;height:18px;font-size:10px;border:2px solid #f34e61;color:#fff;background:#430e1a;box-shadow:0 0 8px #ff435954}
+.stage .lesson.is-read .status{border-color:#34ff94;background:#009957;box-shadow:0 0 8px #21f9898a}
+.stage .ref-r3-copy{order:2;flex:1;display:block;min-width:0;text-align:right}
+.stage .lesson-title{font-size:clamp(13px,3.65vw,17px);line-height:1.45;color:#f6dc9b;display:block;font-weight:800}
+.stage .ref-r3-sub{display:block;color:#e2e2d6;font-size:clamp(10px,2.8vw,12px);line-height:1.65;font-weight:400;margin-top:6px}
+.stage .lesson-chevron{order:3;margin-right:auto;color:#d9c08c}
+.stage .answer{font-size:12px;border-top:1px solid #96724a88;background:#08291eaa;line-height:2.05;padding-top:12px}
+.stage .answer .confirm{padding:11px 22px;border:none;border-radius:14px;background:linear-gradient(125deg,#00452a,#1ed87c);color:white;font-weight:800}
+.stage .tip{border:1px solid #1a9655;border-radius:14px;background:linear-gradient(130deg,#063420,#083c2b);color:#e8e5cd;font-size:12px;margin:15px 0 14px;padding:14px;line-height:1.85}
+.stage .tip b{color:#f1d89d}
+.ref-r3-start{border:1px solid #9cffc2;width:100%;min-height:64px;margin:0 0 16px;border-radius:28px;background:linear-gradient(180deg,#75ffc5,#00b960 45%,#006634);color:#f8ffe9;font-size:clamp(17px,5vw,23px);font-weight:900;box-shadow:inset 0 2px 3px #fafff0ad,0 0 20px #16ea796e;text-shadow:0 2px 4px #033e29;}
+.stage .progressbox{margin:2px 0 15px;padding:9px 12px;border-color:#426a4d;background:#07271d;border-radius:15px}
+.stage .progresscircle{width:48px;height:48px;border-color:#34825c}
+.stage .progress-info strong{font-size:13px}
+.stage .progress-info small{font-size:10px}
+.stage .next{border-radius:16px;min-height:54px;font-size:14px}
+.stage .learn-status{font-size:11px;color:#c2b9a3;margin:6px 4px 9px;line-height:1.6}
+.tabbar{border:1px solid #345c47;border-radius:28px 28px 0 0;min-height:75px;background:#031b14ed;box-shadow:0 -8px 30px #0007}
+.tabbar a{gap:4px;color:#b7cbbb}.tabbar a.active{color:#54f4a0}
+@media(max-width:370px){.stage .lesson-head{padding:8px 7px;gap:5px}.stage .lesson-icon{width:56px;height:56px;flex-basis:56px}.stage .lesson-title{font-size:12px}.stage .ref-r3-sub{font-size:10px}.stage .hero.ref-r3-hero{aspect-ratio:941/298}}
+@media(prefers-reduced-motion:reduce){.ref-r3-candles i{animation:none!important}}

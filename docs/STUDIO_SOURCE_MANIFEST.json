@@ -1,0 +1,72 @@
+{
+  "repository": "parsahojabrian-collab/mmtrade10x",
+  "base_commit": "288de1377616ff6e1f4165d3751860a2b1bbab09",
+  "format": "complete-source-files",
+  "files": [
+    {
+      "path": "apps/api/public/admin.html",
+      "before_sha256": "57fa4640152798ffb54c468b71534cad918ef6a36968a63ff0d106073cd3962f",
+      "sha256": "51a439dc76d0cfe36e39ec1a4c7dc0ac0064a15c10d8547d08a89e5c8927edd4"
+    },
+    {
+      "path": "apps/api/src/index.ts",
+      "before_sha256": "41406419698a3a1dcb4e65b092af8aca2b5bf66bbcea5bcb4529e237df988485",
+      "sha256": "a4ab9a13a2d065e1eaa455854ca9aea989b4f524e8b2de3e5d072ca0c9eaa64c"
+    },
+    {
+      "path": "apps/api/src/studio-releases.ts",
+      "before_sha256": null,
+      "sha256": "21a25824461951671788e18ced41df144a17c46aee8182ac93336a7b621b3cab"
+    },
+    {
+      "path": "docs/MMTRADE_STUDIO_RELEASES_FA.md",
+      "before_sha256": null,
+      "sha256": "97738e258bdd2f7d6068ad07c563c6a035d888497e87db2ffd84f791746a94ae"
+    },
+    {
+      "path": "public/miniapp/p74/profile/preview.html",
+      "before_sha256": "a58eac8b7c80a093be62739342c40491216fc6048d3af5366edce9f7644366d3",
+      "sha256": "8f8bea97cb0e3560b9a7495d17cfa96505a488fe6b31c1fa9f3a7f045b8040f2"
+    },
+    {
+      "path": "public/miniapp/p74/studio/index.html",
+      "before_sha256": "fd8090452eaaecb12b4b8640c995c7a9357e4984969b8580a6b9cc2070812d16",
+      "sha256": "e6e9dd07e11421c224784bd3d084cdef89b0cf1096e94ed3ade300734573f137"
+    },
+    {
+      "path": "public/miniapp/p74/studio/release-history.js",
+      "before_sha256": null,
+      "sha256": "1a8b9d7cfa9684ef8d799d20b20f1ebbdb3f3cb5088811abbb20aae32be3299f"
+    },
+    {
+      "path": "public/miniapp/p74/studio/spatial.js",
+      "before_sha256": "71bb54e68e1b5f6d2be1a497709057392cb7c98b11e36c61196a575678b76b2d",
+      "sha256": "59b794c76995e08a9a776082c236b31f9f766061a71960152057f919b22dea9d"
+    },
+    {
+      "path": "public/miniapp/p74/studio/studio.css",
+      "before_sha256": "2098afebc13630fc20ff28cc0a4de2ae25181c821736ba8916cbce65bacf4977",
+      "sha256": "b40f7c71b7ff6431eb99d2073a4bdc973f692b20529d45c657ad297fb0237d4e"
+    },
+    {
+      "path": "public/miniapp/p74/studio/studio.js",
+      "before_sha256": "8ff93aae03f098b335375c95bbc71921bf9ae1f554f7163df45341cd0a436324",
+      "sha256": "d6ee9d7f65aa121a7070d36b9886a8bec42cfc448e1b2002473b66e63bf0dc29"
+    },
+    {
+      "path": "tests/admin-workspace.test.mjs",
+      "before_sha256": "032e417d94b85961d30a008a6f758165bac272a05e6daeea4ec656cee96b6437",
+      "sha256": "b6215968fa01ffa2144d8b4c3b751d9cebe5045a2ba034f9bb76a0d5b9d5e789"
+    },
+    {
+      "path": "tests/content-workflow.test.mjs",
+      "before_sha256": "3a21049b45cba042b8ae330b460866199423b4ca2e533cc34a2586d68d2cf991",
+      "sha256": "2502e93fdbe8a86dd431d58e744109e2508de7c3a0873260f16523b3caeff360"
+    },
+    {
+      "path": "tests/studio-release-history.test.mjs",
+      "before_sha256": null,
+      "sha256": "207cd5fb1305ec668cf291c151b9697db36f37efbe8e86ff2ac549fdb7c67369"
+    }
+  ]
+}

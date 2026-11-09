@@ -724,19 +724,39 @@ body h4 {
 @media(max-width:780px){.mf62-studio-layout{display:flex;flex-direction:column}.mf62-side,.mf62-stage{width:100%;max-height:none;position:static}.mf62-stage{order:-1}.mf62-preview-frame{height:640px}.mf62-studio .mf62-toolbar-actions button{flex:1;font-size:11px;padding:9px 5px}.mf62-choice-head{justify-content:center}.mf62-choice-head h2{width:100%;text-align:center}}
 
 </style>
-</head><body>
+<link rel="stylesheet" href="/miniapp/p74/studio/route-manager.css?v=MMR6">
+<link rel="stylesheet" href="/miniapp/p74/studio/page-manager.css?v=ADMIN_MAIN_R1">
+<link rel="stylesheet" href="/miniapp/p74/studio/admin-shell.css?v=ADMIN_MAIN_R1">
+<script src="/miniapp/p74/studio/admin-workspace.js?v=ADMIN_MAIN_R1"></script>
+<style id="mmu-r6-admin-style">
+/* MMU_R6_ADMIN_STYLE_BEGIN */
+.mmu6-studio{direction:rtl;max-width:1140px;margin:0 auto;display:grid;gap:16px;color:#eef5eb}.mmu6-studio *{box-sizing:border-box}
+.mmu6-head{display:flex;justify-content:space-between;align-items:center;gap:14px;background:linear-gradient(120deg,#0d251c,#1d3d2e);border:1px solid #749a7755;padding:22px;border-radius:23px}.mmu6-head h2{margin:4px 0 8px;font-size:24px;color:#f4ebd7}.mmu6-overline{font:700 10px Arial,sans-serif;letter-spacing:2px;color:#b1d9bc}.mmu6-version{background:#273c31;color:#e4c99d;border:1px solid #af9260;border-radius:15px;padding:10px 13px;white-space:nowrap;font-size:12px}
+.mmu6-muted{color:#b5c4b8;font-size:12px;line-height:2}.mmu6-status{margin:0;background:#142e24;border:1px solid #427c5c;padding:12px 14px;border-radius:13px;color:#bceac9;font-size:12px}.mmu6-panel,.mmu6-preview{min-width:0;border:1px solid #476950;background:linear-gradient(145deg,#10251c,#091c15);border-radius:22px;padding:18px;display:grid;gap:14px}.mmu6-panel h3,.mmu6-preview h3{font-size:17px;color:#e9cfaa;margin:0}.mmu6-form-field{display:flex;flex-direction:column;gap:9px;min-width:0;font-size:12px;color:#d6e5d7}.mmu6-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.mmu6-controls select,.mmu6-controls input[type=text],.mmu6-items input,.mmu6-items select{min-width:0;width:100%;background:#0c1b16;color:#ecf8ed;border:1px solid #64886b;border-radius:10px;padding:9px;min-height:42px}.mmu6-controls input[type=range]{width:100%;accent-color:#69e3ad;cursor:pointer}.mmu6-slider-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.mmu6-reading{font-size:13px;color:#e9c28d;white-space:nowrap}.mmu6-check{display:flex;align-items:center;gap:10px;color:#d0dfd2;font-size:12px;line-height:1.7}.mmu6-check input{width:18px;height:18px;accent-color:#67e2a7}.mmu6-buttons{display:flex;gap:8px;flex-wrap:wrap}.mmu6-studio button{border:1px solid #9fc7ab;background:linear-gradient(150deg,#a2f5c0,#65be95);color:#08251a;font-size:12px;font-weight:700;border-radius:11px;cursor:pointer;min-height:39px;padding:8px 13px}.mmu6-studio button.sec{background:#15382b;border-color:#5e926f;color:#e0f5e3}.mmu6-studio button:disabled{opacity:.5;cursor:not-allowed}.mmu6-studio :is(button,input,select):focus-visible{outline:2px solid #a9f3cc;outline-offset:2px}
+.mmu6-preview-caption{font-size:11px;color:#a9bfb1}.mmu6-sample{height:225px;position:relative;overflow:hidden;border:1px solid #547762;border-radius:20px;background:radial-gradient(circle at 22% 13%,#16644b,#052219 63%),repeating-linear-gradient(130deg,#ffffff03 0px,#ffffff03 1px,transparent 1px,transparent 15px);display:grid;align-content:end;padding:12px}.mmu6-mini-nav{--p-tint:.14;--p-active:.16;--p-rim:.82;--p-glow:.18;--p-blur:25px;--p-speed:310ms;width:100%;min-height:79px;display:grid;grid-template-columns:repeat(var(--p-count,5),minmax(0,1fr));gap:3px;align-items:stretch;padding:6px;border:1.6px solid rgba(242,255,249,var(--p-rim));border-radius:29px;background:linear-gradient(120deg,rgba(42,125,95,var(--p-tint)),rgba(4,68,51,var(--p-tint)));backdrop-filter:blur(var(--p-blur)) saturate(1.45);-webkit-backdrop-filter:blur(var(--p-blur)) saturate(1.45);box-shadow:inset 0 1px rgba(255,255,255,.38),0 0 19px rgba(63,240,150,var(--p-glow)),0 8px 19px #0006;transition:transform var(--p-speed) cubic-bezier(.2,.8,.18,1),opacity var(--p-speed);}
+.mmu6-mini-nav.mmu6-hidden{transform:translateY(150%);opacity:0}.mmu6-mini-nav[data-skin=solid]{background:#123b2d;backdrop-filter:none}.mmu6-mini-nav[data-skin=minimal]{background:rgba(22,27,25,var(--p-tint))}.mmu6-mini-nav[data-skin=crystal]{background:rgba(216,246,234,var(--p-tint))}.mmu6-mini-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;gap:3px;border-radius:21px;font-size:11px;font-weight:700;text-align:center;color:#ecf9ee}.mmu6-mini-icon{font:31px/1 Arial,sans-serif}.mmu6-current{border:1px solid #ddffec7c;background:rgba(111,235,171,var(--p-active));box-shadow:inset 0 1px #ffffff42}.mmu6-trophy{color:#f0d2a1}.mmu6-trophy .mmu6-mini-icon{font-size:29px;border:1px solid #efcc9b;padding:3px 7px;border-radius:12px}
+.mmu6-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.mmu6-item{padding:14px;background:#0b251a;border:1px solid #4c7657;border-radius:16px;display:grid;gap:11px;min-width:0}.mmu6-item-title{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#f3d6ac}.mmu6-item-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mmu6-item-fields label{min-width:0;display:grid;gap:4px;font-size:11px;color:#aebfb2}.mmu6-item-fields label:last-child{grid-column:1/-1}.mmu6-item-fields input,.mmu6-item-fields select{font-size:12px}
+@media(max-width:760px){.mmu6-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.mmu6-items{grid-template-columns:minmax(0,1fr)}.mmu6-head{align-items:start;flex-direction:column}.mmu6-mini-tab{font-size:10px}}
+@media(max-width:420px){.mmu6-controls{grid-template-columns:1fr}.mmu6-panel,.mmu6-preview{padding:13px}.mmu6-mini-tab{font-size:9px}.mmu6-mini-icon{font-size:25px}.mmu6-sample{padding:7px}}
+@media(prefers-reduced-motion:reduce){.mmu6-mini-nav{transition:none!important}}
+/* MMU_R6_ADMIN_STYLE_END */
+
+</style><!-- MMU_R6_ADMIN_STYLE_INCLUDED -->
+</head><body class="mm-admin-shell">
 <div id="login" class="center"><div class="card" style="width:min(380px,100%)"><h2 style="margin-top:0">ورود به پنل 10X</h2>
-<div class="row" style="flex-direction:column;align-items:stretch"><input id="em" type="email" placeholder="ایمیل" autocomplete="username"><input id="pw" type="password" placeholder="رمز عبور" autocomplete="current-password"><button id="go">ورود</button></div>
+<form id="login-form" class="row" style="flex-direction:column;align-items:stretch"><input id="em" aria-label="ایمیل مدیر" required type="email" placeholder="ایمیل" autocomplete="username"><input id="pw" aria-label="رمز عبور" required type="password" placeholder="رمز عبور" autocomplete="current-password"><button id="go" type="submit">ورود</button></form>
 
 <p id="lerr" class="mut"></p></div></div>
 <div id="app" class="hide"><aside><h2>10X</h2><nav id="nav"></nav></aside>
-<main><header><h1 id="title"></h1><div class="row"><span class="mut" id="who"></span><button class="sec" id="out">خروج</button></div></header><div id="view"></div></main></div>
-<div id="drawer" class="hide"></div><div id="toast" class="hide"></div>
+<main><header><div class="mm-admin-heading"><span class="mm-admin-eyebrow">مرکز مدیریت / <span id="admin-section">داشبورد</span></span><h1 id="title"></h1></div><div class="row"><span class="mut" id="who"></span><button class="sec" id="out">خروج</button></div></header><div id="view"></div></main></div>
+<div id="drawer" class="hide"></div><div id="toast" class="hide" role="status" aria-live="polite"></div>
 <script>
 const $=s=>document.querySelector(s);
 const h=(t,p,...k)=>{const e=document.createElement(t);for(const[a,v]of Object.entries(p||{})){if(a==='class')e.className=v;else if(a.startsWith('on'))e[a]=v;else if(v!=null)e.setAttribute(a,v)}for(const c of k.flat())if(c!=null&&c!==false)e.append(c.nodeType?c:String(c));return e};
+const adminModulesReady=new Promise(resolve=>{if(document.readyState==='complete')resolve();else document.addEventListener('DOMContentLoaded',resolve,{once:true})});
 let token='',me=null,cur='overview';try{token=sessionStorage.getItem('tenx_admin_token')||''}catch(e){}
 const fa=d=>d?new Date(d).toLocaleString('fa-IR'):'—';
+let selectedStudioPage='academy';
 let mfToastTimer=null;const toast=(m)=>{const t=$('#toast');t.textContent=String(m);t.classList.remove('hide');if(mfToastTimer)clearTimeout(mfToastTimer);mfToastTimer=setTimeout(()=>t.classList.add('hide'),4000)};
 async function api(p,o={}){
   const r=await fetch('/admin'+p,{...o,headers:{...(o.headers||{}),'content-type':'application/json',authorization:'Bearer '+token}});
@@ -755,13 +775,11 @@ async function api(p,o={}){
 
 /* TENX_P51_OWNER_TREE_MENU_V1 */
 const TENX_P51_GROUPS = [
-  {id:'reports',name:'داشبورد و گزارش‌ها',symbol:'▦',keys:['overview']},
-  {id:'people',name:'کاربران و ارتباطات',symbol:'♙',keys:['users','tickets','outreach','notifications','followups']},
-  {id:'marketing',name:'تبلیغات و کمپین‌ها',symbol:'◎',keys:['growth','campaigns','campaign','tracking','advertising','referrals','marketing']},
-  {id:'content',name:'محتوای مینی‌اپ',symbol:'▤',keys:['pages','objectStudio','organizers','homeLinks','bottomNav','editor','media','popups']},
-  {id:'academy',name:'آکادمی و چالش',symbol:'◇',keys:['academy','progress','challenges','challenge']},
-  {id:'robot',name:'ربات و تنظیمات',symbol:'⌘',keys:['bot','settings','integrations']},
-  {id:'security',name:'مدیران و امنیت',symbol:'◈',keys:['admins','audit','roles','permissions','sectionPermissions']}
+  {id:'reports',name:'داشبورد',symbol:'▦',keys:['overview','growthAnalytics']},
+  {id:'people',name:'کاربران و ارتباطات',symbol:'♙',keys:['users','tickets','outreach','notifications','followups','growth','campaigns','tracking']},
+  {id:'academy',name:'آموزش و چالش',symbol:'◇',keys:['academy','academyDesign','progress','challenges','challenge','organizers','eplanetWorkflow']},
+  {id:'content',name:'محتوا و طراحی',symbol:'▤',keys:['pageManager','visualStudio','objectStudio','pages','routeManager','pageFiles','homeLinks','bottomNav','editor','media','popups']},
+  {id:'robot',name:'سیستم و دسترسی‌ها',symbol:'⌘',keys:['bot','settings','integrations','admins','audit','roles','permissions','sectionPermissions','telegramTeam']}
 ];
 function TENX_P51_RENDER_MENU(entries, navigate, adminIdentity) {
   const nav=$('#nav');
@@ -779,7 +797,7 @@ function TENX_P51_RENDER_MENU(entries, navigate, adminIdentity) {
     let target=groups.find(g=>Array.isArray(g.keys)&&g.keys.includes(m[0]));
     if(!target) {
       const key=String(m[0]||'').toLowerCase(), label=String(m[1]||'');
-      if(/campaign|track|growth|referr|تبلیغ|کمپین|رهگیری/.test(key+' '+label))target=groups.find(g=>g.id==='marketing');
+      if(/campaign|track|growth|referr|تبلیغ|کمپین|رهگیری/.test(key+' '+label))target=groups.find(g=>g.id==='people');
       else if(/user|member|support|contact|کاربر|پشتیبان/.test(key+' '+label))target=groups.find(g=>g.id==='people');
       else if(/page|content|miniapp|design|محتوا|صفحه|ویرایشگر/.test(key+' '+label))target=groups.find(g=>g.id==='content');
     }
@@ -834,7 +852,27 @@ function TENX_P51_RENDER_MENU(entries, navigate, adminIdentity) {
 }
 /* END TENX_P51_OWNER_TREE_MENU_V1 */
 
-const MENU=[['overview','نمای کلی',null],['growthAnalytics','تحلیل پیشرفته Imperial Reserve',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['growth','داشبورد کاربران و کمپین‌ها',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['bot','مدیریت ربات',['SUPER_ADMIN']],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['progress','مسیر پیشرفت',['SUPER_ADMIN']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['objectStudio','Object Studio هوم',['SUPER_ADMIN']],['organizers','برگزارکنندگان چالش',['CONTENT_MANAGER']],['homeLinks','لینک‌های صفحه اصلی',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['sectionPermissions','مدیران سه‌بخشی',['SUPER_ADMIN']],['admins','مدیران و نقش‌ها',[]],['telegramTeam','مدیران تلگرام',['SUPER_ADMIN']],['eplanetWorkflow','تأیید ePlanet',['SUPER_ADMIN']],['bottomNav','نوار پایین Mini App',['SUPER_ADMIN','CONTENT_MANAGER']],['settings','تنظیمات',[]]];
+/* MMVS_SUPERADMIN_R21_GROUP */
+try {
+  if (typeof TENX_P51_GROUPS !== 'undefined' && Array.isArray(TENX_P51_GROUPS)) {
+    const mmvsGroup = TENX_P51_GROUPS.find(group => group && group.id === 'content');
+    if (mmvsGroup && Array.isArray(mmvsGroup.keys) && !mmvsGroup.keys.includes('visualStudio')) {
+      mmvsGroup.keys.push('visualStudio');
+    }
+  }
+} catch (_mmvsGroupError) { /* menu fallback keeps the section reachable */ }
+
+/* MMTRADE_ROUTE_MANAGER_R6_ADMIN */
+try {
+  const group=TENX_P51_GROUPS.find(x=>x?.id==='content');
+  if(group&&!group.keys.includes('routeManager'))group.keys.push('routeManager');
+} catch(_r6Error) { /* retain the existing menu if absent */ }
+
+/* MMTRADE_PAGE_LIFECYCLE_R10_ADMIN */
+try {const g=TENX_P51_GROUPS.find(x=>x&&x.id==='content');
+  if(g&&!g.keys.includes('pageManager'))g.keys.push('pageManager');}catch(_r10ignore){}
+
+const MENU=[['pageManager','مدیریت صفحات و صفحه شروع',['SUPER_ADMIN']],['routeManager','مدیریت لینک و آدرس صفحه',['SUPER_ADMIN']],['visualStudio','استودیوی بصری صفحات و پاپ‌آپ‌ها',['SUPER_ADMIN']],['overview','نمای کلی',null],['growthAnalytics','تحلیل پیشرفته Imperial Reserve',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['growth','داشبورد کاربران و کمپین‌ها',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['bot','مدیریت ربات',['SUPER_ADMIN']],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['academyDesign','طراحی و مدیریت آکادمی',['SUPER_ADMIN']],['progress','مسیر پیشرفت',['SUPER_ADMIN']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['objectStudio','Object Studio هوم',['SUPER_ADMIN']],['organizers','برگزارکنندگان چالش',['CONTENT_MANAGER']],['homeLinks','لینک‌های صفحه اصلی',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['sectionPermissions','مدیران سه‌بخشی',['SUPER_ADMIN']],['admins','مدیران و نقش‌ها',[]],['telegramTeam','مدیران تلگرام',['SUPER_ADMIN']],['eplanetWorkflow','تأیید ePlanet',['SUPER_ADMIN']],['bottomNav','نوار پایین Mini App',['SUPER_ADMIN','CONTENT_MANAGER']],['settings','تنظیمات',[]]];
 const P60_MENU_SCOPES={users:'users',tickets:'users',outreach:'users',
  growth:'marketing',growthAnalytics:'marketing',academy:'academy',progress:'academy'};
 const ok=m=>{
@@ -848,17 +886,19 @@ const ok=m=>{
 const ROLES=['SUPER_ADMIN','USER_MANAGER','SUPPORT','CONTENT_MANAGER','ACADEMY_MANAGER','CHALLENGE_MANAGER','ANALYST','MARKETING_MANAGER'];
 function table(cols,rows,onrow){return h('div',{class:'tbl'},h('table',{},h('thead',{},h('tr',{},cols.map(c=>h('th',{},c[0])))),h('tbody',{},rows.map(r=>h('tr',{class:onrow?'cl':'',onclick:onrow?()=>onrow(r):null},cols.map(c=>h('td',{},c[1](r))))))))}
 function generic(items){if(!items.length)return h('p',{class:'mut'},'موردی ثبت نشده است.');const ks=Object.keys(items[0]);return table(ks.map(k=>[k,r=>typeof r[k]==='object'&&r[k]?JSON.stringify(r[k]):String(r[k]??'—')]),items)}
-async function navigateManagement(id){
+async function navigateManagement(id,pageSlug){
+  if(window.MMAdminWorkspace&&!window.MMAdminWorkspace.canLeave())return;
+  if(pageSlug&&id==='visualStudio')selectedStudioPage=pageSlug;
   if(id==='objectStudio'){
     if(me?.role!=='SUPER_ADMIN')return;
-    await show('pages');
+    await show('pages',true);
     if(cur==='pages'&&typeof window.MMTradeObjectStudioOpen==='function'){
       await window.MMTradeObjectStudioOpen();
       document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.id==='n-objectStudio'));
     }
     return;
   }
-  return show(id);
+  return show(id,true);
 }
 async function boot(){
 try{me=await api('/auth/me')}catch(e){token='';try{sessionStorage.removeItem('tenx_admin_token')}catch(_e){}$('#app').classList.add('hide');$('#login').classList.remove('hide');$('#lerr').textContent='ورود مجدد لازم است: '+e.message;return}
@@ -870,10 +910,7 @@ const editorMatch=location.pathname.match(/^\/admin\/editor\/([^/]+)$/);
 if(editorMatch){
   let slug='';
   try{slug=decodeURIComponent(editorMatch[1])}catch(e){}
-  if(!MF_P40_AVAILABLE.includes(slug)){
-    $('#view').textContent='صفحه نامعتبر است.';
-    return;
-  }
+  const isCustomEditorPage=!MF_P40_AVAILABLE.includes(slug);
   if(!['SUPER_ADMIN','CONTENT_MANAGER'].includes(me.role)){
     $('#view').textContent='دسترسی به ویرایشگر ندارید.';
     return;
@@ -884,7 +921,8 @@ if(editorMatch){
   $('#title').textContent='ویرایشگر صفحه · '+slug;
   $('#view').textContent='در حال بارگذاری ویرایشگر…';
   try{
-    const data=await api('/content/pages/'+encodeURIComponent(slug)+'/editor');
+    const data=await api((isCustomEditorPage?'/custom-pages/':'/content/pages/')+encodeURIComponent(slug)+'/editor');
+    if(isCustomEditorPage)data.isCustom=true;
     editPage(data);
   }catch(e){
     $('#view').replaceChildren(h('div',{class:'card'},'خطا در بارگذاری صفحه: '+e.message));
@@ -896,15 +934,21 @@ TENX_P51_RENDER_MENU(MENU.filter(ok), navigateManagement, me);
 let menuTarget='';
 try{menuTarget=decodeURIComponent(location.hash.slice(1))}catch(_e){}
 const p60First=MENU.find(m=>m[0]===menuTarget&&ok(m))||MENU.find(ok);
-if(p60First)navigateManagement(p60First[0]);else $('#view').replaceChildren(h('div',{class:'card'},'برای این حساب دسترسی فعالی تعریف نشده است.'));
+if(p60First)await navigateManagement(p60First[0]);else $('#view').replaceChildren(h('div',{class:'card'},'برای این حساب دسترسی فعالی تعریف نشده است.'));
+if(new URLSearchParams(location.search).get('homeStudio')==='1'&&me?.role==='SUPER_ADMIN'){await adminModulesReady;await show('pages');await window.MF62OpenHomeStudio?.()}
 }
 let mfViewRequest=0;
-async function show(id){
+async function show(id,leaveApproved=false){
   if(!VIEWS[id]&&id!=='bot')return;
+  if(!leaveApproved&&window.MMAdminWorkspace&&!window.MMAdminWorkspace.canLeave())return;
   const requestId=++mfViewRequest;
   // Dispose the full-page mountain editor when navigating to another section.
-  window.MMTradeObjectStudioClose?.();
+  window.MMTradeObjectStudioClose?.(true);
   cur=id;
+  const activeGroup=document.getElementById('n-'+id)?.closest('.tenx-p51-group');
+  if(activeGroup&&activeGroup.dataset.open!=='true')activeGroup.querySelector('.tenx-p51-head')?.click();
+  if(document.getElementById('admin-section'))document.getElementById('admin-section').textContent=TENX_P51_GROUPS.find(g=>g.keys.includes(id))?.name||'مدیریت';
+  if(!location.pathname.startsWith('/admin/editor/'))history.replaceState(null,'','#'+encodeURIComponent(id));
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.id==='n-'+id));
   const entry=MENU.find(m=>m[0]===id);
   if(entry)$('#title').textContent=entry[1];
@@ -918,6 +962,34 @@ async function show(id){
 }
 const STAGES={};
 const VIEWS={
+async pageManager(){
+ await adminModulesReady;
+ if(!me||me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'دسترسی به سوپرادمین لازم است.');
+ if(!window.MMPageR10)return h('div',{class:'card'},'ماژول مدیریت صفحات بارگذاری نشده است؛ صفحه را دوباره باز کن.');
+ return window.MMPageR10.mount({api,toast,navigate:navigateManagement});
+},
+
+async routeManager(){
+ await adminModulesReady;
+  if(!me||me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'دسترسی به این بخش فقط برای سوپرادمین است.');
+  if(!window.MMRouteR6)return h('div',{class:'card'},'ماژول مدیریت لینک بارگذاری نشده است؛ صفحه را به‌روز کن.');
+  return window.MMRouteR6.mount({api,toast,h});
+},
+
+  /* MMVS_SUPERADMIN_R2_INTEGRATION */
+  async visualStudio(){
+    if(!me||me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'فقط سوپرادمین اجازه دسترسی به استودیو را دارد.');
+    const wrap=h('section',{class:'mmvs-superadmin-section',style:'width:100%;min-width:0;display:grid;gap:10px'});
+    const info=h('div',{class:'card',style:'background:linear-gradient(115deg,#102b22,#183b2c);border-color:#af8c60;color:#f2e8d9'},
+      h('h2',{style:'margin:0 0 6px;font-size:18px'},'استودیوی بصری MMTrade10X'),
+      h('p',{style:'margin:0;line-height:1.8'},'ویرایش صفحات و پاپ‌آپ‌ها، پیش‌نمایش و انتشار — در پنل اصلی سوپرادمین.'));
+    const frame=h('iframe',{src:'/miniapp/p74/studio/index.html?embedded=1&v=STUDIO_RELEASE_R1&page='+encodeURIComponent(selectedStudioPage),title:'استودیوی بصری مینی‌اپ',loading:'eager',
+      style:'display:block;width:100%;height:max(780px,calc(100dvh - 215px));min-height:780px;border:1px solid #947750;border-radius:16px;background:#061710'});
+    wrap.append(info,frame);
+    window.MMAdminWorkspace?.register('visualStudio',{active:()=>wrap.isConnected,dirty:()=>!!frame.contentWindow?.MMVSWorkspace?.isDirty(),busy:()=>!!frame.contentWindow?.MMVSWorkspace?.isBusy()});
+    return wrap;
+  },
+
 // TENX_P60_SECTION_RBAC_PANEL_V1
 async sectionPermissions(){
   if(me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'دسترسی محدود است.');
@@ -1360,44 +1432,215 @@ async growth(){
 
 
 
+
+
 async eplanetWorkflow(){
  const root=h('div',{class:'card'});
- const title=h('h3',{},'مدیریت مراحل ePlanet');
- const search=h('input',{placeholder:'نام، شماره، آیدی تلگرام'});
- const find=h('button',{},'جست‌وجو');
- const list=h('div',{});
- const more=h('button',{},'نمایش کاربران بیشتر');
- more.hidden=true;
- let cursor=null, busy=false;
+ const title=h('h3',{},'مدیریت ePlanet');
+ const tabs=h('div',{class:'row'});
+ const pendingTab=h('button',{},'درخواست‌های تأیید');
+ const usersTab=h('button',{},'مدیریت مراحل کاربران');
+ const contentTab=h('button',{},'ویرایش محتوای صفحه');
+ const panel=h('div',{});
+ tabs.append(pendingTab,usersTab,contentTab);
+ root.append(title,tabs,panel);
+
+ const EPLANET_API='/miniapp/eplanet';
  const steps=[
   ['ACCOUNT_CREATED','افتتاح حساب','accountCreated'],
   ['DEPOSIT_COMPLETED','شارژ حساب','depositCompleted'],
   ['COPY_CONNECTED','اتصال کپی‌ترید','copyConnected'],
   ['CHALLENGE_PARTICIPANT','شرکت در چالش','challengeParticipant']
  ];
- async function load(append=false){
-  if(busy)return;
-  busy=true;more.disabled=true;
+
+ async function eplanetRequest(path,opts={}){
+  const response=await fetch(EPLANET_API+path,{
+   ...opts,
+   headers:{
+    'content-type':'application/json',
+    authorization:'Bearer '+token,
+    ...(opts.headers||{})
+   }
+  });
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){
+   const error=new Error(data.message||data.error||('HTTP '+response.status));
+   error.status=response.status;
+   throw error;
+  }
+  return data;
+ }
+
+ function showError(error){
+  toast('خطا: '+(error.message||error));
+ }
+
+ function activate(tab){
+  for(const [name,button] of [['pending',pendingTab],['users',usersTab],['content',contentTab]]){
+   button.disabled=name===tab;
+  }
+ }
+
+ async function loadPending(){
+  activate('pending');
+  panel.replaceChildren(
+   h('h3',{},'درخواست‌های در انتظار تأیید'),
+   h('button',{type:'button',onclick:loadPending},'به‌روزرسانی')
+  );
+  const list=h('div',{});
+  panel.append(list);
+  list.replaceChildren(h('p',{},'در حال دریافت درخواست‌ها...'));
   try{
-   const q=new URLSearchParams();
-   if(search.value.trim())q.set('q',search.value.trim());
-   if(append&&cursor)q.set('cursor',cursor);
-   const data=await api('/team/users?'+q.toString());
-   if(!append)list.replaceChildren();
-   cursor=data.nextCursor||null;
-   for(const user of data.items){
-    const wf=user.eplanetWorkflow||{};
+   const data=await eplanetRequest('/admin/requests');
+   list.replaceChildren();
+   if(!data.items?.length){
+    list.append(h('p',{},'درخواست در انتظار وجود ندارد.'));
+    return;
+   }
+   for(const item of data.items){
+    const user=item.user||{};
+    const name=[user.firstName,user.lastName].filter(Boolean).join(' ')||'کاربر';
     const card=h('div',{class:'card'});
-    card.append(h('b',{},[
-     user.firstName,user.lastName,user.telegramId
-    ].filter(Boolean).join(' | ')));
-    const status=h('p',{},'حساب: '+(wf.accountId||'ثبت نشده'));
-    card.append(status);
+    card.append(
+     h('b',{},name),
+     h('p',{},'مرحله: '+item.step),
+     h('p',{},'شناسه حساب: '+(item.accountId||'—')),
+     h('p',{},'تاریخ: '+fa(item.createdAt)),
+     h('p',{},'Telegram: '+(user.telegramId||'—'))
+    );
+    const approve=h('button',{type:'button'},'تأیید درخواست');
+    const reject=h('button',{type:'button',class:'bad'},'رد درخواست');
+    async function decide(approved){
+     const note=prompt('یادداشت مدیر (اختیاری)','');
+     if(note===null)return;
+     const label=approved?'تأیید':'رد';
+     if(!confirm('درخواست '+name+' برای مرحله '+item.step+' '+label+' شود؟'))return;
+     approve.disabled=reject.disabled=true;
+     try{
+      await eplanetRequest('/admin/requests/'+encodeURIComponent(item.id)+'/decision',{
+       method:'POST',body:JSON.stringify({approved,note})
+      });
+      toast(approved?'درخواست تأیید شد':'درخواست رد شد');
+      await loadPending();
+     }catch(error){
+      showError(error);
+      approve.disabled=reject.disabled=false;
+     }
+    }
+    approve.onclick=()=>decide(true);
+    reject.onclick=()=>decide(false);
+    card.append(approve,reject);
+    list.append(card);
+   }
+  }catch(error){
+   list.replaceChildren(h('p',{},'خطا در دریافت درخواست‌ها: '+error.message));
+  }
+ }
+
+ async function loadContent(){
+  activate('content');
+  panel.replaceChildren(h('h3',{},'ویرایش محتوای صفحه ePlanet'));
+  try{
+   const data=await eplanetRequest('/config');
+   const config=data.config||{};
+   const fields={};
+   const stepsFields=[];
+   function addField(label,key,value,multiline=false){
+    const wrapper=h('label',{},label);
+    const input=h(multiline?'textarea':'input',{value:value||''});
+    fields[key]=input;
+    wrapper.append(input);
+    panel.append(wrapper);
+   }
+   addField('عنوان اصلی','title',config.title);
+   addField('زیرعنوان','subtitle',config.subtitle);
+   addField('لینک ثبت‌نام','registerUrl',config.registerUrl);
+   addField('تصویر اصلی','heroImage',config.heroImage);
+   for(let index=0;index<(config.steps||[]).length;index++){
+    const step=config.steps[index];
+    panel.append(h('h4',{},'مرحله '+(index+1)+' — '+step.key));
+    const group={};
+    for(const key of ['title','fa','description','externalUrl','imageUrl']){
+     const wrapper=h('label',{},({
+      title:'عنوان انگلیسی',fa:'عنوان فارسی',description:'توضیحات',
+      externalUrl:'لینک مرحله',imageUrl:'تصویر مرحله'
+     })[key]);
+     const input=h(key==='description'?'textarea':'input',{value:step[key]||''});
+     group[key]=input;
+     wrapper.append(input);
+     panel.append(wrapper);
+    }
+    stepsFields.push(group);
+   }
+   const save=h('button',{type:'button'},'ذخیره تغییرات');
+   save.onclick=async()=>{
+    save.disabled=true;
+    try{
+     const updated={
+      title:fields.title.value.trim(),
+      subtitle:fields.subtitle.value.trim(),
+      registerUrl:fields.registerUrl.value.trim(),
+      heroImage:fields.heroImage.value.trim(),
+      steps:(config.steps||[]).map((step,index)=>({
+       key:step.key,
+       title:stepsFields[index].title.value.trim(),
+       fa:stepsFields[index].fa.value.trim(),
+       description:stepsFields[index].description.value,
+       externalUrl:stepsFields[index].externalUrl.value.trim(),
+       imageUrl:stepsFields[index].imageUrl.value.trim()
+      }))
+     };
+     await eplanetRequest('/admin/config',{
+      method:'PUT',body:JSON.stringify(updated)
+     });
+     toast('محتوای ePlanet ذخیره شد');
+    }catch(error){showError(error)}
+    finally{save.disabled=false}
+   };
+   panel.append(save);
+  }catch(error){showError(error)}
+ }
+
+ async function loadUsers(append=false){
+  activate('users');
+  if(!append){
+   panel.replaceChildren(h('h3',{},'مدیریت مراحل کاربران'));
+   const search=h('input',{placeholder:'نام، شماره یا شناسه تلگرام'});
+   const find=h('button',{type:'button'},'جست‌وجو');
+   const list=h('div',{});
+   const more=h('button',{type:'button'},'نمایش کاربران بیشتر');
+   more.hidden=true;
+   const state={cursor:null,busy:false,query:search,list,more};
+   panel.append(search,find,list,more);
+   find.onclick=()=>{state.cursor=null;loadPage(false,state)};
+   more.onclick=()=>loadPage(true,state);
+   await loadPage(false,state);
+  }
+ }
+
+ async function loadPage(append,state){
+  if(state.busy)return;
+  state.busy=true;
+  state.more.disabled=true;
+  try{
+   const query=new URLSearchParams();
+   if(state.query.value.trim())query.set('q',state.query.value.trim());
+   if(append&&state.cursor)query.set('cursor',state.cursor);
+   const data=await api('/team/users?'+query.toString());
+   if(!append)state.list.replaceChildren();
+   state.cursor=data.nextCursor||null;
+   for(const user of data.items||[]){
+    const workflow=user.eplanetWorkflow||{};
+    const card=h('div',{class:'card'});
+    const name=[user.firstName,user.lastName,user.telegramId].filter(Boolean).join(' | ');
+    const status=h('p',{},'شناسه حساب: '+(workflow.accountId||'ثبت نشده'));
+    const version=h('small',{},'نسخه اطلاعات: '+Number(workflow.version||0));
+    card.append(h('b',{},name||'کاربر'),status,version);
     for(const [step,label,field] of steps){
-     const approved=Boolean(wf[field]);
-     const btn=h('button',{},(approved?'✓ ':'○ ')+label);
-     btn.onclick=async()=>{
-      let accountId=wf.accountId||'';
+     const approved=Boolean(workflow[field]);
+     const button=h('button',{type:'button'},(approved?'✓ ':'○ ')+label);
+     button.onclick=async()=>{
+      let accountId=workflow.accountId||'';
       if(step==='ACCOUNT_CREATED'&&!approved){
        const entered=prompt('شناسه حساب ePlanet',accountId);
        if(entered===null||!entered.trim())return;
@@ -1405,45 +1648,46 @@ async eplanetWorkflow(){
       }
       const note=prompt('یادداشت مدیر (اختیاری)','');
       if(note===null)return;
-      if(!confirm((approved?'لغو تأیید':'تأیید')+' '+label+'؟'))return;
-      btn.disabled=true;
+      if(!confirm((approved?'لغو تأیید':'تأیید')+' '+label+' برای '+(name||'این کاربر')+'؟'))return;
+      button.disabled=true;
       try{
        await api('/team/workflow/'+encodeURIComponent(user.id)+'/step',{
         method:'PUT',
         body:JSON.stringify({
          step,approved:!approved,
-         version:Number(wf.version||0),accountId,note
+         version:Number(workflow.version||0),
+         accountId,note
         })
        });
-       // TENX_P37_ADMIN_REFRESH_FIX
        toast('وضعیت ذخیره شد');
-       wf[field] = !approved;
-       wf.version = Number(wf.version || 0) + 1;
-       if(step === 'ACCOUNT_CREATED') wf.accountId = accountId;
-       status.textContent = 'حساب: ' + (wf.accountId || 'ثبت نشده');
-       btn.textContent = (wf[field] ? '✓ ' : '○ ') + label;
-       btn.onclick = null;
-       find.click();
-      }catch(e){toast('خطا: '+e.message)}
-      finally{btn.disabled=false}
+       await loadUsers();
+      }catch(error){
+       showError(error);
+       if(error.status===409)toast('اطلاعات تغییر کرده؛ فهرست به‌روزرسانی می‌شود.');
+       try{await loadUsers()}catch(_error){}
+      }finally{button.disabled=false}
      };
-     card.append(btn,' ');
+     card.append(button,' ');
     }
-    list.append(card);
+    state.list.append(card);
    }
-   more.hidden=!cursor;
-  }catch(e){toast('خطا در دریافت کاربران: '+e.message)}
-  finally{busy=false;more.disabled=false}
+   state.more.hidden=!state.cursor;
+  }catch(error){
+   state.list.replaceChildren(h('p',{},'خطا در دریافت کاربران: '+error.message));
+  }finally{
+   state.busy=false;
+   state.more.disabled=false;
+  }
  }
- find.onclick=()=>{cursor=null;load(false)};
- more.onclick=()=>load(true);
- root.append(title,search,find,list,more);
- await load();
+
+ pendingTab.onclick=loadPending;
+ usersTab.onclick=()=>loadUsers(false);
+ contentTab.onclick=loadContent;
+ await loadPending();
  return root;
 },
 
-
-async telegramTeam(){
+  async telegramTeam(){
  const root=h('div',{class:'card'});
  const title=h('h3',{},'مدیریت مدیران تلگرام');
  const id=h('input',{placeholder:'Telegram ID'});
@@ -1519,138 +1763,209 @@ async overview(){
 },
 
 async bottomNav(){
-  const wrap=h('div',{});
-  let items=[];
-
-  const field=(label,value,oninput,placeholder='')=>{
-    const box=h('label',{style:'display:flex;flex-direction:column;gap:6px;flex:1;min-width:130px'});
-    box.append(h('span',{class:'mut'},label));
-    const input=h('input',{value:value??'',placeholder});
-    input.addEventListener('input',()=>oninput(input.value));
-    box.append(input);
-    return box;
+  // MMU_R6_SUPERADMIN_PANEL_BEGIN
+  const wrap=h('section',{class:'mmu6-studio'});
+  const canonical=[
+    {id:'home',label:'خانه',href:'/miniapp',icon:'home',enabled:true,sort:10},
+    {id:'academy',label:'آکادمی',href:'/academy',icon:'academy',enabled:true,sort:20},
+    {id:'challenge',label:'چالش 10X',href:'/challenge',icon:'trophy',enabled:true,sort:30},
+    {id:'support',label:'پشتیبانی',href:'/support',icon:'support',enabled:true,sort:40},
+    {id:'profile',label:'پروفایل',href:'/profile',icon:'user',enabled:true,sort:50}
+  ];
+  const icons={home:'⌂',academy:'▥',challenge:'♕',support:'♧',profile:'♙'};
+  const defaultAppearance={preset:'light',tintOpacity:14,activeOpacity:16,blur:25,glow:18,rim:82,autoHide:true,scrollThreshold:14,idleRevealMs:950,animationMs:310};
+  const variants={
+    light:{tintOpacity:14,activeOpacity:16,blur:25,glow:18,rim:82},
+    reference:{tintOpacity:32,activeOpacity:30,blur:22,glow:38,rim:94},
+    crystal:{tintOpacity:12,activeOpacity:18,blur:28,glow:16,rim:90},
+    minimal:{tintOpacity:9,activeOpacity:12,blur:16,glow:5,rim:38},
+    solid:{tintOpacity:90,activeOpacity:27,blur:0,glow:9,rim:35}
   };
-
-  async function load(){
-    const d=await api('/bottom-nav');
-    items=(d.items||[]).map(x=>({...x}));
-    draw();
+  let appearance={...defaultAppearance};
+  let items=canonical.map(x=>({...x}));
+  let extras=[];
+  let originalLoaded=false, appearanceLoaded=false;
+  const status=h('p',{class:'mmu6-status','aria-live':'polite'},'در حال دریافت تنظیمات…');
+  const note=h('p',{class:'mmu6-muted'},'این صفحه، کنترل مرکزی تنها نوار پایین Mini App است. مقدار صفر درصد به معنی شیشهٔ بدون رنگ زمینه است؛ گزینهٔ «جامد» شیشه را با یک نوار غیرشفاف جایگزین می‌کند.');
+  const preview=h('div',{class:'mmu6-preview'});
+  const sample=h('div',{class:'mmu6-sample'});
+  const previewLegend=h('div',{class:'mmu6-preview-caption'},'پیش‌نمایش زنده؛ برای مشاهدهٔ انیمیشن از دکمه‌های تست استفاده کن.');
+  const peek=h('div',{class:'mmu6-mini-nav',dir:'rtl'});
+  sample.append(peek);
+  const previewActions=h('div',{class:'mmu6-buttons'});
+  const hideButton=h('button',{type:'button',class:'sec'},'تست اسکرول رو به پایین');
+  const showButton=h('button',{type:'button',class:'sec'},'تست اسکرول رو به بالا');
+  hideButton.onclick=()=>peek.classList.add('mmu6-hidden');
+  showButton.onclick=()=>peek.classList.remove('mmu6-hidden');
+  previewActions.append(hideButton,showButton);
+  preview.append(h('h3',{},'پیش‌نمایش پوسته'),sample,previewLegend,previewActions);
+  const toolbar=h('div',{class:'mmu6-head'},
+    h('div',{},h('span',{class:'mmu6-overline'},'MMTRADE / NAVIGATION STUDIO'),h('h2',{},'تنظیمات نوار پایین یکپارچه'),note),
+    h('span',{class:'mmu6-version'},'Liquid Glass R6'));
+  wrap.append(toolbar,status,preview);
+  const appearancePanel=h('section',{class:'mmu6-panel'});
+  appearancePanel.append(h('h3',{},'ظاهر و شفافیت شیشه'));
+  const presetLabel=h('label',{class:'mmu6-form-field'},h('span',{},'جایگزینی پوستهٔ نوار'));
+  const preset=h('select',{});
+  [['light','لیکوید گلس سبک R5.1'],['reference','لیکوید گلس مرجع پشتیبانی'],['crystal','شیشه کریستالی روشن'],['minimal','مینیمال خنثی'],['solid','زمردی جامد (بدون Liquid Glass)']].forEach(([v,t])=>preset.append(h('option',{value:v},t)));
+  presetLabel.append(preset);
+  const controls=h('div',{class:'mmu6-controls'});
+  controls.append(presetLabel);
+  const sliders={};
+  function numeric(key,title,min,max,unit){
+    const box=h('label',{class:'mmu6-form-field'}),cap=h('span',{},title),value=h('strong',{class:'mmu6-reading'},'');
+    const head=h('span',{class:'mmu6-slider-head'},cap,value);
+    const input=h('input',{type:'range',min:String(min),max:String(max),step:'1'});
+    sliders[key]={input,value,unit};
+    input.addEventListener('input',()=>{appearance[key]=Number(input.value);updatePreview();});
+    box.append(head,input);return box;
   }
-
-  function draw(){
-    wrap.replaceChildren();
-
-    wrap.append(
-      h('div',{class:'card'},
-        h('b',{},'مدیریت نوار پایین Mini App'),
-        h('p',{class:'mut'},
-          'آیتم‌ها در نوار پایین کاربران نمایش داده می‌شوند. ترتیب با دکمه‌های بالا و پایین قابل تغییر است. حداکثر ۸ آیتم.'
-        ),
-        h('div',{class:'row'},
-          h('button',{onclick:addItem},'+ افزودن آیتم'),
-          h('button',{class:'sec',onclick:load},'بارگذاری مجدد')
-        )
-      )
-    );
-
-    if(!items.length){
-      wrap.append(h('div',{class:'card mut'},'هیچ آیتمی وجود ندارد. برای شروع یک آیتم اضافه کن.'));
+  controls.append(
+    numeric('tintOpacity','درصد رنگ زمینه',0,90,'٪'),
+    numeric('activeOpacity','درصد رنگ تب فعال',0,90,'٪'),
+    numeric('blur','میزان محوشدگی / Blur',0,55,'px'),
+    numeric('glow','شدت درخشش زمردی',0,100,'٪'),
+    numeric('rim','درخشندگی حاشیه شیشه',0,100,'٪')
+  );
+  appearancePanel.append(controls);
+  const behavior=h('section',{class:'mmu6-panel'});
+  behavior.append(h('h3',{},'انیمیشن و رفتار هنگام اسکرول'));
+  const hideField=h('label',{class:'mmu6-check'});
+  const hideToggle=h('input',{type:'checkbox'});
+  hideField.append(hideToggle,h('span',{},'مخفی‌سازی خودکار با حرکت رو به پایین و بازگشت با حرکت رو به بالا'));
+  hideToggle.addEventListener('change',()=>{appearance.autoHide=hideToggle.checked;});
+  const behaviorFields=h('div',{class:'mmu6-controls'},
+    numeric('scrollThreshold','آستانهٔ تشخیص حرکت',6,90,'px'),
+    numeric('idleRevealMs','بازگشت بعد از توقف اسکرول',350,3000,'ms'),
+    numeric('animationMs','مدت انیمیشن',150,700,'ms')
+  );
+  behavior.append(hideField,behaviorFields,h('p',{class:'mmu6-muted'},'روی هوم با اسکرول داخلی هم کار می‌کند. با اسکرول رو به بالا، توقف اسکرول یا رسیدن به بالای صفحه، نوار دوباره ظاهر می‌شود. حالت Reduce Motion دستگاه محترم شمرده می‌شود.'));
+  const actions=h('div',{class:'mmu6-buttons'});
+  const saveAppearance=h('button',{type:'button'},'ذخیره ظاهر و رفتار نوار');
+  const reload=h('button',{type:'button',class:'sec'},'بارگذاری تنظیمات ذخیره‌شده');
+  actions.append(saveAppearance,reload);
+  behavior.append(actions);
+  wrap.append(appearancePanel,behavior);
+  const itemPanel=h('section',{class:'mmu6-panel'});
+  itemPanel.append(h('h3',{},'پنج تب اصلی نوار'),h('p',{class:'mmu6-muted'},'عنوان، مسیر داخلی، آیکون، ترتیب و نمایش تب‌ها از همین بخش کنترل می‌شود. آیتم‌های سفارشی قدیمی برای جلوگیری از حذف اطلاعات حفظ می‌شوند، اما فقط پنج شناسهٔ اصلی در نوار مشترک نمایش داده می‌شوند.'));
+  const itemGrid=h('div',{class:'mmu6-items'});
+  itemPanel.append(itemGrid);
+  const saveItems=h('button',{type:'button'},'ذخیره آیتم‌های پنج‌گانه');
+  const extrasNote=h('p',{class:'mmu6-muted'});
+  itemPanel.append(extrasNote,saveItems);
+  wrap.append(itemPanel);
+  function updatePreview(){
+    for(const [key,x] of Object.entries(sliders)){
+      x.input.value=String(appearance[key]);x.value.textContent=key==='tintOpacity' ? (String(appearance[key])+'٪ رنگ / '+String(100-appearance[key])+'٪ شفاف') : (String(appearance[key])+x.unit);
     }
-
+    preset.value=appearance.preset;
+    hideToggle.checked=appearance.autoHide;
+    peek.dataset.skin=appearance.preset;
+    peek.style.setProperty('--p-tint',(appearance.tintOpacity/100).toFixed(2));
+    peek.style.setProperty('--p-active',(appearance.activeOpacity/100).toFixed(2));
+    peek.style.setProperty('--p-rim',(appearance.rim/100).toFixed(2));
+    peek.style.setProperty('--p-glow',(appearance.glow/100).toFixed(2));
+    peek.style.setProperty('--p-blur',appearance.blur+'px');
+    peek.style.setProperty('--p-speed',appearance.animationMs+'ms');
+    peek.replaceChildren(...items.filter(x=>x.enabled).slice(0,5).map(x=>{
+      const tab=h('div',{class:'mmu6-mini-tab'+(x.id==='support'?' mmu6-current':'')},
+        h('span',{class:'mmu6-mini-icon'},icons[x.id]||'•'),h('span',{},x.label));
+      if(x.id==='challenge')tab.classList.add('mmu6-trophy');
+      return tab;
+    }));
+    peek.style.setProperty('--p-count',String(Math.max(1,peek.children.length)));
+  }
+  function renderItems(){
+    itemGrid.replaceChildren();
+    extrasNote.textContent=extras.length ? `${extras.length} آیتم خارج از پنج تب اصلی در تنظیمات قبلی وجود دارد؛ هنگام ذخیره بدون تغییر حفظ می‌شود.` : '';
     items.forEach((item,index)=>{
-      const card=h('div',{class:'card',style:'margin-top:10px'});
-      const enabled=h('input',{type:'checkbox',checked:item.enabled});
-      enabled.addEventListener('change',()=>{item.enabled=enabled.checked});
-
-      const row=h('div',{class:'row',style:'justify-content:space-between;align-items:center'});
-      row.append(
-        h('b',{},(index+1)+'. '+item.label),
-        h('span',{class:'tag'},item.enabled?'فعال':'غیرفعال')
+      const card=h('div',{class:'mmu6-item'});
+      const label=h('input',{value:item.label,maxlength:'24','aria-label':'عنوان تب'});
+      label.addEventListener('input',()=>{item.label=label.value;updatePreview()});
+      const href=h('input',{value:item.href,dir:'ltr','aria-label':'مسیر داخلی'});
+      href.addEventListener('input',()=>{item.href=href.value});
+      const iconSelect=h('select',{'aria-label':'آیکون'});
+      ['home','academy','support','chart','trophy','user','book','star'].forEach(v=>iconSelect.append(h('option',{value:v},v)));
+      iconSelect.value=item.icon;
+      iconSelect.addEventListener('change',()=>{item.icon=iconSelect.value});
+      const enabled=h('input',{type:'checkbox'});enabled.checked=item.enabled;
+      enabled.addEventListener('change',()=>{item.enabled=enabled.checked;updatePreview()});
+      const up=h('button',{type:'button',class:'sec',disabled:index===0},'↑');
+      const down=h('button',{type:'button',class:'sec',disabled:index===items.length-1},'↓');
+      up.onclick=()=>move(index,-1);down.onclick=()=>move(index,1);
+      card.append(
+        h('div',{class:'mmu6-item-title'},h('b',{},`${index+1}. ${canonical.find(x=>x.id===item.id)?.label||item.id}`),h('label',{class:'mmu6-check'},enabled,'نمایش')),
+        h('div',{class:'mmu6-item-fields'},
+          h('label',{},'عنوان',label),h('label',{},'مسیر',href),h('label',{},'آیکون',iconSelect)),
+        h('div',{class:'mmu6-buttons'},up,down)
       );
-
-      card.append(row);
-
-      const fields=h('div',{class:'row',style:'flex-wrap:wrap;margin-top:12px'});
-      fields.append(
-        field('عنوان',item.label,v=>item.label=v,'مثلاً خانه'),
-        field('مسیر داخلی',item.href,v=>item.href=v,'مثلاً /academy'),
-        field('آیکون',item.icon,v=>item.icon=v,'home / academy / support')
-      );
-
-      card.append(fields);
-
-      const controls=h('div',{class:'row',style:'margin-top:12px;flex-wrap:wrap'});
-      controls.append(
-        h('label',{class:'row',style:'gap:7px;align-items:center'},enabled,'نمایش آیتم'),
-        h('button',{class:'sec',disabled:index===0,onclick:()=>move(index,-1)},'بالا'),
-        h('button',{class:'sec',disabled:index===items.length-1,onclick:()=>move(index,1)},'پایین'),
-        h('button',{class:'bad',onclick:()=>removeItem(index)},'حذف')
-      );
-      card.append(controls);
-      wrap.append(card);
+      itemGrid.append(card);
     });
-
-    wrap.append(
-      h('div',{class:'card',style:'margin-top:12px'},
-        h('button',{onclick:save},'ذخیره نوار پایین')
-      )
-    );
+    updatePreview();
   }
-
-  function addItem(){
-    if(items.length>=8){toast('حداکثر ۸ آیتم مجاز است.');return}
-    items.push({
-      id:'nav-'+Date.now().toString(36),
-      label:'آیتم جدید',
-      href:'/miniapp',
-      icon:'star',
-      enabled:true,
-      sort:(items.length+1)*10
-    });
-    draw();
-  }
-
-  function removeItem(index){
-    if(!confirm('این آیتم از نوار پایین حذف شود؟'))return;
-    items.splice(index,1);
-    draw();
-  }
-
-  function move(index,delta){
-    const target=index+delta;
+  function move(index,step){
+    const target=index+step;
     if(target<0||target>=items.length)return;
-    const temp=items[index];
-    items[index]=items[target];
-    items[target]=temp;
-    items.forEach((item,i)=>item.sort=(i+1)*10);
-    draw();
+    [items[index],items[target]]=[items[target],items[index]];
+    items.forEach((x,i)=>x.sort=(i+1)*10);
+    renderItems();
   }
-
-  async function save(){
+  preset.addEventListener('change',()=>{
+    appearance.preset=preset.value;
+    Object.assign(appearance,variants[preset.value]||variants.light);
+    updatePreview();
+  });
+  saveAppearance.onclick=async()=>{
+    if(!appearanceLoaded){toast('ابتدا اتصال API تنظیمات ظاهر را بررسی کن.');return;}
+    saveAppearance.disabled=true;
     try{
-      const payload={
-        items:items.map((item,index)=>({
-          id:String(item.id),
-          label:String(item.label).trim(),
-          href:String(item.href).trim(),
-          icon:String(item.icon).trim(),
-          enabled:Boolean(item.enabled),
-          sort:(index+1)*10
-        }))
-      };
-      await api('/bottom-nav',{
-        method:'PUT',
-        body:JSON.stringify(payload)
-      });
-      toast('نوار پایین با موفقیت ذخیره شد.');
-      await load();
-    }catch(e){
-      toast('ذخیره انجام نشد: '+e.message);
-    }
+      const result=await api('/bottom-nav-appearance',{method:'PUT',body:JSON.stringify(appearance)});
+      if(result.ok!==true)throw Error('save_unconfirmed');
+      status.textContent='ظاهر و انیمیشن ذخیره شد؛ صفحات مینی‌اپ در بارگذاری بعدی تنظیم جدید را دریافت می‌کنند.';
+      toast('تنظیمات Liquid Glass ذخیره شد.');
+    }catch(e){status.textContent='خطا در ذخیره: '+e.message;toast('خطا: '+e.message)}
+    finally{saveAppearance.disabled=false;}
+  };
+  saveItems.onclick=async()=>{
+    if(!originalLoaded){toast('تنظیمات آیتم‌ها دریافت نشده است.');return;}
+    if(items.length+extras.length>8){toast('با آیتم‌های قدیمی بیش از ۸ آیتم می‌شود؛ ابتدا نسخه قدیمی را جداگانه مدیریت کن.');return;}
+    if(!items.some(x=>x.enabled)){toast('حداقل یک تب باید فعال باشد.');return;}
+    const validPath=v=>/^\/(?!\/)[a-zA-Z0-9/_-]+$/.test(v)&&!v.includes('..')&&!/^\/(?:admin|api|auth)(?:\/|$)/i.test(v);
+    if(items.some(x=>!x.label.trim()||!validPath(x.href))){toast('عنوان یا مسیر معتبر نیست. از مسیر کوتاه مانند /academy استفاده کن.');return;}
+    const payload={items:[...items,...extras].map((x,i)=>({id:String(x.id),label:String(x.label).trim(),href:String(x.href).trim(),icon:String(x.icon),enabled:Boolean(x.enabled),sort:(i+1)*10}))};
+    saveItems.disabled=true;
+    try{await api('/bottom-nav',{method:'PUT',body:JSON.stringify(payload)});toast('پنج تب اصلی ذخیره شد.');status.textContent='تب‌ها ذخیره شدند.';}
+    catch(e){toast('ذخیره تب‌ها ناموفق بود: '+e.message)}finally{saveItems.disabled=false;}
+  };
+  async function load(){
+    status.textContent='در حال دریافت تنظیمات از API…';
+    const responses=await Promise.allSettled([api('/bottom-nav'),api('/bottom-nav-appearance')]);
+    if(responses[0].status==='fulfilled'){
+      const rows=Array.isArray(responses[0].value.items)?responses[0].value.items:[];
+      const alias={mmtrade10x:'challenge'};
+      const primary=[];extras=[];
+      for(const raw of rows){
+        const id=alias[raw.id]||raw.id;
+        if(canonical.some(c=>c.id===id)&&!primary.some(p=>p.id===id))primary.push({...raw,id});
+        else extras.push({...raw});
+      }
+      items=canonical.map(c=>({...c,...primary.find(x=>x.id===c.id)}));
+      if(primary.length===5)items.sort((a,b)=>a.sort-b.sort);
+      else items.forEach((x,i)=>x.sort=(i+1)*10);
+      originalLoaded=true;
+    }else {originalLoaded=false;toast('خطا در دریافت آیتم‌ها: '+responses[0].reason.message);}
+    if(responses[1].status==='fulfilled'){
+      const d=responses[1].value;
+      appearance={...defaultAppearance,...Object.fromEntries(Object.keys(defaultAppearance).filter(k=>d[k]!==undefined).map(k=>[k,d[k]]))};
+      appearanceLoaded=true;
+    }else {appearanceLoaded=false;toast('API ظاهر در دسترس نیست؛ لازم است Build و Restart انجام شود.');}
+    renderItems();
+    status.textContent=originalLoaded&&appearanceLoaded?'هر دو بخش از دیتابیس بارگذاری شدند.':'بخشی از تنظیمات در دسترس نیست؛ قبل از ذخیره، وضعیت API را بررسی کن.';
   }
-
+  reload.onclick=load;
   await load();
   return wrap;
+  // MMU_R6_SUPERADMIN_PANEL_END
 },
 
 async users(){
@@ -1703,7 +2018,20 @@ if(!sel){R.replaceChildren(h('p',{class:'mut'},'یک تیکت را انتخاب 
 R.replaceChildren(h('div',{class:'row'},h('b',{},sel.subject),h('span',{class:'tag'},sel.status),h('span',{class:'mut'},fa(sel.updatedAt))),h('div',{class:'msgs'},sel.messages.map(m=>h('div',{class:'m '+m.senderType},h('div',{},m.body),h('small',{class:'mut'},fa(m.createdAt))))),ta,h('div',{class:'row',style:'margin-top:8px'},h('button',{onclick:async()=>{if(!ta.value.trim())return;try{await api('/tickets/'+sel.id+'/reply',{method:'POST',body:JSON.stringify({body:ta.value.trim()})});toast('پاسخ ارسال شد.');show('tickets')}catch(e){toast('خطا: '+e.message)}}},'ارسال پاسخ'),h('button',{class:'sec',onclick:async()=>{const n=sel.status==='OPEN'?'CLOSED':'OPEN';try{await api('/tickets/'+sel.id+'/status',{method:'PATCH',body:JSON.stringify({status:n})});toast('وضعیت تغییر کرد.');show('tickets')}catch(e){toast('خطا: '+e.message)}}},sel.status==='OPEN'?'بستن تیکت':'بازکردن مجدد')))}
 draw();return h('div',{class:'two'},L,R)},
 async outreach(){const[f,n]=await Promise.all([api('/followups'),api('/notifications')]);return h('div',{},h('div',{class:'card',style:'margin-bottom:12px'},h('b',{},'پیگیری‌ها'),generic(f.items)),h('div',{class:'card'},h('b',{},'اعلان‌ها'),generic(n.items)))},
-async academy(){const d=await api('/academy/courses');const w=me.p60Scopes?me.p60Scopes.academy==='write':['SUPER_ADMIN','ACADEMY_MANAGER'].includes(me.role);const box=h('div',{});
+async academyDesign(){
+  await adminModulesReady;
+  if(!me||me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'دسترسی به سوپرادمین لازم است.');
+  const wrap=h('section',{class:'mm10-academy-admin-entry',style:'width:100%;display:grid;gap:12px'});
+  const info=h('div',{class:'card',style:'border-color:rgba(225,187,100,.42);background:linear-gradient(120deg,#0b3022,#071b13)'},
+    h('h2',{style:'margin:0 0 6px;color:#f4d68e'},'MATIN FUTURE | استودیوی مدیریت آکادمی'),
+    h('p',{class:'mut',style:'margin:0'},'مدیریت هویت بصری، هفت مرحله، محتوای درس‌ها، دکمه ثبت‌نام، پیش‌نمایش و انتشار نسخه‌ها.'));
+  const frame=h('iframe',{src:'/miniapp/p74/learning/academy-studio.html?embedded=1&v=MF_BG_R65_20261108',title:'استودیوی مدیریت آکادمی',loading:'eager',style:'display:block;width:100%;height:max(860px,calc(100dvh - 210px));min-height:860px;border:1px solid rgba(225,187,100,.35);border-radius:16px;background:#061710'});
+  wrap.append(info,frame);
+  window.MMAdminWorkspace?.register('academyDesign',{active:()=>wrap.isConnected,dirty:()=>!!frame.contentWindow?.MM10AcademyStudio?.isDirty?.(),busy:()=>!!frame.contentWindow?.MM10AcademyStudio?.isBusy?.()});
+  return wrap;
+},
+
+  async academy(){const d=await api('/academy/courses');const w=me.p60Scopes?me.p60Scopes.academy==='write':['SUPER_ADMIN','ACADEMY_MANAGER'].includes(me.role);const box=h('div',{});
 if(w)box.append(h('button',{style:'margin-bottom:12px',onclick:()=>editAc('course',null)},'+ دوره‌ی جدید'));
 if(!d.items.length)box.append(h('p',{class:'mut'},'هنوز دوره‌ای ساخته نشده است.'));
 const st=s=>h('span',{class:'tag '+(s==='PUBLISHED'?'ok':'warn')},s==='PUBLISHED'?'منتشرشده':'پیش‌نویس');
@@ -2500,10 +2828,13 @@ async organizers(){
 },
 
 async pages(){
- const[p,q]=await Promise.all([api('/content/pages'),api('/content/popups')]);
+ const[p,q,c,bk]=await Promise.all([api('/content/pages'),api('/content/popups'),api('/custom-pages'),api('/custom-pages/backups').catch(()=>({items:[]}))]);
  const writable=['SUPER_ADMIN','CONTENT_MANAGER'].includes(me.role);
- const enabled=(p.items||[]).filter(x=>MF_P40_AVAILABLE.includes(x.slug));
- const missing=(p.items||[]).filter(x=>!MF_P40_AVAILABLE.includes(x.slug));
+ const core=(p.items||[]).filter(x=>!x.isCustom);
+ const enabled=core.filter(x=>MF_P40_AVAILABLE.includes(x.slug));
+ const missing=core.filter(x=>!MF_P40_AVAILABLE.includes(x.slug));
+ const customPages=c.items||[];
+ const pageBackups=bk.items||[];
  const live=(q.items||[]).filter(x=>MF_P40_AVAILABLE.includes(x.pageSlug));
  const orphan=(q.items||[]).filter(x=>!MF_P40_AVAILABLE.includes(x.pageSlug));
  const box=h('div',{});
@@ -2524,9 +2855,40 @@ async pages(){
     ['وضعیت',r=>h('span',{class:'tag '+(r.status==='PUBLISHED'?'ok':'warn')},r.status)],
     ['عملیات',r=>h('div',{class:'row'},
       writable&&h('button',{class:'sec',onclick:()=>location.assign('/admin/editor/'+encodeURIComponent(r.slug))},'ویرایش دیداری'),
+      writable&&h('button',{class:'sec',onclick:()=>tenxDuplicateCustomPage(r)},'کپی مستقل'),
       h('button',{class:'sec',onclick:()=>pageHistory(r.slug)},'نسخه‌ها'),
       h('a',{target:'_blank',rel:'noopener noreferrer',href:r._audit.preview||'/miniapp'},'نمایش'))]
    ],pageRows):h('p',{class:'mut'},'هیچ فایل صفحه‌ای در مسیر شناسایی‌شده پیدا نشد.')));
+ const customCard=h('div',{class:'card',style:'margin:12px 0;border:1px solid #41634d'},
+   h('div',{class:'row',style:'justify-content:space-between;align-items:center'},
+     h('h3',{},'صفحات سفارشی و کپی‌های مستقل · '+customPages.length),
+     writable&&h('button',{onclick:()=>tenxCreateCustomPage(null)},'+ صفحه جدید')),
+   h('p',{class:'mut'},'این صفحات پوسته مستقل Mini App دارند و محتوای بلوک‌ها و تاریخچه‌شان از صفحه اصلی جداست. لینک عمومی با الگوی /p/نامک منتشر می‌شود.'));
+ if(customPages.length){
+   customCard.append(table([
+     ['عنوان',r=>h('div',{},h('b',{},r.title||r.slug),h('div',{class:'mut'},r.slug))],
+     ['لینک انتشار',r=>h('a',{href:r.publicPath,target:'_blank',rel:'noopener noreferrer'},r.publicPath)],
+     ['وضعیت',r=>h('span',{class:'tag '+(r.status==='PUBLISHED'?'ok':'warn')},r.status)],
+     ['عملیات',r=>h('div',{class:'row'},
+       writable&&h('button',{class:'sec',onclick:()=>location.assign('/admin/editor/'+encodeURIComponent(r.slug))},'ویرایش'),
+       writable&&h('button',{class:'sec',onclick:()=>tenxDuplicateCustomPage(r)},'Duplicate'),
+       me?.role==='SUPER_ADMIN'&&h('button',{class:'sec',onclick:()=>tenxChangeCustomPageRoute(r)},'تغییر لینک'),
+       me?.role==='SUPER_ADMIN'&&h('button',{class:'bad',onclick:()=>tenxDeleteCustomPage(r)},'حذف کامل'))]
+   ],customPages));
+ }else customCard.append(h('p',{class:'mut'},'هنوز صفحه سفارشی ساخته نشده است.'));
+ box.append(customCard);
+ if(me?.role==='SUPER_ADMIN'){
+   const backupCard=h('div',{class:'card',style:'margin:12px 0'},h('h3',{},'بکاپ صفحات حذف‌شده · '+pageBackups.length),
+     h('p',{class:'mut'},'بکاپ‌ها در پوشه خصوصی backups/deleted-pages نگهداری می‌شوند و از مسیر عمومی وب قابل دریافت نیستند.'));
+   if(pageBackups.length)backupCard.append(table([
+     ['صفحه',b=>h('div',{},h('b',{},b.title||b.slug),h('div',{class:'mut'},b.slug))],
+     ['لینک قبلی',b=>b.publicPath||'—'],['زمان بکاپ',b=>b.createdAt?fa(b.createdAt):'—'],
+     ['عملیات',b=>h('button',{class:'sec',onclick:()=>tenxRestoreCustomPage(b)},'بازیابی')]
+   ],pageBackups));
+   else backupCard.append(h('p',{class:'mut'},'بکاپ حذف‌شده‌ای ثبت نشده است.'));
+   box.append(backupCard);
+ }
+
  box.append(h('div',{class:'card',style:'margin-bottom:12px'},
   h('div',{class:'row',style:'justify-content:space-between'},h('h3',{},'پاپ‌آپ‌های متصل به صفحه'),
     writable&&h('button',{onclick:()=>editPopup(null)},'+ پاپ‌آپ جدید')),
@@ -2724,14 +3086,48 @@ const del=async()=>{if(!confirm('حذف شود؟ پیشرفت کاربران ه�
 const d=$('#drawer');d.classList.remove('hide');d.onclick=e=>{if(e.target===d)d.classList.add('hide')};
 d.replaceChildren(h('div',{class:'card'},h('b',{},(isNew?'ساخت ':'ویرایش ')+(isC?'دوره':'درس')),Object.entries(f).map(([k,e])=>h('div',{style:'margin:8px 0'},h('label',{class:'mut'},k),e)),h('div',{class:'row'},h('button',{onclick:save},'ذخیره'),!isNew&&h('button',{class:'bad',onclick:del},'حذف'),h('button',{class:'sec',onclick:()=>d.classList.add('hide')},'بستن'))))}
 
-const MF_P40_PAGE_STATUS={"index":{"available":true,"preview":"/miniapp/index.html?adminPreview=1","kind":"physical"},"academy":{"available":true,"preview":"/miniapp/index.html?view=academy&adminPreview=1","kind":"virtual"},"crypto":{"available":false,"preview":"/miniapp/crypto.html?adminPreview=1","kind":"physical"},"copy-trading":{"available":false,"preview":"/miniapp/copy-trading.html?adminPreview=1","kind":"physical"},"challenge":{"available":false,"preview":"/miniapp/challenge.html?adminPreview=1","kind":"physical"},"support":{"available":true,"preview":"/miniapp/support.html?adminPreview=1","kind":"physical"},"profile":{"available":true,"preview":"/miniapp/index.html?view=profile&adminPreview=1","kind":"virtual"},"mmtrade10x":{"available":true,"preview":"/miniapp/index.html?view=mmtrade10x&adminPreview=1","kind":"virtual"}};
+const MF_P40_PAGE_STATUS={"index":{"available":true,"preview":"/miniapp/index.html?adminPreview=1","kind":"physical"},"academy":{"available":true,"preview":"/miniapp/p74/learning/academy-home.html?preview=1","kind":"virtual"},"crypto":{"available":false,"preview":"/miniapp/crypto.html?adminPreview=1","kind":"physical"},"copy-trading":{"available":false,"preview":"/miniapp/copy-trading.html?adminPreview=1","kind":"physical"},"challenge":{"available":false,"preview":"/miniapp/challenge.html?adminPreview=1","kind":"physical"},"support":{"available":true,"preview":"/miniapp/support.html?adminPreview=1","kind":"physical"},"profile":{"available":true,"preview":"/miniapp/index.html?view=profile&adminPreview=1","kind":"virtual"},"mmtrade10x":{"available":true,"preview":"/miniapp/index.html?view=mmtrade10x&adminPreview=1","kind":"virtual"}};
 const MF_P40_PAGE_LABELS={"index":"خانه","academy":"آکادمی","crypto":"کریپتو","copy-trading":"کپی‌ترید","challenge":"چالش 10X","support":"پشتیبانی","profile":"پروفایل","mmtrade10x":"MMTrade10X"};
 const MF_P40_AVAILABLE=Object.keys(MF_P40_PAGE_STATUS).filter(s=>MF_P40_PAGE_STATUS[s].available);
 if(MF_P40_PAGE_STATUS.profile?.available)MF_P40_PAGE_STATUS.profile.preview='/profile?adminPreview=1';
 const SLUGS=['index','academy','crypto','copy-trading','challenge','support','profile','mmtrade10x'];
-async function pageHistory(slug){try{const d=await api('/content/pages/'+encodeURIComponent(slug)+'/versions');const rows=d.items||[];const box=h('div',{class:'card'},h('div',{class:'row',style:'justify-content:space-between'},h('b',{},'تاریخچه نسخه: '+slug),h('button',{class:'sec',onclick:()=>$('#drawer').classList.add('hide')},'بستن')),rows.length?table([['نسخه',v=>'#'+v.version],['وضعیت',v=>v.status],['زمان',v=>fa(v.createdAt)],['مدیر',v=>v.createdBy?.email||'—'],['',v=>h('button',{class:'sec',onclick:async()=>{if(!confirm('نسخه #'+v.version+' بازگردانی شود؟'))return;try{await api('/content/pages/'+encodeURIComponent(slug)+'/rollback',{method:'POST',body:JSON.stringify({versionId:v.id})});toast('نسخه بازگردانی شد.');$('#drawer').classList.add('hide');if(location.pathname.startsWith('/admin/editor/'))location.reload();else show('pages')}catch(e){toast('خطا: '+e.message)}}},'بازگردانی')]],rows):h('p',{class:'mut'},'هنوز نسخه‌ای ذخیره نشده است.'));const d0=$('#drawer');d0.classList.remove('hide');d0.replaceChildren(box)}catch(e){toast('خطا در دریافت تاریخچه: '+e.message)}}
+async function tenxCreateCustomPage(source){
+  const suggested=source?'copy-'+String(source.slug||'page').replace(/[^a-z0-9-]/g,'-'):'new-page';
+  const slug=prompt('شناسه داخلی صفحه (فقط حروف کوچک انگلیسی، عدد و خط تیره):',suggested);
+  if(!slug)return;
+  const title=prompt('عنوان صفحه:',source?(source.title||source.slug)+' - کپی':'صفحه جدید 10X');
+  if(!title)return;
+  const publicSlug=prompt('نامک لینک انتشار (آدرس نهایی /p/نامک):',slug);
+  if(!publicSlug)return;
+  try{
+    await api('/custom-pages',{method:'POST',body:JSON.stringify({slug:slug.trim(),title:title.trim(),publicSlug:publicSlug.trim(),...(source?{sourceSlug:source.slug}:{})})});
+    toast('صفحه مستقل ساخته شد. محتوای صفحه مبدأ تغییر نمی‌کند.');
+    location.assign('/admin/editor/'+encodeURIComponent(slug.trim()));
+  }catch(e){toast('خطا در ساخت صفحه: '+e.message)}
+}
+async function tenxDuplicateCustomPage(source){return tenxCreateCustomPage(source)}
+async function tenxChangeCustomPageRoute(row){
+  const publicSlug=prompt('نامک جدید لینک انتشار را وارد کن. لینک قبلی به لینک جدید هدایت می‌شود:',row.publicSlug||'');
+  if(!publicSlug||publicSlug===row.publicSlug)return;
+  try{const r=await api('/custom-pages/'+encodeURIComponent(row.slug)+'/route',{method:'POST',body:JSON.stringify({publicSlug:publicSlug.trim()})});toast('لینک انتشار تغییر کرد: '+r.publicPath);await show('pages')}
+  catch(e){toast('خطا در تغییر لینک: '+e.message)}
+}
+async function tenxDeleteCustomPage(row){
+  const typed=prompt('برای حذف کامل صفحه و تمام نسخه‌های آن، شناسه زیر را عیناً وارد کن. ابتدا بکاپ خصوصی و قابل‌بازیابی ساخته می‌شود:\n'+row.slug,'');
+  if(typed!==row.slug)return;
+  try{const result=await api('/custom-pages/'+encodeURIComponent(row.slug),{method:'DELETE'});toast('حذف کامل شد. بکاپ: '+result.backupId);await show('pages')}
+  catch(e){toast('حذف انجام نشد: '+e.message)}
+}
+async function tenxRestoreCustomPage(backup){
+  if(!confirm('صفحه «'+(backup.title||backup.slug)+'» با داده‌ها و تاریخچه موجود در بکاپ بازیابی شود؟'))return;
+  try{const result=await api('/custom-pages/restore',{method:'POST',body:JSON.stringify({backupId:backup.backupId})});toast('صفحه بازیابی شد: '+result.publicPath);await show('pages')}
+  catch(e){toast('بازیابی انجام نشد: '+e.message)}
+}
+
+async function pageHistory(slug,isCustom=false){try{const base=isCustom?'/custom-pages/':'/content/pages/';const d=await api(base+encodeURIComponent(slug)+'/versions');const rows=d.items||[];const box=h('div',{class:'card'},h('div',{class:'row',style:'justify-content:space-between'},h('b',{},'تاریخچه نسخه: '+slug),h('button',{class:'sec',onclick:()=>$('#drawer').classList.add('hide')},'بستن')),rows.length?table([['نسخه',v=>'#'+v.version],['وضعیت',v=>v.status],['زمان',v=>fa(v.createdAt)],['مدیر',v=>v.createdBy?.email||'—'],['',v=>h('button',{class:'sec',onclick:async()=>{if(!confirm('نسخه #'+v.version+' بازگردانی شود؟'))return;try{await api(base+encodeURIComponent(slug)+'/rollback',{method:'POST',body:JSON.stringify({versionId:v.id})});toast('نسخه بازگردانی شد.');$('#drawer').classList.add('hide');if(location.pathname.startsWith('/admin/editor/'))location.reload();else show('pages')}catch(e){toast('خطا: '+e.message)}}},'بازگردانی')]],rows):h('p',{class:'mut'},'هنوز نسخه‌ای ذخیره نشده است.'));const d0=$('#drawer');d0.classList.remove('hide');d0.replaceChildren(box)}catch(e){toast('خطا در دریافت تاریخچه: '+e.message)}}
 function editPage(r){
   const isStandalone = location.pathname.startsWith('/admin/editor/');
+  const pageApiBase = r.isCustom ? '/custom-pages/' : '/content/pages/';
   const d = isStandalone ? $('#view') : $('#drawer');
   let publishedStatus = r.published?.status || r.status || 'DRAFT';
   const blocks = JSON.parse(JSON.stringify(r.blocks || []));
@@ -2743,6 +3139,7 @@ function editPage(r){
     banner: [['title','عنوان بنر','text'],['text','متن بنر','textarea'],['url','لینک بنر','text']],
     progress: [['kind','نوع پیشرفت','select'],['title','عنوان','text']],
     divider: [],
+    html: [['html','کد HTML سفارشی (بدون JavaScript)','textarea']],
     mm10_step: [
       ['id','شناسه ثابت مرحله','text'],
       ['title','عنوان مرحله','text'],
@@ -2777,6 +3174,7 @@ function editPage(r){
   const labels = {
     heading:'عنوان', text:'متن', image:'تصویر', button:'دکمه',
     banner:'بنر', progress:'نوار پیشرفت', divider:'جداکننده',
+    html:'سکشن HTML سفارشی',
     element:'عنصر موجود صفحه',
     mm10_step:'مرحله آموزشی MMTrade10X'
   };
@@ -2957,7 +3355,9 @@ function editPage(r){
     return wrap;
   };
 
-  let p40Dirty=false;
+  let p40Dirty=false,p40Busy=false;
+  const p40Host=isStandalone?document.getElementById('view'):d;
+  window.MMAdminWorkspace?.register('legacyEditor',{active:()=>shell.isConnected&&(isStandalone||!d.classList.contains('hide')),dirty:()=>p40Dirty,busy:()=>p40Busy});
   let p40InspectorTab='content';
   const shell = el('div',{style:{
     width:'100%',maxWidth:'1400px',margin:'0 auto',
@@ -2975,6 +3375,7 @@ function editPage(r){
   const actions = el('div',{style:{display:'flex',gap:'6px',flexWrap:'wrap'}});
   const closeBtn = el('button',{type:'button',class:'sec'},'بستن');
   closeBtn.onclick = () => {
+    if(p40Busy)return toast('عملیات در حال انجام است؛ صبر کنید');
     if(p40Dirty&&!confirm('تغییرات ذخیره نشده‌اند. خارج شوید؟'))return;
     if(isStandalone) location.assign('/admin/panel');
     else d.classList.add('hide');
@@ -2988,7 +3389,7 @@ function editPage(r){
 
   undoBtn.onclick = undoEdit;
   redoBtn.onclick = redoEdit;
-  historyBtn.onclick = () => pageHistory(r.slug);
+  historyBtn.onclick = () => pageHistory(r.slug,!!r.isCustom);
 
   actions.append(undoBtn,redoBtn,historyBtn,saveBtn,publishBtn,closeBtn);
   updateHistoryButtons();
@@ -3349,6 +3750,7 @@ function editPage(r){
       banner:{type:t,title:'بنر جدید',text:''},
       progress:{type:t,kind:'registration',title:''},
       divider:{type:t},
+      html:{type:t,html:'<section dir="rtl" style="padding:16px;border-radius:14px;background-color:#10251b;color:#ffffff"><h2>سکشن جدید</h2><p>محتوای خود را اینجا ویرایش کنید.</p></section>'},
       mm10_step:{
         type:t,
         id:'step-'+Date.now().toString(36),
@@ -3945,6 +4347,9 @@ function editPage(r){
       n=el('h2',{style:{fontSize:'25px',margin:'12px 0',overflowWrap:'anywhere'}},b.text||'عنوان');
     } else if(b.type==='text'){
       n=el('p',{style:{fontSize:'15px',lineHeight:'1.9',whiteSpace:'pre-wrap',overflowWrap:'anywhere'}},b.text||'متن');
+    } else if(b.type==='html'){
+      n=el('section',{class:'tenx-custom-html',style:{padding:'8px',border:'1px dashed #d4a84f',borderRadius:'8px',minHeight:'36px'}});
+      if(window.TenxSafeHtml)window.TenxSafeHtml.append(n,b.html||'');else n.textContent=b.html||'';
     } else if(b.type==='image'){
       n=el('div',{style:{margin:'12px 0'}});
       const img=el('img',{src:p45LogoUrl(b.url)||'/',alt:b.alt||'',style:{
@@ -4281,6 +4686,11 @@ function editPage(r){
         n = node('h2', 'tenx-preview-block', b.text || '');
       } else if (b.type === 'text') {
         n = node('p', 'muted btxt tenx-preview-block tenx-preview-text', b.text || '');
+      } else if (b.type === 'html') {
+        n = node('section', 'tenx-preview-block tenx-preview-html tenx-custom-html');
+        const safeHtml = doc.defaultView && doc.defaultView.TenxSafeHtml;
+        if (safeHtml && typeof safeHtml.append === 'function') safeHtml.append(n, b.html || '');
+        else n.textContent = b.html || '';
       } else if (b.type === 'divider') {
         n = node('hr', 'bdiv tenx-preview-divider');
       } else if (b.type === 'image') {
@@ -4733,6 +5143,7 @@ function editPage(r){
         if(!b.selector||b.selector.length>500){errors.push(n+'انتخابگر CSS نامعتبر است.');return}
         try{document.querySelector(b.selector)}catch(_e){errors.push(n+'انتخابگر CSS قابل تفسیر نیست.');}
       }
+      if(b.type==='html'&&(!String(b.html||'').trim()||String(b.html).length>16000))errors.push(n+'کد HTML باید بین ۱ تا ۱۶۰۰۰ کاراکتر باشد.');
       if(b.type==='mm10_step'&&!/^[a-zA-Z0-9_-]{1,64}$/.test(b.id||''))errors.push(n+'شناسه مرحله معتبر نیست.');
       for(const key of ['url','src','href'])if(b[key]!==undefined&&!safe(b[key]))errors.push(n+'آدرس '+key+' معتبر نیست.');
       if((b.type==='image'||b.type==='button')&&!safe(b.url))errors.push(n+'لینک اجباری است.');
@@ -4751,43 +5162,48 @@ function editPage(r){
     publishBtn.disabled=true;
 
     try{
-      await api('/content/pages/'+encodeURIComponent(r.slug)+'/draft',{
+      const sent=JSON.stringify({title:titleInput.value.trim()||null,blocks:cleanBlocks()});
+      const saved=await api(pageApiBase+encodeURIComponent(r.slug)+'/draft',{
         method:'PUT',
         body:JSON.stringify({
+          ...(r.revision?{expectedRevision:r.revision}:{}),
           title:titleInput.value.trim()||null,
           blocks:cleanBlocks()
         })
       });
-      r.hasDraft=true;
-      p40Dirty=false;p40DirtyLabel.dataset.clean='true';p40DirtyLabel.textContent='ذخیره شده';
+      r.hasDraft=true;if(saved.revision)r.revision=saved.revision;
+      p40Dirty=sent!==JSON.stringify({title:titleInput.value.trim()||null,blocks:cleanBlocks()});p40DirtyLabel.dataset.clean=String(!p40Dirty);p40DirtyLabel.textContent=p40Dirty?'تغییرات جدید ذخیره‌نشده':'ذخیره شده';
       return true;
     }finally{
-      saveBtn.disabled=false;
-      publishBtn.disabled=false;
+      saveBtn.disabled=p40Busy;
+      publishBtn.disabled=p40Busy;
     }
   }
 
   saveBtn.onclick=async()=>{
+    if(p40Busy)return;p40Busy=true;
     try{
       await saveDraft();
       toast('پیش‌نویس ذخیره شد؛ برای نمایش در Mini App انتشار را بزن.');
     }catch(e){
       toast('خطا در ذخیره پیش‌نویس: '+e.message);
-    }
+    }finally{p40Busy=false;saveBtn.disabled=publishBtn.disabled=false}
   };
 
   publishBtn.onclick=async()=>{
+    if(p40Busy)return;
     if(!confirm('نسخه فعلی منتشر شود و در Mini App نمایش داده شود؟'))return;
 
-    publishBtn.disabled=true;
+    p40Busy=true;publishBtn.disabled=true;
     saveBtn.disabled=true;
 
     try{
       await saveDraft();
+      if(p40Dirty)throw Error('تغییر جدید هنگام ذخیره ایجاد شد؛ دوباره ذخیره کنید');
 
-      const result=await api('/content/pages/'+encodeURIComponent(r.slug)+'/publish',{
+      const result=await api(pageApiBase+encodeURIComponent(r.slug)+'/publish',{
         method:'POST',
-        body:JSON.stringify({})
+        body:JSON.stringify(r.revision?{expectedRevision:r.revision}:{})
       });
 
       publishedStatus=result.status||'PUBLISHED';
@@ -4798,7 +5214,7 @@ function editPage(r){
     }catch(e){
       toast('خطا در انتشار: '+e.message);
     }finally{
-      publishBtn.disabled=false;
+      p40Busy=false;publishBtn.disabled=false;
       saveBtn.disabled=false;
     }
   };
@@ -4880,7 +5296,8 @@ async function csv(){try{
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 }catch(e){toast('خطا: '+e.message)}}
-$('#go').onclick=async()=>{
+$('#login-form').onsubmit=async event=>{
+  event.preventDefault();
   const btn=$('#go');if(btn.disabled)return;
   btn.disabled=true;const oldLabel=btn.textContent;btn.textContent='در حال ورود…';$('#lerr').textContent='';
   try{
@@ -4894,6 +5311,152 @@ $('#go').onclick=async()=>{
   finally{btn.disabled=false;btn.textContent=oldLabel}
 };
 $('#out').onclick=()=>{token='';try{sessionStorage.removeItem('tenx_admin_token')}catch(e){}location.reload()};
+
+/* TENX_PAGE_FILES_MANAGER_R1_UI */
+MENU.push(['pageFiles','مدیریت فایل‌های HTML',['SUPER_ADMIN']]);
+VIEWS.pageFiles = async function(){
+  if(me?.role!=='SUPER_ADMIN') return h('div',{class:'card'},'فقط سوپرادمین به مدیریت فایل‌ها دسترسی دارد.');
+  const root=h('section',{class:'pfm-root'});
+  const style=document.createElement('style');
+  style.textContent=`
+    .pfm-root{display:grid;gap:14px;color:var(--ink)}
+    .pfm-hero{padding:20px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(125deg,rgba(25,112,72,.18),rgba(184,142,91,.09))}
+    .pfm-hero h2{margin:0 0 6px;font-size:20px}.pfm-hero p{margin:0;color:var(--mut);line-height:1.9}
+    .pfm-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+    .pfm-stat{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);min-width:0}
+    .pfm-stat b{display:block;font-size:22px}.pfm-stat small{color:var(--mut)}
+    .pfm-toolbar{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,240px) auto auto;gap:8px}
+    .pfm-toolbar input,.pfm-toolbar select{min-width:0;width:100%}
+    .pfm-tabs{display:flex;gap:7px;flex-wrap:wrap}
+    .pfm-tabs button{background:transparent;color:var(--ink);border:1px solid var(--line)}
+    .pfm-tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+    .pfm-layout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(300px,.95fr);gap:12px;align-items:start}
+    .pfm-list,.pfm-detail{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:10px;min-width:0}
+    .pfm-file{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;text-align:right;align-items:center;background:transparent;color:var(--ink);border:1px solid transparent;border-bottom:1px solid var(--line);border-radius:8px;padding:11px}
+    .pfm-file:hover,.pfm-file.selected{background:rgba(42,150,98,.09);border-color:var(--line)}
+    .pfm-file strong{display:block;overflow-wrap:anywhere}.pfm-file small{display:block;color:var(--mut);font-size:11px;overflow-wrap:anywhere}
+    .pfm-tag{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:2px 8px;font-size:10px;color:var(--mut);white-space:nowrap}
+    .pfm-warning{padding:10px;border-radius:10px;background:rgba(217,119,6,.10);border:1px solid rgba(217,119,6,.35);line-height:1.8}
+    .pfm-ref{padding:9px 0;border-bottom:1px solid var(--line);font-size:12px;overflow-wrap:anywhere}
+    .pfm-ref code{display:block;white-space:pre-wrap;color:var(--mut);font-size:11px}
+    .pfm-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+    .pfm-actions button{min-height:38px}
+    .pfm-preview{width:100%;height:420px;border:1px solid var(--line);border-radius:10px;background:#fff}
+    .pfm-empty{padding:24px;text-align:center;color:var(--mut)}
+    @media(max-width:850px){.pfm-layout{grid-template-columns:1fr}.pfm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.pfm-toolbar{grid-template-columns:1fr 1fr}.pfm-preview{height:330px}}
+    @media(max-width:430px){.pfm-toolbar{grid-template-columns:1fr}.pfm-file{grid-template-columns:1fr}.pfm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  `;
+  root.append(style);
+  let items=[],trash=[],counts={},selected=null,detail=null,tab='files',category='all',query='';
+  const categoryNames={
+    'miniapp-source':'سورس مینی‌اپ','live-miniapp':'مینی‌اپ منتشرشده',
+    admin:'پنل‌ها و رابط مدیریت','academy-archive':'نسخه‌ها و آرشیو آکادمی',
+    public:'سایر فایل‌های عمومی',application:'بخش‌های داخلی برنامه',
+    tests:'تست‌ها',generated:'خروجی‌های ساخته‌شده',project:'سایر فایل‌های پروژه'
+  };
+  const stats=h('div',{class:'pfm-stats'});
+  const tabs=h('div',{class:'pfm-tabs'});
+  const search=h('input',{type:'search',placeholder:'جست‌وجوی نام یا مسیر فایل…',oninput:e=>{query=e.target.value;renderList();}});
+  const categorySelect=h('select',{onchange:e=>{category=e.target.value;renderList();}});
+  const refresh=h('button',{type:'button',class:'sec',onclick:()=>load()},'بازخوانی');
+  const toolbar=h('div',{class:'pfm-toolbar'},search,categorySelect,
+    h('button',{type:'button',class:'sec',onclick:()=>{tab='files';renderList();}},'فایل‌ها'),
+    h('button',{type:'button',class:'sec',onclick:()=>{tab='trash';renderList();}},'آرشیو'));
+  const list=h('div',{class:'pfm-list'});
+  const detailPane=h('div',{class:'pfm-detail'},h('div',{class:'pfm-empty'},'برای مشاهده جزئیات، یک فایل را انتخاب کن.'));
+  root.append(h('div',{class:'pfm-hero'},
+    h('h2',{},'مدیریت فایل‌های HTML پروژه'),
+    h('p',{},'فهرست یکپارچه فایل‌های HTML سورس پروژه و نسخه زنده مینی‌اپ؛ همراه با دسته‌بندی، پیش‌نمایش، بررسی وابستگی، آرشیو و بازیابی. حذف مستقیم فایل فعال بدون بررسی وابستگی مجاز نیست.')),
+    stats,toolbar,tabs,h('div',{class:'pfm-layout'},list,detailPane));
+  function button(label,fn,klass='sec'){return h('button',{type:'button',class:klass,onclick:fn},label);}
+  function renderStats(){
+    const vals=[
+      ['کل فایل‌های HTML',counts.all??items.length],
+      ['سورس مینی‌اپ',counts['miniapp-source']??0],
+      ['نسخه زنده مینی‌اپ',counts['live-miniapp']??0],
+      ['آرشیوها',trash.length]
+    ];
+    stats.replaceChildren(...vals.map(([label,value])=>h('div',{class:'pfm-stat'},h('small',{},label),h('b',{},Number(value).toLocaleString('fa-IR')))));
+  }
+  function renderTabs(){
+    const options=[['all','همه'],['miniapp-source','سورس مینی‌اپ'],['live-miniapp','نسخه زنده'],['admin','پنل مدیریت'],['academy-archive','آرشیو آکادمی'],['public','عمومی'],['application','بخش برنامه'],['tests','تست‌ها'],['generated','خروجی ساخته‌شده'],['project','سایر پروژه']];
+    tabs.replaceChildren(...options.map(([value,label])=>button(label,()=>{category=value;categorySelect.value=value;tab='files';renderTabs();renderList();},category===value?'on':'')));
+    categorySelect.replaceChildren(...options.map(([value,label])=>h('option',{value},label)));
+    categorySelect.value=category;
+  }
+  function renderList(){
+    if(tab==='trash'){
+      list.replaceChildren(h('h3',{},'آرشیو و فایل‌های قابل بازیابی'));
+      if(!trash.length){list.append(h('div',{class:'pfm-empty'},'آرشیوی وجود ندارد.'));return;}
+      trash.forEach(item=>{
+        const row=h('div',{class:'pfm-file'},
+          h('span',{},h('strong',{},item.path),h('small',{},item.rootLabel+' · '+fa(item.archivedAt))),
+          h('span',{class:'pfm-actions'},
+            button('بازیابی',async()=>{if(!confirm('فایل به مسیر اصلی بازگردد؟'))return;try{await api('/page-files-trash/'+encodeURIComponent(item.id)+'/restore',{method:'POST',body:'{}'});toast('فایل بازیابی شد');await load();}catch(e){toast('خطا: '+e.message);}},''),
+            button('حذف دائمی',async()=>{const phrase=prompt('برای حذف غیرقابل‌بازگشت، عبارت DELETE را وارد کن.');if(phrase!=='DELETE')return;try{await api('/page-files-trash/'+encodeURIComponent(item.id),{method:'DELETE',body:JSON.stringify({confirmation:'DELETE'})});toast('فایل برای همیشه حذف شد');await load();}catch(e){toast('خطا: '+e.message);}},'bad')));
+        list.append(row);
+      });
+      return;
+    }
+    const filtered=items.filter(item=>(category==='all'||item.category===category)&&
+      (!query||item.path.toLowerCase().includes(query.toLowerCase())||item.rootLabel.toLowerCase().includes(query.toLowerCase())));
+    list.replaceChildren(h('div',{class:'row',style:'justify-content:space-between;padding:7px'},h('b',{},'فایل‌ها ('+filtered.length+')'),refresh));
+    if(!filtered.length){list.append(h('div',{class:'pfm-empty'},'فایلی با این فیلتر پیدا نشد.'));return;}
+    filtered.forEach(item=>{
+      const row=h('button',{type:'button',class:'pfm-file'+(selected===item.id?' selected':''),
+        onclick:()=>select(item.id)},
+        h('span',{},h('strong',{},item.path),h('small',{},item.rootLabel+' · '+item.categoryLabel+' · '+(item.size/1024).toFixed(1)+' KB')),
+        h('span',{class:'pfm-tag'},item.protected?'سیستمی': 'قابل مدیریت'));
+      list.append(row);
+    });
+  }
+  async function select(id){
+    selected=id;detail=null;renderList();
+    detailPane.replaceChildren(h('div',{class:'pfm-empty'},'در حال دریافت جزئیات و بررسی لینک‌های وابسته…'));
+    try{detail=await api('/page-files/'+encodeURIComponent(id));renderDetail();}
+    catch(e){detailPane.replaceChildren(h('div',{class:'pfm-warning'},'دریافت جزئیات ناموفق بود: '+e.message));}
+  }
+  function renderDetail(){
+    if(!detail)return;
+    const item=detail.item;
+    const refs=detail.references||[];
+    const actions=h('div',{class:'pfm-actions'},
+      button('کپی مسیر',async()=>{try{await navigator.clipboard.writeText(item.path);toast('مسیر کپی شد');}catch(e){toast('کپی مسیر در این مرورگر پشتیبانی نشد');}}),
+      button('پیش‌نمایش',()=>{const frame=detailPane.querySelector('iframe');if(frame)frame.scrollIntoView({behavior:'smooth',block:'center'});}));
+    if(!item.protected)actions.append(button('انتقال به آرشیو',async()=>{
+      if(!confirm('فایل از مسیر فعلی خارج و به آرشیو قابل‌بازیابی منتقل شود؟'))return;
+      let confirmPath;
+      if(refs.length){confirmPath=prompt('این فایل '+refs.length+' ارجاع احتمالی دارد. برای ادامه، مسیر دقیق فایل را وارد کن:\n'+item.path);if(confirmPath!==item.path)return;}
+      try{await api('/page-files/'+encodeURIComponent(item.id)+'/archive',{method:'POST',body:JSON.stringify({confirmPath})});toast('فایل به آرشیو منتقل شد؛ لینک‌های ارجاع‌شده را از بخش وابستگی بررسی کن.');selected=null;detail=null;await load();}
+      catch(e){toast('آرشیو ناموفق: '+e.message);}
+    },'bad'));
+    const warning=item.protected?h('div',{class:'pfm-warning'},'فایل محافظت‌شده است: '+item.protectionReason):refs.length?h('div',{class:'pfm-warning'},'این فایل '+refs.length+' ارجاع احتمالی دارد. قبل از آرشیو، مسیرهای وابسته را بررسی کن.'):h('p',{class:'mut'},'ارجاع متنی شناخته‌شده‌ای پیدا نشد؛ این موضوع تضمین نمی‌کند که ارجاع پویا یا مسیر ساخته‌شده در زمان اجرا وجود ندارد.');
+    const refNodes=refs.length?refs.map(ref=>h('div',{class:'pfm-ref'},h('b',{},ref.root+' · '+ref.path+':'+ref.line),h('code',{},ref.excerpt))):[h('p',{class:'mut'},'ارجاعی پیدا نشد.')];
+    const frame=h('iframe',{class:'pfm-preview',title:'پیش‌نمایش ایمن HTML',sandbox:''});
+    const csp='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: https:; style-src \'unsafe-inline\' https:; font-src data: https:; form-action \'none\'; base-uri \'none\'">';
+    frame.srcdoc=csp+detail.content;
+    detailPane.replaceChildren(
+      h('div',{},h('h3',{},item.path),h('p',{class:'mut'},item.rootLabel+' · '+item.categoryLabel),
+        h('p',{class:'mut'},'اندازه: '+(item.size/1024).toFixed(1)+' KB · آخرین تغییر: '+fa(item.modifiedAt)),
+        h('p',{class:'mut'},'SHA-256: '+(item.sha256||'برای فایل بزرگ محاسبه نشده')),
+        warning,actions,
+        h('h4',{},'ارجاع‌ها و وابستگی‌های متنی ('+refs.length+')'),...refNodes,
+        h('h4',{},'پیش‌نمایش ایمن (اجرای JavaScript غیرفعال است)'),frame));
+  }
+  async function load(){
+    try{
+      const [data,archived]=await Promise.all([api('/page-files'),api('/page-files-trash')]);
+      items=data.items||[];counts=data.counts||{};trash=archived.items||[];
+      renderStats();renderTabs();renderList();
+      if(selected){const exists=items.some(x=>x.id===selected);if(exists)await select(selected);else{selected=null;detail=null;detailPane.replaceChildren(h('div',{class:'pfm-empty'},'یک فایل را برای مشاهده جزئیات انتخاب کن.'));}}
+    }catch(e){list.replaceChildren(h('div',{class:'pfm-warning'},'خطا در دریافت فهرست فایل‌ها: '+e.message));}
+  }
+  renderStats();renderTabs();renderList();await load();
+  return root;
+};
+/* END TENX_PAGE_FILES_MANAGER_R1_UI */
+
+
 if(token)boot();
 </script>
 <section id="tenx-real-bot-manager" class="hide" style="padding:20px;margin:20px 0;border:1px solid #8885;border-radius:14px">
@@ -5355,125 +5918,7 @@ if(token)boot();
 
 
 
-<style id="mf-owner-lux-r1-style">
-/* MATIN_FUTURE_OWNER_LUX_R1 */
-/* MATIN FUTURE · OWNER LUX R1 · isolated visual layer */
-:root{
-  color-scheme:dark;
-  --bg:#07110e;--card:#11211a;--ink:#eaf9ef;--mut:#97b5a4;
-  --line:#244638;--pri:#147c51;--ok:#45dda0;--bad:#f37886;--warn:#e4b76a;
-  --mf-surface:#0c1914;--mf-glass:rgba(16,33,25,.96);
-  --mf-gold:#e3c481;--mf-shadow:0 22px 56px rgba(0,0,0,.23);
-}
-*,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth;color-scheme:dark;max-width:100%;overflow-x:hidden}
-body{margin:0!important;max-width:100%;overflow-x:hidden!important}
-body{background:radial-gradient(ellipse at 8% 0%,rgba(35,115,77,.16),transparent 32%),radial-gradient(ellipse at 92% 91%,rgba(19,84,56,.12),transparent 40%),var(--bg)!important;color:var(--ink)!important;font-family:Vazirmatn,Tahoma,Arial,sans-serif!important;line-height:1.8}
-*{scrollbar-color:#2d6249 #09150f}
-::selection{background:#267f5c;color:#fff}
-#app{display:grid;grid-template-columns:258px minmax(0,1fr)!important;min-height:100vh;max-width:100vw}
-#app>aside{min-width:0;max-width:100%;height:100vh;max-height:100vh;position:sticky;top:0;padding:23px 15px 18px!important;background:linear-gradient(180deg,#0d2218,#0b1913 52%,#0b1712)!important;border-inline-end:1px solid #23513b!important;z-index:25;overflow-y:auto;overflow-x:hidden;box-shadow:14px 0 30px #0002}
-#app>aside h2{margin:0 4px 15px!important;padding:12px 12px 14px;font-size:22px!important;letter-spacing:2px;line-height:1.1;color:#e8cb89!important;border-bottom:1px solid #294f3e}
-#app>aside h2::after{content:'MATIN FUTURE  |  CONTROL';display:block;margin-top:7px;font-size:9px;font-weight:500;letter-spacing:1.3px;color:#90bda5}
-#nav{display:flex;flex-direction:column;gap:4px;max-width:100%;overflow:visible}
-#nav a{border:1px solid transparent;border-radius:12px!important;color:#bed4c7!important;font-weight:600;padding:10px 13px!important;margin:0!important;line-height:1.6;transition:background .17s,border-color .17s,transform .17s;min-height:42px;display:flex!important;align-items:center;gap:9px}
-#nav a::before{content:'◈';color:#7d9f8e;font-size:11px;width:15px;flex:none}
-#nav a[hidden]{display:none!important}
-#nav a:hover{background:#183b2a!important;border-color:#28593e;transform:translateX(-2px)}
-#nav a.on{background:linear-gradient(120deg,#17643e,#154b35)!important;border-color:#3ab778!important;color:#f5fff9!important;box-shadow:0 5px 18px #0005}
-#nav a.on::before{color:#a4ffca}
-#app>main{padding:27px clamp(16px,2.1vw,36px) 56px!important;min-width:0;overflow-x:hidden;background:transparent}
-#app>main>header{min-height:78px;margin:0 0 23px!important;padding:15px 20px;border:1px solid #29503d;border-radius:17px;background:linear-gradient(114deg,rgba(24,57,39,.86),rgba(14,33,24,.96));box-shadow:var(--mf-shadow);gap:13px;flex-wrap:wrap}
-#app>main>header h1{font-size:clamp(19px,2.2vw,26px)!important;line-height:1.4;font-weight:800;color:#f1fff5;letter-spacing:-.35px}
-#who{font-size:12px;direction:ltr;text-align:left;color:#a2cfb6!important;max-width:260px;overflow-wrap:anywhere}
-#out{white-space:nowrap}
-#view{min-width:0;max-width:100%;animation:mf-appear .24s ease both}
-@keyframes mf-appear{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-#view>.card,#view .card,#drawer .card,.card{background:linear-gradient(155deg,#12261b,#102018)!important;border:1px solid #2b4d3b!important;border-radius:17px!important;box-shadow:0 7px 28px rgba(0,0,0,.14);color:#e7f8ec}
-.card{padding:18px!important}
-.card>.mut, .card p.mut{color:#9bb6a3}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px!important}
-.stat b{display:block;font-size:clamp(23px,2.2vw,34px)!important;color:#e4ffc9;letter-spacing:-1px}
-.stat{position:relative;overflow:hidden;background:linear-gradient(140deg,#193d2a,#112c20)!important;border-color:#326147!important;min-height:111px}
-.stat::after{content:'';position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,#51d995,transparent);opacity:.6}
-.stat b{font-size:clamp(23px,2.2vw,34px)!important;color:#e4ffc9;letter-spacing:-1px}
-.mut,th,dt{color:var(--mut)!important}
-button,input,textarea,select{font:inherit;transition:background .16s,border-color .16s,box-shadow .16s;max-width:100%;accent-color:#3bcb85}
-input,select,textarea{background:#0c1b14!important;color:#e9fff1!important;border:1px solid #376047!important;border-radius:11px!important;padding:10px 12px!important;min-height:41px}
-input::placeholder,textarea::placeholder{color:#769787!important;opacity:1}
-input:focus,textarea:focus,select:focus{outline:2px solid #4bca8a!important;outline-offset:1px;box-shadow:0 0 0 4px rgba(61,184,118,.14)!important}
-button{min-height:41px;border:1px solid #2b9360!important;border-radius:11px!important;background:linear-gradient(130deg,#218557,#14633e)!important;color:#fff!important;padding:9px 14px!important;font-weight:700;box-shadow:0 4px 10px #07170e33}
-button:hover:not(:disabled){background:linear-gradient(130deg,#2b9b67,#17754a)!important;filter:brightness(1.05)}
-button:focus-visible,a:focus-visible{outline:2px solid #eac886!important;outline-offset:3px}
-button:disabled{opacity:.46;cursor:not-allowed;box-shadow:none}
-button.sec{background:#183127!important;border-color:#3b7153!important;color:#dbf4e3!important}
-button.bad{background:#672e35!important;border-color:#a65961!important;color:#fff!important}
-a{color:#76e6aa}
-a:hover{text-decoration:underline}
-#view .tbl, #view .wrap{max-width:100%;overflow-x:auto;border:1px solid #2b4d3b;border-radius:12px}
-table{border-collapse:separate;border-spacing:0;width:100%;min-width:0}
-th,td{padding:12px 13px!important;border-bottom:1px solid #274534!important;text-align:right}
-th{background:#102d1e;color:#bbd6c5!important;font-size:12px;font-weight:700!important}
-tbody tr:hover{background:rgba(42,109,74,.18)}
-tbody tr:last-child td{border-bottom:0}
-.tag{background:#10281c!important;border:1px solid #3b5943!important;color:#d0e7d7!important;padding:3px 9px;border-radius:99px!important}
-.tag.ok{color:#71e7ab!important}.tag.bad{color:#ff9399!important}.tag.warn{color:#f6c876!important}
-#drawer{z-index:200!important;backdrop-filter:blur(7px);background:rgba(0,0,0,.68)!important}
-#drawer>.card{background:#11211b!important;border-radius:0!important;max-width:min(460px,100vw);height:100vh;overflow:auto;box-shadow:-20px 0 60px #000a}
-#toast{background:#15432d!important;border:1px solid #3fbe80!important;color:#f0fff5!important;border-radius:12px!important;box-shadow:0 18px 40px #0009;padding:12px 17px!important;max-width:min(430px,calc(100vw - 26px));white-space:normal;overflow-wrap:anywhere}
-#login{background:radial-gradient(ellipse at 50% 20%,#125637 0%,#0a1e14 44%,#07110e 80%)}
-#login>.card{width:min(440px,100%)!important;background:linear-gradient(145deg,#183b2a,#0b1e15)!important;border:1px solid #387954!important;border-radius:23px!important;padding:clamp(22px,4vw,38px)!important;box-shadow:0 30px 90px #0008;position:relative;overflow:hidden}
-#login>.card::before{content:'MATIN FUTURE';display:block;color:#d9bd7e;font-size:12px;font-weight:800;letter-spacing:3px;margin-bottom:24px;direction:ltr;text-align:center}
-#login h2{color:#f3fff7;font-size:25px;margin-bottom:22px!important;text-align:center}
-#login .row{gap:13px!important}
-#login input{width:100%;min-height:48px}
-#login #go{width:100%;min-height:48px;margin-top:7px}
-#lerr{font-size:13px;color:#ffadad!important;min-height:22px}
-#mf-nav-filter{width:100%;max-width:100%;font-size:12px;min-height:39px;margin-bottom:11px;background:#0b2015!important}
-#mf-top-label{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid #38674b;border-radius:100px;background:#102d20;color:#b3ddc2;font-size:11px;font-weight:700}
-#mf-top-label::before{content:'●';color:#63dfa1;font-size:9px}
-#mf-alert{position:fixed;left:14px;right:14px;top:12px;max-width:600px;margin:auto;background:#502c32;border:1px solid #e09494;color:#fff;padding:13px 17px;border-radius:13px;z-index:4000;box-shadow:0 12px 30px #0008}
-#mf-alert button{float:left;padding:3px 10px!important;min-height:28px!important;background:#783741!important;border-color:#d08b8b!important;margin-right:10px}
-.two{display:grid;grid-template-columns:minmax(270px,360px) minmax(0,1fr);gap:15px}
-.msgs{max-height:52vh}
-.m{border:1px solid #2e4f3e;background:#0d261a!important;color:#d7f3e3}
-.m.ADMIN{background:#175638!important}
-body.tenx-editor-standalone #app{display:block!important}
-body.tenx-editor-standalone #app>main{padding:0!important}
-body.tenx-editor-standalone #app>main>header{border-radius:0!important;margin:0!important;min-height:58px}
-body.tenx-editor-standalone #view{animation:none!important}
-body.tenx-editor-standalone #view .card{max-width:100%}
-.tenx-studio-stage-panel iframe{max-width:100%}
-@media(max-width:1050px){#app{grid-template-columns:215px minmax(0,1fr)!important}#app>aside{padding:15px 10px!important}#app>main{padding:17px 15px 42px!important}}
-@media(max-width:800px){
-  #app{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
-  #app>aside{position:sticky!important;top:0!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;padding:10px 11px!important;border-bottom:1px solid #2b6247!important;box-shadow:0 12px 24px #0005;z-index:120!important;overflow:visible!important}
-  #app>aside h2{margin:0 0 8px!important;padding:5px 3px 9px;font-size:17px!important}
-  #app>aside h2::after{display:inline;margin:0 9px;font-size:8px}
-  #nav{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:7px!important;max-width:100%;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin;padding:3px 0 7px}
-  #nav a{flex:0 0 auto!important;min-height:36px;padding:7px 11px!important;font-size:12px!important;white-space:nowrap!important}
-  #mf-nav-filter{height:34px;min-height:34px;margin-bottom:6px;padding:6px 12px!important}
-  #app>main{padding:13px 11px 65px!important;overflow-x:hidden!important}
-  #app>main>header{padding:13px 14px;border-radius:13px!important;min-height:67px;gap:8px}
-  #app>main>header h1{font-size:19px!important}
-  #who{font-size:10px;max-width:190px}
-  .card{padding:12px!important}
-  .two{grid-template-columns:minmax(0,1fr)!important}
-  .grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important}
-  #view table{display:table!important;min-width:570px}
-  #view .tbl{overflow-x:auto!important}
-  #drawer>.card{max-width:100%;height:100dvh}
-  html.tenx-admin-zoom-enabled body{zoom:1!important}
-  #tenx-admin-zoom-controls{display:none!important}
-  .tenx-studio-stage-panel iframe{touch-action:pan-y!important}
-}
-@media(max-width:440px){#app>main>header{flex-direction:column;align-items:stretch!important}#app>main>header>.row{justify-content:space-between}#view .row{flex-wrap:wrap}#view .stat b{font-size:25px!important}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
-@media(max-width:600px){#view>.grid:has(.tbl){grid-template-columns:minmax(0,1fr)!important}}
-
-</style>
 <script id="mf-owner-lux-r1-js">
 /* MATIN FUTURE · OWNER LUX R1 · progressive UI enhancements */
 (function(){
@@ -5548,6 +5993,26 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
 .p40-editor-shell .tenx-studio-responsive-layout{grid-template-columns:minmax(300px,380px) minmax(0,1fr)!important;align-items:start!important;gap:14px!important}
 .p40-editor-shell .tenx-studio-inspector-panel{background:#0e2018!important;border:1px solid #305841!important;border-radius:15px!important;max-height:calc(100vh - 150px);overflow-y:auto;overflow-x:hidden;position:sticky;top:80px}
 .p40-editor-shell .tenx-studio-stage-panel{background:#14251d!important;border:1px solid #305841!important;border-radius:15px!important;min-width:0;overflow:hidden}
+
+/* TENX_EDITOR_PREVIEW_STICKY_DESKTOP_R1 */
+@media (min-width: 761px) {
+  .p40-editor-shell .tenx-studio-stage-panel {
+    position: sticky !important;
+    top: 80px !important;
+    align-self: start !important;
+    max-height: calc(100vh - 96px);
+    z-index: 5;
+  }
+}
+
+/* Keep existing mobile tab behavior */
+@media (max-width: 760px) {
+  .p40-editor-shell .tenx-studio-stage-panel {
+    position: static !important;
+    max-height: none;
+  }
+}
+
 .p40-editor-shell .tenx-studio-stage-panel iframe{border-radius:10px;box-shadow:0 10px 35px #0007}
 .p40-editor-shell .tenx-studio-inspector-panel h3{font-size:15px!important;color:#e8fbee!important;margin:17px 0 8px}
 .p40-editor-shell .tenx-studio-inspector-panel select,.p40-editor-shell .tenx-studio-inspector-panel input,.p40-editor-shell .tenx-studio-inspector-panel textarea{width:100%;min-width:0;background:#0b1c14!important;border:1px solid #3b5a49!important;color:#e8fbed!important;border-radius:9px!important}
@@ -5662,8 +6127,8 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
     try {
       if (typeof TENX_P51_RENDER_MENU === 'function' &&
           typeof MENU !== 'undefined' && typeof ok === 'function' &&
-          typeof show === 'function' && typeof me !== 'undefined' && me) {
-        TENX_P51_RENDER_MENU(MENU.filter(ok), show, me);
+          typeof navigateManagement === 'function' && typeof me !== 'undefined' && me) {
+        TENX_P51_RENDER_MENU(MENU.filter(ok), navigateManagement, me);
       }
     } catch (e) {
       console.error('P52 owner menu recovery failed:', e);
@@ -5728,7 +6193,7 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
     openBtn=element('button','p53-menu-button','☰  منوی مدیریت');
     openBtn.type='button';openBtn.setAttribute('aria-controls','p53-mobile-drawer');openBtn.setAttribute('aria-expanded','false');
     openBtn.addEventListener('click',()=>document.body.classList.contains('p53-drawer-open')?close():open());
-    bar.append(openBtn,element('span','p53-brand','MATIN FUTURE · ADMIN'));
+    bar.append(openBtn,element('span','p53-brand','MMTrade10X · مدیریت'));
     app.insertBefore(bar,app.firstChild);
     overlay=element('div','');overlay.id='p53-mobile-overlay';overlay.addEventListener('click',close);
     drawer=element('aside','');drawer.id='p53-mobile-drawer';drawer.setAttribute('role','navigation');drawer.setAttribute('aria-label','بخش‌های مدیریت');drawer.setAttribute('aria-hidden','true');
@@ -5773,7 +6238,7 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
       let group=groups.find(g=>g.keys.includes(item[0]));
       if(!group){
         const target=(String(item[0])+' '+String(item[1])).toLowerCase();
-        if(/growth|campaign|track|referr|تبلیغ|کمپین|رهگیری/.test(target))group=groups.find(g=>g.id==='marketing');
+        if(/growth|campaign|track|referr|تبلیغ|کمپین|رهگیری/.test(target))group=groups.find(g=>g.id==='people');
         else if(/user|member|support|کاربر|پشتیبان/.test(target))group=groups.find(g=>g.id==='people');
         else if(/page|content|design|محتوا|صفحه/.test(target))group=groups.find(g=>g.id==='content');
       }
@@ -5793,8 +6258,8 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
       g.items.forEach(item=>{
         const btn=element('button','p53-item'+(item[0]===active?' p53-active':''),item[1]);
         btn.type='button';btn.addEventListener('click',()=>{
-          if(typeof show==='function'){
-            try{const p=show(item[0]);if(p&&typeof p.catch==='function')p.catch(err=>console.error('P53 navigation error',err));}
+          if(typeof navigateManagement==='function'){
+            try{const p=navigateManagement(item[0]);if(p&&typeof p.catch==='function')p.catch(err=>console.error('P53 navigation error',err));}
             catch(err){console.error('P53 navigation error',err)}
           }else{
             const link=byId('n-'+item[0]);if(link)link.click();
@@ -5840,635 +6305,14 @@ body.tenx-editor-standalone .p40-editor-shell{max-width:1680px!important;margin:
 /* END TENX_P53_OWNER_MOBILE_DRAWER_V1 */
 
 </script>
-<style id="p54-executive-admin">
 
-/* TENX_P54_EXECUTIVE_UI_V1 -- Luxury console. No layout takeover for P53. */
-:root{
- color-scheme:dark;
- --bg:#060f0c;--card:#11221b;--ink:#edf7f0;--mut:#99b9a7;
- --line:#2b4e3e;--pri:#207952;--ok:#60dba0;--warn:#deb77d;--bad:#ff8f94;
- --p54-void:#060e0b;--p54-obsidian:#0a1711;--p54-surface:#10221a;
- --p54-surface2:#162c21;--p54-copper:#cfa576;--p54-copper-faint:#71543a;
- --p54-jade:#4dd79b;--p54-ink:#ecf8f1;--p54-muted:#a1bfae;
- --p54-stroke:rgba(127,178,137,.21);
- --p54-shadow:0 16px 44px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.035);
-}
-html{color-scheme:dark;scrollbar-color:#34624c #07120d}
-body:not(.tenx-editor-standalone){
- background:radial-gradient(ellipse 70% 45% at 100% 0%,rgba(35,118,79,.17),transparent 63%),
- radial-gradient(ellipse 50% 35% at 0% 95%,rgba(160,111,60,.095),transparent 75%),
- linear-gradient(135deg,#060e0b,#0a1711 40%,#07120e)!important;
- color:var(--p54-ink)!important;
-}
-body:not(.tenx-editor-standalone) #app>aside{
- background:linear-gradient(160deg,rgba(17,38,27,.99),rgba(8,23,16,.99) 67%,rgba(18,30,23,.99))!important;
- border-inline-end:1px solid rgba(205,158,98,.28)!important;
- box-shadow:inset -1px 0 0 rgba(74,159,110,.07),14px 0 42px rgba(0,0,0,.28)!important;
-}
-body:not(.tenx-editor-standalone) #app>aside h2{
- font-weight:900!important;color:#edd0a0!important;letter-spacing:1.6px!important;
- text-shadow:0 3px 16px rgba(203,157,91,.16);
-}
-body:not(.tenx-editor-standalone) #mf-nav-filter{
- background:#091a12!important;border:1px solid rgba(155,202,154,.23)!important;
- box-shadow:inset 0 2px 8px rgba(0,0,0,.16)!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-group{
- background:linear-gradient(145deg,#13291d,#0c1b14)!important;
- border:1px solid rgba(149,188,142,.22)!important;
- border-radius:16px!important;
- box-shadow:0 5px 18px rgba(0,0,0,.11),inset 0 1px 0 rgba(255,255,255,.025)!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-group[data-open="true"]{
- border-color:rgba(202,159,100,.55)!important;
- background:linear-gradient(152deg,#193326,#10231a)!important;
- box-shadow:0 9px 27px rgba(0,0,0,.27),inset 3px 0 0 rgba(205,165,107,.55)!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-head{
- color:#e4f4e8!important;min-height:49px!important;letter-spacing:-.15px;
- background:transparent!important;box-shadow:none!important;border:0!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-icon,
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-arrow{color:var(--p54-copper)!important}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-count{
- border-color:#43664e!important;color:#c3dbcb!important;background:#0b1b13!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-children{
- border-top-color:rgba(186,163,107,.24)!important;padding-top:7px!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-children a,
-body:not(.tenx-editor-standalone) #nav:not(.tenx-p51-tree)>a{
- color:#bcd6c5!important;border:1px solid transparent!important;
- transition:background .2s,border-color .2s,transform .2s,color .2s;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-children a:hover,
-body:not(.tenx-editor-standalone) #nav:not(.tenx-p51-tree)>a:hover{
- background:#1a402c!important;border-color:#387a51!important;color:#f7fffa!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-children a.on,
-body:not(.tenx-editor-standalone) #nav:not(.tenx-p51-tree)>a.on{
- background:linear-gradient(108deg,#226d4c,#12422f)!important;
- border-color:rgba(94,226,160,.56)!important;color:#fff!important;
- box-shadow:inset 3px 0 0 #d5ae77,0 7px 20px rgba(0,0,0,.24)!important;
-}
-body:not(.tenx-editor-standalone) #app>main>header{
- position:relative;isolation:isolate;overflow:hidden;
- padding:21px 24px!important;border:1px solid rgba(201,167,103,.35)!important;
- border-radius:22px!important;
- background:linear-gradient(115deg,rgba(18,45,31,.97),rgba(9,24,17,.98) 62%,rgba(35,38,27,.98))!important;
- box-shadow:var(--p54-shadow)!important;min-height:106px;
-}
-body:not(.tenx-editor-standalone) #app>main>header::before{
- content:'';position:absolute;inset:0 0 auto;height:2px;
- background:linear-gradient(90deg,transparent,#c89b5b 21%,#51db9a 55%,transparent);
- z-index:-1;
-}
-body:not(.tenx-editor-standalone) #app>main>header::after{
- content:'MATIN FUTURE   /   EXECUTIVE CONTROL';display:block;width:100%;order:10;
- font:600 10px/1.5 system-ui,sans-serif;direction:ltr;text-align:right;
- color:rgba(210,183,137,.71);letter-spacing:2px;
-}
-body:not(.tenx-editor-standalone) #app>main>header h1{
- font-size:clamp(21px,2.1vw,28px)!important;font-weight:900!important;
- letter-spacing:-.5px;color:#f4fff8!important;text-shadow:0 3px 16px #0003;
-}
-body:not(.tenx-editor-standalone) #who{font-size:11px!important;color:#b3d5c2!important}
-body:not(.tenx-editor-standalone) #view{
- color:#e6f5eb;max-width:100%;min-width:0;
-}
-body:not(.tenx-editor-standalone) #view .card,
-body:not(.tenx-editor-standalone) #view>.card,
-body:not(.tenx-editor-standalone) #drawer .card{
- position:relative;
- background:linear-gradient(153deg,rgba(20,43,31,.98),rgba(11,27,19,.98))!important;
- border:1px solid rgba(127,177,140,.23)!important;
- border-radius:19px!important;
- box-shadow:var(--p54-shadow)!important;
-}
-body:not(.tenx-editor-standalone) #view>.card:hover,
-body:not(.tenx-editor-standalone) #view>.grid>.card:hover{
- border-color:rgba(183,155,108,.5)!important;
-}
-body:not(.tenx-editor-standalone) #view h2,
-body:not(.tenx-editor-standalone) #view h3,
-body:not(.tenx-editor-standalone) #view .card>b{
- color:#f0f8f1;letter-spacing:-.2px;
-}
-body:not(.tenx-editor-standalone) #view .grid{gap:15px!important}
-body:not(.tenx-editor-standalone) #view .stat{
- min-height:133px;padding:21px!important;
- background:linear-gradient(148deg,#1b412c,#122f22 50%,#10231a)!important;
- border:1px solid rgba(122,185,135,.4)!important;
- box-shadow:0 16px 38px rgba(0,0,0,.23),inset 0 1px 0 rgba(245,240,209,.09)!important;
- transition:transform .22s,border-color .22s,box-shadow .22s;
-}
-body:not(.tenx-editor-standalone) #view .stat::after{
- background:linear-gradient(90deg,#d5a773,#75efb1,transparent)!important;height:2px!important;opacity:1!important;
-}
-body:not(.tenx-editor-standalone) #view .stat:hover{
- transform:translateY(-3px);border-color:rgba(219,175,106,.68)!important;
- box-shadow:0 20px 42px rgba(0,0,0,.33)!important;
-}
-body:not(.tenx-editor-standalone) #view .stat b{
- font-family:"DoranFaNum","Doran",Vazirmatn,Tahoma,sans-serif!important;
- font-size:clamp(28px,2.3vw,39px)!important;color:#e7d1a6!important;
- text-shadow:0 5px 17px rgba(0,0,0,.24);font-variant-numeric:tabular-nums;
-}
-body:not(.tenx-editor-standalone) #view .stat .mut{color:#b1d5bc!important;font-size:12px;line-height:1.9}
-body:not(.tenx-editor-standalone) button:not(.tenx-p51-head):not(.p53-item),
-body:not(.tenx-editor-standalone) #view button,
-body:not(.tenx-editor-standalone) #drawer button{
- border-radius:12px!important;
- background:linear-gradient(135deg,#267d56,#166245)!important;
- border:1px solid rgba(100,219,157,.58)!important;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 5px 15px rgba(0,0,0,.22)!important;
- color:#f7fff9!important;
- font-weight:700;transition:transform .16s,filter .16s,border-color .16s;
-}
-body:not(.tenx-editor-standalone) button:not(.tenx-p51-head):not(.p53-item):hover:enabled{
- filter:brightness(1.12);transform:translateY(-1px);
-}
-body:not(.tenx-editor-standalone) button.sec,
-body:not(.tenx-editor-standalone) button.secondary{
- background:linear-gradient(135deg,#21362b,#18291e)!important;
- color:#e2f6e9!important;border-color:#3d6750!important;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
-}
-body:not(.tenx-editor-standalone) button.bad{
- background:linear-gradient(120deg,#772f37,#53262d)!important;
- border-color:#a85f65!important;color:#fff!important;
-}
-body:not(.tenx-editor-standalone) input:not([type=checkbox]):not([type=radio]),
-body:not(.tenx-editor-standalone) select,
-body:not(.tenx-editor-standalone) textarea{
- border-radius:12px!important;
- background:linear-gradient(#0a1b13,#0d2118)!important;
- border:1px solid #395c49!important;color:#edf9f1!important;
- box-shadow:inset 0 2px 8px rgba(0,0,0,.2);
-}
-body:not(.tenx-editor-standalone) input:focus-visible,
-body:not(.tenx-editor-standalone) textarea:focus-visible,
-body:not(.tenx-editor-standalone) select:focus-visible,
-body:not(.tenx-editor-standalone) button:focus-visible,
-body:not(.tenx-editor-standalone) a:focus-visible{
- outline:2px solid #d8ac71!important;outline-offset:2px!important;
-}
-body:not(.tenx-editor-standalone) #view .tbl,
-body:not(.tenx-editor-standalone) #view .wrap{
- background:#0c1e15;border:1px solid #31503c!important;
- border-radius:16px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
-}
-body:not(.tenx-editor-standalone) #view table{border-spacing:0;width:100%}
-body:not(.tenx-editor-standalone) #view th{
- background:linear-gradient(120deg,#1a3928,#153022)!important;
- color:#d8bf98!important;border-bottom:1px solid rgba(195,156,104,.37)!important;
- font-size:12px!important;letter-spacing:.1px;
-}
-body:not(.tenx-editor-standalone) #view td{
- border-bottom:1px solid rgba(114,165,127,.15)!important;
- color:#daeee0;line-height:1.7;
-}
-body:not(.tenx-editor-standalone) #view tbody tr:nth-child(even){background:rgba(17,51,31,.25)}
-body:not(.tenx-editor-standalone) #view tbody tr:hover{background:rgba(44,111,76,.29)!important}
-body:not(.tenx-editor-standalone) .tag{
- border:1px solid rgba(187,152,98,.31)!important;
- background:linear-gradient(120deg,#183222,#0e2419)!important;
- color:#d4e5d8!important;
-}
-body:not(.tenx-editor-standalone) .tag.ok{color:#71e7ac!important;border-color:rgba(76,201,140,.42)!important}
-body:not(.tenx-editor-standalone) .tag.warn{color:#e8c27d!important;border-color:rgba(219,167,91,.43)!important}
-body:not(.tenx-editor-standalone) .tag.bad{color:#ff999f!important;border-color:rgba(222,105,118,.4)!important}
-body:not(.tenx-editor-standalone) #drawer{background:rgba(1,10,6,.72)!important;backdrop-filter:blur(9px)}
-body:not(.tenx-editor-standalone) #drawer>.card{
- background:linear-gradient(160deg,#173425,#0a1b12 67%)!important;
- border-inline-start:1px solid #a68153!important;
- box-shadow:-22px 0 60px rgba(0,0,0,.54)!important;
-}
-body:not(.tenx-editor-standalone) #toast{
- background:linear-gradient(110deg,#174e34,#0e3022)!important;
- border:1px solid rgba(192,158,102,.65)!important;
- box-shadow:0 18px 48px #0009!important;
-}
-body:not(.tenx-editor-standalone) #login{
- background:radial-gradient(ellipse at 50% 17%,rgba(47,119,73,.43),transparent 48%),
- radial-gradient(ellipse at 50% 100%,rgba(195,136,69,.1),transparent 65%),#050e0b!important;
-}
-body:not(.tenx-editor-standalone) #login>.card{
- border:1px solid rgba(209,167,104,.52)!important;
- box-shadow:0 42px 110px #0009,0 0 70px rgba(22,107,67,.14)!important;
- background:linear-gradient(145deg,#1a3a29,#0c1b13 77%)!important;
-}
-body:not(.tenx-editor-standalone) #login>.card::before{
- color:#e2ba7e!important;letter-spacing:3px!important;
-}
-/* P53 mobile drawer: purely visual overrides; geometry and behaviors remain P53-owned. */
-body.p53-owner-mobile #p53-mobilebar{
- background:linear-gradient(120deg,#0c2317,#10291c 65%,#1a2920)!important;
- border-bottom-color:rgba(207,165,108,.55)!important;
- box-shadow:0 12px 28px rgba(0,0,0,.42)!important;
-}
-body.p53-owner-mobile #p53-mobilebar .p53-brand{color:#e1c18d!important;letter-spacing:.5px}
-body.p53-owner-mobile #p53-mobile-drawer{
- background:linear-gradient(155deg,#0d2117,#06140c 70%)!important;
- border-left-color:rgba(204,157,95,.6)!important;
- box-shadow:-18px 0 65px rgba(0,0,0,.7)!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer .p53-title{color:#edcca0!important}
-body.p53-owner-mobile #p53-mobile-drawer .p53-group{
- background:linear-gradient(150deg,#172e20,#0e2117)!important;
- border-color:#355c42!important;border-radius:15px!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer .p53-group[open]{border-color:#ae8551!important}
-body.p53-owner-mobile #p53-mobile-drawer .p53-item{
- background:#153626!important;border:1px solid #315e42!important;color:#e3f5e9!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer .p53-item.p53-active{
- background:linear-gradient(120deg,#1a6948,#164e36)!important;
- border-color:#cea66d!important;
- box-shadow:inset 3px 0 0 #e3bc81!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer .p53-foot{border-top-color:#5d593b!important;color:#b3d1b9!important}
-/* Interface comfort, without modifying the editor's canvas/preview. */
-@media(max-width:800px){
- body:not(.tenx-editor-standalone) #app>main>header{
-   padding:17px 15px!important;min-height:0;border-radius:17px!important;
- }
- body:not(.tenx-editor-standalone) #app>main>header::after{font-size:8px;letter-spacing:1px;text-align:right}
- body:not(.tenx-editor-standalone) #view .stat{min-height:115px;padding:15px!important}
- body:not(.tenx-editor-standalone) #view .card{padding:15px!important}
- body:not(.tenx-editor-standalone) #view th,body:not(.tenx-editor-standalone) #view td{padding:10px!important}
- body:not(.tenx-editor-standalone) #view .stat b{font-size:27px!important}
-}
-@media(prefers-reduced-motion:reduce){
- body:not(.tenx-editor-standalone) #view .stat,
- body:not(.tenx-editor-standalone) button{transition:none!important;transform:none!important}
-}
-/* END TENX_P54_EXECUTIVE_UI_V1 */
 
-</style>
-<style id="p55-imperial-admin">
-
-/* TENX_P55_IMPERIAL_RESERVE_V1 -- Private wealth UI; layout remains P53-owned */
-:root{
- color-scheme:dark;
- --bg:#07110e;--card:#12231c;--ink:#f0ebe1;--mut:#b4c3b9;
- --line:#34453b;--pri:#2d634e;--ok:#97c5a7;--warn:#d5ad81;--bad:#e5a09b;
- --ir-void:#060c0a;--ir-obsidian:#0b1712;--ir-panel:#11231b;
- --ir-panel-raised:#172b21;--ir-emerald:#234c3a;--ir-copper:#bf9678;
- --ir-ivory:#f1e9da;--ir-sage:#aec9b5;--ir-dim:#879b8c;
- --ir-line:rgba(189,150,115,.23);
- --ir-shadow:0 18px 52px rgba(0,0,0,.3),inset 0 1px rgba(246,227,197,.045);
-}
-html{color-scheme:dark;scrollbar-color:#475649 #08130e}
-body:not(.tenx-editor-standalone){
- background:radial-gradient(ellipse 55% 45% at 98% -8%,rgba(40,83,60,.2),transparent 75%),
- radial-gradient(ellipse 43% 45% at 2% 100%,rgba(151,93,70,.07),transparent 80%),
- linear-gradient(150deg,#060e0b,#0b1912 51%,#07120e)!important;
- color:var(--ir-ivory)!important;
-}
-body:not(.tenx-editor-standalone) #app>aside{
- background:linear-gradient(180deg,#0a1a13 0%,#0b1913 64%,#101b16)!important;
- border-inline-end:1px solid rgba(182,142,105,.3)!important;
- box-shadow:8px 0 36px #0004!important;
-}
-body:not(.tenx-editor-standalone) #app>aside h2{
- color:var(--ir-copper)!important;letter-spacing:2.5px!important;font-weight:800!important;
- text-shadow:none!important;
-}
-body:not(.tenx-editor-standalone) #mf-nav-filter{
- background:#091910!important;border:1px solid #3c5241!important;
- border-radius:11px!important;box-shadow:none!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-group{
- background:linear-gradient(150deg,#11231a,#0d1d15)!important;
- border:1px solid #30483a!important;border-radius:13px!important;
- box-shadow:inset 0 1px 0 rgba(245,222,190,.035)!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-group[data-open="true"]{
- background:linear-gradient(150deg,#1a3226,#11251b)!important;
- border-color:rgba(192,151,118,.65)!important;
- box-shadow:inset 2px 0 0 #bf9778!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-head{
- color:#e6e5d8!important;background:transparent!important;border:0!important;box-shadow:none!important;
- font-weight:700!important;letter-spacing:0!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-icon,
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-arrow{color:#bb9c83!important}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-count{
- color:#b6c6b9!important;background:#13251b!important;border-color:#3c5543!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree .tenx-p51-children{
- border-top-color:rgba(191,151,119,.19)!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree a,
-body:not(.tenx-editor-standalone) #nav:not(.tenx-p51-tree)>a{
- color:#afc4b4!important;border-radius:9px!important;transition:background .18s,border-color .18s;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree a.on,
-body:not(.tenx-editor-standalone) #nav:not(.tenx-p51-tree)>a.on{
- background:#204736!important;border:1px solid rgba(192,151,119,.55)!important;
- color:#f7f1e7!important;box-shadow:inset 3px 0 #c79a78!important;
-}
-body:not(.tenx-editor-standalone) #app>aside #nav.tenx-p51-tree a:hover{
- background:#203b2c!important;color:#fffaf1!important;
-}
-body:not(.tenx-editor-standalone) #app>main>header{
- min-height:104px;background:linear-gradient(122deg,#1b3427,#12261d 61%,#18251d)!important;
- border:1px solid rgba(192,151,119,.43)!important;
- border-radius:18px!important;
- box-shadow:var(--ir-shadow)!important;
- padding:22px 25px!important;isolation:isolate;
-}
-body:not(.tenx-editor-standalone) #app>main>header::before{
- content:'';position:absolute;inset:0 0 auto;height:1px;
- background:linear-gradient(90deg,transparent,rgba(199,158,124,.7),transparent);
- z-index:-1;
-}
-body:not(.tenx-editor-standalone) #app>main>header::after{
- content:'MATIN FUTURE  /  IMPERIAL RESERVE';order:10;width:100%;display:block;
- color:rgba(206,170,137,.76);letter-spacing:2.3px;
- font:600 10px/1.4 system-ui,sans-serif;direction:ltr;text-align:right;
-}
-body:not(.tenx-editor-standalone) #app>main>header h1{
- color:var(--ir-ivory)!important;font-weight:800!important;
- font-size:clamp(21px,2vw,29px)!important;letter-spacing:0!important;text-shadow:none!important;
-}
-body:not(.tenx-editor-standalone) #who{color:#aec7b2!important;font-size:11px!important}
-body:not(.tenx-editor-standalone) #view{color:var(--ir-ivory)!important}
-body:not(.tenx-editor-standalone) #view .card,
-body:not(.tenx-editor-standalone) #view>.card,
-body:not(.tenx-editor-standalone) #drawer .card{
- background:linear-gradient(148deg,#14291e,#0d1c15)!important;
- border:1px solid rgba(168,156,125,.24)!important;
- border-radius:17px!important;
- box-shadow:0 13px 35px rgba(0,0,0,.22),inset 0 1px rgba(240,221,189,.03)!important;
-}
-body:not(.tenx-editor-standalone) #view h2,
-body:not(.tenx-editor-standalone) #view h3,
-body:not(.tenx-editor-standalone) #view .card>b{color:#f0e6d5!important;letter-spacing:0!important}
-body:not(.tenx-editor-standalone) #view .grid{gap:15px!important}
-body:not(.tenx-editor-standalone) #view .stat{
- background:linear-gradient(135deg,#1b3628,#11251b)!important;
- border:1px solid rgba(191,150,113,.39)!important;
- border-radius:15px!important;min-height:135px;padding:22px!important;
- box-shadow:inset 0 1px rgba(241,226,194,.065),0 14px 31px #0003!important;
- transition:border-color .2s,transform .2s;
-}
-body:not(.tenx-editor-standalone) #view .stat::after{
- content:'';position:absolute;inset:auto 22px 0;height:1px!important;
- background:linear-gradient(90deg,transparent,#bf9678,transparent)!important;opacity:.7!important;
-}
-body:not(.tenx-editor-standalone) #view .stat:hover{transform:translateY(-2px);border-color:#a7886b!important}
-body:not(.tenx-editor-standalone) #view .stat b{
- color:#e9d5bb!important;text-shadow:none!important;
- font-size:clamp(29px,2.4vw,40px)!important;
- font-variant-numeric:tabular-nums;
- font-family:"DoranFaNum","Doran",Vazirmatn,Tahoma,sans-serif!important;
-}
-body:not(.tenx-editor-standalone) #view .stat .mut{color:#aec4b5!important;font-size:12px}
-body:not(.tenx-editor-standalone) button:not(.tenx-p51-head):not(.p53-item),
-body:not(.tenx-editor-standalone) #view button,
-body:not(.tenx-editor-standalone) #drawer button{
- background:linear-gradient(125deg,#2b6048,#1e4434)!important;
- border:1px solid rgba(154,174,137,.48)!important;
- border-radius:11px!important;color:#f4f0e6!important;
- box-shadow:inset 0 1px rgba(255,255,255,.07),0 5px 16px #0003!important;
- font-weight:700!important;transition:filter .18s,transform .18s;
-}
-body:not(.tenx-editor-standalone) button.sec,
-body:not(.tenx-editor-standalone) button.secondary{
- background:#1a3024!important;color:#ddded2!important;
- border:1px solid rgba(184,144,106,.39)!important;box-shadow:none!important;
-}
-body:not(.tenx-editor-standalone) button.bad{
- background:#633b39!important;border-color:#9b6960!important;color:#fff7f3!important;
-}
-body:not(.tenx-editor-standalone) input:not([type=checkbox]):not([type=radio]),
-body:not(.tenx-editor-standalone) select,
-body:not(.tenx-editor-standalone) textarea{
- background:#0b1d14!important;color:#f5f2e7!important;
- border:1px solid #405647!important;border-radius:11px!important;
- box-shadow:inset 0 1px 5px #0003!important;
-}
-body:not(.tenx-editor-standalone) input::placeholder,
-body:not(.tenx-editor-standalone) textarea::placeholder{color:#8ea397!important}
-body:not(.tenx-editor-standalone) input:focus-visible,
-body:not(.tenx-editor-standalone) textarea:focus-visible,
-body:not(.tenx-editor-standalone) select:focus-visible,
-body:not(.tenx-editor-standalone) button:focus-visible,
-body:not(.tenx-editor-standalone) a:focus-visible{
- outline:2px solid #cea483!important;outline-offset:2px!important;
-}
-body:not(.tenx-editor-standalone) #view .tbl,
-body:not(.tenx-editor-standalone) #view .wrap{
- background:#0d2017!important;border:1px solid #394b3d!important;
- border-radius:14px!important;box-shadow:none!important;
-}
-body:not(.tenx-editor-standalone) #view th{
- background:#1b3326!important;border-bottom:1px solid rgba(196,151,112,.47)!important;
- color:#e1bc98!important;font-weight:750;font-size:12px!important;
-}
-body:not(.tenx-editor-standalone) #view td{
- border-bottom:1px solid rgba(158,174,140,.15)!important;
- color:#d8e4d9!important;
-}
-body:not(.tenx-editor-standalone) #view tbody tr:nth-child(even){background:rgba(26,54,37,.24)!important}
-body:not(.tenx-editor-standalone) #view tbody tr:hover{background:rgba(54,87,60,.27)!important}
-body:not(.tenx-editor-standalone) .tag{
- background:#1b3024!important;border:1px solid #4b5b45!important;
- color:#c4d4c5!important;
-}
-body:not(.tenx-editor-standalone) .tag.ok{color:#a1d5b6!important;border-color:#476d53!important}
-body:not(.tenx-editor-standalone) .tag.warn{color:#e0ba8a!important;border-color:#876b4b!important}
-body:not(.tenx-editor-standalone) .tag.bad{color:#e6a5a0!important;border-color:#905b59!important}
-body:not(.tenx-editor-standalone) #drawer{background:rgba(2,9,5,.73)!important;backdrop-filter:blur(7px)!important}
-body:not(.tenx-editor-standalone) #drawer>.card{
- background:linear-gradient(170deg,#172d21,#0b1a12)!important;
- border-inline-start:1px solid #a88163!important;
-}
-body:not(.tenx-editor-standalone) #toast{
- background:#1c412f!important;border:1px solid #ba9476!important;
- color:#f4f2e8!important;box-shadow:0 12px 35px #0008!important;
-}
-body:not(.tenx-editor-standalone) #login{
- background:radial-gradient(ellipse at 50% 8%,rgba(36,86,58,.3),transparent 60%),#070e0a!important;
-}
-body:not(.tenx-editor-standalone) #login>.card{
- background:linear-gradient(155deg,#1a3626,#0c1d14)!important;
- border:1px solid rgba(199,154,113,.55)!important;
- box-shadow:0 35px 90px #0009!important;
-}
-body:not(.tenx-editor-standalone) #login>.card::before{color:#d1b094!important}
-/* P53 mobile drawer remains functionally independent; only paint is changed */
-body.p53-owner-mobile #p53-mobilebar{
- background:linear-gradient(118deg,#0c1d15,#17291e)!important;
- border-bottom:1px solid rgba(192,153,116,.55)!important;
- box-shadow:0 8px 22px #0006!important;
-}
-body.p53-owner-mobile #p53-mobilebar .p53-brand{color:#d7b394!important;letter-spacing:.8px!important}
-body.p53-owner-mobile #p53-mobilebar .p53-menu-button{
- color:#f3eadb!important;background:#244c39!important;
- border-color:#a98468!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer{
- background:linear-gradient(155deg,#12291e,#0a1912 72%)!important;
- border-left:1px solid rgba(185,145,113,.6)!important;
- box-shadow:-20px 0 65px #000a!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer .p53-title{color:#efd7be!important}
-body.p53-owner-mobile #p53-mobile-drawer .p53-group{
- background:linear-gradient(160deg,#1a3326,#11251c)!important;
- border:1px solid #445847!important;border-radius:13px!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer .p53-group[open]{border-color:#b28b6d!important}
-body.p53-owner-mobile #p53-mobile-drawer .p53-item{
- background:#163226!important;border:1px solid #3e5a44!important;
- color:#e0e8dc!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer .p53-item.p53-active{
- background:#26543e!important;border-color:#c39b7d!important;
- color:#fff8ed!important;box-shadow:inset 3px 0 #c99c7e!important;
-}
-body.p53-owner-mobile #p53-mobile-drawer .p53-foot{color:#9cb1a1!important;border-top-color:#515144!important}
-@media(max-width:800px){
- body:not(.tenx-editor-standalone) #app>main>header{
-   padding:16px!important;min-height:0;border-radius:15px!important;
- }
- body:not(.tenx-editor-standalone) #app>main>header::after{font-size:8px;letter-spacing:1.2px}
- body:not(.tenx-editor-standalone) #view .stat{min-height:116px;padding:15px!important}
- body:not(.tenx-editor-standalone) #view .stat b{font-size:28px!important}
- body:not(.tenx-editor-standalone) #view .card{padding:15px!important}
- body:not(.tenx-editor-standalone) #view th,body:not(.tenx-editor-standalone) #view td{padding:11px!important}
-}
-@media(prefers-reduced-motion:reduce){
- body:not(.tenx-editor-standalone) #view .stat,
- body:not(.tenx-editor-standalone) button{transition:none!important;transform:none!important}
-}
-/* END TENX_P55_IMPERIAL_RESERVE_V1 */
-
-</style>
 <!-- TENX_P62_HOME_STUDIO_ADMIN_V1 -->
 <!-- P66_STUDIO_EXTERNAL_SCRIPT_DISABLED -->
 <!-- TENX_P63_HOME_STUDIO_ENTRY_V1 -->
 <!-- P65_SUPERSEDES_P63_SCRIPT -->
 <!-- TENX_P65_HOME_ENTRY_INLINE_V1 -->
-<script>
-/* TENX_P65_HOME_ENTRY_INLINE_V1 — resilient on-page entry and visible diagnostics */
-(function(){
-'use strict';
-if (window.__MF65_ENTRY__) return;
-window.__MF65_ENTRY__ = true;
-var ROOT='/admin/home-studio';
-var lastToken='', lastCheck=0, checking=false, authorized=false, authStatus='در حال شناسایی حساب مدیریتی…', opened=false, opening=false;
-var errorText='';
-function storedToken(){
- var t='';
- try{t=sessionStorage.getItem('tenx_admin_token')||'';}catch(_){}
- try{if(!t && typeof token==='string')t=token;}catch(_){}
- return t;
-}
-function loggedIn(){
- var a=document.getElementById('app');
- if(!a || a.classList.contains('hide'))return false;
- try{if(getComputedStyle(a).display==='none')return false;}catch(_){}
- return true;
-}
-function getRole(){try{return typeof me==='object'&&me ? me.role : '';}catch(_){return ''}}
-function el(tag,cls,txt){var n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=String(txt);return n}
-var style=el('style');style.textContent='\n#mf65-dock{position:fixed;top:calc(60px + env(safe-area-inset-top,0px));left:12px;z-index:2147483000;direction:rtl;max-width:min(340px,calc(100vw - 24px));background:#09261f;color:#f5ebdb;border:1px solid #4bae8a;border-radius:15px;padding:11px;box-shadow:0 10px 30px #0009;font:13px/1.8 system-ui,sans-serif}\n#mf65-dock .mf65-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}\n#mf65-dock button,.mf65-pageentry button{font:inherit;cursor:pointer;color:#f9f5e9;background:#146e4e;border:1px solid #63bc91;border-radius:10px;padding:7px 12px}\n#mf65-dock .mf65-open{background:linear-gradient(125deg,#176e4f,#26916d);font-weight:700}\n#mf65-dock .mf65-info{font-size:11px;line-height:1.6;white-space:normal;color:#e9d1ac;max-width:290px;overflow-wrap:anywhere}\n#mf65-dock .mf65-error{color:#ffadad}\n.mf65-pageentry{direction:rtl;border-radius:14px;border:1px solid #57ac85;background:#102b25;color:#e7f6e9;padding:14px;margin:0 0 15px}\n.mf65-pageentry strong{display:block;margin-bottom:5px;color:#f4dbad}\n@media(max-width:560px){#mf65-dock{top:calc(58px + env(safe-area-inset-top,0px));left:8px;right:8px;max-width:none}}';
-(document.head||document.documentElement).appendChild(style);
-var dock=null,status=null,detail=null,button=null;
-function alertMsg(msg){errorText=String(msg||'');render()}
-function render(){
- if(!loggedIn())return;
- if(!dock){
-  dock=el('div');dock.id='mf65-dock';dock.setAttribute('role','region');dock.setAttribute('aria-label','وضعیت استودیوی هوم');
-  var row=el('div','mf65-row');
-  button=el('button','mf65-open','باز کردن استودیوی هوم (۳ قالب)');
-  button.type='button';button.onclick=function(){void open()};
-  var diag=el('button','','بررسی اتصال');diag.type='button';diag.onclick=function(){lastCheck=0;void check(true)};
-  var close=el('button','','×');close.type='button';close.title='بستن اعلان تا بارگذاری بعدی';close.onclick=function(){dock.hidden=true};
-  row.append(button,diag,close);
-  status=el('div','mf65-info');detail=el('div','mf65-info mf65-error');
-  dock.append(row,status,detail);document.body.appendChild(dock);
- }
- var role=getRole();
- if(button)button.disabled=!authorized||opening;
- if(status){status.textContent=(authorized?'✓ دسترسی سوپرادمین تأیید شد':authStatus)+(role?' | نقش پنل: '+role:'')}
- if(detail)detail.textContent=errorText;
- if(authorized && !document.getElementById('mf62-studio') && !document.body.classList.contains('mm-object-fullpage')){
-  var title=document.getElementById('title');
-  var pages=title&&/صفحه‌ها|صفحات|پاپ‌آپ|ویرایشگر/.test(title.textContent||'');
-  var view=document.getElementById('view');
-  if(pages&&view&&!document.getElementById('mf65-pageentry')){
-    var box=el('section','mf65-pageentry');box.id='mf65-pageentry';
-    box.append(el('strong','','استودیوی هوم · سه قالب مستقل'),el('p','','ویرایش هر قالب، ویدیو، مراحل، پیش‌نمایش و انتشار انتخابی.'));
-    var b=el('button','','ورود به استودیوی هوم');b.onclick=function(){void open()};box.appendChild(b);view.prepend(box);
-  }
- }
-}
-async function check(force){
- var t=storedToken();
- if(!loggedIn())return;
- if(!t){authorized=false;authStatus='توکن نشست پنل در دسترس نیست؛ بعد از ورود دوباره، بررسی اتصال را بزن.';render();return}
- if(checking || (!force && t===lastToken && Date.now()-lastCheck<7000))return;
- checking=true;lastToken=t;lastCheck=Date.now();
- try{
-  var r=await fetch('/admin/auth/me',{headers:{authorization:'Bearer '+t},cache:'no-store'});
-  if(!r.ok)throw Error('HTTP '+r.status);
-  var j=await r.json();
-  authorized=j&&j.role==='SUPER_ADMIN';
-  authStatus=authorized?'سوپرادمین تأیید شد':'دسترسی به استودیو نیازمند SUPER_ADMIN است. نقش حساب فعلی: '+(j&&j.role||'نامشخص');
-  errorText='';
- }catch(e){authorized=false;authStatus='خطا در بررسی دسترسی: '+(e&&e.message||e)}
- finally{checking=false;render()}
-}
-function ensureStudio(){
- if(typeof window.MF62OpenHomeStudio==='function')return Promise.resolve();
- return new Promise(function(resolve,reject){
-  var s=document.createElement('script');s.src='/miniapp/p62/studio-admin.js?v=p65fix';
-  s.onload=function(){typeof window.MF62OpenHomeStudio==='function'?resolve():reject(Error('فایل لود شد ولی تابع MF62OpenHomeStudio تعریف نشد؛ مشکل اجرای JS.'))};
-  s.onerror=function(){reject(Error('فایل studio-admin.js بارگذاری نشد؛ مسیر یا MIME را بررسی کن.'))};
-  document.body.appendChild(s);
- });
-}
-async function open(){
- if(opening)return;
- if(!authorized){alertMsg('ورود مسدود شد؛ ابتدا باید نقش SUPER_ADMIN تأیید شود.');return}
- if(document.getElementById('mf62-studio')){if(dock)dock.hidden=true;return}
- opening=true;render();
- try{
-  await ensureStudio();
-  if(getRole()!=='SUPER_ADMIN')throw Error('نقش پنل در متغیر me برابر SUPER_ADMIN نیست. از حساب سوپرادمین وب وارد شو.');
-  if(typeof window.MF62OpenHomeStudio!=='function')throw Error('تابع ورود به استودیو تعریف نشده.');
-  await window.MF62OpenHomeStudio();
-  if(document.getElementById('mf62-studio')){if(dock)dock.hidden=true;opened=true}
-  else {
-   var view=document.getElementById('view');
-   var msg=view&&(view.textContent||'').slice(0,170);
-   alertMsg('استودیو باز نشد. '+(msg||'خطای پنل یا API؛ بررسی اتصال را بزن.'));
-  }
- }catch(e){alertMsg('خطای ورود به استودیو: '+(e&&e.message||e))}
- finally{opening=false;render()}
-}
-var tick=0;
-function cycle(){
- if(!loggedIn())return;
- render();
- var current=storedToken();
- if(current!==lastToken)void check(true);
- else if(Date.now()-lastCheck>7000)void check(false);
- var qs=new URLSearchParams(location.search);
- if(qs.get('homeStudio')==='1'&&!opened&&authorized&&!opening){opened=true;void open()}
- tick++;
-}
-window.setInterval(cycle,1050);
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cycle,{once:true});else cycle();
-window.MF65HomeStudioDiagnostic=function(){return {entryLoaded:true,authorized:authorized,panelRole:getRole(),tokenAvailable:!!storedToken(),status:authStatus,error:errorText,studioFunction:typeof window.MF62OpenHomeStudio,studioOpen:!!document.getElementById('mf62-studio')}};
-})();
-
-</script>
+<!-- Legacy floating diagnostic launcher retired; editors are reached through the page workspace. -->
 <!-- TENX_P66_STUDIO_INLINE_LOADER_V1_JS -->
 <script>
 /* TENX_P62_HOME_STUDIO_ADMIN_V1 - isolated visual editor for the three home presets */
@@ -6480,6 +6324,7 @@ const clone=x=>JSON.parse(JSON.stringify(x));
 const fields={video:[['title','تیتر ویدیو'],['subtitle','زیرتیتر'],['text','توضیح کوتاه'],['media','آدرس ویدیو'],['poster','تصویر کاور']],headline:[['title','تیتر'],['subtitle','توضیح']],steps:[['title','عنوان مراحل'],['subtitle','شرح مراحل']],button:[['title','متن دکمه'],['url','لینک مقصد'],['icon','آیکون']],features:[['title','عنوان قابلیت‌ها']],progress:[['title','عنوان پیشرفت'],['subtitle','توضیح']],sculpture:[['title','متن سه‌بعدی'],['subtitle','زیرنویس']],image:[['title','شرح تصویر'],['media','آدرس تصویر']],text:[['text','متن']],divider:[],spacer:[]};
 const types={video:'ویدیو هدر',headline:'تیتر',steps:'مراحل چالش',button:'دکمه',features:'ویژگی‌ها',progress:'پیشرفت',sculpture:'المان سه‌بعدی',image:'تصویر',text:'متن',divider:'خط جداکننده',spacer:'فاصله'};
 let panel,frame,layerBox,inspector,tabs,lab,liveState,working,chosen='1',selected=null,dirty=false,undo=[],redo=[],phone=true,fieldMode='content',status,loading=false;
+window.MMAdminWorkspace?.register('legacyHomeStudio',{active:()=>!!panel?.isConnected,dirty:()=>dirty,busy:()=>loading});
 const auth=()=>sessionStorage.getItem('tenx_admin_token')||'';
 async function req(p,opt={}){const headers={authorization:'Bearer '+auth(),...(opt.headers||{})};if(opt.body&&typeof opt.body==='string'&&!headers['content-type'])headers['content-type']='application/json';const r=await fetch('/admin/home-studio'+p,{...opt,headers});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.message||d.error||('HTTP '+r.status));return d}
 function message(text,err){status.textContent=text;status.classList.toggle('error',!!err)}
@@ -6766,6 +6611,7 @@ body #view .p74admin-page .p74admin-panel button.mm-poster-upload:focus-visible{
 .mm-page-editor input[type=color]{height:38px;padding:3px}
 @media(max-width:520px){.mm-page-element-list{grid-template-columns:1fr}}
 </style>
+<script src="/miniapp/safe-html.js?v=TENX_SAFE_CUSTOM_HTML_R1"></script>
 <script src="/miniapp/p74/object-model.js?v=OBJECT_STUDIO_R1"></script>
 <script src="/miniapp/p74/image-optimizer.js?v=OBJECT_STUDIO_OPTIMIZE_R2"></script>
 <script id="p74-studio-script">
@@ -6795,7 +6641,7 @@ DEF.steps=SEED.map((v,i)=>({title:v[0],href:v[1],position:layout(8)[i]}));
 function urlValid(s){s=String(s||'').trim();if(s.startsWith('/')&&!s.startsWith('//')&&!/[\s<>'"]/.test(s))return s;
 try{const u=new URL(s);if(u.protocol==='https:'&&!u.username&&!u.password)return u.href}catch(e){}throw Error('لینک باید HTTPS یا با / شروع شود')}
 function token(){try{return sessionStorage.getItem(TOKEN)||''}catch(e){return''}}
-async function api(route,options={}){if(!token())throw Error('ابتدا وارد پنل شوید');const r=await fetch('/admin'+route,{...options,headers:{'content-type':'application/json',authorization:'Bearer '+token()}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||d.message||'HTTP '+r.status);return d}
+async function api(route,options={}){if(!token())throw Error('ابتدا وارد پنل شوید');const r=await fetch('/admin'+route,{...options,headers:{'content-type':'application/json',authorization:'Bearer '+token()}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.message||d.error||'HTTP '+r.status);return d}
 function decodeMarker(blocks){const m=(Array.isArray(blocks)?blocks:[]).filter(b=>b?.type==='element'&&b.selector===MARK);
 if(m.length>1)throw Error('تنظیمات تکراری Home');if(!m.length)return null;let v;try{v=JSON.parse(m[0].text)}catch(e){throw Error('تنظیمات ذخیره‌شده معتبر نیست')};if(v.version!==74)throw Error('نسخه تنظیمات ناسازگار');return v}
 
@@ -6981,6 +6827,9 @@ function normalize(raw){const a=clone(DEF);if(!raw||typeof raw!=='object'){a.ste
  a.steps=Array.from({length:a.stepCount},(_,i)=>{const seed=clone(DEF.steps[i]);const v=Array.isArray(raw.steps)?raw.steps[i]:null;return{...seed,...(v||{}),position:{...auto[i],...(v?.position||{})}}});
  if(Array.isArray(raw.nav))a.nav=a.nav.map((v,i)=>({...v,...(raw.nav[i]||{})}));a.objects=window.MMTradeObjectModel.normalizeObjects(raw.objects);a.backgrounds=window.MMTradeObjectModel.backgrounds(raw.backgrounds);a.pageLayout=normalizePageLayout(raw.pageLayout);a.pageStyles=normalizePageStyles(raw.pageStyles);return a}
 let modal=null,frame=null,dataLoaded=false,config=null,statusNode=null,form=null,stepZone=null,stageCounter=null;
+let savedConfig='',contentVersion=undefined,operation=false,openSession=0;
+const objectDirty=()=>dataLoaded&&config!==null&&JSON.stringify(config)!==savedConfig;
+window.MMAdminWorkspace?.register('objectStudio',{active:()=>!!modal?.isConnected,dirty:objectDirty,busy:()=>operation});
 /* Object Studio: editable layers, per-step backgrounds, animations and authenticated upload. */
 const OBJECT=window.MMTradeObjectModel;
 let selectedObjectId=null,objectList=null,objectInspector=null,backgroundLabel=null;
@@ -7164,7 +7013,7 @@ function rebuild(){form.replaceChildren();const toggle=el('label','p74admin-swit
  s=heading(form,'پیشرفت و CTA');for(const [k,l] of [['progressTitle','عنوان پیشرفت'],['progressHref','لینک پیشرفت'],['ctaText','متن CTA'],['ctaHref','لینک CTA']])input(s,l,config,k,k.toLowerCase().includes('href')?'url':'text');
  s=heading(form,'منوی پایین');for(let i=0;i<3;i++){input(s,'عنوان '+(i+1),config.nav[i],'title');input(s,'لینک '+(i+1),config.nav[i],'href','url')}
 }
-function receive(e){if(!modal||!frame||e.origin!==location.origin||e.source!==frame.contentWindow||!e.data)return;
+function receive(e){if(operation||!modal||!frame||e.origin!==location.origin||e.source!==frame.contentWindow||!e.data)return;
  if(e.data.type==='P74_ELEMENT_SELECTED'){
   selectedPageElementId=String(e.data.id||'');
   selectedPageGeometry=e.data.layout&&typeof e.data.layout==='object'?e.data.layout:null;
@@ -7193,7 +7042,7 @@ function receive(e){if(!modal||!frame||e.origin!==location.origin||e.source!==fr
  }
  status('موقعیت دکمه '+(i+1)+' تغییر کرد؛ ذخیره و انتشار را انجام دهید.','ok')
 }
-function close(){modal?.remove();modal=null;frame=null;dataLoaded=false;config=null;objectList=null;objectInspector=null;selectedObjectId=null;selectedPageElementId=null;selectedPageGeometry=null;pageElementList=null;pageElementInspector=null;document.body.classList.remove('mm-object-fullpage');window.removeEventListener('message',receive)}
+function close(force=false){if(!force&&(operation||(objectDirty()&&!confirm('تغییرات ذخیره نشده‌اند. خارج شوید؟'))))return false;openSession++;modal?.remove();modal=null;frame=null;dataLoaded=false;config=null;objectList=null;objectInspector=null;selectedObjectId=null;selectedPageElementId=null;selectedPageGeometry=null;pageElementList=null;pageElementInspector=null;document.body.classList.remove('mm-object-fullpage');window.removeEventListener('message',receive);return true}
 function validate(){if(!config||config.steps.length!==config.stepCount)throw Error('تعداد دکمه‌ها با پله‌ها برابر نیست');
  for(const s of config.steps){if(!String(s.title||'').trim())throw Error('عنوان مرحله خالی است');urlValid(s.href);
  const p=s.position;if(!p)throw Error('موقعیت مرحله تعریف نشده');for(const k of ['top','right','width','height'])if(!Number.isFinite(Number(p[k])))throw Error('موقعیت دکمه نامعتبر است');
@@ -7203,12 +7052,22 @@ function validate(){if(!config||config.steps.length!==config.stepCount)throw Err
    if(!Number.isFinite(Number(config[k]))||Number(config[k])<min||Number(config[k])>max)throw Error('اندازه یا جای پوستر نامعتبر است');
  }
  for(const s of config.nav)urlValid(s.href);urlValid(config.ctaHref);urlValid(config.progressHref);urlValid(config.videoUrl);const checked=window.MMTradeObjectModel.validateConfig(clone(config));checked.pageLayout=normalizePageLayout(config.pageLayout);checked.pageStyles=normalizePageStyles(config.pageStyles);return checked}
-async function saveDraft(){if(!dataLoaded)throw Error('اطلاعات صفحه هنوز بارگذاری نشده');const d=await api('/content/pages/index/editor');const arr=Array.isArray(d.blocks)?d.blocks:[];decodeMarker(arr);const other=arr.filter(b=>!(b?.type==='element'&&b.selector===MARK));if(other.length>=40)throw Error('ظرفیت بلاک‌های صفحه پر شده');
- const final=validate();final.version=74;other.push({type:'element',selector:MARK,text:JSON.stringify(final)});
- await api('/content/pages/index/draft',{method:'PUT',body:JSON.stringify({title:d.title||null,blocks:other})});return final}
+async function saveDraft(){
+ if(!dataLoaded)throw Error('اطلاعات صفحه هنوز بارگذاری نشده');
+ const snapshot=validate(),sent=JSON.stringify(config),session=openSession;
+ const d=await api('/content/pages/index/editor');
+ if(d.revision!==contentVersion)throw Error('نسخه صفحه تغییر کرده؛ پیش از ذخیره تغییرات مدیر دیگر را بررسی کنید');
+ const arr=Array.isArray(d.blocks)?d.blocks:[];decodeMarker(arr);
+ const other=arr.filter(b=>!(b?.type==='element'&&b.selector===MARK));
+ if(other.length>=40)throw Error('ظرفیت بلاک‌های صفحه پر شده');
+ snapshot.version=74;other.push({type:'element',selector:MARK,text:JSON.stringify(snapshot)});
+ const result=await api('/content/pages/index/draft',{method:'PUT',body:JSON.stringify({title:d.title||null,blocks:other,expectedRevision:contentVersion})});
+ if(session===openSession){contentVersion=result.revision;savedConfig=sent;}
+ return snapshot;
+}
 async function open(){
  if(me?.role!=='SUPER_ADMIN'){toast('این ویرایشگر فقط برای سوپرادمین است.');return}
- close();const host=document.getElementById('view');if(!host)return;
+ if(modal&&!close())return;close(true);const session=openSession;const host=document.getElementById('view');if(!host)return;
  document.body.classList.add('mm-object-fullpage');config=normalize(null);modal=el('section','p74admin-page');
  const box=el('section','p74admin-panel'),head=el('header','p74admin-head');
  head.append(el('strong','','MMTrade Object Studio • ویرایش هوم'));
@@ -7219,12 +7078,12 @@ async function open(){
  screen.append(el('div','p74admin-hint','پیش‌نمایش زنده؛ برای جابه‌جایی لمس کن و برای تغییر اندازه از دو انگشت استفاده کن.'));rebuild();
  const acts=el('div','p74admin-actions'),save=el('button','','ذخیره پیش‌نویس'),publish=el('button','p74admin-primary','انتشار برای کاربران'),reload=el('button','','بارگذاری دوباره');acts.append(save,publish,reload);box.append(acts);statusNode=el('p','p74admin-status','در حال دریافت تنظیمات…');box.append(statusNode);
  modal.append(box);host.replaceChildren(modal);document.getElementById('title').textContent='صفحه‌ها و پاپ‌آپ‌ها · Object Studio';window.scrollTo?.(0,0);window.addEventListener('message',receive);
- const busy=v=>{save.disabled=publish.disabled=reload.disabled=v};
- const load=async()=>{const d=await api('/content/pages/index/editor');config=normalize(decodeMarker(d.blocks));dataLoaded=true;selectedObjectId=null;rebuild();preview();status('Object Studio بارگذاری شد؛ تا انتشار روی کاربران اعمال نمی‌شود.','ok')};
- save.onclick=async()=>{busy(true);try{await saveDraft();status('پیش‌نویس ذخیره شد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
- publish.onclick=async()=>{if(!confirm('پیش‌نویس Home برای کاربران منتشر شود؟'))return;busy(true);try{await saveDraft();await api('/content/pages/index/publish',{method:'POST',body:'{}'});status('نسخه جدید منتشر شد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
- reload.onclick=async()=>{busy(true);try{await load()}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
- try{await load()}catch(e){status('خطا در بارگذاری: '+e.message,'warn')}
+ const busy=v=>{operation=v;save.disabled=publish.disabled=reload.disabled=v;form.inert=v;if(frame)frame.style.pointerEvents=v?'none':''};
+ const load=async()=>{const d=await api('/content/pages/index/editor');if(session!==openSession)return;config=normalize(decodeMarker(d.blocks));savedConfig=JSON.stringify(config);contentVersion=d.revision;dataLoaded=true;selectedObjectId=null;rebuild();preview();status('Object Studio بارگذاری شد؛ تا انتشار روی کاربران اعمال نمی‌شود.','ok')};
+ save.onclick=async()=>{if(operation)return;busy(true);try{await saveDraft();status(objectDirty()?'نسخه قبلی ذخیره شد؛ تغییرات جدید هنوز ذخیره نشده‌اند.':'پیش‌نویس ذخیره شد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
+ publish.onclick=async()=>{if(operation)return;if(!confirm('پیش‌نویس Home برای کاربران منتشر شود؟'))return;busy(true);try{await saveDraft();if(objectDirty())throw Error('تغییر جدید ایجاد شده؛ دوباره ذخیره کنید');await api('/content/pages/index/publish',{method:'POST',body:JSON.stringify({expectedRevision:contentVersion})});status('نسخه جدید منتشر شد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
+ reload.onclick=async()=>{if(operation)return;if(objectDirty()&&!confirm('تغییرات ذخیره‌نشده حذف و نسخه سرور بارگذاری شود؟'))return;busy(true);try{await load()}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
+ busy(true);try{await load()}catch(e){status('خطا در بارگذاری: '+e.message,'warn')}finally{busy(false)}
 }
  window.MMTradeObjectStudioOpen=open;
  window.MMTradeObjectStudioClose=close;
@@ -7232,4 +7091,6 @@ async function open(){
 
 </script>
 <!-- P74_HOME_MATCH_R1 ADMIN END -->
+<script defer src="/miniapp/p74/studio/route-manager.js?v=MMR6"></script>
+<script defer src="/miniapp/p74/studio/page-manager.js?v=ADMIN_MAIN_R1"></script>
 </body></html>

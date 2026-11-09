@@ -1,10 +1,14 @@
+import { recordStudioRelease, studioReleaseKey } from './studio-releases.js';
+import { contentRevision, assertContentRevision, withContentLock, ContentConflict } from './content-workflow.js';
 import { authenticateTeamAdmin } from './team-auth-p37.js';
 import { randomInt as quizCryptoRandomInt } from 'node:crypto';
 import 'dotenv/config';
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual, createHash as mmChallengeHash } from 'node:crypto';
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { join } from 'node:path';
+import { chmod as customFsChmod, mkdir as customFsMkdir, readFile as customFsReadFile, readdir as customFsReaddir, writeFile as customFsWriteFile } from 'node:fs/promises';
+import { randomUUID as customPageRandomUUID } from 'node:crypto';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -19,12 +23,59 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 
 const prisma = new PrismaClient();
 const app = Fastify({ trustProxy: ['127.0.0.1', '::1'], logger: { redact: ['req.headers.authorization', 'req.headers.cookie'] }, bodyLimit: 1024 * 1024 });
+// MMTRADE_R102_PAGE_HOOK_BEGIN
+// Reuse the existing /p/:slug route without a duplicate GET registration.
+// Registered BEFORE existing routes, so Fastify will run this hook for them.
+app.addHook('onRequest', async (request, reply) => {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return;
+  const pathname = (request.raw.url || '').split('?')[0];
+  const match = /^\/p\/([a-z][a-z0-9-]{2,39})\/?$/.exec(pathname);
+  if (!match) return;
+  const slug = match[1];
+  const state = await r10Read();
+  const page = state.custom.find(p => p.slug === slug);
+  if (!page) return; // Preserve all pre-existing /p/... behaviour.
+  if (page.status === 'ARCHIVED') {
+    const routes = await rm6State(prisma, true);
+    const active = r10Entries(state, routes).find(x => x.slug === state.start && x.status === 'PUBLISHED');
+    return reply.redirect(active?.path || '/miniapp/index.html');
+  }
+  if (page.status !== 'PUBLISHED') return reply.code(404).send({error:'page_unpublished'});
+  const published = await prisma.contentPage.findUnique({where:{slug},select:{status:true}});
+  if (!published || published.status !== 'PUBLISHED') return reply.code(404).send({error:'page_unpublished'});
+  reply.header('Cache-Control', 'no-store');
+  return reply.sendFile('miniapp/p74/studio/page-runtime.html');
+});
+// MMTRADE_R102_PAGE_HOOK_END
+
 const port = Number(process.env.PORT || process.env.API_PORT || 3000);
 const host = process.env.API_HOST || '0.0.0.0';
 
 await app.register(helmet, { contentSecurityPolicy: false });
 await app.register(cors, { origin: (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(v => v.trim()), credentials: true });
 await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
+
+// MMTRADE_ROUTE_MANAGER_R6_EARLY_HOOK_BEGIN
+// Register before any legacy fixed GET route, so a changed address works without an API restart.
+app.addHook('onRequest',async(request,reply)=>{
+  if(request.method!=='GET'&&request.method!=='HEAD')return;
+  const raw=request.raw.url||'';
+  const path=raw.split('?')[0];
+  if(!/^\/[a-zA-Z0-9_-]{1,60}$/.test(path)||rm6Protected.has(path.toLowerCase()))return;
+  let state:any;
+  try{state=await rm6State()}catch{return;} // preserve existing routing if DB temporarily unavailable
+  for(const row of rm6RouteEntries(state)){
+    if(path===row.path){
+      const extra=raw.includes('?')?'?'+raw.split('?').slice(1).join('?'):'';
+      return reply.code(302).header('Location',row.target+(row.target.includes('?')?'&'+extra.slice(1):extra)).send();
+    }
+    if(row.aliases.some((p:string)=>p===path)){
+      const extra=raw.includes('?')?'?'+raw.split('?').slice(1).join('?'):'';
+      return reply.code(302).header('Location',row.path+extra).send();
+    }
+  }
+});
+// MMTRADE_ROUTE_MANAGER_R6_EARLY_HOOK_END
 
 // Custom Mini App page paths. Legacy /miniapp and /miniapp/*.html routes remain intact.
 const customPageFiles: Record<string, string> = {
@@ -65,7 +116,7 @@ try {
 
     app.get(path, async (_request, reply) => {
       if (slug === 'academy') {
-        return reply.redirect('/miniapp/index.html?view=academy');
+        return reply.redirect('/miniapp/p74/learning/academy-home.html');
       }
       return reply.sendFile(customPageFiles[slug]);
     });
@@ -79,13 +130,28 @@ try {
 
   if (!usedPaths.has('/academy')) {
     app.get('/academy', async (_request, reply) => {
-      return reply.redirect('/miniapp/index.html?view=academy');
+      return reply.redirect('/miniapp/p74/learning/academy-home.html');
     });
   }
 } catch (error) {
   app.log.error(error, 'Could not register custom Mini App paths');
 }
 
+
+// TENX_CUSTOM_PAGE_PUBLIC_ROUTE_V1
+app.get('/p/:publicSlug', async (request, reply) => {
+  const parsed = z.object({ publicSlug: tenxCustomPublicSlugSchema }).safeParse(request.params);
+  if (!parsed.success) return reply.code(404).send({ error: 'page_not_found' });
+  const pages = await tenxCustomPagesRead();
+  const meta = pages.find(p => p.publicSlug === parsed.data.publicSlug || p.aliases.includes(parsed.data.publicSlug));
+  if (!meta) return reply.code(404).send({ error: 'page_not_found' });
+  if (meta.publicSlug !== parsed.data.publicSlug) return reply.redirect('/p/' + meta.publicSlug);
+  const page = await prisma.contentPage.findUnique({ where: { slug: meta.slug }, select: { status: true } });
+  if (!page || page.status !== 'PUBLISHED') return reply.code(404).send({ error: 'page_not_published' });
+  reply.header('cache-control', 'no-store');
+  return reply.sendFile('miniapp/custom.html');
+});
+// TENX_CUSTOM_PAGE_PUBLIC_ROUTE_V1_END
 
 await app.register(fastifyStatic, { root: join(process.cwd(), 'public'), prefix: '/' });
 
@@ -428,6 +494,35 @@ async function p62Owner(request:FastifyRequest,reply:FastifyReply):Promise<boole
   if(identity?.role!=='SUPER_ADMIN'){reply.code(403).send({error:'super_admin_required'});return false;}
   return true;
 }
+// MM_P74_ENTRY_R103_API_BEGIN
+// Public read-only access to *only* the published P74 Home config.
+// No private blocks, user information or draft data are returned.
+app.get('/public/p74-home-config', async (_request, reply) => {
+  reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+  const row = await prisma.contentPage.findUnique({
+    where: { slug: 'index' },
+    select: { status: true, blocks: true, updatedAt: true }
+  });
+  if (!row || row.status !== 'PUBLISHED') return { enabled: false, reason: 'not_published' };
+  const block = Array.isArray(row.blocks) ? row.blocks.find((entry: unknown) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+    const b = entry as Record<string, unknown>;
+    return b.type === 'element' && b.selector === '#p74-home-config' && typeof b.text === 'string';
+  }) : null;
+  if (!block) return { enabled: false, reason: 'published_marker_absent' };
+  let config: unknown;
+  try { config = JSON.parse((block as { text: string }).text); }
+  catch { return { enabled: false, reason: 'invalid_published_marker' }; }
+  if (!config || typeof config !== 'object' || Array.isArray(config))
+    return { enabled: false, reason: 'invalid_config' };
+  const home = config as Record<string, unknown>;
+  if (home.version !== 74 || home.enabled === false ||
+      !Number.isInteger(Number(home.stepCount)) || Number(home.stepCount) < 3 || Number(home.stepCount) > 8)
+    return { enabled: false, reason: 'not_active_p74' };
+  return { enabled: true, version: 74, config: home, updatedAt: row.updatedAt.toISOString() };
+});
+// MM_P74_ENTRY_R103_API_END
+
 app.get('/public/home-studio',async(_request,reply)=>{
   const s=await p62State();
   reply.header('Cache-Control','no-store');
@@ -1503,7 +1598,7 @@ app.put('/admin/bot/config', { preHandler: botControlGuard }, async (request: an
 // END TENX_BOT_CONFIG_API_V1
 
 
-app.get('/miniapp', async (_request, reply) => reply.sendFile('miniapp/index.html'));
+app.get('/miniapp', async (_request, reply) => { reply.header('Cache-Control', 'no-store'); return reply.redirect('/miniapp/index.html?entry=P74_R103', 302); });
 
 app.get('/admin', async (_request, reply) => {
   reply.type('text/html; charset=utf-8');
@@ -2595,6 +2690,78 @@ app.put('/admin/bottom-nav', async (request, reply) => {
   return { ok: true, ...config };
 });
 
+
+// MMU_R6_APPEARANCE_API_BEGIN — independent of BOTTOM_NAV_V1 item configuration.
+const mmuR6AppearanceKey = 'BOTTOM_NAV_APPEARANCE_V1';
+const mmuR6AppearanceDefaults = {
+  preset: 'light' as const,
+  tintOpacity: 14,
+  activeOpacity: 16,
+  blur: 25,
+  glow: 18,
+  rim: 82,
+  autoHide: true,
+  scrollThreshold: 14,
+  idleRevealMs: 950,
+  animationMs: 310
+};
+const mmuR6AppearanceSchema = z.object({
+  preset: z.enum(['light', 'reference', 'crystal', 'minimal', 'solid']),
+  tintOpacity: z.number().int().min(0).max(90),
+  activeOpacity: z.number().int().min(0).max(90),
+  blur: z.number().int().min(0).max(55),
+  glow: z.number().int().min(0).max(100),
+  rim: z.number().int().min(0).max(100),
+  autoHide: z.boolean(),
+  scrollThreshold: z.number().int().min(6).max(90),
+  idleRevealMs: z.number().int().min(350).max(3000),
+  animationMs: z.number().int().min(150).max(700)
+}).strict();
+function mmuR6NormalizeAppearance(value: unknown) {
+  const parsed = mmuR6AppearanceSchema.safeParse(value);
+  return parsed.success ? parsed.data : { ...mmuR6AppearanceDefaults };
+}
+app.get('/public/bottom-nav-appearance', async (_request, reply) => {
+  const row = await prisma.systemSetting.findUnique({
+    where: { key: mmuR6AppearanceKey }, select: { value: true }
+  });
+  reply.header('Cache-Control', 'no-store');
+  return { version: 1, ...mmuR6NormalizeAppearance(row?.value) };
+});
+app.get('/admin/bottom-nav-appearance', async (request, reply) => {
+  if (!(await adminGuard(request, reply))) return;
+  const row = await prisma.systemSetting.findUnique({
+    where: { key: mmuR6AppearanceKey }, select: { value: true }
+  });
+  reply.header('Cache-Control', 'no-store');
+  return { version: 1, ...mmuR6NormalizeAppearance(row?.value) };
+});
+app.put('/admin/bottom-nav-appearance', async (request, reply) => {
+  if (!(await adminGuard(request, reply))) return;
+  const parsed = mmuR6AppearanceSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({
+    error: 'invalid_bottom_nav_appearance', details: parsed.error.flatten()
+  });
+  const next = parsed.data;
+  await prisma.$transaction(async tx => {
+    await tx.systemSetting.upsert({
+      where: { key: mmuR6AppearanceKey },
+      create: { key: mmuR6AppearanceKey, value: next },
+      update: { value: next }
+    });
+    await tx.auditLog.create({
+      data: {
+        adminUserId: adminIdOf(request),
+        action: 'BOTTOM_NAV_APPEARANCE_UPDATED',
+        entityType: 'SystemSetting',
+        metadata: { preset: next.preset, autoHide: next.autoHide,
+                    tintOpacity: next.tintOpacity, animationMs: next.animationMs }
+      }
+    });
+  });
+  return { ok: true, version: 1, ...next };
+});
+// MMU_R6_APPEARANCE_API_END
 
 // Operational settings are stored in the database; secrets remain in the server environment.
 const pagePathSettingKeys = [
@@ -4039,8 +4206,1446 @@ app.post('/academy/lessons/:id/progress', async (request, reply) => {
   };
 });
 
+// MMTRADE_ACADEMY_HOME_V2_API_BEGIN
+// Dedicated seven-stage Academy home CMS. Uses the existing SystemSetting,
+// adminGuard/SUPER_ADMIN authorization, AuditLog and LessonProgress tables.
+const MM10_ACADEMY_HOME_KEY = 'MM10_ACADEMY_HOME_V2';
+const MM10_ACADEMY_STAGE_IDS = ['welcome','gold','copy','account','risk','connection','start'] as const;
+const mm10AcademySafeUrl = z.string().trim().max(1000).refine((value) =>
+  value === '' ||
+  (/^\/(?!\/)[a-zA-Z0-9_./?=&%#-]*$/.test(value) && !value.includes('..') && !value.includes('\\')) ||
+  /^https:\/\/\S+$/i.test(value), 'invalid_academy_url');
+const mm10AcademySectionSchema = z.object({
+  heading: z.string().trim().max(120).optional(),
+  body: z.string().trim().max(3000).optional(),
+  bullets: z.array(z.string().trim().max(250)).max(20).optional()
+}).strict();
+const mm10AcademyStageSchema = z.object({
+  id: z.enum(MM10_ACADEMY_STAGE_IDS),
+  title: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(300).optional(),
+  icon: mm10AcademySafeUrl,
+  enabled: z.boolean(),
+  locked: z.boolean(),
+  lesson: z.object({
+    title: z.string().trim().max(120).optional(),
+    intro: z.string().trim().max(4000),
+    sections: z.array(mm10AcademySectionSchema).max(12),
+    note: z.string().trim().max(1200).optional(),
+    imageUrl: mm10AcademySafeUrl.optional(),
+    videoUrl: mm10AcademySafeUrl.optional(),
+    ctaText: z.string().trim().max(80).optional(),
+    ctaUrl: mm10AcademySafeUrl.optional()
+  }).strict()
+}).strict();
+const mm10AcademyConfigSchema = z.object({
+  schemaVersion: z.literal(1),
+  enabled: z.boolean(),
+  title: z.string().trim().min(1).max(120),
+  subtitle: z.string().trim().max(240),
+  logo: mm10AcademySafeUrl,
+  background: mm10AcademySafeUrl,
+  footerBackground: mm10AcademySafeUrl,
+  cta: z.object({
+    enabled: z.boolean(),
+    text: z.string().trim().min(1).max(80),
+    href: mm10AcademySafeUrl,
+    icon: z.string().trim().max(12)
+  }).strict(),
+  footerText: z.string().trim().max(180),
+  riskText: z.string().trim().max(400),
+  layout: z.object({
+    backgroundScroll: z.boolean().default(false),
+    backgroundCoverage: z.number().int().min(50).max(100).default(100)
+  }).strict().default({ backgroundScroll: false, backgroundCoverage: 100 }),
+  stages: z.array(mm10AcademyStageSchema).length(7)
+}).strict().superRefine((value, context) => {
+  const ids = value.stages.map(stage => stage.id);
+  if (new Set(ids).size !== 7 || !MM10_ACADEMY_STAGE_IDS.every(id => ids.includes(id))) {
+    context.addIssue({ code: 'custom', message: 'academy_must_contain_exactly_seven_unique_stage_ids' });
+  }
+});
+function mm10AcademyDefaultConfig(): any {
+  const a = '/miniapp/p74/learning/academy-assets/';
+  return {
+    schemaVersion: 1,
+    enabled: true,
+    title: 'آکادمی متین فیوچر',
+    subtitle: 'مسیر آموزشی ۷ مرحله‌ای برای شروع کپی‌ترید',
+    logo: '/miniapp/p74/learning/academy-assets/matin-future-logo.png',
+    background: a + 'academy-bg-portrait.webp',
+    footerBackground: a + 'academy-footer-mountains.webp',
+    cta: { enabled: true, text: 'شروع ثبت‌نام', href: '/profile', icon: '➜' },
+    footerText: 'آماده ورود به مرحله بعدی هستید؟',
+    riskText: 'معاملات بازارهای مالی با ریسک همراه‌اند؛ سود تضمین‌شده نیست.',
+    layout: { backgroundScroll: false, backgroundCoverage: 100 },
+    stages: [
+      { id: 'welcome', title: 'خوش آمدید', description: 'آشنایی سریع با مسیر پروژه و نحوه شروع', icon: a+'stage-01-rocket.webp', enabled: true, locked: false, lesson: { intro: 'به MATIN FUTURE خوش آمدید. این مسیر برای آشنایی با بازار طلا، سازوکار کپی‌ترید، افتتاح حساب و اتصال حساب معاملاتی طراحی شده است. قبل از شروع، این هفت مرحله را به ترتیب مرور کنید.', sections: [{heading:'در این مسیر چه یاد می‌گیرید؟',body:'از شناخت بازار طلا تا آماده‌سازی حساب و پایش معاملات، قدم‌به‌قدم با فرآیند آشنا می‌شوید.',bullets:['شناخت نماد XAUUSD و ویژگی‌های بازار طلا','درک سازوکار کپی‌ترید و نحوه اجرای معاملات','افتتاح حساب، تعیین ریسک و اتصال به MMTrade','شروع و بررسی عملکرد حساب معاملاتی']},{heading:'چطور از آکادمی استفاده کنید؟',body:'هر مرحله را باز کنید، محتوای آن را بخوانید و پس از یادگیری، مطالعه را تأیید کنید تا پیشرفت شما ثبت شود.'}], note:'این آکادمی محتوای آموزشی است و هیچ سود یا بازدهی را تضمین نمی‌کند.' } },
+      { id: 'gold', title: 'بازار طلا', description: 'شناخت XAUUSD و دلیل تمرکز ما روی طلا', icon: a+'stage-02-gold.webp', enabled: true, locked: false, lesson: { intro: 'XAUUSD نماد رایج قیمت هر اونس طلا در برابر دلار آمریکاست. در این نماد، معامله‌گر با پیش‌بینی حرکت قیمت می‌تواند موقعیت خرید یا فروش باز کند.', sections: [{heading:'خرید و فروش یعنی چه؟',body:'در موقعیت BUY انتظار دارید قیمت افزایش پیدا کند؛ در موقعیت SELL انتظار دارید قیمت کاهش پیدا کند. در هر دو حالت، حرکت خلاف پیش‌بینی می‌تواند زیان ایجاد کند.'},{heading:'چه عواملی روی طلا اثر می‌گذارند؟',body:'قدرت دلار، نرخ بهره، داده‌های تورمی و اشتغال، تصمیم‌های بانک‌های مرکزی و رویدادهای ژئوپلیتیکی می‌توانند نوسان طلا را افزایش دهند.'},{heading:'چرا تمرکز این پروژه روی طلاست؟',body:'طلا بازاری شناخته‌شده و پرمعامله است؛ با این حال نقدشوندگی و فرصت معاملاتی به معنی کم‌ریسک بودن آن نیست.'}], note:'هنگام انتشار اخبار مهم، نوسان و لغزش قیمت می‌تواند بیشتر شود. از ریسک معامله آگاه باشید.' } },
+      { id: 'copy', title: 'کپی ترید', description: 'درک نحوه کپی شدن معاملات در حساب شما', icon: a+'stage-03-copy.webp', enabled: true, locked: false, lesson: { intro: 'کپی‌ترید به شما اجازه می‌دهد اجرای معاملات یک استراتژی را طبق تنظیمات اتصال، در حساب معاملاتی خود دنبال کنید.', sections: [{heading:'فرآیند چگونه انجام می‌شود؟',body:'با باز یا بسته شدن معامله در حساب مبدأ، دستور متناظر طبق تنظیمات و محدودیت‌های اتصال برای حساب شما ارسال می‌شود.'},{heading:'حساب معاملاتی متعلق به چه کسی است؟',body:'معاملات در حساب معاملاتی خودتان اجرا می‌شوند. موجودی، معاملات باز و سود و زیان را از پنل بروکر بررسی می‌کنید.'},{heading:'چه چیزی را باید کنترل کنید؟',body:'میزان سرمایه درگیر، ضریب یا حجم کپی، حد ریسک، وضعیت اتصال و اختلاف احتمالی قیمت اجرا را بررسی کنید.'}], note:'کپی‌ترید سود را تضمین نمی‌کند؛ نتیجه حساب شما ممکن است با حساب مبدأ متفاوت باشد.' } },
+      { id: 'account', title: 'افتتاح حساب', description: 'ثبت‌نام و ساخت حساب معاملاتی در ePlanet', icon: a+'stage-04-account.webp', enabled: true, locked: false, lesson: { intro: 'برای اتصال به سیستم، ابتدا باید حساب معاملاتی موردنیاز را در بروکر ePlanet ایجاد و مراحل تأیید آن را تکمیل کنید.', sections: [{heading:'مراحل افتتاح حساب',body:'از لینک رسمی ثبت‌نامی که توسط تیم پروژه ارائه شده استفاده کنید و اطلاعات را دقیقاً مطابق مدارک خود وارد کنید.',bullets:['ورود به لینک اختصاصی ثبت‌نام ePlanet','تکمیل اطلاعات شخصی و اطلاعات تماس','انجام مراحل احراز هویت در سامانه رسمی بروکر','ساخت حساب معاملاتی و نگهداری شناسه حساب']},{heading:'قبل از ادامه',body:'نوع حساب، شرایط معاملاتی، هزینه‌ها، اهرم و قوانین برداشت را در اسناد رسمی بروکر بررسی کنید.'}], note:'رمز عبور، کد یک‌بارمصرف یا اطلاعات محرمانه ورود را برای هیچ شخصی ارسال نکنید.', ctaText:'رفتن به مسیر ثبت‌نام', ctaUrl:'/profile' } },
+      { id: 'risk', title: 'سرمایه و ریسک', description: 'انتخاب سرمایه و تنظیم ریسک متناسب با شرایط شما', icon: a+'stage-05-risk.webp', enabled: true, locked: false, lesson: { intro: 'پیش از اتصال حساب، مشخص کنید چه مقدار از سرمایه را آگاهانه در معرض ریسک معاملات قرار می‌دهید. مبلغ انتخابی باید با شرایط مالی و توان تحمل زیان شما متناسب باشد.', sections: [{heading:'قبل از شروع بررسی کنید',body:'میزان سرمایه قابل‌ریسک، حجم معاملات، اهرم، افت سرمایه قابل‌تحمل و شرایط توقف کپی را بشناسید.',bullets:['با پول موردنیاز زندگی یا بدهی وارد معامله نشوید','ریسک هر معامله و مجموع معاملات باز را در نظر بگیرید','حداکثر زیان قابل‌تحمل خود را از قبل مشخص کنید','عملکرد حساب را به‌صورت منظم بررسی کنید']},{heading:'انتظار واقع‌بینانه داشته باشید',body:'دوره‌های زیان، نوسان و افت سرمایه بخشی از معاملات هستند. عملکرد گذشته تضمین‌کننده نتایج آینده نیست.'}], note:'ممکن است بخشی یا تمام سرمایه‌ای که در معاملات درگیر می‌کنید از دست برود.' } },
+      { id: 'connection', title: 'اتصال به MMTrade', description: 'اتصال حساب معاملاتی به سیستم کپی‌ترید', icon: a+'stage-06-connection.webp', enabled: true, locked: false, lesson: { intro: 'پس از آماده شدن حساب معاملاتی، باید آن را از مسیر رسمی و امن به زیرساخت MMTrade متصل کنید.', sections: [{heading:'اطلاعات موردنیاز',body:'شناسه حساب و اطلاعاتی را که در فرآیند رسمی اتصال درخواست می‌شود، آماده داشته باشید. فقط از روش‌های تأییدشده پروژه استفاده کنید.'},{heading:'پس از اتصال',body:'وضعیت اتصال را بررسی کنید، تنظیمات کپی و میزان سرمایه درگیر را تأیید کنید و مطمئن شوید حساب صحیح انتخاب شده است.'},{heading:'امنیت حساب',body:'رمز اصلی بروکر، کد تأیید دومرحله‌ای و اطلاعات حساس را در پیام یا فرم غیررسمی وارد نکنید.'}], note:'اتصال موفق به‌تنهایی به معنی فعال شدن معاملات یا تضمین نتیجه نیست.', ctaText:'ورود به پنل کاربری', ctaUrl:'/profile' } },
+      { id: 'start', title: 'شروع معاملات', description: 'فعال‌سازی سیستم و پایش عملکرد حساب', icon: a+'stage-07-growth.webp', enabled: true, locked: false, lesson: { intro: 'پیش از فعال‌سازی، اتصال حساب و تنظیمات ریسک را دوباره بررسی کنید. پس از شروع، وضعیت معاملات را در حساب شخصی خود پایش کنید.', sections: [{heading:'چک‌لیست شروع',body:'این موارد را پیش از فعال‌سازی مرور کنید.',bullets:['شناسه حساب متصل‌شده صحیح است','میزان سرمایه و تنظیمات کپی را بررسی کرده‌اید','ریسک و افت سرمایه قابل‌تحمل را می‌شناسید','روش توقف یا قطع اتصال را می‌دانید']},{heading:'پس از فعال‌سازی',body:'وضعیت اتصال، معاملات باز، موجودی و سود و زیان را به‌صورت منظم بررسی کنید. در صورت تغییر شرایط بازار یا وضعیت حساب، تنظیمات را دوباره ارزیابی کنید.'}], note:'عنوان 10X وعده ده‌برابر شدن سرمایه نیست. معامله‌گری و کپی‌ترید همواره با احتمال زیان همراه‌اند.', ctaText:'ورود به پنل کاربری', ctaUrl:'/profile' } }
+    ]
+  };
+}
+function mm10AcademyLegacyPublishedConfig(fallback: any): any {
+  const next = JSON.parse(JSON.stringify(fallback));
+  next.title = 'آکادمی MMTrade Challenge 10X';
+  next.logo = '/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg';
+  const welcome = Array.isArray(next.stages) ? next.stages.find((stage: any) => stage?.id === 'welcome') : null;
+  if (typeof welcome?.lesson?.intro === 'string') {
+    welcome.lesson.intro = welcome.lesson.intro.replace('به MATIN FUTURE خوش آمدید.', 'به MMTrade Challenge 10X خوش آمدید.');
+  }
+  return next;
+}
+function mm10AcademyBrandConfig(value: any, fallback: any): any {
+  const next = JSON.parse(JSON.stringify(value));
+  if (next.title === 'آکادمی MMTrade Challenge 10X') next.title = fallback.title;
+  if (next.logo === '/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg') next.logo = fallback.logo;
+  const welcome = Array.isArray(next.stages) ? next.stages.find((stage: any) => stage?.id === 'welcome') : null;
+  if (typeof welcome?.lesson?.intro === 'string') {
+    welcome.lesson.intro = welcome.lesson.intro.replace('به MMTrade Challenge 10X خوش آمدید.', 'به MATIN FUTURE خوش آمدید.');
+  }
+  return next;
+}
+async function mm10AcademyReadState(): Promise<any> {
+  const row = await prisma.systemSetting.findUnique({ where: { key: MM10_ACADEMY_HOME_KEY }, select: { value: true } });
+  const fallback = mm10AcademyDefaultConfig();
+  const raw = row?.value && typeof row.value === 'object' && !Array.isArray(row.value) ? row.value as any : {};
+  const parsedDraft = mm10AcademyConfigSchema.safeParse(raw.draft);
+  const parsedPublished = mm10AcademyConfigSchema.safeParse(raw.published);
+  const draftBase = parsedDraft.success ? parsedDraft.data : (parsedPublished.success ? parsedPublished.data : fallback);
+  const publishedBase = parsedPublished.success ? parsedPublished.data : mm10AcademyLegacyPublishedConfig(fallback);
+  return {
+    schemaVersion: 1,
+    revision: Number.isInteger(Number(raw.revision)) ? Number(raw.revision) : 0,
+    publishedAt: typeof raw.publishedAt === 'string' ? raw.publishedAt : null,
+    draft: mm10AcademyBrandConfig(draftBase, fallback),
+    published: publishedBase,
+    history: Array.isArray(raw.history) ? raw.history.filter((item: any) => item && Number.isInteger(Number(item.revision)) && mm10AcademyConfigSchema.safeParse(item.config).success).slice(-20) : []
+  };
+}
+async function mm10AcademySaveState(state: any, request: FastifyRequest, action: string, metadata: any = {}) {
+  await prisma.$transaction(async (tx) => {
+    await tx.systemSetting.upsert({
+      where: { key: MM10_ACADEMY_HOME_KEY },
+      create: { key: MM10_ACADEMY_HOME_KEY, value: state as Prisma.InputJsonValue },
+      update: { value: state as Prisma.InputJsonValue }
+    });
+    await tx.auditLog.create({
+      data: {
+        adminUserId: adminIdOf(request), action, entityType: 'AcademyHome', entityId: MM10_ACADEMY_HOME_KEY,
+        metadata: metadata as Prisma.InputJsonValue
+      }
+    });
+  });
+}
+app.get('/public/academy-home', async (_request, reply) => {
+  reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+  const state = await mm10AcademyReadState();
+  return { config: state.published, revision: state.revision, publishedAt: state.publishedAt };
+});
+app.get('/admin/academy-home', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  reply.header('Cache-Control', 'no-store');
+  return await mm10AcademyReadState();
+});
+app.put('/admin/academy-home/draft', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const body = z.object({ config: mm10AcademyConfigSchema }).strict().safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_academy_config', details: body.error.flatten() });
+  const state = await mm10AcademyReadState();
+  state.draft = body.data.config;
+  await mm10AcademySaveState(state, request, 'ACADEMY_HOME_DRAFT_SAVED', { stageCount: body.data.config.stages.length });
+  return { ok: true, state };
+});
+app.post('/admin/academy-home/publish', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const state = await mm10AcademyReadState();
+  const draft = mm10AcademyConfigSchema.safeParse(state.draft);
+  if (!draft.success) return reply.code(409).send({ error: 'academy_draft_invalid' });
+  const now = new Date().toISOString();
+  const actor = (request as any).admin;
+  state.revision += 1;
+  state.published = JSON.parse(JSON.stringify(draft.data));
+  state.draft = JSON.parse(JSON.stringify(draft.data));
+  state.publishedAt = now;
+  state.history = (Array.isArray(state.history) ? state.history : []).concat([{
+    revision: state.revision, publishedAt: now, createdBy: actor?.email || 'SUPER_ADMIN', config: state.published
+  }]).slice(-20);
+  await mm10AcademySaveState(state, request, 'ACADEMY_HOME_PUBLISHED', { revision: state.revision });
+  return { ok: true, revision: state.revision, state };
+});
+app.post('/admin/academy-home/restore', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const body = z.object({ revision: z.number().int().positive() }).strict().safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_revision' });
+  const state = await mm10AcademyReadState();
+  const snapshot = state.history.find((item: any) => Number(item.revision) === body.data.revision);
+  if (!snapshot) return reply.code(404).send({ error: 'academy_version_not_found' });
+  const restored = mm10AcademyConfigSchema.safeParse(snapshot.config);
+  if (!restored.success) return reply.code(409).send({ error: 'academy_version_invalid' });
+  const now = new Date().toISOString();
+  const actor = (request as any).admin;
+  state.revision += 1;
+  state.published = JSON.parse(JSON.stringify(restored.data));
+  state.draft = JSON.parse(JSON.stringify(restored.data));
+  state.publishedAt = now;
+  state.history = state.history.concat([{
+    revision: state.revision, publishedAt: now, createdBy: actor?.email || 'SUPER_ADMIN',
+    restoredFrom: body.data.revision, config: state.published
+  }]).slice(-20);
+  await mm10AcademySaveState(state, request, 'ACADEMY_HOME_RESTORED', { sourceRevision: body.data.revision, revision: state.revision });
+  return { ok: true, revision: state.revision, state };
+});
+app.get('/admin/academy-home/analytics', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const rows = await prisma.lessonProgress.findMany({
+    where: { lessonId: { startsWith: 'MM10_ACADEMY_HOME_V2:' }, completedAt: { not: null } },
+    select: { userId: true, lessonId: true }
+  });
+  const uniqueUsers = new Set(rows.map(row => row.userId));
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const id = row.lessonId.slice('MM10_ACADEMY_HOME_V2:'.length);
+    counts.set(id, (counts.get(id) || 0) + 1);
+  }
+  const config = (await mm10AcademyReadState()).published;
+  const stages = config.stages.map((stage: any) => ({ id: stage.id, title: stage.title, completed: counts.get(stage.id) || 0 }));
+  const ctaClicks = await prisma.auditLog.count({ where: { entityType: 'AcademyHome', action: 'ACADEMY_HOME_CTA_CLICK' } });
+  return { trackedUsers: uniqueUsers.size, completedStages: rows.length, ctaClicks, stages };
+});
+const mm10AcademyProgressBody = z.object({ initData: z.string().min(1).max(10000) }).strict();
+async function mm10AcademyProgressState(userId: string) {
+  const rows = await prisma.lessonProgress.findMany({
+    where: { userId, lessonId: { in: MM10_ACADEMY_STAGE_IDS.map(id => `MM10_ACADEMY_HOME_V2:${id}`) }, completedAt: { not: null } },
+    select: { lessonId: true }
+  });
+  const completed = new Set(rows.map(row => row.lessonId.slice('MM10_ACADEMY_HOME_V2:'.length)));
+  return { tracked: true, read: MM10_ACADEMY_STAGE_IDS.filter(id => completed.has(id)), completed: completed.size, total: MM10_ACADEMY_STAGE_IDS.length };
+}
+app.post('/academy-home/progress/status', async (request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+  const body = mm10AcademyProgressBody.safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_request' });
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return { tracked: false, read: [], reason: who.error };
+  return mm10AcademyProgressState(who.id);
+});
+app.post('/academy-home/progress/complete', { config: { rateLimit: { max: 25, timeWindow: '1 minute' } } }, async (request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+  const body = mm10AcademyProgressBody.extend({ stageId: z.enum(MM10_ACADEMY_STAGE_IDS) }).strict().safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_stage' });
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return reply.code(who.code).send({ error: who.error });
+  await prisma.lessonProgress.upsert({
+    where: { userId_lessonId: { userId: who.id, lessonId: `MM10_ACADEMY_HOME_V2:${body.data.stageId}` } },
+    create: { userId: who.id, lessonId: `MM10_ACADEMY_HOME_V2:${body.data.stageId}`, completedAt: new Date(), progressPct: 100, contentProgressPct: 100, videoProgressPct: 100 },
+    update: { completedAt: new Date(), progressPct: 100, contentProgressPct: 100, videoProgressPct: 100 }
+  });
+  return mm10AcademyProgressState(who.id);
+});
+app.post('/academy-home/cta-click', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (request, reply) => {
+  const body = z.object({ initData: z.string().min(1).max(10000).optional() }).strict().safeParse(request.body);
+  if (!body.success || !body.data.initData) return { ok: true, tracked: false };
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return { ok: true, tracked: false };
+  await prisma.auditLog.create({ data: { userId: who.id, action: 'ACADEMY_HOME_CTA_CLICK', entityType: 'AcademyHome', entityId: 'registration-cta' } });
+  return { ok: true, tracked: true };
+});
+// MMTRADE_ACADEMY_HOME_V2_API_END
+
+// MMTrade Stage 1 education: authenticated, persistent completion and stage-two gate.
+const MM_STAGE1_KEYS = ['challenge','forex','gold','crypto','broker','scam','risk'] as const;
+const MM_STAGE1_IDS = MM_STAGE1_KEYS.map(k => `MM10_STAGE1_V1_${k}`);
+const mmStage1Body = z.object({ initData: z.string().min(1).max(10000) }).strict();
+async function mmStage1State(userId: string) {
+  const rows = await prisma.lessonProgress.findMany({
+    where: { userId, lessonId: { in: MM_STAGE1_IDS }, completedAt: { not: null } },
+    select: { lessonId: true }
+  });
+  const doneIds = new Set(rows.map(row => row.lessonId));
+  const read = MM_STAGE1_KEYS.filter(key => doneIds.has(`MM10_STAGE1_V1_${key}`));
+  return { read, done: read.length, total: MM_STAGE1_KEYS.length, unlocked: read.length === MM_STAGE1_KEYS.length };
+}
+app.post('/challenge/learning/stage1/status', async (request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+  const body = mmStage1Body.safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_request' });
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return reply.code(who.code).send({ error: who.error });
+  return mmStage1State(who.id);
+});
+app.post('/challenge/learning/stage1/complete', {
+  config: { rateLimit: { max: 25, timeWindow: '1 minute' } }
+}, async (request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+  const body = mmStage1Body.extend({ lessonKey: z.enum(MM_STAGE1_KEYS) }).strict().safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_lesson' });
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return reply.code(who.code).send({ error: who.error });
+  await prisma.lessonProgress.upsert({
+    where: { userId_lessonId: { userId: who.id, lessonId: `MM10_STAGE1_V1_${body.data.lessonKey}` } },
+    create: { userId: who.id, lessonId: `MM10_STAGE1_V1_${body.data.lessonKey}`, completedAt: new Date(), progressPct: 100, contentProgressPct: 100, videoProgressPct: 100 },
+    update: { completedAt: new Date(), progressPct: 100, contentProgressPct: 100, videoProgressPct: 100 }
+  });
+  return mmStage1State(who.id);
+});
+app.post('/challenge/learning/stage2/content', async (request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+  const body = mmStage1Body.safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_request' });
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return reply.code(who.code).send({ error: who.error });
+  const state = await mmStage1State(who.id);
+  if (!state.unlocked) return reply.code(403).send({ error: 'stage1_incomplete', done: state.done, total: state.total });
+  return { unlocked: true, title: 'آموزش عضویت در چالش 10X', steps: [
+    { title: 'ورود به لینک ثبت‌نام', detail: 'لینک رسمی ثبت‌نام بروکر ePlanet را از پنل چالش باز کنید.' },
+    { title: 'ثبت اطلاعات صحیح', detail: 'نام، شماره تماس و ایمیل را دقیق و مطابق مدارک وارد کنید.' },
+    { title: 'تأیید حساب', detail: 'ایمیل یا شماره تماس را طبق دستورالعمل رسمی تأیید کنید.' },
+    { title: 'احراز هویت', detail: 'در صورت نیاز، مدارک را فقط در سامانه رسمی بروکر بارگذاری کنید.' },
+    { title: 'افتتاح حساب', detail: 'بعد از تأیید، حساب معاملاتی بسازید و شماره حساب را در MMTrade ثبت کنید.' }
+  ] };
+});
+// Stage 1 Object Studio: only authenticated admins may change the scene.
+const mmSceneKey = 'MM10_STAGE1_SCENE_V1';
+const mmSceneDraftKey = 'MM10_STAGE1_SCENE_DRAFT_V1';
+const mmSceneItem = z.object({
+  id: z.string().regex(/^[a-zA-Z0-9_-]{1,48}$/),
+  type: z.enum(['candles','orb','coin','bars','ring','label','text','image','flag','glow']),
+  x: z.number().min(0).max(100), y: z.number().min(0).max(100),
+  w: z.number().min(5).max(100), rot: z.number().min(-180).max(180),
+  opacity: z.number().min(0).max(100), z: z.number().int().min(0).max(100),
+  anim: z.enum(['none','float','pulse','rise','spin','glow','shimmer']),
+  text: z.string().max(100).default(''),
+  src: z.string().max(300).regex(/^\/(?:uploads\/|miniapp\/p74\/)[a-zA-Z0-9_./-]+\.(?:png|jpe?g|webp)$/).optional()
+}).strict().refine(v => v.type !== 'image' || Boolean(v.src), { message: 'image_requires_safe_source' })
+  .refine(v => !v.src || (!v.src.includes('..') && !v.src.includes('//')), { message: 'unsafe_asset_path' });
+const mmSceneList = z.array(mmSceneItem).max(32).refine(items => new Set(items.map(x => x.id)).size === items.length, { message: 'duplicate_id' });
+async function mmReadScene(key: string = mmSceneKey) {
+  const row = await prisma.systemSetting.findUnique({ where: { key }, select: { value: true } });
+  const parsed = mmSceneList.safeParse(row?.value);
+  return parsed.success ? parsed.data : null;
+}
+app.get('/challenge/learning/stage1/scene', async (_request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+  return { items: await mmReadScene() };
+});
+app.get('/admin/challenge/stage1/scene', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  return { items: (await mmReadScene(mmSceneDraftKey)) ?? (await mmReadScene(mmSceneKey)) };
+});
+app.put('/admin/challenge/stage1/scene', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const body = z.object({ items: mmSceneList }).strict().safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_scene' });
+  await prisma.systemSetting.upsert({
+    where: { key: mmSceneDraftKey },
+    create: { key: mmSceneDraftKey, value: body.data.items },
+    update: { value: body.data.items }
+  });
+  return { ok: true, count: body.data.items.length, draft: true };
+});
+app.post('/admin/challenge/stage1/scene/publish', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const draft = await mmReadScene(mmSceneDraftKey);
+  if (draft === null) return reply.code(409).send({ error: 'draft_missing' });
+  await prisma.systemSetting.upsert({
+    where: { key: mmSceneKey },
+    create: { key: mmSceneKey, value: draft },
+    update: { value: draft }
+  });
+  return { ok: true, count: draft.length, published: true };
+});
+// MMTRADE_CHALLENGE_RESULT_R1: broker evidence and supervised decisions.
+// IMPORTANT: Account registration/copy connection is not proof of passing 10X.
+type MMChallengeVerdict = 'PASSED' | 'FAILED' | 'IN_PROGRESS' | 'UNDER_REVIEW';
+type MMChallengeBroker = { verdict: MMChallengeVerdict; checkedAt: string; accountId: string; evidenceHash: string };
+type MMChallengeManual = { verdict: MMChallengeVerdict; reason: string; evidenceRef: string | null; adminId: string; decidedAt: string };
+type MMChallengeRecord = { version: 1; broker: MMChallengeBroker | null; manual: MMChallengeManual | null; lastAttemptAt: string | null };
+const mmChallengeVerdicts = new Set<MMChallengeVerdict>(['PASSED','FAILED','IN_PROGRESS','UNDER_REVIEW']);
+const mmChallengeKey = (userId: string) => `MM10_CHALLENGE_RESULT_R1_${userId}`;
+const mmChallengeBlank = (): MMChallengeRecord => ({ version:1, broker:null, manual:null, lastAttemptAt:null });
+function mmChallengeDecode(input: unknown): MMChallengeRecord {
+  const data = input && typeof input === 'object' ? input as Record<string, any> : {};
+  const b = data.broker, m = data.manual;
+  const broker: MMChallengeBroker | null = b && mmChallengeVerdicts.has(b.verdict) && typeof b.checkedAt === 'string' && typeof b.accountId === 'string'
+    ? { verdict:b.verdict, checkedAt:b.checkedAt, accountId:b.accountId, evidenceHash:String(b.evidenceHash || '').slice(0,64) } : null;
+  const manual: MMChallengeManual | null = m && mmChallengeVerdicts.has(m.verdict) && typeof m.reason === 'string' && typeof m.adminId === 'string'
+    ? { verdict:m.verdict, reason:m.reason, evidenceRef:typeof m.evidenceRef === 'string' ? m.evidenceRef : null, adminId:m.adminId, decidedAt:String(m.decidedAt || '') } : null;
+  return { version:1, broker, manual, lastAttemptAt:typeof data.lastAttemptAt === 'string' ? data.lastAttemptAt : null };
+}
+function mmChallengeView(value: MMChallengeRecord, accountId: string | null) {
+  const matches = value.broker && accountId && value.broker.accountId === accountId;
+  const broker = matches ? value.broker : null;
+  const effective = value.manual ?? broker;
+  return {
+    verdict: effective?.verdict ?? 'NOT_VERIFIED',
+    source: value.manual ? 'SUPER_ADMIN' : broker ? 'EPLANET' : 'NONE',
+    accountLinked: Boolean(accountId),
+    checkedAt: broker?.checkedAt ?? null,
+    decidedAt: value.manual?.decidedAt ?? null,
+    brokerVerdict: broker?.verdict ?? null,
+    hasOverride: Boolean(value.manual),
+    conflict: Boolean(value.manual && broker && value.manual.verdict !== broker.verdict)
+  };
+}
+async function mmChallengeRead(userId: string) {
+  const [setting, workflow] = await Promise.all([
+    prisma.systemSetting.findUnique({ where:{key:mmChallengeKey(userId)} }),
+    prisma.eplanetUserWorkflow.findUnique({ where:{userId},select:{accountId:true,challengeParticipant:true} })
+  ]);
+  const value = mmChallengeDecode(setting?.value);
+  return { value, accountId:workflow?.accountId ?? null, participant:Boolean(workflow?.challengeParticipant), display:mmChallengeView(value,workflow?.accountId ?? null) };
+}
+function mmChallengeNested(data: unknown, path: string): unknown {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_.]{0,100}$/.test(path)) return null;
+  return path.split('.').reduce<unknown>((value,key) => value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string,unknown>)[key] : null, data);
+}
+const mmChallengeLastFetch = new Map<string,number>();
+const mmChallengeConfigReady = () => Boolean(process.env.EPLANET_CHALLENGE_STATUS_URL && process.env.EPLANET_CHALLENGE_STATUS_FIELD && process.env.EPLANET_CHALLENGE_ACCOUNT_FIELD && process.env.EPLANET_CHALLENGE_PROGRAM_FIELD && process.env.EPLANET_CHALLENGE_PROGRAM_ID && process.env.EPLANET_CHALLENGE_ALLOWED_HOSTS);
+async function mmChallengeSync(userId: string) {
+  if (!mmChallengeConfigReady()) throw new Error('broker_result_api_not_configured');
+  const workflow = await prisma.eplanetUserWorkflow.findUnique({where:{userId},select:{accountId:true}});
+  if (!workflow?.accountId) throw new Error('no_verified_trading_account');
+  const template = String(process.env.EPLANET_CHALLENGE_STATUS_URL);
+  if (!template.includes('{accountId}')) throw new Error('broker_url_requires_account_placeholder');
+  const url = new URL(template.replace('{accountId}',encodeURIComponent(workflow.accountId)));
+  const hosts = String(process.env.EPLANET_CHALLENGE_ALLOWED_HOSTS).split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  if (url.protocol !== 'https:' || url.username || url.password || !hosts.includes(url.hostname.toLowerCase())) throw new Error('broker_url_not_allowlisted');
+  const headers: Record<string,string> = {accept:'application/json'};
+  const token = process.env.EPLANET_CHALLENGE_API_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const response = await fetch(url,{headers,redirect:'error',signal:AbortSignal.timeout(8000)});
+  if (!response.ok) throw new Error('broker_http_'+response.status);
+  const size = Number(response.headers.get('content-length') || 0);
+  if (size > 150000) throw new Error('broker_response_too_large');
+  const raw = await response.text();
+  if (raw.length > 150000) throw new Error('broker_response_too_large');
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); } catch { throw new Error('broker_not_json'); }
+  const accountValue = mmChallengeNested(parsed,String(process.env.EPLANET_CHALLENGE_ACCOUNT_FIELD));
+  const verdictValue = mmChallengeNested(parsed,String(process.env.EPLANET_CHALLENGE_STATUS_FIELD));
+  const programValue = mmChallengeNested(parsed,String(process.env.EPLANET_CHALLENGE_PROGRAM_FIELD));
+  if (String(programValue) !== String(process.env.EPLANET_CHALLENGE_PROGRAM_ID)) throw new Error('broker_challenge_program_mismatch');
+  if (String(accountValue) !== workflow.accountId) throw new Error('broker_account_mismatch');
+  if (typeof verdictValue !== 'string' || !mmChallengeVerdicts.has(verdictValue as MMChallengeVerdict)) throw new Error('broker_challenge_verdict_unavailable');
+  // Never infer PASS from balance, deposits, trade history, or "challengeParticipant".
+  const item: MMChallengeBroker = {verdict:verdictValue as MMChallengeVerdict, checkedAt:new Date().toISOString(), accountId:workflow.accountId, evidenceHash:mmChallengeHash('sha256').update(raw).digest('hex')};
+  await prisma.$transaction(async tx => {
+    const key=mmChallengeKey(userId);
+    const old=mmChallengeDecode((await tx.systemSetting.findUnique({where:{key}}))?.value);
+    const next:MMChallengeRecord={...old,broker:item,lastAttemptAt:new Date().toISOString()};
+    await tx.systemSetting.upsert({where:{key},create:{key,value:next as any},update:{value:next as any}});
+    if(old.broker?.verdict!==item.verdict || old.broker?.accountId!==item.accountId){
+      await tx.auditLog.create({data:{userId,action:'CHALLENGE_BROKER_RESULT_CHANGED',entityType:'MMTradeChallengeResult',entityId:userId,
+        metadata:{from:old.broker?.verdict??null,to:item.verdict,accountVerified:true,evidenceHash:item.evidenceHash,source:'EPLANET'}}});
+    }
+  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable});
+  return mmChallengeRead(userId);
+}
+// Authenticated Mini App: never accepts a userId or status from the browser.
+app.post('/challenge/result/status',{config:{rateLimit:{max:12,timeWindow:'1 minute'}}},async(request,reply)=>{
+  reply.header('Cache-Control','no-store');
+  const input=z.object({initData:z.string().min(1).max(10000)}).strict().safeParse(request.body);
+  if(!input.success)return reply.code(400).send({error:'invalid_request'});
+  const who=await miniUser(input.data.initData,false);
+  if('code' in who)return reply.code(who.code).send({error:who.error});
+  let result=await mmChallengeRead(who.id);
+  // Opportunistic read-through sync, at most once per account per 15 minutes.
+  const last=mmChallengeLastFetch.get(who.id)||0;
+  if(result.accountId && mmChallengeConfigReady() && Date.now()-last>15*60*1000){
+    mmChallengeLastFetch.set(who.id,Date.now());
+    try{result=await mmChallengeSync(who.id);}catch(e){request.log.warn({message:e instanceof Error?e.message:'broker_sync_failed'},'Challenge result unavailable; preserving last verified state');}
+  }
+  return result.display;
+});
+app.get('/admin/challenge/results',async(request,reply)=>{
+  if(!(await p37SuperSession(request,reply)))return;
+  const q=z.object({q:z.string().trim().max(80).optional()}).safeParse(request.query);
+  if(!q.success)return reply.code(400).send({error:'invalid_query'});
+  const term=q.data.q||'';
+  const users=await prisma.user.findMany({where:term?{OR:[{telegramId:{contains:term}},{username:{contains:term}},{firstName:{contains:term}}]}:{eplanetWorkflow:{isNot:null}},include:{eplanetWorkflow:true},orderBy:{createdAt:'desc'},take:40});
+  const results=await Promise.all(users.map(async u=>{
+    const value=mmChallengeDecode((await prisma.systemSetting.findUnique({where:{key:mmChallengeKey(u.id)}}))?.value);
+    return {userId:u.id,username:u.username,telegramId:u.telegramId,accountId:u.eplanetWorkflow?.accountId||null,status:mmChallengeView(value,u.eplanetWorkflow?.accountId||null)};
+  }));
+  reply.header('Cache-Control','no-store');return {items:results};
+});
+app.get('/admin/challenge/results/:userId',async(request,reply)=>{
+  if(!(await p37SuperSession(request,reply)))return;
+  const p=z.object({userId:z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/)}).safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_user'});
+  const user=await prisma.user.findUnique({where:{id:p.data.userId},select:{id:true,username:true,telegramId:true}});
+  if(!user)return reply.code(404).send({error:'user_not_found'});
+  const [result,history]=await Promise.all([mmChallengeRead(user.id),prisma.auditLog.findMany({where:{userId:user.id,entityType:'MMTradeChallengeResult'},orderBy:{createdAt:'desc'},take:50,select:{action:true,adminUserId:true,createdAt:true,metadata:true}})]);
+  reply.header('Cache-Control','no-store');return {user,accountId:result.accountId,status:result.display,broker:result.value.broker,manual:result.value.manual,history};
+});
+app.put('/admin/challenge/results/:userId',async(request,reply)=>{
+  const actor=await p37SuperSession(request,reply);if(!actor)return;
+  const p=z.object({userId:z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/)}).safeParse(request.params);
+  const body=z.object({verdict:z.enum(['PASSED','FAILED','IN_PROGRESS','UNDER_REVIEW']),reason:z.string().trim().min(10).max(500),evidenceRef:z.string().trim().max(200).optional()}).strict().refine(x=>!['PASSED','FAILED'].includes(x.verdict)||Boolean(x.evidenceRef&&x.evidenceRef.length>=4),{message:'final_decision_requires_evidence_reference'}).safeParse(request.body);
+  if(!p.success||!body.success)return reply.code(400).send({error:'invalid_request'});
+  const user=await prisma.user.findUnique({where:{id:p.data.userId},select:{id:true,eplanetWorkflow:{select:{accountId:true}}}});
+  if(!user)return reply.code(404).send({error:'user_not_found'});
+  if(['PASSED','FAILED'].includes(body.data.verdict) && !user.eplanetWorkflow?.accountId) return reply.code(409).send({error:'verified_account_required'});
+  await prisma.$transaction(async tx=>{
+    const key=mmChallengeKey(user.id),old=mmChallengeDecode((await tx.systemSetting.findUnique({where:{key}}))?.value);
+    const manual:MMChallengeManual={verdict:body.data.verdict,reason:body.data.reason,evidenceRef:body.data.evidenceRef||null,adminId:actor.id,decidedAt:new Date().toISOString()};
+    const next:MMChallengeRecord={...old,manual};
+    await tx.systemSetting.upsert({where:{key},create:{key,value:next as any},update:{value:next as any}});
+    await tx.auditLog.create({data:{adminUserId:actor.id,userId:user.id,action:'CHALLENGE_SUPERADMIN_DECISION',entityType:'MMTradeChallengeResult',entityId:user.id,ipAddress:request.ip,
+      metadata:{previous:old.manual?.verdict||null,next:manual.verdict,reason:manual.reason,evidenceRef:manual.evidenceRef,brokerVerdict:old.broker?.verdict||null}}});
+  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable});
+  reply.header('Cache-Control','no-store');return {ok:true,status:(await mmChallengeRead(user.id)).display};
+});
+app.post('/admin/challenge/results/:userId/clear-override',async(request,reply)=>{
+  const actor=await p37SuperSession(request,reply);if(!actor)return;
+  const p=z.object({userId:z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/)}).safeParse(request.params);
+  const body=z.object({reason:z.string().trim().min(10).max(500)}).strict().safeParse(request.body);
+  if(!p.success||!body.success)return reply.code(400).send({error:'invalid_request'});
+  const user=await prisma.user.findUnique({where:{id:p.data.userId},select:{id:true}});if(!user)return reply.code(404).send({error:'user_not_found'});
+  await prisma.$transaction(async tx=>{
+    const key=mmChallengeKey(user.id),old=mmChallengeDecode((await tx.systemSetting.findUnique({where:{key}}))?.value);
+    const next:MMChallengeRecord={...old,manual:null};
+    await tx.systemSetting.upsert({where:{key},create:{key,value:next as any},update:{value:next as any}});
+    await tx.auditLog.create({data:{adminUserId:actor.id,userId:user.id,action:'CHALLENGE_SUPERADMIN_OVERRIDE_CLEARED',entityType:'MMTradeChallengeResult',entityId:user.id,ipAddress:request.ip,metadata:{previous:old.manual?.verdict||null,reason:body.data.reason}}});
+  },{isolationLevel:Prisma.TransactionIsolationLevel.Serializable});
+  return {ok:true,status:(await mmChallengeRead(user.id)).display};
+});
+app.post('/admin/challenge/results/:userId/sync',async(request,reply)=>{
+  const actor=await p37SuperSession(request,reply);if(!actor)return;
+  const p=z.object({userId:z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/)}).safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_user'});
+  try{const result=await mmChallengeSync(p.data.userId);return {ok:true,status:result.display};}
+  catch(e){request.log.warn({error:e instanceof Error?e.message:'broker_failed'},'Broker challenge verification unavailable');return reply.code(503).send({error:e instanceof Error?e.message:'broker_failed'});}
+});
+// END MMTRADE_CHALLENGE_RESULT_R1
+
+// MMTrade Stage 1 routes end.
+
 // ---- Page builder + popups ----
-const PAGE_SLUGS = ['index', 'academy', 'crypto', 'copy-trading', 'challenge', 'support', 'profile', 'mmtrade10x'] as const;
+const PAGE_SLUGS = ['index', 'academy', 'stage2', 'crypto', 'copy-trading', 'challenge', 'support', 'profile', 'mmtrade10x', 'eplanet', 'copytrade-academy'] as const;
+
+// TENX_CUSTOM_PAGES_V1: custom pages use existing ContentPage*, SystemSetting and ContentPageVersion tables.
+// Public path is always /p/:publicSlug; built-in physical pages and their routes are not mutated.
+const TENX_CUSTOM_PAGES_KEY = 'MM_CUSTOM_PAGES_V1';
+type TenxCustomPageMeta = {
+  slug: string;
+  title: string;
+  publicSlug: string;
+  aliases: string[];
+  sourceSlug: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+const tenxCustomSlugOk = (v: any): v is string => typeof v === 'string' && /^[a-z0-9][a-z0-9-]{1,59}$/.test(v);
+const tenxCustomPublicSlugOk = (v: any): v is string => typeof v === 'string' && /^[a-z0-9][a-z0-9-]{1,47}$/.test(v) && !(PAGE_SLUGS as readonly string[]).includes(v);
+const tenxCustomSlugSchema = z.string().trim().min(2).max(60).regex(/^[a-z0-9][a-z0-9-]{1,59}$/);
+const tenxCustomPublicSlugSchema = z.string().trim().min(2).max(48).regex(/^[a-z0-9][a-z0-9-]{1,47}$/).refine(v => !(PAGE_SLUGS as readonly string[]).includes(v), 'reserved_public_slug');
+const tenxCustomBackupDir = () => join(process.cwd(), 'backups', 'deleted-pages');
+
+async function tenxCustomPagesRead(db: any = prisma): Promise<TenxCustomPageMeta[]> {
+  const row = await db.systemSetting.findUnique({ where: { key: TENX_CUSTOM_PAGES_KEY }, select: { value: true } });
+  const raw: any = row?.value;
+  const items = Array.isArray(raw?.pages) ? raw.pages : [];
+  return items.filter((p: any) => p && tenxCustomSlugOk(p.slug) && tenxCustomPublicSlugOk(p.publicSlug))
+    .filter((p: any) => !(PAGE_SLUGS as readonly string[]).includes(p.slug))
+    .map((p: any) => ({
+      slug: p.slug,
+      title: typeof p.title === 'string' ? p.title : p.slug,
+      publicSlug: p.publicSlug,
+      aliases: Array.isArray(p.aliases) ? p.aliases.filter(tenxCustomPublicSlugOk).slice(-30) : [],
+      sourceSlug: typeof p.sourceSlug === 'string' ? p.sourceSlug : null,
+      createdAt: typeof p.createdAt === 'string' ? p.createdAt : new Date(0).toISOString(),
+      updatedAt: typeof p.updatedAt === 'string' ? p.updatedAt : new Date(0).toISOString()
+    }));
+}
+
+async function tenxCustomPagesWrite(db: any, pages: TenxCustomPageMeta[]) {
+  const value = { version: 1, pages } as Prisma.InputJsonValue;
+  await db.systemSetting.upsert({
+    where: { key: TENX_CUSTOM_PAGES_KEY },
+    create: { key: TENX_CUSTOM_PAGES_KEY, value },
+    update: { value }
+  });
+}
+
+async function tenxCustomPageWriter(request: FastifyRequest, reply: FastifyReply, ownerOnly = false): Promise<boolean> {
+  if (!(await adminGuard(request, reply))) return false;
+  const role = (request as any).admin?.role;
+  if (ownerOnly ? role !== 'SUPER_ADMIN' : !['SUPER_ADMIN', 'CONTENT_MANAGER'].includes(role)) {
+    reply.code(403).send({ error: ownerOnly ? 'super_admin_required' : 'content_manager_required' });
+    return false;
+  }
+  return true;
+}
+
+function tenxCustomBackupIdOk(v: any): v is string {
+  return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+}
+
+// MMTRADE_ROUTE_MANAGER_R6_API_BEGIN
+// Canonical URLs are page identities, not names of physical HTML files.
+// All write operations below require SUPER_ADMIN and use one DB transaction.
+const rm6PageInfo: Record<string, { label: string; defaultPath: string; target: string; legacy: string[] }> = {
+  index: {label:'خانه',defaultPath:'/miniapp/index.html',target:'/miniapp/index.html',legacy:['/miniapp/index.html','/miniapp/']},
+  academy: {label:'آموزش / مرحله اول',defaultPath:'/academy',target:'/miniapp/p74/learning/stage1.html',legacy:['/miniapp/academy.html','/miniapp/index.html?view=academy']},
+  crypto: {label:'رمزارز',defaultPath:'/crypto',target:'/miniapp/crypto.html',legacy:['/miniapp/crypto.html']},
+  'copy-trading': {label:'کپی‌ترید',defaultPath:'/copy-trading',target:'/miniapp/copy-trading.html',legacy:['/miniapp/copy-trading.html']},
+  challenge: {label:'چالش',defaultPath:'/challenge',target:'/miniapp/index.html?view=mmtrade10x',legacy:['/miniapp/challenge.html']},
+  support: {label:'پشتیبانی',defaultPath:'/support',target:'/miniapp/p74/support/support.html',legacy:['/miniapp/support.html','/miniapp/p74/support/support.html']},
+  profile: {label:'پروفایل',defaultPath:'/profile',target:'/miniapp/p74/profile/profile.html',legacy:['/miniapp/profile.html','/miniapp/p74/profile/profile.html']},
+  mmtrade10x: {label:'چالش 10X در مینی‌اپ',defaultPath:'/mmtrade10x',target:'/miniapp/index.html?view=mmtrade10x',legacy:[]}
+};
+const rm6Slugs = Object.keys(rm6PageInfo);
+const rm6AliasesKey='MM_ROUTE_ALIASES_R6';
+const rm6RevisionKey='MM_ROUTE_REVISION_R6';
+const rm6MutableKeys=['HOME_LINKS_V1','BOTTOM_NAV_V1','TENX_P62_HOME_STUDIO_V1','BOT_CONTROL_CONFIG'];
+const rm6CanonicalPattern=/^\/[a-zA-Z0-9_-]{1,60}$/;
+const rm6Protected=new Set([
+  '/admin','/api','/health','/miniapp','/public','/auth','/content','/assets',
+  '/uploads','/favicon.ico','/webhook','/robots.txt','/sitemap.xml','/go',
+  '/login','/logout','/register','/privacy','/terms','/status','/docs','/healthz'
+]);
+let rm6Cache:{ at:number;value:any }|null=null;
+const rm6Origin='https://mmtrade.parsahojabrian.ir';
+const rm6Json=(v:any)=>JSON.parse(JSON.stringify(v));
+function rm6CleanAliases(raw:any):Record<string,string[]>{
+  const out:Record<string,string[]>={};
+  for(const slug of rm6Slugs){
+    const xs=raw&&typeof raw==='object'&&!Array.isArray(raw)&&Array.isArray(raw[slug])?raw[slug]:[];
+    out[slug]=xs.filter((p:any)=>typeof p==='string'&&rm6CanonicalPattern.test(p)).slice(-30);
+  }
+  return out;
+}
+async function rm6State(db:any=prisma,force=false):Promise<any>{
+  if(!force && db===prisma && rm6Cache && Date.now()-rm6Cache.at<10000)return rm6Cache.value;
+  const keys=[...rm6Slugs.map(s=>'PAGE_PATH_'+s),rm6AliasesKey,rm6RevisionKey];
+  const items=await db.systemSetting.findMany({where:{key:{in:keys}},select:{key:true,value:true}});
+  const stored=new Map<string,any>(items.map((x:any)=>[x.key,x.value]));
+  const aliases=rm6CleanAliases(stored.get(rm6AliasesKey));
+  const paths:Record<string,string>={};
+  for(const slug of rm6Slugs){
+    const s=stored.get('PAGE_PATH_'+slug);
+    paths[slug]=typeof s==='string'&&rm6CanonicalPattern.test(s)?s:rm6PageInfo[slug].defaultPath;
+  }
+  const revision=Math.max(0,Math.trunc(Number(stored.get(rm6RevisionKey))||0));
+  const state={paths,aliases,revision};
+  if(db===prisma)rm6Cache={at:Date.now(),value:state};
+  return state;
+}
+function rm6RouteEntries(state:any){
+  return rm6Slugs.map(slug=>({
+    slug,label:rm6PageInfo[slug].label,path:state.paths[slug],
+    target:rm6PageInfo[slug].target,
+    aliases:Array.from(new Set([...rm6PageInfo[slug].legacy,...state.aliases[slug],rm6PageInfo[slug].defaultPath]))
+      .filter(p=>p!==state.paths[slug])
+  }));
+}
+function rm6UrlMatch(raw:string,old:string,destination:string):string|null{
+  if(typeof raw!=='string'||!raw.trim())return null;
+  // No rewriting a different host, mailto, javascript URL, or free-form prose.
+  const absolute=/^https:\/\//i.test(raw);
+  if(!raw.startsWith('/')&&!absolute)return null;
+  let u:URL;
+  try{u=new URL(raw,rm6Origin)}catch{return null}
+  if(u.origin!==rm6Origin)return null;
+  const qi=old.indexOf('?'); const path=qi>=0?old.slice(0,qi):old;
+  if(u.pathname!==path)return null;
+  if(qi>=0){
+    if((u.search||'')!==old.slice(qi))return null;
+  } else if(u.pathname==='/miniapp/index.html' && u.searchParams.has('view')){
+    // This HTML file carries different pages via ?view=..., do not mistake them for index.
+    return null;
+  }
+  const extra=qi>=0?'':u.search;
+  return (absolute?rm6Origin:'')+destination+extra+u.hash;
+}
+function rm6MapLink(v:string,from:string[],to:string):string{
+  for(const old of from){const next=rm6UrlMatch(v,old,to);if(next!==null)return next;}
+  return v;
+}
+function rm6Transform(input:any,from:string[],to:string):{result:any,count:number,samples:string[]}{
+  let count=0;const samples:string[]=[];
+  function rec(v:any,key:string,depth:number):any{
+    if(depth>30)return v;
+    if(typeof v==='string'){
+      const replacement=rm6MapLink(v,from,to);
+      if(replacement!==v){count++;if(samples.length<12)samples.push(key+': '+v+' → '+replacement);return replacement;}
+      // R74/R77 editor embeds its validated JSON config as text in a dedicated marker block.
+      if((key==='text'||key.endsWith('.text'))&&v.startsWith('{')&&v.length<=12000){
+        try{const data=JSON.parse(v);if(data&&typeof data==='object'&&typeof data.version==='number'&&[74,77].includes(data.version)){
+          const before=count,updated=rec(data,'config',depth+1);
+          if(count>before)return JSON.stringify(updated);
+        }}catch{}
+      }
+      return v;
+    }
+    if(Array.isArray(v))return v.map((x,i)=>rec(x,key+'['+i+']',depth+1));
+    if(v&&typeof v==='object'){
+      const out:any={};for(const [k,x] of Object.entries(v)){
+        // Historical records must remain immutable for truthful rollback.
+        out[k]=(k==='history'&&depth===0)?x:rec(x,key?key+'.'+k:k,depth+1);
+      }
+      return out;
+    }
+    return v;
+  }
+  return {result:rec(input,'',0),count,samples};
+}
+function rm6Sources(slug:string,state:any){
+  return Array.from(new Set([state.paths[slug],rm6PageInfo[slug].defaultPath,
+    ...rm6PageInfo[slug].legacy,...state.aliases[slug]]));
+}
+async function rm6StaticCandidates(paths:string[]):Promise<any[]> {
+  // Read-only scan of executable/static files. Never alter source automatically.
+  const fs=await import('node:fs');
+  const roots=[
+    {dir:join(process.cwd(),'public','miniapp'),prefix:'public/miniapp'},
+    {dir:join(process.cwd(),'apps','bot','src'),prefix:'apps/bot/src'}
+  ];
+  const out:any[]=[];let visited=0;
+  for(const root of roots){
+    if(!fs.existsSync(root.dir))continue;
+    const todo=[{dir:root.dir,rel:''}];
+    while(todo.length&&visited<1200){
+      const current=todo.pop()!;
+      for(const entry of fs.readdirSync(current.dir,{withFileTypes:true})){
+        if(visited>=1200)break;
+        if(entry.isSymbolicLink())continue;
+        const relative=current.rel?current.rel+'/'+entry.name:entry.name;
+        const full=join(current.dir,entry.name);
+        if(entry.isDirectory()){
+          if(!['node_modules','.git','studio'].includes(entry.name))todo.push({dir:full,rel:relative});
+          continue;
+        }
+        if(!entry.isFile()||!/[.](?:html|js|ts|css)$/.test(entry.name))continue;
+        visited++;const st=fs.statSync(full);if(st.size>1800000)continue;
+        const text=fs.readFileSync(full,'utf-8');
+        let hits=0;for(const path of paths){
+          let at=0;while((at=text.indexOf(path,at))>=0){hits++;at+=path.length;}
+        }
+        if(hits)out.push({file:root.prefix+'/'+relative,occurrences:hits,review:true});
+      }
+    }
+  }
+  return out.sort((a,b)=>b.occurrences-a.occurrences).slice(0,50);
+}
+async function rm6Inventory(db:any,state:any,slug:string,next:string){
+  const from=rm6Sources(slug,state).filter(s=>s!==next);
+  const pages=await db.contentPage.findMany({select:{slug:true,blocks:true,title:true}});
+  const drafts=await db.contentPageDraft.findMany({select:{slug:true,blocks:true,title:true}});
+  const popups=await db.popup.findMany({select:{id:true,title:true,buttonUrl:true,pageSlug:true}});
+  const storedSettings=await db.systemSetting.findMany({where:{key:{in:rm6MutableKeys}},select:{key:true,value:true}});
+  const settings=[...storedSettings];
+  const existingKeys=new Set(storedSettings.map((s:any)=>s.key));
+  // Some installations rely on built-in defaults instead of saved settings.
+  // Materialize a migrated default only when a link actually changes.
+  if(!existingKeys.has('HOME_LINKS_V1'))settings.push({key:'HOME_LINKS_V1',value:normalizeHomeLinks(null)});
+  if(!existingKeys.has('BOTTOM_NAV_V1'))settings.push({key:'BOTTOM_NAV_V1',value:bottomNavDefaults});
+  if(!existingKeys.has('TENX_P62_HOME_STUDIO_V1')){
+    try{settings.push({key:'TENX_P62_HOME_STUDIO_V1',value:p62Defaults()})}catch{}
+  }
+  const changed:any[]=[];
+  const totals:Record<string,number>={pages:0,drafts:0,popups:0,settings:0};
+  for(const p of pages){const m=rm6Transform(p.blocks,from,next);if(m.count){
+    totals.pages+=m.count;changed.push({type:'page',id:p.slug,count:m.count,detail:m.samples,next:m.result});}}
+  for(const p of drafts){const m=rm6Transform(p.blocks,from,next);if(m.count){
+    totals.drafts+=m.count;changed.push({type:'draft',id:p.slug,count:m.count,detail:m.samples,next:m.result});}}
+  for(const p of popups){if(!p.buttonUrl)continue;const u=rm6MapLink(p.buttonUrl,from,next);if(u!==p.buttonUrl){
+    totals.popups++;changed.push({type:'popup',id:p.id,label:p.title,count:1,detail:[p.buttonUrl+' → '+u],next:u});}}
+  for(const s of settings){const m=rm6Transform(s.value,from,next);if(m.count){
+    totals.settings+=m.count;changed.push({type:'setting',id:s.key,count:m.count,detail:m.samples,next:m.result});}}
+  return {totals,changed};
+}
+function rm6Validate(slug:string,next:string,state:any):string|null{
+  if(!rm6PageInfo[slug])return 'unknown_page';
+  if(!rm6CanonicalPattern.test(next)||rm6Protected.has(next.toLowerCase()))return 'invalid_path';
+  if(state.paths[slug]===next)return 'unchanged_path';
+  for(const row of rm6RouteEntries(state)){
+    if(row.slug===slug)continue;
+    if([row.path,...row.aliases].some((s:string)=>s.toLowerCase()===next.toLowerCase()))return 'route_collision_'+row.slug;
+  }
+  return null;
+}
+async function rm6Owner(request:FastifyRequest,reply:FastifyReply):Promise<boolean>{
+  if(!(await adminGuard(request,reply)))return false;
+  if((request as any).admin?.role!=='SUPER_ADMIN'){
+    reply.code(403).send({error:'super_admin_required'});return false;
+  }
+  return true;
+}
+const rm6Request=z.object({slug:z.enum(PAGE_SLUGS),newPath:z.string().trim().max(64)}).strict();
+app.get('/public/page-routes',async(_request,reply)=>{
+  const state=await rm6State();reply.header('cache-control','no-store');
+  return {revision:state.revision,pages:rm6RouteEntries(state)};
+});
+app.get('/admin/route-manager',async(request,reply)=>{
+  if(!(await rm6Owner(request,reply)))return;
+  const state=await rm6State(prisma,true);
+  reply.header('cache-control','no-store');
+  return {revision:state.revision,pages:rm6RouteEntries(state)};
+});
+app.post('/admin/route-manager/preview',async(request,reply)=>{
+  if(!(await rm6Owner(request,reply)))return;
+  const b=rm6Request.safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:'invalid_input'});
+  const state=await rm6State(prisma,true);const {slug,newPath}=b.data;
+  const issue=rm6Validate(slug,newPath,state);
+  if(issue)return reply.code(409).send({error:issue});
+  const i=await rm6Inventory(prisma,state,slug,newPath);
+  const staticCandidates=await rm6StaticCandidates(rm6Sources(slug,state).filter(s=>s!==newPath));
+  return {ok:true,slug,newPath,oldPath:state.paths[slug],revision:state.revision,
+    totals:i.totals,changes:i.changed.map(({next,...x})=>x),staticCandidates,
+    notes:['Static JavaScript redirects and links inside external messages require a separate audit.',
+    'Old links remain available through aliases/legacy URLs where supported by Nginx.']};
+});
+app.post('/admin/route-manager/publish',async(request,reply)=>{
+  if(!(await rm6Owner(request,reply)))return;
+  const b=rm6Request.extend({expectedRevision:z.number().int().min(0),expectedOldPath:z.string()}).safeParse(request.body);
+  if(!b.success)return reply.code(400).send({error:'invalid_input'});
+  const result=await prisma.$transaction(async(tx)=>{
+    const state=await rm6State(tx,true);
+    if(state.revision!==b.data.expectedRevision||state.paths[b.data.slug]!==b.data.expectedOldPath)return {error:'stale_preview'};
+    const issue=rm6Validate(b.data.slug,b.data.newPath,state);
+    if(issue)return {error:issue};
+    const i=await rm6Inventory(tx,state,b.data.slug,b.data.newPath);
+    const slug=b.data.slug,old=state.paths[slug],next=b.data.newPath;
+    for(const x of i.changed){
+      if(x.type==='page'){
+        const original=await tx.contentPage.findUnique({where:{slug:x.id},select:{title:true,status:true}});
+        await tx.contentPage.update({where:{slug:x.id},data:{blocks:x.next}});
+        const latest=await tx.contentPageVersion.aggregate({where:{pageSlug:x.id},_max:{version:true}});
+        await tx.contentPageVersion.create({data:{pageSlug:x.id,version:(latest._max.version||0)+1,
+          title:original?.title||null,status:original?.status||'PUBLISHED',blocks:x.next,
+          createdByAdminId:adminIdOf(request)}});
+      }
+      if(x.type==='draft')await tx.contentPageDraft.update({where:{slug:x.id},data:{blocks:x.next}});
+      if(x.type==='popup')await tx.popup.update({where:{id:x.id},data:{buttonUrl:x.next}});
+      if(x.type==='setting')await tx.systemSetting.upsert({where:{key:x.id},
+        create:{key:x.id,value:x.next},update:{value:x.next}});
+    }
+    state.aliases[slug]=Array.from(new Set([...(state.aliases[slug]||[]),old]))
+      .filter((x:string)=>rm6CanonicalPattern.test(x)&&x!==next).slice(-30);
+    const json=rm6CleanAliases(state.aliases);
+    await tx.systemSetting.upsert({where:{key:rm6AliasesKey},create:{key:rm6AliasesKey,value:json},update:{value:json}});
+    await tx.systemSetting.upsert({where:{key:'PAGE_PATH_'+slug},create:{key:'PAGE_PATH_'+slug,value:next},update:{value:next}});
+    const revision=state.revision+1;
+    await tx.systemSetting.upsert({where:{key:rm6RevisionKey},create:{key:rm6RevisionKey,value:revision},update:{value:revision}});
+    await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'MM_ROUTE_R6_PUBLISHED',
+      entityType:'PageRoute',entityId:slug,metadata:{from:old,to:next,revision,totals:i.totals}}});
+    return {ok:true,slug,oldPath:old,newPath:next,revision,totals:i.totals};
+  },{timeout:20000});
+  if('error' in result)return reply.code(409).send(result);
+  rm6Cache=null;
+  return result;
+});
+// MMTRADE_ROUTE_MANAGER_R6_API_END
+// MMTRADE_PAGE_LIFECYCLE_R10_API_BEGIN
+// Reversible registry of published and archived pages. No Prisma schema change.
+const r10Key='MM_PAGE_LIFECYCLE_R10';
+const r10SlugSchema=z.string().regex(/^[a-z][a-z0-9-]{2,39}$/);
+const r10Builtins=['index','academy','crypto','copy-trading','challenge','support','profile','mmtrade10x'];
+const r10Engine=z.enum(['p74','p62','legacy']);
+const r10Status=z.enum(['DRAFT','PUBLISHED','ARCHIVED']);
+const r10CustomSchema=z.object({slug:r10SlugSchema,title:z.string().min(1).max(120),status:r10Status,previousStatus:z.enum(['DRAFT','PUBLISHED']).optional()}).strict();
+const r10StateSchema=z.object({version:z.number().int().min(0),start:z.string().max(60),engine:r10Engine,
+ builtins:z.record(z.enum(['PUBLISHED','ARCHIVED'])),custom:z.array(r10CustomSchema).max(70)}).strict();
+type R10State=z.infer<typeof r10StateSchema>;
+const r10Defaults=():R10State=>({version:0,start:'index',engine:'p74',builtins:Object.fromEntries(r10Builtins.map(s=>[s,'PUBLISHED'])) as Record<string,'PUBLISHED'|'ARCHIVED'>,custom:[]});
+function r10SafeState(raw:any):R10State{
+ const base=r10Defaults();const candidate=r10StateSchema.safeParse(raw);
+ if(!candidate.success)return base;
+ const x=candidate.data;
+ const custom=x.custom.filter(c=>!r10Builtins.includes(c.slug));
+ const builtins:any={};for(const slug of r10Builtins)builtins[slug]=x.builtins[slug]==='ARCHIVED'?'ARCHIVED':'PUBLISHED';
+ const start= x.start==='index'||r10Builtins.includes(x.start)||custom.some(c=>c.slug===x.start)?x.start:'index';
+ return {version:x.version,start,engine:x.engine,builtins,custom};
+}
+async function r10Read(db:any=prisma):Promise<R10State>{
+ const row=await db.systemSetting.findUnique({where:{key:r10Key},select:{value:true}});
+ return r10SafeState(row?.value);
+}
+async function r10Write(tx:any,state:R10State,actor:string|null,action:string,meta:any={}){
+ state.version++;
+ await tx.systemSetting.upsert({where:{key:r10Key},create:{key:r10Key,value:state as unknown as Prisma.InputJsonValue},update:{value:state as unknown as Prisma.InputJsonValue}});
+ await tx.auditLog.create({data:{adminUserId:actor,action,entityType:'PageLifecycle',metadata:meta}});
+}
+async function r10Owner(request:FastifyRequest,reply:FastifyReply){
+ if(!(await adminGuard(request,reply)))return false;
+ if((request as any).admin?.role!=='SUPER_ADMIN'){reply.code(403).send({error:'super_admin_required'});return false;}
+ return true;
+}
+function r10Entries(state:R10State,routeState:any){
+ const builtins=r10Builtins.map(slug=>{
+  const record=rm6RouteEntries(routeState).find((x:any)=>x.slug===slug);
+  return {slug,title:record?.label||slug,kind:'BUILTIN',path:record?.path||('/'+slug),target:record?.target||'',
+   aliases:record?.aliases||[],status:state.builtins[slug]||'PUBLISHED'};
+ });
+ const custom=state.custom.map(c=>({...c,kind:'CUSTOM',path:'/p/'+c.slug,target:'/p/'+c.slug,aliases:[]}));
+ return [...builtins,...custom];
+}
+function r10ValidStart(state:R10State,slug:string):boolean{
+ if(r10Builtins.includes(slug))return state.builtins[slug]==='PUBLISHED';
+ return state.custom.some(c=>c.slug===slug&&c.status==='PUBLISHED');
+}
+async function r10Payload(db:any=prisma){
+ const [state,routes]=await Promise.all([r10Read(db),rm6State(db,true)]);
+ const pages=r10Entries(state,routes);
+ let chosen=pages.find(p=>p.slug===state.start&&p.status==='PUBLISHED');
+ if(!chosen)chosen=pages.find(p=>p.slug==='index');
+ return {version:state.version,start:chosen?.slug||'index',startPath:chosen?.path||'/miniapp/index.html',engine:state.engine,pages};
+}
+const r10EditSchema=z.object({status:z.enum(['DRAFT','PUBLISHED','ARCHIVED']).optional(),title:z.string().trim().min(1).max(120).optional()}).strict();
+app.get('/public/page-lifecycle',async(_request,reply)=>{
+ reply.header('Cache-Control','no-store');return await r10Payload();
+});
+app.get('/admin/page-lifecycle',async(request,reply)=>{
+ if(!(await r10Owner(request,reply)))return;
+ reply.header('Cache-Control','no-store');return await r10Payload();
+});
+app.post('/admin/page-lifecycle',async(request,reply)=>{
+ if(!(await r10Owner(request,reply)))return;
+ const v=z.object({slug:r10SlugSchema,title:z.string().trim().min(1).max(120),expectedVersion:z.number().int().min(0)}).strict().safeParse(request.body);
+ if(!v.success)return reply.code(400).send({error:'invalid_page'});
+ const {slug,title,expectedVersion}=v.data;
+ if(r10Builtins.includes(slug)||['admin','api','miniapp','public','health','content','p74','p62'].includes(slug))return reply.code(409).send({error:'reserved_slug'});
+ const result=await prisma.$transaction(async tx=>{
+  const state=await r10Read(tx);
+  if(state.version!==expectedVersion)return {error:'stale_version'};
+  if(state.custom.some(x=>x.slug===slug))return {error:'slug_exists'};
+  if(state.custom.length>=70)return {error:'page_limit'};
+  if(await tx.contentPage.findUnique({where:{slug}}))return {error:'cms_slug_in_use'};
+  const blocks=[{type:'heading',text:title},{type:'text',text:'متن صفحه را از پنل ویرایش کنید.'}];
+  await tx.contentPageDraft.create({data:{slug,title,blocks}});
+  state.custom.push({slug,title,status:'DRAFT'});
+  await r10Write(tx,state,adminIdOf(request),'R10_PAGE_CREATED',{slug});
+  return {ok:true,path:'/p/'+slug,version:state.version};
+ });
+ if('error' in result)return reply.code(409).send(result);
+ return result;
+});
+app.patch('/admin/page-lifecycle/:slug',async(request,reply)=>{
+ if(!(await r10Owner(request,reply)))return;
+ const params=z.object({slug:z.string()}).safeParse(request.params);
+ const body=r10EditSchema.extend({expectedVersion:z.number().int().min(0)}).safeParse(request.body);
+ if(!params.success||!body.success)return reply.code(400).send({error:'invalid_request'});
+ const slug=params.data.slug;
+ const result=await withContentLock(prisma,slug,async tx=>{
+  const state=await r10Read(tx);
+  if(state.version!==body.data.expectedVersion)return {error:'stale_version'};
+  const builtin=r10Builtins.includes(slug),page=state.custom.find(p=>p.slug===slug);
+  if(!builtin&&!page)return {error:'page_not_found'};
+  if(body.data.title&&builtin)return {error:'builtin_title_locked'};
+  if(body.data.status==='ARCHIVED'&&state.start===slug)return {error:'select_another_start_first'};
+  if(builtin){if(body.data.status==='DRAFT')return {error:'builtin_cannot_be_draft'};if(body.data.status)state.builtins[slug]=body.data.status;}
+  else if(page){
+   if(body.data.title){page.title=body.data.title;await tx.contentPageDraft.updateMany({where:{slug},data:{title:page.title}});}
+   if(body.data.status){
+    if(body.data.status==='ARCHIVED'&&page.status!=='ARCHIVED')page.previousStatus=page.status==='PUBLISHED'?'PUBLISHED':'DRAFT';
+    if(body.data.status==='PUBLISHED'){
+     const published=await tx.contentPage.findUnique({where:{slug}});
+     if(!published||published.status!=='PUBLISHED')return {error:'publish_content_first'};
+    }
+    page.status=body.data.status;
+   }
+  }
+  await r10Write(tx,state,adminIdOf(request),'R10_PAGE_UPDATED',{slug,status:body.data.status,title:body.data.title});
+  return {ok:true,version:state.version};
+ });
+ if('error' in result)return reply.code(409).send(result);
+ return result;
+});
+app.post('/admin/page-lifecycle/start',async(request,reply)=>{
+ if(!(await r10Owner(request,reply)))return;
+ const b=z.object({slug:z.string().max(60),engine:r10Engine,expectedVersion:z.number().int().min(0)}).strict().safeParse(request.body);
+ if(!b.success)return reply.code(400).send({error:'invalid_request'});
+ const result=await prisma.$transaction(async tx=>{
+  const state=await r10Read(tx);
+  if(state.version!==b.data.expectedVersion)return {error:'stale_version'};
+  if(!r10ValidStart(state,b.data.slug))return {error:'start_not_published'};
+  state.start=b.data.slug;state.engine=b.data.engine;
+  await r10Write(tx,state,adminIdOf(request),'R10_START_CHANGED',{slug:state.start,engine:state.engine});
+  return {ok:true,version:state.version};
+ });
+ if('error' in result)return reply.code(409).send(result);
+ return result;
+});
+app.get('/admin/page-lifecycle/:slug/draft',async(request,reply)=>{
+ if(!(await r10Owner(request,reply)))return;
+ const slug=String((request.params as any).slug||'');
+ const state=await r10Read();const page=state.custom.find(x=>x.slug===slug);
+ if(!page)return reply.code(404).send({error:'custom_page_not_found'});
+ const [draft,published]=await Promise.all([prisma.contentPageDraft.findUnique({where:{slug}}),prisma.contentPage.findUnique({where:{slug}})]);
+ return {slug,title:draft?.title??published?.title??page.title,blocks:draft?.blocks??published?.blocks??[],revision:contentRevision(draft??published),status:page.status};
+});
+app.put('/admin/page-lifecycle/:slug/draft',async(request,reply)=>{
+ if(!(await r10Owner(request,reply)))return;
+ const slug=String((request.params as any).slug||'');
+ const v=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(),title:z.string().trim().min(1).max(120),blocks:z.array(blockSchema).max(220)}).strict().safeParse(request.body);
+ if(!v.success)return reply.code(400).send({error:'invalid_blocks',details:v.error.flatten()});
+ const state=await r10Read();if(!state.custom.some(x=>x.slug===slug))return reply.code(404).send({error:'custom_page_not_found'});
+ const saved=await withContentLock(prisma,slug,async tx=>{
+  const current=await tx.contentPageDraft.findUnique({where:{slug}})??await tx.contentPage.findUnique({where:{slug}});
+  assertContentRevision(current,v.data.expectedRevision);
+  const saved=await tx.contentPageDraft.upsert({where:{slug},create:{slug,title:v.data.title,blocks:toInputJson(v.data.blocks as unknown as Prisma.JsonValue)},update:{title:v.data.title,blocks:toInputJson(v.data.blocks as unknown as Prisma.JsonValue)}});
+  await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'R10_PAGE_DRAFT_SAVED',entityType:'PageLifecycle',entityId:slug}});
+  return saved;
+ });
+ return {ok:true,revision:contentRevision(saved)};
+});
+app.post('/admin/page-lifecycle/:slug/publish',async(request,reply)=>{
+ if(!(await r10Owner(request,reply)))return;
+ const slug=String((request.params as any).slug||'');
+ const body=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict().safeParse(request.body??{});
+ if(!body.success)return reply.code(400).send({error:'invalid_request'});
+ const result=await withContentLock(prisma,slug,async tx=>{
+  const state=await r10Read(tx);
+  const page=state.custom.find(x=>x.slug===slug);
+  if(!page)return {error:'custom_page_not_found'};
+  const draft=await tx.contentPageDraft.findUnique({where:{slug}});
+  assertContentRevision(draft,body.data.expectedRevision);
+  const validated=draft&&z.array(blockSchema).max(220).safeParse(draft.blocks);
+  if(!draft||!validated||!validated.success)return {error:'draft_invalid_or_missing'};
+  await tx.contentPage.upsert({where:{slug},create:{slug,title:draft.title,blocks:toInputJson(validated.data as unknown as Prisma.JsonValue),status:'PUBLISHED'},update:{title:draft.title,blocks:toInputJson(validated.data as unknown as Prisma.JsonValue),status:'PUBLISHED'}});
+  const latest=await tx.contentPageVersion.aggregate({where:{pageSlug:slug},_max:{version:true}});
+  await tx.contentPageVersion.create({data:{pageSlug:slug,version:(latest._max.version??0)+1,title:draft.title,blocks:toInputJson(validated.data as unknown as Prisma.JsonValue),status:'PUBLISHED',createdByAdminId:adminIdOf(request)}});
+  page.title=draft.title||page.title;page.status='PUBLISHED';
+  await r10Write(tx,state,adminIdOf(request),'R10_PAGE_PUBLISHED',{slug});
+  return {ok:true,version:state.version};
+ });
+ if('error' in result)return reply.code(409).send(result);
+ return result;
+});
+app.get('/public/page-lifecycle/content/:slug',async(request,reply)=>{
+ const slug=String((request.params as any).slug||'');
+ const state=await r10Read();
+ if(!state.custom.some(p=>p.slug===slug&&p.status==='PUBLISHED'))return reply.code(404).send({error:'page_unavailable'});
+ const page=await prisma.contentPage.findUnique({where:{slug},select:{title:true,blocks:true,status:true}});
+ if(!page||page.status!=='PUBLISHED')return reply.code(404).send({error:'page_unpublished'});
+ reply.header('cache-control','no-store');return {title:page.title,blocks:page.blocks};
+});
+// R10.2: public page handled by early onRequest hook above.
+// MMTRADE_PAGE_LIFECYCLE_R10_API_END
+
+// EPLANET_OFFICIAL_R2_BEGIN
+// ePlanet onboarding uses existing SystemSetting, User and EplanetUserWorkflow records.
+// All mutations are serialized inside this single API process to prevent lost JSON updates.
+const eplanetStoreKey = 'EPLANET_ONBOARDING_V1';
+const eplanetStepKeys = ['registration','deposit','connect','activation'] as const;
+const eplanetTeamSteps = ['ACCOUNT_CREATED','DEPOSIT_COMPLETED','COPY_CONNECTED','CHALLENGE_PARTICIPANT'] as const;
+const eplanetWorkflowFields = ['accountCreated','depositCompleted','copyConnected','challengeParticipant'] as const;
+const eplanetDefaults:any = {
+ title:'مسیر اتصال به ePlanet',
+ subtitle:'از افتتاح حساب تا فعال‌سازی سیستم کپی‌ترید',
+ registerUrl:'',
+ heroImage:'assets/icon-eplanet.webp',
+ steps:[
+  {key:'registration',title:'Registration',fa:'ثبت‌نام و افتتاح حساب ePlanet',description:'حساب ePlanet را ایجاد کنید و شناسه حساب معاملاتی را ثبت کنید.',externalUrl:'',imageUrl:'assets/icon-registration.webp'},
+  {key:'deposit',title:'Deposit',fa:'واریز و شارژ حساب معاملاتی',description:'واریز وجه را انجام دهید و درخواست بررسی را ارسال کنید.',externalUrl:'',imageUrl:'assets/icon-deposit.webp'},
+  {key:'connect',title:'Connect to MMTrade',fa:'اتصال حساب به سیستم معاملاتی',description:'اطلاعات حساب را طبق راهنمای اتصال ثبت کنید.',externalUrl:'',imageUrl:'assets/icon-connect.webp'},
+  {key:'activation',title:'Activate Copy Trading',fa:'فعال‌سازی کپی‌ترید',description:'کپی‌ترید را فعال کنید و درخواست تأیید نهایی را ارسال کنید.',externalUrl:'',imageUrl:'assets/icon-activate.webp'}
+ ]
+};
+
+let eplanetMutationTail:Promise<void> = Promise.resolve();
+async function eplanetSerialize<T>(work:()=>Promise<T>):Promise<T>{
+ const previous=eplanetMutationTail;
+ let release!:()=>void;
+ eplanetMutationTail=new Promise<void>(resolve=>{release=resolve});
+ await previous;
+ try{return await work()}
+ finally{release()}
+}
+
+function eplanetUrl(value:unknown):string{
+ if(typeof value!=='string'||!value.trim())return '';
+ try{
+  const url=new URL(value);
+  return ['https:','http:'].includes(url.protocol)&&!url.username&&!url.password?url.toString():'';
+ }catch{return ''}
+}
+function eplanetImage(value:unknown,fallback:string):string{
+ if(typeof value!=='string'||!value.trim())return fallback;
+ const image=value.trim();
+ if(/^assets\/[A-Za-z0-9._/-]+$/.test(image)&&!image.includes('..'))return image;
+ return eplanetUrl(image)||fallback;
+}
+function eplanetConfig(raw:any){
+ const value=raw&&typeof raw==='object'?raw:{};
+ const sourceSteps=Array.isArray(value.steps)?value.steps:[];
+ return {
+  title:typeof value.title==='string'?value.title.slice(0,120):eplanetDefaults.title,
+  subtitle:typeof value.subtitle==='string'?value.subtitle.slice(0,240):eplanetDefaults.subtitle,
+  registerUrl:eplanetUrl(value.registerUrl),
+  heroImage:eplanetImage(value.heroImage,eplanetDefaults.heroImage),
+  steps:eplanetStepKeys.map((key,index)=>{
+   const step=sourceSteps.find((item:any)=>item?.key===key)||eplanetDefaults.steps[index];
+   return {
+    key,
+    title:typeof step.title==='string'?step.title.slice(0,100):eplanetDefaults.steps[index].title,
+    fa:typeof step.fa==='string'?step.fa.slice(0,160):eplanetDefaults.steps[index].fa,
+    description:typeof step.description==='string'?step.description.slice(0,700):eplanetDefaults.steps[index].description,
+    externalUrl:eplanetUrl(step.externalUrl),
+    imageUrl:eplanetImage(step.imageUrl,eplanetDefaults.steps[index].imageUrl)
+   };
+  })
+ };
+}
+async function eplanetRead(db:any=prisma):Promise<any>{
+ const row=await db.systemSetting.findUnique({
+  where:{key:eplanetStoreKey},select:{value:true}
+ });
+ const stored:any=row?.value||{};
+ return {
+  config:eplanetConfig(stored.config),
+  requests:Array.isArray(stored.requests)
+   ?stored.requests.filter((item:any)=>item&&typeof item.id==='string').slice(-1500)
+   :[]
+ };
+}
+async function eplanetWrite(db:any,value:any){
+ await db.systemSetting.upsert({
+  where:{key:eplanetStoreKey},
+  create:{key:eplanetStoreKey,value:value as unknown as Prisma.InputJsonValue},
+  update:{value:value as unknown as Prisma.InputJsonValue}
+ });
+}
+function eplanetStatuses(workflow:any,requests:any[]){
+ const completed=eplanetWorkflowFields.map(field=>workflow?.[field]===true);
+ let blocked=false;
+ return Object.fromEntries(eplanetStepKeys.map((key,index)=>{
+  let status='locked';
+  if(!blocked&&!completed[index]){
+   const request=[...requests].reverse().find((item:any)=>item.step===key&&item.status==='pending');
+   const rejected=[...requests].reverse().find((item:any)=>item.step===key&&item.status==='rejected');
+   status=request?'pending':rejected?'rejected':'available';
+  }
+  if(!completed[index])blocked=true;
+  return [key,{status}];
+ }));
+}
+
+app.get('/miniapp/eplanet/config',async(_request,reply)=>{
+ reply.header('Cache-Control','no-store');
+ const state=await eplanetRead();
+ return {ok:true,config:state.config};
+});
+
+app.post('/miniapp/eplanet/status',async(request,reply)=>{
+ reply.header('Cache-Control','no-store');
+ const parsed=z.object({initData:z.string().min(1).max(10000)}).strict().safeParse(request.body);
+ if(!parsed.success)return reply.code(400).send({error:'invalid_request'});
+ const user=await miniUser(parsed.data.initData,false);
+ if('code'in user)return reply.code(user.code).send({error:user.error});
+ const [record,state]=await Promise.all([
+  prisma.user.findUnique({where:{id:user.id},select:{id:true,eplanetWorkflow:true}}),
+  eplanetRead()
+ ]);
+ if(!record)return reply.code(404).send({error:'user_not_found'});
+ return {
+  ok:true,
+  steps:eplanetStatuses(
+   record.eplanetWorkflow,
+   state.requests.filter((item:any)=>item.userId===user.id)
+  ),
+  version:record.eplanetWorkflow?.version??0
+ };
+});
+
+app.post('/miniapp/eplanet/submit',async(request,reply)=>{
+ const parsed=z.object({
+  initData:z.string().min(1).max(10000),
+  step:z.enum(eplanetStepKeys),
+  accountId:z.string().trim().max(100).optional()
+ }).strict().safeParse(request.body);
+ if(!parsed.success)return reply.code(400).send({error:'invalid_request'});
+ const user=await miniUser(parsed.data.initData,false);
+ if('code'in user)return reply.code(user.code).send({error:user.error});
+ const index=eplanetStepKeys.indexOf(parsed.data.step);
+ const record=await prisma.user.findUnique({
+  where:{id:user.id},select:{id:true,eplanetWorkflow:true}
+ });
+ if(!record)return reply.code(404).send({error:'user_not_found'});
+ const completed=eplanetWorkflowFields.map(field=>record.eplanetWorkflow?.[field]===true);
+ if(completed.slice(0,index).some(value=>!value)||completed[index])
+  return reply.code(409).send({error:'step_not_available'});
+ if(index===0&&!parsed.data.accountId?.trim())
+  return reply.code(400).send({error:'account_id_required'});
+
+ return eplanetSerialize(async()=>{
+  const state=await eplanetRead();
+  if(state.requests.some((item:any)=>
+   item.userId===user.id&&item.step===parsed.data.step&&item.status==='pending'
+  ))return reply.code(409).send({error:'request_already_pending'});
+  const requestId=customPageRandomUUID();
+  state.requests.push({
+   id:requestId,userId:user.id,step:parsed.data.step,
+   accountId:parsed.data.accountId?.trim()||'',
+   status:'pending',createdAt:new Date().toISOString()
+  });
+  state.requests=state.requests.slice(-1500);
+  await eplanetWrite(prisma,state);
+  return reply.code(201).send({ok:true,status:'pending',requestId});
+ });
+});
+
+app.get('/miniapp/eplanet/admin/requests',async(request,reply)=>{
+ const actor=await p37SuperSession(request,reply);
+ if(!actor)return;
+ const state=await eplanetRead();
+ const pending=state.requests.filter((item:any)=>item.status==='pending');
+ const ids=[...new Set<string>(pending.map((item:any)=>String(item.userId)))];
+ const users=ids.length?await prisma.user.findMany({
+  where:{id:{in:ids}},
+  select:{id:true,telegramId:true,username:true,firstName:true,lastName:true}
+ }):[];
+ const usersById=new Map(users.map((user:any)=>[user.id,user]));
+ return {
+  ok:true,
+  items:pending.map((item:any)=>({...item,user:usersById.get(item.userId)||null})).reverse()
+ };
+});
+
+app.put('/miniapp/eplanet/admin/config',async(request,reply)=>{
+ const actor=await p37SuperSession(request,reply);
+ if(!actor)return;
+ const stepSchema=z.object({
+  key:z.enum(eplanetStepKeys),
+  title:z.string().trim().min(1).max(100),
+  fa:z.string().trim().min(1).max(160),
+  description:z.string().max(700),
+  externalUrl:z.string().max(1000).optional().default(''),
+  imageUrl:z.string().max(1000).optional().default('')
+ }).strict();
+ const parsed=z.object({
+  title:z.string().trim().min(1).max(120),
+  subtitle:z.string().max(240),
+  registerUrl:z.string().max(1000).optional().default(''),
+  heroImage:z.string().max(1000).optional().default(''),
+  steps:z.array(stepSchema).length(4)
+ }).strict().safeParse(request.body);
+ if(!parsed.success)return reply.code(400).send({error:'invalid_config'});
+ const value=parsed.data;
+ if(
+  (value.registerUrl&&!eplanetUrl(value.registerUrl))||
+  (value.heroImage&&!eplanetImage(value.heroImage,''))||
+  value.steps.some(step=>
+   (step.externalUrl&&!eplanetUrl(step.externalUrl))||
+   (step.imageUrl&&!eplanetImage(step.imageUrl,''))
+  )
+ )return reply.code(400).send({error:'invalid_url'});
+ if(new Set(value.steps.map(step=>step.key)).size!==4)
+  return reply.code(400).send({error:'duplicate_step_key'});
+
+ return eplanetSerialize(async()=>{
+  const state=await eplanetRead();
+  state.config=eplanetConfig(value);
+  await prisma.$transaction(async tx=>{
+   await eplanetWrite(tx,state);
+   await tx.auditLog.create({
+    data:{
+     adminUserId:actor.id,
+     action:'EPLANET_CONTENT_UPDATED',
+     entityType:'SystemSetting',
+     entityId:eplanetStoreKey,
+     metadata:{steps:4}
+    }
+   });
+  });
+  return {ok:true,config:state.config};
+ });
+});
+
+app.post('/miniapp/eplanet/admin/requests/:id/decision',async(request,reply)=>{
+ const actor=await p37SuperSession(request,reply);
+ if(!actor)return;
+ const params=z.object({id:z.string().min(1).max(100)}).safeParse(request.params);
+ const parsed=z.object({
+  approved:z.boolean(),
+  note:z.string().trim().max(500).optional()
+ }).strict().safeParse(request.body);
+ if(!params.success||!parsed.success)
+  return reply.code(400).send({error:'invalid_request'});
+
+ return eplanetSerialize(async()=>{
+  const state=await eplanetRead();
+  const item=state.requests.find((entry:any)=>entry.id===params.data.id);
+  if(!item||item.status!=='pending')
+   return reply.code(404).send({error:'pending_request_not_found'});
+
+  const stepIndex=eplanetStepKeys.indexOf(item.step);
+  if(stepIndex<0)return reply.code(409).send({error:'invalid_stored_request_step'});
+  if(parsed.data.approved){
+   const current=await prisma.eplanetUserWorkflow.findUnique({
+    where:{userId:item.userId},
+    select:{
+     version:true,accountCreated:true,depositCompleted:true,
+     copyConnected:true,challengeParticipant:true
+    }
+   });
+   const workflowField=eplanetWorkflowFields[stepIndex];
+   // Idempotent recovery: if workflow committed but queue write failed, finish the queue decision.
+   if(current?.[workflowField]!==true){
+    const result=await p37ChangeWorkflow(item.userId,{
+     step:eplanetTeamSteps[stepIndex],
+     approved:true,
+     version:current?.version??0,
+     ...(item.step==='registration'&&item.accountId?{accountId:item.accountId}:{}),
+     ...(parsed.data.note!==undefined?{note:parsed.data.note}:{})
+    },{adminUserId:actor.id});
+    if('error'in result)
+     return reply.code(result.status??409).send({error:result.error});
+   }
+   item.status='approved';
+  }else{
+   item.status='rejected';
+   item.note=parsed.data.note||'نیازمند اصلاح';
+  }
+  item.decidedAt=new Date().toISOString();
+  item.decidedBy=actor.id;
+  await prisma.$transaction(async tx=>{
+   await eplanetWrite(tx,state);
+   await tx.auditLog.create({
+    data:{
+     adminUserId:actor.id,
+     action:'EPLANET_REQUEST_DECIDED',
+     entityType:'EplanetOnboardingRequest',
+     entityId:item.id,
+     metadata:{step:item.step,approved:parsed.data.approved}
+    }
+   });
+  });
+  return {ok:true,status:item.status};
+ });
+});
+// EPLANET_OFFICIAL_R2_END
+
+
+// MMVS_SPATIAL_R4_API_BEGIN
+// MMVS R7: optional lock, reversible hide, z-index and opacity. Existing R4 layouts remain valid.
+// Super-admin-only position editor. Stored in existing SystemSetting JSON; no migration.
+const mmvsSpatialSlug = z.enum(PAGE_SLUGS);
+// MMVS_R9_ANIMATION_SCHEMA: existing layout, optional per-object movement.
+const mmvsSpatialAnimation = z.object({
+  kind: z.enum(['float','spin','sway','pulse']),
+  durationMs: z.number().int().min(400).max(30000),
+  amplitude: z.number().finite().min(1).max(150),
+  delayMs: z.number().int().min(0).max(10000),
+  loop: z.boolean()
+}).strict();
+const mmvsSpatialItem = z.object({
+  selector: z.string().min(1).max(500).refine(v => !v.startsWith('#p74-home-config') && !v.startsWith('#p77-profile-config') && !v.startsWith('#mmvs-spatial-'), 'reserved_selector'),
+  x: z.number().finite().min(-4000).max(4000),
+  y: z.number().finite().min(-4000).max(4000),
+  scale: z.number().finite().min(0.2).max(4),
+  locked: z.boolean().optional(),
+  hidden: z.boolean().optional(),
+  zIndex: z.number().int().min(-1000).max(20000).optional(),
+  opacity: z.number().finite().min(0.05).max(1).optional(),
+  animation: mmvsSpatialAnimation.optional()
+}).strict();
+const mmvsSpatialLayout = z.object({
+  items: z.array(mmvsSpatialItem).max(500)
+}).strict().superRefine((value, ctx) => {
+  const unique = new Set<string>();
+  for(const [i, item] of value.items.entries()) {
+    if(unique.has(item.selector))ctx.addIssue({code:'custom',path:['items',i,'selector'],message:'duplicate_selector'});
+    unique.add(item.selector);
+  }
+});
+type MmvsSpatialLayout = z.infer<typeof mmvsSpatialLayout>;
+type MmvsSpatialHistory = {revision:number;at:string;layout:MmvsSpatialLayout};
+type MmvsSpatialState = {version:1;revision:number;published:MmvsSpatialLayout;draft:MmvsSpatialLayout|null;history:MmvsSpatialHistory[]};
+const mmvsSpatialEmpty = ():MmvsSpatialLayout => ({items:[]});
+const mmvsSpatialKey = (slug:string) => 'MMVS_SPATIAL_R4_'+slug;
+const mmvsSpatialCopy = <T>(obj:T):T => JSON.parse(JSON.stringify(obj));
+async function mmvsSpatialRead(slug:string,db:Prisma.TransactionClient|PrismaClient=prisma):Promise<MmvsSpatialState>{
+  const row=await db.systemSetting.findUnique({where:{key:mmvsSpatialKey(slug)},select:{value:true}});
+  const value:any=row?.value;
+  if(!value || typeof value!=='object' || Array.isArray(value) || value.version!==1) return {version:1,revision:0,published:mmvsSpatialEmpty(),draft:null,history:[]};
+  const published=mmvsSpatialLayout.safeParse(value.published);
+  const draft=value.draft==null?null:mmvsSpatialLayout.safeParse(value.draft);
+  if(!published.success || (draft && !draft.success) || !Number.isSafeInteger(value.revision)||value.revision<0)throw Error('MMVS_SPATIAL_CORRUPT_STATE');
+  return {version:1,revision:value.revision,published:published.data,draft:draft?draft.data:null,
+    history:Array.isArray(value.history)?value.history.slice(-25):[]};
+}
+async function mmvsSpatialWrite(slug:string,state:MmvsSpatialState,request:FastifyRequest,action:string,tx:Prisma.TransactionClient){
+    await tx.systemSetting.upsert({where:{key:mmvsSpatialKey(slug)},
+      create:{key:mmvsSpatialKey(slug),value:state as unknown as Prisma.InputJsonValue},
+      update:{value:state as unknown as Prisma.InputJsonValue}});
+    await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action,entityType:'VisualStudioSpatial',entityId:slug,
+      metadata:{revision:state.revision,items:(state.draft??state.published).items.length}}});
+}
+async function mmvsSpatialOwner(request:FastifyRequest,reply:FastifyReply){
+  if(!(await adminGuard(request,reply)))return false;
+  if((request as any).admin?.role!=='SUPER_ADMIN'){reply.code(403).send({error:'super_admin_required'});return false;}
+  return true;
+}
+app.get('/public/mmvs/layout/:slug',async(request,reply)=>{
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  if(!p.success)return reply.code(404).send({error:'invalid_page'});
+  reply.header('cache-control','no-store');
+  const state=await mmvsSpatialRead(p.data.slug);
+  return {revision:state.revision,layout:state.published};
+});
+app.get('/admin/mmvs/layout/:slug',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  if(!p.success)return reply.code(404).send({error:'invalid_page'});
+  reply.header('cache-control','no-store');
+  return await mmvsSpatialRead(p.data.slug);
+});
+app.put('/admin/mmvs/layout/:slug/draft',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  const b=z.object({expectedRevision:z.number().int().min(0),layout:mmvsSpatialLayout}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_spatial_layout'});
+  return withContentLock(prisma,p.data.slug,async tx=>{
+  const current=await mmvsSpatialRead(p.data.slug,tx);
+  if(current.revision!==b.data.expectedRevision)return reply.code(409).send({error:'spatial_revision_conflict'});
+  current.draft=mmvsSpatialCopy(b.data.layout);current.revision++;
+  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_DRAFT_SAVED',tx);
+  return {ok:true,revision:current.revision};
+  });
+});
+app.post('/admin/mmvs/layout/:slug/publish',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  const b=z.object({expectedRevision:z.number().int().min(0)}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  return withContentLock(prisma,p.data.slug,async tx=>{
+  const current=await mmvsSpatialRead(p.data.slug,tx);
+  if(current.revision!==b.data.expectedRevision)return reply.code(409).send({error:'spatial_revision_conflict'});
+  if(!current.draft)return reply.code(409).send({error:'spatial_draft_not_found'});
+  current.published=mmvsSpatialCopy(current.draft);current.draft=null;current.revision++;
+  current.history=[...current.history,{revision:current.revision,at:new Date().toISOString(),layout:mmvsSpatialCopy(current.published)}].slice(-25);
+  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_PUBLISHED',tx);
+  return {ok:true,revision:current.revision};
+  });
+});
+app.post('/admin/mmvs/layout/:slug/restore',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  const b=z.object({expectedRevision:z.number().int().min(0),revision:z.number().int().positive()}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  return withContentLock(prisma,p.data.slug,async tx=>{
+  const current=await mmvsSpatialRead(p.data.slug,tx);
+  if(current.revision!==b.data.expectedRevision)return reply.code(409).send({error:'spatial_revision_conflict'});
+  const snap=current.history.find((x:any)=>x.revision===b.data.revision);
+  if(!snap)return reply.code(404).send({error:'spatial_version_not_found'});
+  const parsed=mmvsSpatialLayout.safeParse(snap.layout);
+  if(!parsed.success)return reply.code(409).send({error:'spatial_version_invalid'});
+  current.draft=mmvsSpatialCopy(parsed.data);current.revision++;
+  await mmvsSpatialWrite(p.data.slug,current,request,'MMVS_SPATIAL_RESTORED_TO_DRAFT',tx);
+  return {ok:true,revision:current.revision};
+  });
+});
+// MMVS_SPATIAL_R4_API_END
+
 const REG_ORDER = ['STARTED', 'CHANNELS_PENDING', 'CONSENT_PENDING', 'PHONE_PENDING', 'REGISTERED', 'MINI_APP_PENDING', 'COMPLETE'];
 const safeLink = z.string().trim().max(500).refine((v) => /^(https:\/\/\S+|\/(?!\/)\S*)$/.test(v), 'https_or_internal_path');
 const blockSchema = z.discriminatedUnion('type', [
@@ -4051,6 +5656,7 @@ const blockSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('banner'), title: z.string().trim().min(1).max(200), text: z.string().trim().max(1000).optional(), url: safeLink.optional() }),
   z.object({ type: z.literal('progress'), kind: z.enum(['registration', 'academy']), title: z.string().trim().max(120).optional() }),
   z.object({ type: z.literal('divider') }),
+  z.object({ type: z.literal('html'), html: z.string().min(1).max(16000) }),
   z.object({
     type: z.literal('mm10_step'),
     id: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
@@ -4100,6 +5706,805 @@ const toInputJson = (value: Prisma.JsonValue) =>
 const contentAudit = (request: FastifyRequest, action: string, entityId: string) =>
   prisma.auditLog.create({ data: { adminUserId: adminIdOf(request), action, entityType: 'Content', entityId } });
 
+// TENX_CUSTOM_PAGE_ADMIN_API_V1
+app.get('/admin/custom-pages', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply))) return;
+  const pages = await tenxCustomPagesRead();
+  const items = await Promise.all(pages.map(async meta => {
+    const [draft, published] = await Promise.all([
+      prisma.contentPageDraft.findUnique({ where: { slug: meta.slug } }),
+      prisma.contentPage.findUnique({ where: { slug: meta.slug } })
+    ]);
+    const source = draft ?? published;
+    return {
+      slug: meta.slug, title: source?.title ?? meta.title,
+      status: published?.status ?? 'DRAFT',
+      blocks: Array.isArray(source?.blocks) ? source.blocks : [],
+      updatedAt: source?.updatedAt ?? null,
+      isCustom: true, publicSlug: meta.publicSlug, publicPath: '/p/' + meta.publicSlug,
+      aliases: meta.aliases.map(x => '/p/' + x)
+    };
+  }));
+  return { items };
+});
+
+app.get('/admin/custom-pages/backups', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply, true))) return;
+  const dir = tenxCustomBackupDir();
+  let files: string[] = [];
+  try { files = await customFsReaddir(dir); } catch (error: any) { if (error?.code !== 'ENOENT') throw error; }
+  const items: any[] = [];
+  for (const name of files.filter(x => /^[0-9a-f-]{36}\.json$/i.test(x)).slice(0, 200)) {
+    try {
+      const data = JSON.parse(await customFsReadFile(join(dir, name), 'utf8'));
+      if (data?.format !== '10X_CUSTOM_PAGE_BACKUP_V1' || !tenxCustomBackupIdOk(data.backupId)) continue;
+      items.push({ backupId: data.backupId, slug: data.customPage?.slug, title: data.customPage?.title,
+        publicPath: data.customPage?.publicSlug ? '/p/' + data.customPage.publicSlug : null, createdAt: data.createdAt });
+    } catch { /* Ignore an incomplete or invalid backup; never expose its contents. */ }
+  }
+  items.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  reply.header('cache-control', 'no-store');
+  return { items };
+});
+
+app.post('/admin/custom-pages', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply))) return;
+  const parsed = z.object({
+    slug: tenxCustomSlugSchema,
+    title: z.string().trim().min(1).max(200),
+    publicSlug: tenxCustomPublicSlugSchema,
+    sourceSlug: z.string().trim().min(1).max(60).optional()
+  }).strict().safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({ error: 'invalid_input', details: parsed.error.flatten() });
+  const { slug, title, publicSlug, sourceSlug } = parsed.data;
+  if ((PAGE_SLUGS as readonly string[]).includes(slug)) return reply.code(409).send({ error: 'protected_page_slug' });
+  const pages = await tenxCustomPagesRead();
+  if (pages.some(p => p.slug === slug || p.publicSlug === publicSlug || p.aliases.includes(publicSlug)))
+    return reply.code(409).send({ error: 'slug_or_public_path_in_use' });
+  const [existingPage, existingDraft] = await Promise.all([
+    prisma.contentPage.findUnique({ where: { slug } }),
+    prisma.contentPageDraft.findUnique({ where: { slug } })
+  ]);
+  if (existingPage || existingDraft) return reply.code(409).send({ error: 'page_slug_already_exists' });
+
+  let blocks: any[] = [];
+  let copiedTitle: string | null = null;
+  if (sourceSlug) {
+    const isBuiltin = (PAGE_SLUGS as readonly string[]).includes(sourceSlug);
+    const isCustom = pages.some(p => p.slug === sourceSlug);
+    if (!isBuiltin && !isCustom) return reply.code(404).send({ error: 'source_page_not_found' });
+    const [sourceDraft, sourcePublished] = await Promise.all([
+      prisma.contentPageDraft.findUnique({ where: { slug: sourceSlug } }),
+      prisma.contentPage.findUnique({ where: { slug: sourceSlug } })
+    ]);
+    const source = sourceDraft ?? sourcePublished;
+    if (source) {
+      blocks = Array.isArray(source.blocks) ? JSON.parse(JSON.stringify(source.blocks)) : [];
+      copiedTitle = source.title ?? null;
+    }
+  }
+
+  const now = new Date().toISOString();
+  const meta: TenxCustomPageMeta = { slug, title, publicSlug, aliases: [], sourceSlug: sourceSlug ?? null, createdAt: now, updatedAt: now };
+  const saved = await prisma.$transaction(async tx => {
+    const draft = await tx.contentPageDraft.create({ data: { slug, title, blocks: blocks as Prisma.InputJsonValue } });
+    await tx.contentPageVersion.create({ data: {
+      pageSlug: slug, version: 1, title: draft.title, blocks: toInputJson(draft.blocks), status: 'DRAFT',
+      createdByAdminId: adminIdOf(request)
+    } });
+    await tenxCustomPagesWrite(tx, [...pages, meta]);
+    await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: sourceSlug ? 'CUSTOM_PAGE_DUPLICATED' : 'CUSTOM_PAGE_CREATED', entityType: 'ContentPage', entityId: slug,
+      metadata: { sourceSlug: sourceSlug ?? null, publicPath: '/p/' + publicSlug, copiedTitle } } });
+    return draft;
+  });
+  return { ok: true, slug, title, publicSlug, publicPath: '/p/' + publicSlug, updatedAt: saved.updatedAt };
+});
+
+app.get('/admin/custom-pages/:slug/editor', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply))) return;
+  const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
+  if (!p.success) return reply.code(400).send({ error: 'invalid_request' });
+  const meta = (await tenxCustomPagesRead()).find(x => x.slug === p.data.slug);
+  if (!meta) return reply.code(404).send({ error: 'page_not_found' });
+  const [draft, published] = await Promise.all([
+    prisma.contentPageDraft.findUnique({ where: { slug: p.data.slug } }),
+    prisma.contentPage.findUnique({ where: { slug: p.data.slug } })
+  ]);
+  const source = draft ?? published;
+  return {
+    slug: p.data.slug, title: source?.title ?? meta.title,
+    blocks: Array.isArray(source?.blocks) ? source.blocks : [], hasDraft: Boolean(draft),
+    draftUpdatedAt: draft?.updatedAt ?? null, revision: contentRevision(source),
+    isCustom: true, publicSlug: meta.publicSlug, publicPath: '/p/' + meta.publicSlug,
+    published: { title: published?.title ?? null, blocks: Array.isArray(published?.blocks) ? published.blocks : [],
+      status: published?.status ?? 'DRAFT', updatedAt: published?.updatedAt ?? null }
+  };
+});
+
+app.put('/admin/custom-pages/:slug/draft', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply))) return;
+  const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
+  const b = z.object({ expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(), title: z.string().trim().max(200).nullable().optional(), blocks: z.array(blockSchema).max(220) }).strict().safeParse(request.body);
+  if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request', details: b.success ? undefined : b.error.flatten() });
+  if (!(await tenxCustomPagesRead()).some(x => x.slug === p.data.slug)) return reply.code(404).send({ error: 'page_not_found' });
+  const blocks = JSON.parse(JSON.stringify(b.data.blocks));
+  const title = b.data.title ?? null;
+  const saved = await withContentLock(prisma,p.data.slug,async tx => {
+    const current=await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}})??await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    assertContentRevision(current,b.data.expectedRevision);
+    const draft = await tx.contentPageDraft.upsert({ where: { slug: p.data.slug },
+      create: { slug: p.data.slug, title, blocks }, update: { title, blocks } });
+    const latest = await tx.contentPageVersion.aggregate({ where: { pageSlug: p.data.slug }, _max: { version: true } });
+    await tx.contentPageVersion.create({ data: { pageSlug: p.data.slug, version: (latest._max.version ?? 0) + 1,
+      title: draft.title, blocks: toInputJson(draft.blocks), status: 'DRAFT', createdByAdminId: adminIdOf(request) } });
+    await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'CUSTOM_PAGE_DRAFT_SAVED', entityType: 'ContentPageDraft', entityId: p.data.slug } });
+    return draft;
+  });
+  return { ok: true, updatedAt: saved.updatedAt, revision:contentRevision(saved) };
+});
+
+app.post('/admin/custom-pages/:slug/publish', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply))) return;
+  const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
+  if (!p.success) return reply.code(400).send({ error: 'invalid_request' });
+  if (!(await tenxCustomPagesRead()).some(x => x.slug === p.data.slug)) return reply.code(404).send({ error: 'page_not_found' });
+  const body=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict().safeParse(request.body??{});
+  if(!body.success)return reply.code(400).send({error:'invalid_request'});
+  const published = await withContentLock(prisma,p.data.slug,async tx => {
+    const draft = await tx.contentPageDraft.findUnique({ where: { slug: p.data.slug } });
+    if (!draft) return null;
+    assertContentRevision(draft,body.data.expectedRevision);
+    const page = await tx.contentPage.upsert({ where: { slug: p.data.slug },
+      create: { slug: p.data.slug, title: draft.title, blocks: toInputJson(draft.blocks), status: 'PUBLISHED' },
+      update: { title: draft.title, blocks: toInputJson(draft.blocks), status: 'PUBLISHED' } });
+    const latest = await tx.contentPageVersion.aggregate({ where: { pageSlug: p.data.slug }, _max: { version: true } });
+    await tx.contentPageVersion.create({ data: { pageSlug: p.data.slug, version: (latest._max.version ?? 0) + 1,
+      title: page.title, blocks: toInputJson(page.blocks), status: 'PUBLISHED', createdByAdminId: adminIdOf(request) } });
+    await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'CUSTOM_PAGE_PUBLISHED', entityType: 'ContentPage', entityId: p.data.slug,
+      metadata: { status: 'PUBLISHED' } } });
+    return page;
+  });
+  if (!published) return reply.code(409).send({ error: 'draft_not_found' });
+  return { ok: true, status: published.status, updatedAt: published.updatedAt };
+});
+
+app.get('/admin/custom-pages/:slug/versions', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply))) return;
+  const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
+  if (!p.success) return reply.code(400).send({ error: 'invalid_request' });
+  if (!(await tenxCustomPagesRead()).some(x => x.slug === p.data.slug)) return reply.code(404).send({ error: 'page_not_found' });
+  const items = await prisma.contentPageVersion.findMany({ where: { pageSlug: p.data.slug }, orderBy: { version: 'desc' }, take: 50,
+    select: { id: true, version: true, title: true, status: true, createdAt: true, createdBy: { select: { email: true } } } });
+  return { items };
+});
+
+app.post('/admin/custom-pages/:slug/rollback', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply))) return;
+  const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
+  const b = z.object({ versionId: z.string().min(1).max(64) }).strict().safeParse(request.body);
+  if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request' });
+  if (!(await tenxCustomPagesRead()).some(x => x.slug === p.data.slug)) return reply.code(404).send({ error: 'page_not_found' });
+  const result = await withContentLock(prisma,p.data.slug,async tx => {
+    const target = await tx.contentPageVersion.findFirst({ where: { id: b.data.versionId, pageSlug: p.data.slug } });
+    if (!target) return null;
+    if (target.status === 'DRAFT') {
+      await tx.contentPageDraft.upsert({ where: { slug: p.data.slug },
+        create: { slug: p.data.slug, title: target.title, blocks: toInputJson(target.blocks) },
+        update: { title: target.title, blocks: toInputJson(target.blocks) } });
+    } else {
+      await tx.contentPage.upsert({ where: { slug: p.data.slug },
+        create: { slug: p.data.slug, title: target.title, blocks: toInputJson(target.blocks), status: 'PUBLISHED' },
+        update: { title: target.title, blocks: toInputJson(target.blocks), status: 'PUBLISHED' } });
+    }
+    await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'CUSTOM_PAGE_ROLLED_BACK', entityType: 'ContentPage', entityId: p.data.slug,
+      metadata: { sourceVersion: target.version, sourceStatus: target.status } } });
+    return { ok: true, status: target.status };
+  });
+  if (!result) return reply.code(404).send({ error: 'version_not_found' });
+  return result;
+});
+
+app.post('/admin/custom-pages/:slug/route', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply, true))) return;
+  const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
+  const b = z.object({ publicSlug: tenxCustomPublicSlugSchema }).strict().safeParse(request.body);
+  if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_input' });
+  const pages = await tenxCustomPagesRead();
+  const index = pages.findIndex(x => x.slug === p.data.slug);
+  if (index < 0) return reply.code(404).send({ error: 'page_not_found' });
+  if (pages.some((x, i) => i !== index && (x.publicSlug === b.data.publicSlug || x.aliases.includes(b.data.publicSlug))))
+    return reply.code(409).send({ error: 'public_path_in_use' });
+  const old = pages[index].publicSlug;
+  if (old === b.data.publicSlug) return { ok: true, publicPath: '/p/' + old, unchanged: true };
+  const next = pages.slice();
+  next[index] = { ...next[index], publicSlug: b.data.publicSlug,
+    aliases: Array.from(new Set([...next[index].aliases, old])).filter(x => x !== b.data.publicSlug).slice(-30), updatedAt: new Date().toISOString() };
+  await prisma.$transaction(async tx => {
+    await tenxCustomPagesWrite(tx, next);
+    await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'CUSTOM_PAGE_ROUTE_CHANGED', entityType: 'PageRoute', entityId: p.data.slug,
+      metadata: { from: '/p/' + old, to: '/p/' + b.data.publicSlug } } });
+  });
+  return { ok: true, oldPath: '/p/' + old, publicPath: '/p/' + b.data.publicSlug, aliases: next[index].aliases.map(x => '/p/' + x) };
+});
+
+app.delete('/admin/custom-pages/:slug', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply, true))) return;
+  const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
+  if (!p.success) return reply.code(400).send({ error: 'invalid_request' });
+  const pages = await tenxCustomPagesRead();
+  const meta = pages.find(x => x.slug === p.data.slug);
+  if (!meta) return reply.code(404).send({ error: 'page_not_found' });
+
+  const [published, draft, versions, spatial] = await Promise.all([
+    prisma.contentPage.findUnique({ where: { slug: meta.slug } }),
+    prisma.contentPageDraft.findUnique({ where: { slug: meta.slug } }),
+    prisma.contentPageVersion.findMany({ where: { pageSlug: meta.slug }, orderBy: { version: 'asc' } }),
+    prisma.systemSetting.findUnique({ where: { key: 'MMVS_SPATIAL_R4_' + meta.slug } })
+  ]);
+  const backupId = customPageRandomUUID();
+  const backup = { format: '10X_CUSTOM_PAGE_BACKUP_V1', version: 1, backupId, createdAt: new Date().toISOString(),
+    customPage: meta, contentPage: published, contentPageDraft: draft, versions,
+    spatialSetting: spatial ? { key: spatial.key, value: spatial.value } : null };
+  const dir = tenxCustomBackupDir();
+  const file = join(dir, backupId + '.json');
+  try {
+    await customFsMkdir(dir, { recursive: true, mode: 0o700 });
+    await customFsChmod(dir, 0o700);
+    await customFsWriteFile(file, JSON.stringify(backup), { encoding: 'utf8', flag: 'wx', mode: 0o600 });
+    await customFsChmod(file, 0o600);
+    const check = JSON.parse(await customFsReadFile(file, 'utf8'));
+    if (check.backupId !== backupId || check.customPage?.slug !== meta.slug || check.format !== '10X_CUSTOM_PAGE_BACKUP_V1')
+      throw new Error('backup_verification_failed');
+  } catch (error) {
+    request.log.error({ err: error, slug: meta.slug }, 'custom page backup failed; delete cancelled');
+    return reply.code(500).send({ error: 'backup_failed_delete_cancelled' });
+  }
+
+  try {
+    await prisma.$transaction(async tx => {
+      const current = await tenxCustomPagesRead(tx);
+      if (!current.some(x => x.slug === meta.slug)) throw new Error('page_changed_during_delete');
+      await tx.contentPageVersion.deleteMany({ where: { pageSlug: meta.slug } });
+      await tx.contentPageDraft.deleteMany({ where: { slug: meta.slug } });
+      await tx.contentPage.deleteMany({ where: { slug: meta.slug } });
+      await tx.systemSetting.deleteMany({ where: { key: 'MMVS_SPATIAL_R4_' + meta.slug } });
+      await tenxCustomPagesWrite(tx, current.filter(x => x.slug !== meta.slug));
+      await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'CUSTOM_PAGE_DELETED_WITH_BACKUP', entityType: 'ContentPage', entityId: meta.slug,
+        metadata: { backupId, backupFile: 'backups/deleted-pages/' + backupId + '.json', publicPath: '/p/' + meta.publicSlug } } });
+    }, { timeout: 20000 });
+  } catch (error) {
+    request.log.error({ err: error, slug: meta.slug, backupId }, 'custom page delete failed after backup');
+    return reply.code(500).send({ error: 'delete_failed_backup_preserved', backupId });
+  }
+  return { ok: true, deleted: true, backupId, backupPath: 'backups/deleted-pages/' + backupId + '.json' };
+});
+
+app.post('/admin/custom-pages/restore', async (request, reply) => {
+  if (!(await tenxCustomPageWriter(request, reply, true))) return;
+  const b = z.object({ backupId: z.string().uuid() }).strict().safeParse(request.body);
+  if (!b.success) return reply.code(400).send({ error: 'invalid_backup_id' });
+  let backup: any;
+  try {
+    backup = JSON.parse(await customFsReadFile(join(tenxCustomBackupDir(), b.data.backupId + '.json'), 'utf8'));
+  } catch { return reply.code(404).send({ error: 'backup_not_found' }); }
+  if (backup?.format !== '10X_CUSTOM_PAGE_BACKUP_V1' || backup.backupId !== b.data.backupId ||
+      !tenxCustomSlugOk(backup.customPage?.slug) || !tenxCustomPublicSlugOk(backup.customPage?.publicSlug))
+    return reply.code(400).send({ error: 'invalid_backup_file' });
+
+  const meta: TenxCustomPageMeta = backup.customPage;
+  if ((PAGE_SLUGS as readonly string[]).includes(meta.slug)) return reply.code(409).send({ error: 'protected_page_slug' });
+  const current = await tenxCustomPagesRead();
+  const restorePaths = [meta.publicSlug, ...(Array.isArray(meta.aliases) ? meta.aliases : [])];
+  if (current.some(x => x.slug === meta.slug || [x.publicSlug, ...x.aliases].some(path => restorePaths.includes(path))))
+    return reply.code(409).send({ error: 'page_or_public_path_in_use' });
+  const [existingPage, existingDraft] = await Promise.all([
+    prisma.contentPage.findUnique({ where: { slug: meta.slug } }),
+    prisma.contentPageDraft.findUnique({ where: { slug: meta.slug } })
+  ]);
+  if (existingPage || existingDraft) return reply.code(409).send({ error: 'page_slug_already_exists' });
+
+  try {
+    await prisma.$transaction(async tx => {
+      if (backup.contentPage) await tx.contentPage.create({ data: {
+        slug: meta.slug, title: backup.contentPage.title ?? null, blocks: backup.contentPage.blocks as Prisma.InputJsonValue,
+        status: backup.contentPage.status, ...(backup.contentPage.updatedAt ? { updatedAt: new Date(backup.contentPage.updatedAt) } : {})
+      } });
+      if (backup.contentPageDraft) await tx.contentPageDraft.create({ data: {
+        slug: meta.slug, title: backup.contentPageDraft.title ?? null, blocks: backup.contentPageDraft.blocks as Prisma.InputJsonValue,
+        ...(backup.contentPageDraft.updatedAt ? { updatedAt: new Date(backup.contentPageDraft.updatedAt) } : {})
+      } });
+      if (Array.isArray(backup.versions) && backup.versions.length) await tx.contentPageVersion.createMany({ data: backup.versions.map((v: any) => ({
+        pageSlug: meta.slug, version: Number(v.version), title: v.title ?? null, blocks: v.blocks as Prisma.InputJsonValue,
+        status: v.status, createdByAdminId: null, createdAt: new Date(v.createdAt)
+      })) });
+      if (backup.spatialSetting?.key === 'MMVS_SPATIAL_R4_' + meta.slug) await tx.systemSetting.upsert({
+        where: { key: backup.spatialSetting.key }, create: { key: backup.spatialSetting.key, value: backup.spatialSetting.value as Prisma.InputJsonValue },
+        update: { value: backup.spatialSetting.value as Prisma.InputJsonValue }
+      });
+      await tenxCustomPagesWrite(tx, [...current, meta]);
+      await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'CUSTOM_PAGE_RESTORED_FROM_BACKUP', entityType: 'ContentPage', entityId: meta.slug,
+        metadata: { backupId: b.data.backupId, publicPath: '/p/' + meta.publicSlug } } });
+    }, { timeout: 20000 });
+  } catch (error) {
+    request.log.error({ err: error, backupId: b.data.backupId }, 'custom page restore failed');
+    return reply.code(500).send({ error: 'restore_failed' });
+  }
+  return { ok: true, slug: meta.slug, publicPath: '/p/' + meta.publicSlug };
+});
+// TENX_CUSTOM_PAGE_ADMIN_API_V1_END
+
+
+/* TENX_PAGE_FILES_MANAGER_R1_API_BEGIN */
+const PM_R1_FS = await import('node:fs/promises');
+const PM_R1_PATH = await import('node:path');
+const PM_R1_CRYPTO = await import('node:crypto');
+
+type PMR1Root = { id: string; label: string; path: string };
+type PMR1File = {
+  id: string; rootId: string; rootLabel: string; path: string;
+  category: string; categoryLabel: string; size: number; modifiedAt: string;
+  sha256: string | null; protected: boolean; protectionReason: string | null;
+  absolutePath: string;
+};
+
+const PM_R1_ROOTS: PMR1Root[] = [
+  { id: 'project', label: 'سورس کل پروژه', path: process.cwd() },
+  { id: 'live-miniapp', label: 'مینی‌اپ منتشرشده', path: '/srv/tenx-public/miniapp' }
+];
+const PM_R1_SKIP_DIRS = new Set([
+  '.git', 'node_modules', '.page-manager-trash', '.page-manager-stage',
+  '.page-manager-backups', '.cache'
+]);
+const PM_R1_HTML_EXTS = new Set(['.html', '.htm']);
+const PM_R1_TEXT_EXTS = new Set([
+  '.html', '.htm', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx',
+  '.css', '.json', '.md', '.yml', '.yaml'
+]);
+const PM_R1_MAX_WALK = 12000;
+const PM_R1_MAX_PREVIEW = 1500000;
+const PM_R1_PROTECTED = new Map<string, string>([
+  ['project:public/miniapp/index.html', 'ورودی اصلی مینی‌اپ و میزبان اجرای P74 است. حذف این فایل هوم سه‌پله‌ای را از کار می‌اندازد.'],
+  ['live-miniapp:index.html', 'نسخه زنده ورودی مینی‌اپ و میزبان اجرای P74 است.'],
+  ['project:apps/api/public/admin.html', 'فایل اصلی پنل سوپرادمین است.'],
+  ['project:apps/api/public/team.html', 'پنل مدیریت تیم به این فایل وابسته است.']
+]);
+
+function pmR1Id(rootId: string, rel: string): string {
+  return PM_R1_CRYPTO.createHash('sha256').update(rootId + '\0' + rel).digest('hex').slice(0, 24);
+}
+function pmR1Category(rootId: string, rel: string): { category: string; label: string } {
+  if (rootId === 'live-miniapp') return { category: 'live-miniapp', label: 'مینی‌اپ منتشرشده' };
+  if (rel.startsWith('public/miniapp/')) return { category: 'miniapp-source', label: 'سورس مینی‌اپ' };
+  if (rel.startsWith('apps/api/public/')) return { category: 'admin', label: 'پنل‌ها و رابط مدیریت' };
+  if (rel.startsWith('academy-content/')) return { category: 'academy-archive', label: 'نسخه‌ها و آرشیو آکادمی' };
+  if (rel.startsWith('public/')) return { category: 'public', label: 'سایر فایل‌های عمومی' };
+  if (rel.startsWith('apps/')) return { category: 'application', label: 'بخش‌های داخلی برنامه' };
+  if (rel.startsWith('tests/')) return { category: 'tests', label: 'تست‌ها' };
+  if (rel.startsWith('dist/') || rel.startsWith('coverage/')) return { category: 'generated', label: 'خروجی‌های ساخته‌شده' };
+  return { category: 'project', label: 'سایر فایل‌های پروژه' };
+}
+function pmR1Protected(rootId: string, rel: string): string | null {
+  return PM_R1_PROTECTED.get(rootId + ':' + rel) ?? null;
+}
+async function pmR1Root(rootId: string): Promise<PMR1Root | null> {
+  const root = PM_R1_ROOTS.find(x => x.id === rootId);
+  if (!root) return null;
+  try {
+    const st = await PM_R1_FS.stat(root.path);
+    if (!st.isDirectory()) return null;
+    return root;
+  } catch { return null; }
+}
+async function pmR1Resolve(root: PMR1Root, rel: string): Promise<string> {
+  if (!rel || rel.includes('\0') || PM_R1_PATH.isAbsolute(rel)) throw new Error('INVALID_PATH');
+  const normalized = rel.replace(/\\/g, '/');
+  if (normalized.split('/').some((part: string) => part === '..' || part === '.')) throw new Error('INVALID_PATH');
+  const rootReal = await PM_R1_FS.realpath(root.path);
+  const absolute = PM_R1_PATH.resolve(rootReal, normalized);
+  if (!absolute.startsWith(rootReal + PM_R1_PATH.sep)) throw new Error('PATH_OUTSIDE_ROOT');
+  const st = await PM_R1_FS.lstat(absolute);
+  if (st.isSymbolicLink() || !st.isFile()) throw new Error('NOT_REGULAR_FILE');
+  const real = await PM_R1_FS.realpath(absolute);
+  if (!real.startsWith(rootReal + PM_R1_PATH.sep)) throw new Error('PATH_OUTSIDE_ROOT');
+  return real;
+}
+async function pmR1Walk(root: PMR1Root, extensions: Set<string>): Promise<Array<{ absolutePath: string; path: string; size: number; modifiedAt: string }>> {
+  const found: Array<{ absolutePath: string; path: string; size: number; modifiedAt: string }> = [];
+  const stack: Array<{ absolutePath: string; path: string }> = [{ absolutePath: root.path, path: '' }];
+  while (stack.length && found.length < PM_R1_MAX_WALK) {
+    const current = stack.pop()!;
+    let entries: any[];
+    try { entries = await PM_R1_FS.readdir(current.absolutePath, { withFileTypes: true }) as any[]; }
+    catch { continue; }
+    for (const entry of entries) {
+      if (entry.name === '.' || entry.name === '..') continue;
+      const rel = current.path ? current.path + '/' + entry.name : entry.name;
+      const absolutePath = PM_R1_PATH.join(current.absolutePath, entry.name);
+      if (entry.isDirectory()) {
+        if (!PM_R1_SKIP_DIRS.has(entry.name) && !entry.name.startsWith('.page-manager-')) {
+          stack.push({ absolutePath, path: rel });
+        }
+        continue;
+      }
+      if (!entry.isFile() || !extensions.has(PM_R1_PATH.extname(entry.name).toLowerCase())) continue;
+      try {
+        const st = await PM_R1_FS.stat(absolutePath);
+        found.push({ absolutePath, path: rel, size: st.size, modifiedAt: st.mtime.toISOString() });
+      } catch {}
+      if (found.length >= PM_R1_MAX_WALK) break;
+    }
+  }
+  return found;
+}
+async function pmR1ListFiles(): Promise<PMR1File[]> {
+  const out: PMR1File[] = [];
+  for (const rootDef of PM_R1_ROOTS) {
+    const root = await pmR1Root(rootDef.id);
+    if (!root) continue;
+    const files = await pmR1Walk(root, PM_R1_HTML_EXTS);
+    for (const file of files) {
+      const cat = pmR1Category(root.id, file.path);
+      const protectionReason = pmR1Protected(root.id, file.path);
+      let sha256: string | null = null;
+      if (file.size <= 8 * 1024 * 1024) {
+        try {
+          const bytes = await PM_R1_FS.readFile(file.absolutePath);
+          sha256 = PM_R1_CRYPTO.createHash('sha256').update(bytes).digest('hex');
+        } catch {}
+      }
+      out.push({
+        id: pmR1Id(root.id, file.path), rootId: root.id, rootLabel: root.label,
+        path: file.path, category: cat.category, categoryLabel: cat.label,
+        size: file.size, modifiedAt: file.modifiedAt, sha256,
+        protected: Boolean(protectionReason), protectionReason,
+        absolutePath: file.absolutePath
+      });
+    }
+  }
+  return out.sort((a, b) => a.categoryLabel.localeCompare(b.categoryLabel, 'fa') || a.path.localeCompare(b.path));
+}
+async function pmR1References(target: PMR1File): Promise<Array<{ root: string; path: string; line: number; excerpt: string }>> {
+  const needles = new Set<string>();
+  needles.add(target.path);
+  const basename = PM_R1_PATH.posix.basename(target.path);
+  if (!['index.html', 'admin.html', 'team.html', 'preview.html', 'source.html', 'live.html'].includes(basename.toLowerCase()) && basename.length > 7) needles.add(basename);
+  if (target.rootId === 'live-miniapp') {
+    needles.add('/miniapp/' + target.path);
+    needles.add('miniapp/' + target.path);
+  } else if (target.path.startsWith('public/miniapp/')) {
+    const miniRel = target.path.slice('public/'.length);
+    needles.add(miniRel);
+    needles.add('/' + miniRel);
+  } else if (target.path.startsWith('public/')) {
+    needles.add(target.path.slice('public/'.length));
+    needles.add('/' + target.path.slice('public/'.length));
+  }
+  const refs: Array<{ root: string; path: string; line: number; excerpt: string }> = [];
+  for (const rootDef of PM_R1_ROOTS) {
+    const root = await pmR1Root(rootDef.id);
+    if (!root) continue;
+    const candidates = await pmR1Walk(root, PM_R1_TEXT_EXTS);
+    for (const candidate of candidates) {
+      if (root.id === target.rootId && candidate.path === target.path) continue;
+      if (candidate.size > 2 * 1024 * 1024) continue;
+      let content = '';
+      try { content = await PM_R1_FS.readFile(candidate.absolutePath, 'utf8'); } catch { continue; }
+      const lines = content.split(/\r?\n/);
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if ([...needles].some(n => n && line.includes(n))) {
+          refs.push({ root: root.label, path: candidate.path, line: i + 1, excerpt: line.trim().slice(0, 260) });
+          if (refs.length >= 80) return refs;
+        }
+      }
+    }
+  }
+  return refs;
+}
+function pmR1TrashRoot(root: PMR1Root): string {
+  return root.id === 'live-miniapp'
+    ? PM_R1_PATH.join(PM_R1_PATH.dirname(root.path), '.page-manager-trash')
+    : PM_R1_PATH.join(root.path, '.page-manager-trash');
+}
+async function pmR1TrashItems(): Promise<any[]> {
+  const items: any[] = [];
+  for (const rootDef of PM_R1_ROOTS) {
+    const root = await pmR1Root(rootDef.id);
+    if (!root) continue;
+    const trashRoot = pmR1TrashRoot(root);
+    let dirs: any[] = [];
+    try { dirs = await PM_R1_FS.readdir(trashRoot, { withFileTypes: true }) as any[]; } catch { continue; }
+    for (const dir of dirs) {
+      if (!dir.isDirectory() || !/^\d+-[a-f0-9]{24}$/.test(dir.name)) continue;
+      try {
+        const manifest = JSON.parse(await PM_R1_FS.readFile(PM_R1_PATH.join(trashRoot, dir.name, 'manifest.json'), 'utf8'));
+        items.push({ id: dir.name, rootId: root.id, rootLabel: root.label, path: manifest.path, category: manifest.category, archivedAt: manifest.archivedAt, size: manifest.size, sha256: manifest.sha256 });
+      } catch {}
+    }
+  }
+  return items.sort((a, b) => String(b.archivedAt).localeCompare(String(a.archivedAt)));
+}
+async function pmR1FindTrash(id: string): Promise<{ root: PMR1Root; dir: string; manifest: any } | null> {
+  if (!/^\d+-[a-f0-9]{24}$/.test(id)) return null;
+  for (const rootDef of PM_R1_ROOTS) {
+    const root = await pmR1Root(rootDef.id);
+    if (!root) continue;
+    const dir = PM_R1_PATH.join(pmR1TrashRoot(root), id);
+    try {
+      const manifest = JSON.parse(await PM_R1_FS.readFile(PM_R1_PATH.join(dir, 'manifest.json'), 'utf8'));
+      if (manifest.rootId === root.id && typeof manifest.path === 'string') return { root, dir, manifest };
+    } catch {}
+  }
+  return null;
+}
+async function pmR1Admin(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
+  if (!(await adminGuard(request, reply))) return false;
+  const identity = (request as any).admin as AdminIdentity | undefined;
+  if (!identity || identity.role !== 'SUPER_ADMIN') {
+    reply.code(403).send({ error: 'SUPER_ADMIN_REQUIRED' });
+    return false;
+  }
+  return true;
+}
+async function pmR1Audit(request: FastifyRequest, action: string, id: string, metadata: any): Promise<void> {
+  await prisma.auditLog.create({
+    data: { adminUserId: adminIdOf(request), action, entityType: 'ProjectHtmlFile', entityId: id, metadata }
+  }).catch(() => undefined);
+}
+
+app.get('/admin/page-files', async (request, reply) => {
+  if (!(await pmR1Admin(request, reply))) return;
+  const items = await pmR1ListFiles();
+  const counts: Record<string, number> = { all: items.length };
+  for (const item of items) counts[item.category] = (counts[item.category] ?? 0) + 1;
+  return { items: items.map(({ absolutePath, ...item }) => item), counts, roots: PM_R1_ROOTS.map(x => ({ id: x.id, label: x.label })) };
+});
+
+app.get('/admin/page-files/:id', async (request, reply) => {
+  if (!(await pmR1Admin(request, reply))) return;
+  const p = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/) }).safeParse(request.params);
+  if (!p.success) return reply.code(400).send({ error: 'invalid_file_id' });
+  const item = (await pmR1ListFiles()).find(x => x.id === p.data.id);
+  if (!item) return reply.code(404).send({ error: 'file_not_found' });
+  if (item.size > PM_R1_MAX_PREVIEW) return reply.code(413).send({ error: 'preview_too_large', maxBytes: PM_R1_MAX_PREVIEW });
+  const content = await PM_R1_FS.readFile(item.absolutePath, 'utf8');
+  const references = await pmR1References(item);
+  const { absolutePath, ...safeItem } = item;
+  return { item: safeItem, content, references };
+});
+
+app.get('/admin/page-files-trash', async (request, reply) => {
+  if (!(await pmR1Admin(request, reply))) return;
+  return { items: await pmR1TrashItems() };
+});
+
+app.post('/admin/page-files/:id/archive', async (request, reply) => {
+  if (!(await pmR1Admin(request, reply))) return;
+  const p = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/) }).safeParse(request.params);
+  const body = z.object({ confirmPath: z.string().max(500).optional() }).strict().safeParse(request.body ?? {});
+  if (!p.success || !body.success) return reply.code(400).send({ error: 'invalid_request' });
+  const item = (await pmR1ListFiles()).find(x => x.id === p.data.id);
+  if (!item) return reply.code(404).send({ error: 'file_not_found' });
+  if (item.protected) return reply.code(409).send({ error: 'protected_file', reason: item.protectionReason });
+  const root = await pmR1Root(item.rootId);
+  if (!root) return reply.code(404).send({ error: 'root_not_available' });
+  const references = await pmR1References(item);
+  if (references.length && body.data.confirmPath !== item.path) {
+    return reply.code(409).send({ error: 'references_found', references, requiredConfirmation: item.path });
+  }
+  const absolute = await pmR1Resolve(root, item.path);
+  const trashRoot = pmR1TrashRoot(root);
+  const trashId = Date.now() + '-' + item.id;
+  const trashDir = PM_R1_PATH.join(trashRoot, trashId);
+  await PM_R1_FS.mkdir(trashDir, { recursive: true });
+  const payload = PM_R1_PATH.join(trashDir, 'payload.html');
+  const manifest = {
+    id: trashId, rootId: root.id, path: item.path, category: item.category,
+    categoryLabel: item.categoryLabel, archivedAt: new Date().toISOString(),
+    size: item.size, sha256: item.sha256, references
+  };
+  try {
+    await PM_R1_FS.rename(absolute, payload);
+    await PM_R1_FS.writeFile(PM_R1_PATH.join(trashDir, 'manifest.json'), JSON.stringify(manifest, null, 2), { flag: 'wx' });
+  } catch (error) {
+    try { if (await PM_R1_FS.stat(payload).then(() => true).catch(() => false)) await PM_R1_FS.rename(payload, absolute); } catch {}
+    await PM_R1_FS.rm(trashDir, { recursive: true, force: true }).catch(() => undefined);
+    throw error;
+  }
+  await pmR1Audit(request, 'PROJECT_HTML_ARCHIVED', item.id, { rootId: root.id, path: item.path, references: references.length });
+  return { ok: true, archivedId: trashId, path: item.path, references: references.length };
+});
+
+app.post('/admin/page-files-trash/:id/restore', async (request, reply) => {
+  if (!(await pmR1Admin(request, reply))) return;
+  const p = z.object({ id: z.string().regex(/^\d+-[a-f0-9]{24}$/) }).safeParse(request.params);
+  if (!p.success) return reply.code(400).send({ error: 'invalid_trash_id' });
+  const item = await pmR1FindTrash(p.data.id);
+  if (!item) return reply.code(404).send({ error: 'trash_item_not_found' });
+  const rootReal = await PM_R1_FS.realpath(item.root.path);
+  const destination = PM_R1_PATH.resolve(rootReal, item.manifest.path);
+  if (!destination.startsWith(rootReal + PM_R1_PATH.sep)) return reply.code(400).send({ error: 'invalid_restore_path' });
+  if (await PM_R1_FS.stat(destination).then(() => true).catch(() => false)) return reply.code(409).send({ error: 'restore_destination_exists' });
+  await PM_R1_FS.mkdir(PM_R1_PATH.dirname(destination), { recursive: true });
+  const parentReal = await PM_R1_FS.realpath(PM_R1_PATH.dirname(destination));
+  if (!parentReal.startsWith(rootReal + PM_R1_PATH.sep)) return reply.code(400).send({ error: 'restore_parent_outside_root' });
+  await PM_R1_FS.rename(PM_R1_PATH.join(item.dir, 'payload.html'), destination);
+  await PM_R1_FS.rm(item.dir, { recursive: true, force: true });
+  await pmR1Audit(request, 'PROJECT_HTML_RESTORED', p.data.id, { rootId: item.root.id, path: item.manifest.path });
+  return { ok: true, path: item.manifest.path };
+});
+
+app.delete('/admin/page-files-trash/:id', async (request, reply) => {
+  if (!(await pmR1Admin(request, reply))) return;
+  const p = z.object({ id: z.string().regex(/^\d+-[a-f0-9]{24}$/) }).safeParse(request.params);
+  const body = z.object({ confirmation: z.literal('DELETE') }).strict().safeParse(request.body ?? {});
+  if (!p.success || !body.success) return reply.code(400).send({ error: 'permanent_delete_confirmation_required' });
+  const item = await pmR1FindTrash(p.data.id);
+  if (!item) return reply.code(404).send({ error: 'trash_item_not_found' });
+  await PM_R1_FS.rm(item.dir, { recursive: true, force: false });
+  await pmR1Audit(request, 'PROJECT_HTML_PERMANENTLY_DELETED', p.data.id, { rootId: item.root.id, path: item.manifest.path });
+  return { ok: true };
+});
+/* TENX_PAGE_FILES_MANAGER_R1_API_END */
+
+
+// Canonical paired history: old content-only versions remain visible but cannot be restored as a pair.
+const studioSnapshotSchema=z.object({
+  format:z.literal(1),slug:mmvsSpatialSlug,contentVersionId:z.string(),version:z.number().int().positive(),
+  title:z.string().nullable(),blocks:z.array(blockSchema).max(220),layout:mmvsSpatialLayout,capturedAt:z.string()
+});
+const studioReleaseParams=z.object({slug:mmvsSpatialSlug,id:z.string().min(1).max(64)});
+async function readStudioSnapshot(tx:Prisma.TransactionClient|PrismaClient,slug:string,id:string){
+  const row=await tx.systemSetting.findUnique({where:{key:studioReleaseKey(slug,id)},select:{value:true}});
+  const parsed=studioSnapshotSchema.safeParse(row?.value);
+  if(!parsed.success||parsed.data.slug!==slug||parsed.data.contentVersionId!==id)throw new ContentConflict('paired_snapshot_unavailable');
+  return parsed.data;
+}
+app.get('/admin/mmvs/releases/:slug',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_page'});
+  reply.header('cache-control','no-store');
+  const versions=await prisma.contentPageVersion.findMany({where:{pageSlug:p.data.slug,status:'PUBLISHED'},orderBy:{version:'desc'},take:50,
+    select:{id:true,version:true,title:true,createdAt:true,createdBy:{select:{email:true}}}});
+  const keys=versions.map(v=>studioReleaseKey(p.data.slug,v.id));
+  const paired=await prisma.systemSetting.findMany({where:{key:{in:keys}},select:{key:true}});
+  const available=new Set(paired.map(row=>row.key));
+  return {items:versions.map(v=>({...v,paired:available.has(studioReleaseKey(p.data.slug,v.id))}))};
+});
+app.get('/admin/mmvs/releases/:slug/:id',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=studioReleaseParams.safeParse(request.params);
+  if(!p.success)return reply.code(400).send({error:'invalid_release'});
+  reply.header('cache-control','no-store');
+  return await readStudioSnapshot(prisma,p.data.slug,p.data.id);
+});
+app.post('/admin/mmvs/releases/:slug/checkpoint',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=z.object({slug:mmvsSpatialSlug}).safeParse(request.params);
+  const b=z.object({expectedPublishedRevision:z.string().regex(/^[a-f0-9]{64}$/),spatialExpectedRevision:z.number().int().min(0)}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  return await withContentLock(prisma,p.data.slug,async tx=>{
+    const page=await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    if(!page||page.status!=='PUBLISHED')throw new ContentConflict('published_page_not_found');
+    assertContentRevision(page,b.data.expectedPublishedRevision);
+    const spatial=await mmvsSpatialRead(p.data.slug,tx);
+    if(spatial.revision!==b.data.spatialExpectedRevision)throw new ContentConflict('spatial_revision_conflict');
+    const latest=await tx.contentPageVersion.aggregate({where:{pageSlug:p.data.slug},_max:{version:true}});
+    const version=await tx.contentPageVersion.create({data:{pageSlug:p.data.slug,version:(latest._max.version??0)+1,title:page.title,blocks:toInputJson(page.blocks),status:'PUBLISHED',createdByAdminId:adminIdOf(request)}});
+    await recordStudioRelease(tx,p.data.slug,version,spatial.published);
+    await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'STUDIO_RELEASE_CHECKPOINT_CREATED',entityType:'ContentPage',entityId:p.data.slug,metadata:{version:version.version,versionId:version.id}}});
+    return {ok:true,id:version.id,version:version.version};
+  });
+});
+app.post('/admin/mmvs/releases/:slug/:id/restore',async(request,reply)=>{
+  if(!(await mmvsSpatialOwner(request,reply)))return;
+  const p=studioReleaseParams.safeParse(request.params);
+  const b=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/),spatialExpectedRevision:z.number().int().min(0)}).strict().safeParse(request.body);
+  if(!p.success||!b.success)return reply.code(400).send({error:'invalid_request'});
+  return await withContentLock(prisma,p.data.slug,async tx=>{
+    const current=await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}})??await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    assertContentRevision(current,b.data.expectedRevision);
+    const spatial=await mmvsSpatialRead(p.data.slug,tx);
+    if(spatial.revision!==b.data.spatialExpectedRevision)throw new ContentConflict('spatial_revision_conflict');
+    const snapshot=await readStudioSnapshot(tx,p.data.slug,p.data.id);
+    const draft=await tx.contentPageDraft.upsert({where:{slug:p.data.slug},create:{slug:p.data.slug,title:snapshot.title,blocks:toInputJson(snapshot.blocks)},update:{title:snapshot.title,blocks:toInputJson(snapshot.blocks)}});
+    spatial.draft=mmvsSpatialCopy(snapshot.layout);spatial.revision++;
+    await mmvsSpatialWrite(p.data.slug,spatial,request,'MMVS_SPATIAL_RESTORED_TO_DRAFT',tx);
+    const latest=await tx.contentPageVersion.aggregate({where:{pageSlug:p.data.slug},_max:{version:true}});
+    await tx.contentPageVersion.create({data:{pageSlug:p.data.slug,version:(latest._max.version??0)+1,title:draft.title,blocks:toInputJson(draft.blocks),status:'DRAFT',createdByAdminId:adminIdOf(request)}});
+    await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'STUDIO_RELEASE_RESTORED_TO_DRAFT',entityType:'ContentPage',entityId:p.data.slug,metadata:{sourceVersionId:snapshot.contentVersionId,sourceVersion:snapshot.version,spatialRevision:spatial.revision}}});
+    return {ok:true,revision:contentRevision(draft),spatialRevision:spatial.revision};
+  });
+});
+
+// MMVS_MEDIA_LIBRARY_R1_API_BEGIN
+// Reusable, read-only inventory of public website assets. Only SUPER_ADMIN may enumerate.
+// Files are served by existing public static routes. No destructive operations are exposed.
+type MmvsMediaLibraryAssetR1 = {url:string;name:string;group:'uploads'|'academy'|'site'};
+let mmvsMediaLibraryCacheR1: {at:number;items:MmvsMediaLibraryAssetR1[];truncated:boolean}|null=null;
+async function mmvsMediaLibraryScanR1(){
+  const fsp=await import('node:fs/promises');
+  const pathLib=await import('node:path');
+  const inventory:MmvsMediaLibraryAssetR1[]=[];
+  const maximum=45000;
+  let truncated=false;
+  const roots=[
+    {folder:pathLib.join(process.cwd(),'public','miniapp'),prefix:'/miniapp'},
+    {folder:pathLib.join(process.cwd(),'public','uploads'),prefix:'/uploads'}
+  ];
+  for(const root of roots){
+    const stack:[string,string[],number][]=[[root.folder,[],0]];
+    while(stack.length){
+      if(inventory.length>=maximum){truncated=true;break;}
+      const [folder,components,depth]=stack.pop()!;
+      if(depth>13)continue;
+      let entries:import('node:fs').Dirent[];
+      try{entries=await fsp.readdir(folder,{withFileTypes:true})}catch{continue}
+      for(const entry of entries){
+        if(inventory.length>=maximum){truncated=true;break}
+        if(entry.name.startsWith('.')||entry.isSymbolicLink())continue;
+        const parts=[...components,entry.name];
+        if(entry.isDirectory()){
+          if(depth<13&&!['node_modules','backups','__pycache__'].includes(entry.name))stack.push([pathLib.join(folder,entry.name),parts,depth+1]);
+          continue;
+        }
+        if(!entry.isFile()||! /\.(?:png|jpe?g|webp|gif|avif|svg)$/i.test(entry.name))continue;
+        const url=root.prefix+'/'+parts.map(encodeURIComponent).join('/');
+        inventory.push({url,name:entry.name,group:root.prefix==='/uploads'?'uploads':parts[0]==='p74'&&parts[1]==='copytrade-academy'?'academy':'site'});
+      }
+    }
+  }
+  inventory.sort((a,b)=>{
+    const pa=a.group==='uploads'?0:a.group==='academy'?1:2;
+    const pb=b.group==='uploads'?0:b.group==='academy'?1:2;
+    return pa-pb||a.url.localeCompare(b.url);
+  });
+  return {at:Date.now(),items:inventory,truncated};
+}
+app.get('/admin/mmvs/media-library',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if((request as any).admin?.role!=='SUPER_ADMIN')return reply.code(403).send({error:'super_admin_required'});
+  const parsed=z.object({
+    page:z.coerce.number().int().min(1).max(3000).optional(),
+    limit:z.coerce.number().int().min(8).max(100).optional(),
+    search:z.string().trim().max(120).optional(),
+    group:z.enum(['all','uploads','academy','site']).optional(),
+    refresh:z.enum(['1']).optional()
+  }).strict().safeParse(request.query||{});
+  if(!parsed.success)return reply.code(400).send({error:'invalid_media_query'});
+  const q=parsed.data;
+  if(!mmvsMediaLibraryCacheR1||q.refresh==='1'||Date.now()-mmvsMediaLibraryCacheR1.at>45000){
+    mmvsMediaLibraryCacheR1=await mmvsMediaLibraryScanR1();
+  }
+  const f=mmvsMediaLibraryCacheR1;
+  let all=f.items;
+  if(q.group&&q.group!=='all')all=all.filter(x=>x.group===q.group);
+  if(q.search){const needle=q.search.toLocaleLowerCase();all=all.filter(x=>(x.name+' '+x.url).toLocaleLowerCase().includes(needle))}
+  const page=q.page||1,limit=q.limit||32;
+  const selection=all.slice((page-1)*limit,page*limit);
+  const paths=[
+    {prefix:'/miniapp/',folder:join(process.cwd(),'public','miniapp')},
+    {prefix:'/uploads/',folder:join(process.cwd(),'public','uploads')}
+  ];
+  const fs=await import('node:fs/promises');
+  const result=await Promise.all(selection.map(async x=>{
+    let bytes=0;
+    const mapping=paths.find(m=>x.url.startsWith(m.prefix));
+    if(mapping){
+      // URLs were generated from trusted directory entries; prevent path traversal on decoding.
+      const rel=x.url.slice(mapping.prefix.length).split('/').map(decodeURIComponent);
+      if(rel.every(p=>p!=='.'&&p!=='..'&&!p.includes('/')&&!p.includes('\\'))){
+        try{const st=await fs.stat(join(mapping.folder,...rel));if(st.isFile())bytes=st.size}catch{}
+      }
+    }
+    return {...x,bytes};
+  }));
+  reply.header('cache-control','no-store');
+  return {ok:true,items:result,total:all.length,truncated:f.truncated,page,limit};
+});
+// MMVS_MEDIA_LIBRARY_R1_API_END
+
 app.get('/admin/content/pages', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
   const rows = await prisma.contentPage.findMany();
@@ -4126,8 +6531,10 @@ app.get('/admin/content/pages/:slug/editor', async (request, reply) => {
     title: source?.title ?? null,
     blocks: Array.isArray(source?.blocks) ? source.blocks : [],
     hasDraft: Boolean(draft),
+    revision: contentRevision(source),
     draftUpdatedAt: draft?.updatedAt ?? null,
     published: {
+      revision: contentRevision(published),
       title: published?.title ?? null,
       blocks: Array.isArray(published?.blocks) ? published.blocks : [],
       status: published?.status ?? 'DRAFT',
@@ -4141,8 +6548,9 @@ app.put('/admin/content/pages/:slug/draft', async (request, reply) => {
 
   const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
   const b = z.object({
+    expectedRevision: z.string().regex(/^[a-f0-9]{64}$/).optional(),
     title: z.string().trim().max(200).nullable().optional(),
-    blocks: z.array(blockSchema).max(40)
+    blocks: z.array(blockSchema).max(220)
   }).strict().safeParse(request.body);
 
   if (!p.success || !b.success) {
@@ -4155,7 +6563,10 @@ app.put('/admin/content/pages/:slug/draft', async (request, reply) => {
   const blocks = JSON.parse(JSON.stringify(b.data.blocks));
   const title = b.data.title ?? null;
 
-  const saved = await prisma.$transaction(async (tx) => {
+  const saved = await withContentLock(prisma,p.data.slug,async (tx) => {
+    const current=await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}});
+    const source=current??await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    assertContentRevision(source,b.data.expectedRevision);
     const draft = await tx.contentPageDraft.upsert({
       where: { slug: p.data.slug },
       create: { slug: p.data.slug, title, blocks },
@@ -4190,7 +6601,7 @@ app.put('/admin/content/pages/:slug/draft', async (request, reply) => {
     return draft;
   });
 
-  return { ok: true, updatedAt: saved.updatedAt };
+  return { ok: true, updatedAt: saved.updatedAt, revision: contentRevision(saved) };
 });
 
 app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
@@ -4199,24 +6610,52 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
   const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
   if (!p.success) return reply.code(400).send({ error: 'invalid_request' });
 
-  const published = await prisma.$transaction(async (tx) => {
-    const draft = await tx.contentPageDraft.findUnique({
-      where: { slug: p.data.slug }
-    });
+  const body=z.object({
+    expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(),
+    spatialExpectedRevision:z.number().int().min(0).optional()
+  }).strict().safeParse(request.body??{});
+  if(!body.success)return reply.code(400).send({error:'invalid_request'});
+  if(body.data.spatialExpectedRevision!==undefined&&(request as any).admin?.role!=='SUPER_ADMIN')return reply.code(403).send({error:'super_admin_required'});
+  const published = await withContentLock(prisma,p.data.slug,async (tx) => {
+    const draft = await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}})
+      ?? (body.data.spatialExpectedRevision!==undefined?await tx.contentPage.findUnique({where:{slug:p.data.slug}}):null);
 
-    if (!draft) return null;
+    // R12: permit first publication of a spatial-only page.
+    // Preserve the normal content revision and SUPER_ADMIN checks.
+    const initialSpatial = !draft && body.data.spatialExpectedRevision !== undefined
+      ? await mmvsSpatialRead(p.data.slug,tx) : null;
+    if (!draft && (!initialSpatial?.draft || initialSpatial.draft.items.length===0)) return null;
+    if (!draft) {
+      assertContentRevision(null,body.data.expectedRevision);
+    } else {
+      assertContentRevision(draft,body.data.expectedRevision);
+    }
+    const publishContent = draft ?? {title:null,blocks:[]};
+    let spatialRevision:number|undefined;
+    // Content and spatial publication share this transaction: either both commit or neither does.
+    if(body.data.spatialExpectedRevision!==undefined){
+      const spatial=await mmvsSpatialRead(p.data.slug,tx);
+      if(spatial.revision!==body.data.spatialExpectedRevision)throw new ContentConflict('spatial_revision_conflict');
+      spatialRevision=spatial.revision;
+      if(spatial.draft){
+        spatial.published=mmvsSpatialCopy(spatial.draft);spatial.draft=null;spatial.revision++;
+        spatial.history=[...spatial.history,{revision:spatial.revision,at:new Date().toISOString(),layout:mmvsSpatialCopy(spatial.published)}].slice(-25);
+        await mmvsSpatialWrite(p.data.slug,spatial,request,'MMVS_SPATIAL_PUBLISHED',tx);
+        spatialRevision=spatial.revision;
+      }
+    }
 
     const page = await tx.contentPage.upsert({
       where: { slug: p.data.slug },
       create: {
         slug: p.data.slug,
-        title: draft.title,
-        blocks: toInputJson(draft.blocks),
+        title: publishContent.title,
+        blocks: toInputJson(publishContent.blocks),
         status: 'PUBLISHED'
       },
       update: {
-        title: draft.title,
-        blocks: toInputJson(draft.blocks),
+        title: publishContent.title,
+        blocks: toInputJson(publishContent.blocks),
         status: 'PUBLISHED'
       }
     });
@@ -4226,7 +6665,7 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
       _max: { version: true }
     });
 
-    await tx.contentPageVersion.create({
+    const version=await tx.contentPageVersion.create({
       data: {
         pageSlug: p.data.slug,
         version: (latest._max.version ?? 0) + 1,
@@ -4236,6 +6675,9 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
         createdByAdminId: adminIdOf(request)
       }
     });
+
+    const publishedLayout=await mmvsSpatialRead(p.data.slug,tx);
+    await recordStudioRelease(tx,p.data.slug,version,publishedLayout.published);
 
     await tx.auditLog.create({
       data: {
@@ -4247,23 +6689,23 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
       }
     });
 
-    return page;
+    return {...page,spatialRevision};
   });
 
   if (!published) {
     return reply.code(409).send({ error: 'draft_not_found' });
   }
 
-  return { ok: true, status: published.status, updatedAt: published.updatedAt };
+  return { ok: true, status: published.status, updatedAt: published.updatedAt, spatialRevision:published.spatialRevision };
 });
 
 app.put('/admin/content/pages/:slug', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
   const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
-  const b = z.object({ title: z.string().trim().max(200).nullable().optional(), status: z.enum(['DRAFT', 'PUBLISHED']), blocks: z.array(blockSchema).max(40) }).strict().safeParse(request.body);
+  const b = z.object({ title: z.string().trim().max(200).nullable().optional(), status: z.enum(['DRAFT', 'PUBLISHED']), blocks: z.array(blockSchema).max(220) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request', details: b.success ? undefined : b.error.flatten() });
   const blocks = JSON.parse(JSON.stringify(b.data.blocks));
-  const saved = await prisma.$transaction(async (tx) => {
+  const saved = await withContentLock(prisma,p.data.slug,async (tx) => {
     const page = await tx.contentPage.upsert({
       where: { slug: p.data.slug },
       create: { slug: p.data.slug, status: b.data.status, blocks, ...pick('title', b.data.title) },
@@ -4298,7 +6740,7 @@ app.post('/admin/content/pages/:slug/rollback', async (request, reply) => {
   const b = z.object({ versionId: z.string().min(1).max(64) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request' });
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await withContentLock(prisma,p.data.slug,async (tx) => {
     const target = await tx.contentPageVersion.findFirst({
       where: { id: b.data.versionId, pageSlug: p.data.slug }
     });
@@ -4742,15 +7184,26 @@ app.post('/admin/challenge-organizers/upload', async (request, reply) => {
 
 
 app.post('/content/page', async (request, reply) => {
-  const b = z.object({ initData: z.string().min(1).max(10000), slug: z.enum(PAGE_SLUGS) }).safeParse(request.body);
+  const b = z.object({
+    initData: z.string().min(1).max(10000),
+    slug: z.union([z.enum(PAGE_SLUGS), tenxCustomPublicSlugSchema])
+  }).safeParse(request.body);
   if (!b.success) return reply.code(400).send({ error: 'invalid_request' });
+  let contentSlug = b.data.slug;
+  if (!(PAGE_SLUGS as readonly string[]).includes(contentSlug)) {
+    const meta = (await tenxCustomPagesRead()).find(x => x.publicSlug === contentSlug);
+    if (!meta) return reply.code(404).send({ error: 'page_not_found' });
+    contentSlug = meta.slug;
+    const published = await prisma.contentPage.findUnique({ where: { slug: contentSlug }, select: { status: true } });
+    if (!published || published.status !== 'PUBLISHED') return reply.code(404).send({ error: 'page_not_published' });
+  }
   const who = await miniUser(b.data.initData, false);
   if ('code' in who) return reply.code(who.code).send({ error: who.error });
   const [user, page, lessons, popups] = await Promise.all([
     prisma.user.findUnique({ where: { id: who.id }, select: { registrationStage: true } }),
-    prisma.contentPage.findUnique({ where: { slug: b.data.slug } }),
+    prisma.contentPage.findUnique({ where: { slug: contentSlug } }),
     prisma.lesson.findMany({ where: { status: 'PUBLISHED', course: { status: 'PUBLISHED' } }, select: { id: true } }),
-    prisma.popup.findMany({ where: { status: 'PUBLISHED', pageSlug: b.data.slug }, orderBy: { createdAt: 'asc' } }),
+    prisma.popup.findMany({ where: { status: 'PUBLISHED', pageSlug: contentSlug }, orderBy: { createdAt: 'asc' } }),
     prisma.systemSetting.findUnique({ where: { key: 'CHALLENGE_ORGANIZERS_V1' } })
   ]);
   const lessonIds = lessons.map((l) => l.id);
@@ -4778,7 +7231,7 @@ app.post('/content/page', async (request, reply) => {
 
   const organizerEligible =
     organizerConfig?.enabled === true &&
-    organizerConfig?.pageSlug === b.data.slug &&
+    organizerConfig?.pageSlug === contentSlug &&
     Boolean(organizerId) &&
     activeOrganizers.length > 0;
 
@@ -4816,10 +7269,10 @@ app.post('/content/page', async (request, reply) => {
       x.id !== organizerId &&
       (x.frequency === 'EVERY_VISIT' || !seen.has(x.id))
     ) ?? null);
-  const homeLinksRow = b.data.slug === 'index'
+  const homeLinksRow = contentSlug === 'index'
     ? await prisma.systemSetting.findUnique({ where: { key: 'HOME_LINKS_V1' } })
     : null;
-  const homeLinks = b.data.slug === 'index'
+  const homeLinks = contentSlug === 'index'
     ? normalizeHomeLinks(homeLinksRow?.value)
     : undefined;
   const stage = user?.registrationStage ?? 'STARTED';
@@ -6110,6 +8563,8 @@ app.post('/progress/path', async (request, reply) => {
 // ---- END PROGRESS_API_V1 ----
 
 app.setErrorHandler((error: any, request, reply) => {
+  if(error instanceof ContentConflict){const messages:Record<string,string>={paired_snapshot_unavailable:'این نسخه snapshot هماهنگ محتوا و چیدمان ندارد.',published_page_not_found:'این صفحه هنوز نسخه عمومی منتشرشده ندارد.'};return reply.code(409).send({error:error.code,message:messages[error.code]||'نسخه صفحه تغییر کرده است؛ تغییرات محلی را نگه دارید و نسخه جدید را بررسی کنید.'});}
+
   if (error instanceof z.ZodError) return reply.code(400).send({ error: 'invalid_request' });
   const status = Number(error?.statusCode);
   if (status >= 400 && status < 500) {

@@ -1,0 +1,116 @@
+/* MATIN_FUTURE_NAVIGATION_R1 */
+html.mf-nav-enabled body {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+}
+html.mf-nav-enabled .tenx-bottom-nav,
+html.mf-nav-enabled .p74-nav,
+html.mf-nav-enabled .tabbar,
+html.mf-nav-enabled .p77-nav,
+html.mf-nav-enabled .p78-nav,
+html.mf-nav-enabled #r10-bottom {
+  display: none !important;
+}
+html.mf-nav-enabled .p77-shell,
+html.mf-nav-enabled .p78-shell,
+html.mf-nav-enabled .academy-shell,
+html.mf-nav-enabled .stage {
+  padding-bottom: calc(124px + env(safe-area-inset-bottom, 0px)) !important;
+}
+html.mf-nav-enabled #p74-app .p74-scroll {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.mf-global-bottom-nav {
+  position: fixed !important;
+  z-index: 70 !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: max(9px, env(safe-area-inset-bottom, 0px)) !important;
+  transform: translateX(-50%) !important;
+  width: min(calc(100% - 18px), 560px) !important;
+  min-height: 76px !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  gap: 5px !important;
+  padding: 7px !important;
+  direction: rtl !important;
+  border: 1px solid rgba(220, 180, 132, .48) !important;
+  border-radius: 25px !important;
+  background: linear-gradient(135deg, rgba(17, 61, 47, .96), rgba(3, 23, 17, .97) 78%) !important;
+  box-shadow: 0 12px 34px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.09), 0 0 20px rgba(40,220,155,.08) !important;
+  backdrop-filter: blur(23px) saturate(155%) !important;
+  -webkit-backdrop-filter: blur(23px) saturate(155%) !important;
+  box-sizing: border-box !important;
+  font-family: Doran, Tahoma, Arial, sans-serif !important;
+}
+.mf-global-nav-item {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 60px !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 5px 2px !important;
+  border: 1px solid transparent !important;
+  border-radius: 17px !important;
+  color: #b9c9be !important;
+  background: transparent !important;
+  text-decoration: none !important;
+  font-size: clamp(8px, 2.35vw, 11px) !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease !important;
+}
+.mf-global-nav-item svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex: 0 0 22px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+.mf-global-nav-item span {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.mf-global-nav-item.is-active {
+  color: #ffdfad !important;
+  border-color: rgba(238, 190, 130, .62) !important;
+  background: linear-gradient(145deg, rgba(94, 69, 39, .55), rgba(17, 65, 48, .8)) !important;
+  box-shadow: inset 0 1px 4px rgba(255,220,175,.15), 0 0 13px rgba(226,166,94,.16) !important;
+}
+.mf-global-nav-item.is-active svg {
+  filter: drop-shadow(0 0 6px rgba(255,213,157,.45)) !important;
+  transform: translateY(-1px) !important;
+}
+.mf-global-nav-item:active { transform: scale(.95) !important; }
+#p74-app > .mf-global-bottom-nav {
+  position: absolute !important;
+  z-index: 15 !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: max(9px, env(safe-area-inset-bottom, 0px)) !important;
+  transform: translateX(-50%) !important;
+  width: min(calc(100% - 18px), 560px) !important;
+}
+#p74-app .p74-nav { display: none !important; }
+.academy-modal { z-index: 120 !important; }
+.p77-overlay { z-index: 120 !important; }
+.p77-toast { z-index: 130 !important; }
+@media (max-width: 360px) {
+  .mf-global-bottom-nav { min-height: 70px !important; padding: 6px !important; gap: 2px !important; }
+  .mf-global-nav-item { min-height: 56px !important; font-size: 8px !important; gap: 3px !important; }
+  .mf-global-nav-item svg { width: 20px !important; height: 20px !important; flex-basis: 20px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mf-global-nav-item, .mf-global-nav-item svg { transition: none !important; }
+}

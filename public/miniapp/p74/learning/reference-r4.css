@@ -1,0 +1,81 @@
+/* MMTrade10X Stage 1: seamless background + independent transparent visual assets.
+   Additive to stage.css + reference-r3.css; no change to lesson/progress logic. */
+:root{--mm-scene-green:#00da79;--mm-scene-gold:#d9b568}
+html,body{background-color:#00140f!important}
+.stage{
+  background-image:linear-gradient(180deg,rgba(0,9,7,.16),rgba(0,15,11,.06) 50%,rgba(0,6,5,.18)),url('./assets/reference-r4/scene-background.webp')!important;
+  background-color:#00160f!important;
+  background-position:center top,center top!important;
+  background-size:100% 100%,100% 100%!important;
+  background-repeat:no-repeat!important;
+  overflow-x:clip;
+  isolation:isolate;
+}
+.stage::before{display:none!important}
+.stage .hero.ref-r3-hero.ref-r4-scene{
+  position:relative!important;
+  display:block!important;
+  height:clamp(230px,67vw,305px)!important;
+  aspect-ratio:auto!important;
+  overflow:visible!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  margin:2px -13px 7px!important;
+  width:calc(100% + 26px)!important;
+  max-width:none!important;
+  isolation:isolate;
+  pointer-events:none;
+}
+.stage .hero.ref-r4-scene::before,.stage .hero.ref-r4-scene::after{display:none!important}
+.stage .hero.ref-r4-scene .ref-r3-art,
+.stage .hero.ref-r4-scene .ref-r3-candles,
+.stage .hero.ref-r4-scene .hero-note,
+.stage .hero.ref-r4-scene .object{display:none!important}
+.ref-r4-scene .ref-r4-piece{
+  display:block!important;
+  position:absolute!important;
+  width:var(--w)!important;
+  height:auto!important;
+  top:var(--y)!important;
+  left:var(--x)!important;
+  right:auto!important;
+  transform:translate(-50%,-50%);
+  object-fit:contain;
+  user-select:none;
+  -webkit-user-drag:none;
+  pointer-events:none;
+  z-index:var(--layer,3);
+  opacity:var(--opacity,1);
+  will-change:transform;
+}
+/* Each item is an independent transparent WebP. Positions recreate the approved finance scene. */
+.ref-r4-scene .ref-r4-floor{--x:50%;--y:88%;--w:98%;--layer:1;--opacity:.82}
+.ref-r4-scene .ref-r4-chart{--x:51%;--y:51%;--w:103%;--layer:2;--opacity:.93;animation:mm-chart-drift 8s ease-in-out infinite alternate}
+.ref-r4-scene .ref-r4-globe{--x:51%;--y:42%;--w:57%;--layer:3;animation:mm-globe-float 6.5s ease-in-out infinite alternate}
+.ref-r4-scene .ref-r4-board{--x:17.5%;--y:40%;--w:31%;--layer:5}
+.ref-r4-scene .ref-r4-bitcoin{--x:32%;--y:77%;--w:28%;--layer:8;animation:mm-coin-glow 5.5s ease-in-out infinite}
+.ref-r4-scene .ref-r4-gold{--x:69%;--y:79%;--w:36%;--layer:8}
+.ref-r4-scene .ref-r4-euro{--x:83%;--y:48%;--w:13%;--layer:6}
+.ref-r4-scene .ref-r4-dollar{--x:94%;--y:47%;--w:13%;--layer:6}
+.ref-r4-scene .ref-r4-fog{--x:50%;--y:79%;--w:109%;--layer:7;--opacity:.30;animation:mm-fog-sway 10s ease-in-out infinite alternate}
+.ref-r4-scene .ref-r4-light{--x:49%;--y:93%;--w:94%;--layer:9;--opacity:.60}
+/* Extra live-style green/red candles are independent pieces, not a baked video or static screenshot. */
+.ref-r4-scene .ref-r4-candle{--w:3.8%;--layer:4;animation:mm-candle-breathe var(--speed,3.2s) ease-in-out infinite alternate;animation-delay:var(--offset,0s);filter:drop-shadow(0 0 4px var(--candle-color,#11e47b))}
+@keyframes mm-globe-float{0%{transform:translate(-50%,-50%) translateY(3px)}100%{transform:translate(-50%,-50%) translateY(-3px)}}
+@keyframes mm-chart-drift{0%{transform:translate(-50%,-50%) translateY(1px);opacity:.75}100%{transform:translate(-50%,-50%) translateY(-1px);opacity:1}}
+@keyframes mm-candle-breathe{0%{transform:translate(-50%,-50%) scaleY(.89);opacity:.75}100%{transform:translate(-50%,-50%) scaleY(1.07);opacity:1}}
+@keyframes mm-coin-glow{0%,100%{filter:drop-shadow(0 0 4px #d9a83b60)}50%{filter:drop-shadow(0 0 11px #e5b8518c)}}
+@keyframes mm-fog-sway{0%{transform:translate(-50%,-50%) translateX(-4px)}100%{transform:translate(-50%,-50%) translateX(4px)}}
+/* Cards remain real interactive UI while the same continuous background stays visible beneath them. */
+.stage .lesson{background:linear-gradient(120deg,rgba(2,27,20,.78),rgba(2,20,16,.71))!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.stage .lesson .answer{background:rgba(0,26,18,.64)!important}
+.stage .progressbox{background:rgba(0,31,22,.64)!important;backdrop-filter:blur(5px)}
+.stage .tip{background:linear-gradient(125deg,rgba(1,45,30,.67),rgba(2,49,34,.58))!important}
+.tabbar{background:rgba(2,24,19,.87)!important}
+@media(max-width:370px){
+ .stage .hero.ref-r3-hero.ref-r4-scene{height:clamp(222px,70vw,255px)!important}
+ .ref-r4-scene .ref-r4-board{--w:32%;--x:18%}
+ .ref-r4-scene .ref-r4-globe{--w:59%}
+}
+@media(prefers-reduced-motion:reduce){.ref-r4-scene .ref-r4-piece{animation:none!important;will-change:auto!important}}

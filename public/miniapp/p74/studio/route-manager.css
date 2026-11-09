@@ -1,0 +1,28 @@
+/* R6 route manager, scoped to avoid modifying other superadmin sections. */
+.mmr6-root{direction:rtl;color:#ecf1eb;display:grid;gap:16px;font:14px/1.8 Tahoma,Arial,sans-serif;max-width:1470px;margin:0 auto}
+.mmr6-root *{box-sizing:border-box}
+.mmr6-heading,.mmr6-footer{background:linear-gradient(118deg,#061811,#12382a 74%,#1c362d);border:1px solid #947755;border-radius:18px;padding:20px;color:#eeeae0}
+.mmr6-heading h2{margin:5px 0 8px;font-size:clamp(20px,2.7vw,29px);color:#e6c89d}
+.mmr6-heading p,.mmr6-footer p{margin:5px 0;color:#c8d4cb}
+.mmr6-eyebrow{letter-spacing:2px;color:#e5b378;font-size:11px}
+.mmr6-layout{display:grid;grid-template-columns:minmax(310px,440px) minmax(0,1fr);gap:15px}
+.mmr6-card{background:#091f18;border:1px solid #527663;border-radius:17px;padding:18px;color:#f0eee7;min-width:0}
+.mmr6-card h3,.mmr6-footer h3{margin:0 0 16px;color:#e6bd85;font-size:17px}
+.mmr6-field{display:grid;gap:6px;margin:12px 0;font-size:12px;color:#bdccc3}
+.mmr6-field input,.mmr6-field select{width:100%;border:1px solid #62816e;background:#0a3022;color:#fff;border-radius:11px;padding:12px;min-height:45px;font-size:14px}
+.mmr6-field code{display:block;min-height:39px;padding:9px 12px;border:1px dashed #4f6b56;background:#041710;border-radius:8px;color:#b9ffdf;overflow-wrap:anywhere;direction:ltr;text-align:left}
+.mmr6-actions{display:grid;gap:8px;margin-top:16px}
+.mmr6-root button.mmr6-btn{border:1px solid #739985;padding:11px 13px;border-radius:10px;background:#1b4934;color:#fff;font:inherit;font-size:13px;cursor:pointer;min-height:43px}
+.mmr6-root button.mmr6-primary{background:#296a4c}
+.mmr6-root button.mmr6-publish{background:linear-gradient(115deg,#be9661,#f0c895);border-color:#e6b981;color:#1a2117;font-weight:bold}
+.mmr6-root button:disabled{opacity:.4;cursor:not-allowed}
+.mmr6-status{min-height:27px;color:#8bf6bb;font-size:12px}.mmr6-status[data-error="1"]{color:#ffc49d}
+.mmr6-note{font-size:12px;color:#b9cfc1;margin:12px 0}.mmr6-note.mmr6-warning{color:#ffd29c;background:#3a2b1b;border:1px solid #a27a40;border-radius:10px;padding:12px}
+.mmr6-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:13px 0}
+.mmr6-stat{border:1px solid #426650;padding:12px;border-radius:12px;background:#103323;display:grid;gap:3px}.mmr6-stat b{font-size:25px;color:#f1cca0}.mmr6-stat span{font-size:11px;color:#c0d2c4}
+.mmr6-route-change{display:grid;gap:6px;direction:ltr;text-align:left;color:#c6f2dd;overflow-wrap:anywhere;font:12px/1.7 monospace}
+.mmr6-list{max-height:440px;overflow:auto;display:grid;gap:8px}
+.mmr6-impact{background:#10291f;border:1px solid #496b59;border-radius:9px;padding:10px}.mmr6-impact summary{cursor:pointer}.mmr6-diff{font:11px/1.8 monospace;white-space:pre-wrap;word-break:break-all;color:#bdf0d0;border-top:1px solid #476854;padding-top:8px}
+@media(max-width:940px){.mmr6-layout{grid-template-columns:minmax(0,1fr)}.mmr6-card{padding:13px}.mmr6-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.mmr6-static-list{max-height:175px;overflow:auto;display:grid;gap:4px}.mmr6-static-item{border:1px solid #496b59;background:#13281e;padding:6px 9px;border-radius:7px;font:11px/1.7 monospace;overflow-wrap:anywhere}

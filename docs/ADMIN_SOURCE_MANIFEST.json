@@ -1,0 +1,82 @@
+{
+  "repository": "parsahojabrian-collab/mmtrade10x",
+  "base_commit": "12e1a8e789b0286eb1d4d6fd5c89a971e7863d4b",
+  "format": "complete-source-files",
+  "files": [
+    {
+      "path": "apps/api/public/admin.html",
+      "before_sha256": "cddd0cb82f9e985880857ae55d1e0a9642df1204768b6c67a5897ae829fbb606",
+      "sha256": "57fa4640152798ffb54c468b71534cad918ef6a36968a63ff0d106073cd3962f"
+    },
+    {
+      "path": "apps/api/src/content-workflow.ts",
+      "before_sha256": null,
+      "sha256": "7f40a041b5ebb03434150f65c6ec63939bc5eeb656189a12c5c33f2f29dedd3d"
+    },
+    {
+      "path": "apps/api/src/index.ts",
+      "before_sha256": "15ec06a17f8bfaf48fcab50c53241e05a4faf4e28d83e1b34dec6debf0d51e8b",
+      "sha256": "41406419698a3a1dcb4e65b092af8aca2b5bf66bbcea5bcb4529e237df988485"
+    },
+    {
+      "path": "docs/MMTRADE_ADMIN_WORKSPACE_FA.md",
+      "before_sha256": null,
+      "sha256": "8511f1393f1cd69c291cc8c82c1d7e438d1d4ccbfe1d4c9774cd4f626d9cf7a2"
+    },
+    {
+      "path": "public/miniapp/p74/studio/admin-shell.css",
+      "before_sha256": null,
+      "sha256": "26fc6cde2d675294b2fbc04b4437c5a62da347a0e3225981d4bdf0d625e38572"
+    },
+    {
+      "path": "public/miniapp/p74/studio/admin-workspace.js",
+      "before_sha256": null,
+      "sha256": "11f509cd7302d1a7159178491e26c821c00fafc10200e16a543da801e2645160"
+    },
+    {
+      "path": "public/miniapp/p74/studio/index.html",
+      "before_sha256": "45717a5051ea95055d3504c6836ab0c93c9969044dec438f6d9d17c39f2f8e72",
+      "sha256": "fd8090452eaaecb12b4b8640c995c7a9357e4984969b8580a6b9cc2070812d16"
+    },
+    {
+      "path": "public/miniapp/p74/studio/page-manager.css",
+      "before_sha256": "15518b9633bc43d8f108b0f516d7a6aace06796a53c2184c9e2fc6256e008c9c",
+      "sha256": "16cd328db5940fcb125474ba355f504c54b2fe2af48fd64080fa59bee85e6c4f"
+    },
+    {
+      "path": "public/miniapp/p74/studio/page-manager.js",
+      "before_sha256": "f0ba89e446106c509917aea2bb1dd9600b23dbfb5fc291a47548e512be2b6674",
+      "sha256": "6ffc39cb672e3abcd03850cca33636f876afb98f2bf7b827ca92b4c7dd0a30cc"
+    },
+    {
+      "path": "public/miniapp/p74/studio/spatial.js",
+      "before_sha256": "9bd556c0f10db7ac1e2c479b0fd228223629b274a3d7f375171c5817fa8a07c2",
+      "sha256": "71bb54e68e1b5f6d2be1a497709057392cb7c98b11e36c61196a575678b76b2d"
+    },
+    {
+      "path": "public/miniapp/p74/studio/studio.js",
+      "before_sha256": "c5da1a6ce79fb9b3c98fc9b65fa3df9ae80074c38934454178d6342ac483153d",
+      "sha256": "8ff93aae03f098b335375c95bbc71921bf9ae1f554f7163df45341cd0a436324"
+    },
+    {
+      "path": "tests/admin-navigation.test.mjs",
+      "before_sha256": "971f49e12f86a6e30e88b11a2f8c29db467605bd8425633e2cc56c07c3f019ec",
+      "sha256": "082a65e8913a782f8e38914630a4e78ab2af62ef227301dbff8838ba063f0810"
+    },
+    {
+      "path": "tests/admin-workspace.test.mjs",
+      "before_sha256": null,
+      "sha256": "032e417d94b85961d30a008a6f758165bac272a05e6daeea4ec656cee96b6437"
+    },
+    {
+      "path": "tests/content-workflow.test.mjs",
+      "before_sha256": null,
+      "sha256": "3a21049b45cba042b8ae330b460866199423b4ca2e533cc34a2586d68d2cf991"
+    },
+    {
+      "path": "tests/home-studio-fullpage-video.test.mjs",
+      "before_sha256": "eecab536e49c60f21d0c067ef51f622b1f51c3bb2a8b1b82ec31e7f0fea2cb1b",
+      "sha256": "2f7e64d24c852b636d1da19a44369eddccb0b390152eed29d22a83bb08e25054"
+    }
+  ]
+}

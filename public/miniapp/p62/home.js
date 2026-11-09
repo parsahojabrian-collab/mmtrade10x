@@ -85,5 +85,9 @@ if(isPreview){
  };
  document.head.append(script);return;
 }
-fetch('/public/home-studio',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(Error('fetch'))).then(x=>{if(x?.active&&x?.published)render(x.published,x.active)}).catch(()=>{ /* preserve original homepage on failure */ });
+/* MMTRADE_PAGE_LIFECYCLE_R10_HOME_GUARD */
+Promise.resolve(window.__MM_PAGE_GATE_READY__).then(()=>{
+  if(window.__MM_PAGE_GATE_REDIRECT__||window.__MM_PAGE_ENGINE__!=='p62')return;
+  return fetch('/public/home-studio',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(Error('fetch'))).then(x=>{if(x?.active&&x?.published)render(x.published,x.active)});
+}).catch(()=>{ /* preserve original homepage on failure */ });
 })();
