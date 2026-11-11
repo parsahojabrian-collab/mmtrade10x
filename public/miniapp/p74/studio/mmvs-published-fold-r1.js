@@ -16,7 +16,10 @@
   const v=num(input.value),doc=frame.contentDocument;
   if(!v||!doc||doc.readyState==='loading'){guide.hidden=true;return}
   const a=frame.getBoundingClientRect(),b=holder.getBoundingClientRect();
-  const y=a.top-b.top+holder.scrollTop+v;
+  // MMTRADE_AUDIT_FIX_R1_FOLD_GEOMETRY: document px -> scaled iframe CSS px.
+  const scaleY=a.height/(frame.offsetHeight||a.height||1);
+  const docScroll=(doc.scrollingElement||doc.documentElement)?.scrollTop||0;
+  const y=a.top-b.top+holder.scrollTop+(v-docScroll)*scaleY;
   const x=a.left-b.left+holder.scrollLeft;
   // The marker describes document coordinates; don't misrepresent an off-canvas marker.
   if(y<0||y>holder.scrollHeight+150){guide.hidden=true;return}
@@ -32,6 +35,13 @@
  function stage(enable){
   if(!cfg()?.set)return msg('اتصال به ویرایشگر آماده نیست؛ صفحه را یک بار بازخوانی کن.',true);
   const h=num(input.value);if(enable&&!h)return msg(`ارتفاع مرز باید بین ${MIN} و ${MAX} پیکسل باشد.`,true);
+  /* MMTRADE_AUDIT_FIX_R1_FOLD_CONFLICT: refuse two competing page clips. */
+  if(enable){
+   const spatial=window.MMVS_Spatial;
+   if(!spatial?.getDraftLayout||spatial.isBusy?.())return msg('اول بارگذاری چیدمان این صفحه را کامل کن.',true);
+   const old=spatial.getDraftLayout().items.find(x=>x?.selector==='html'&&x.x>=200&&x.x<=4000);
+   if(old)return msg('مرز قدیمی چیدمان فضایی ('+old.x+'px) فعال است. ابتدا در پنل چیدمان، «محدودکردن نمایش صفحه» را خاموش کن؛ سپس ذخیره و انتشار را انجام بده.',true);
+  }
   try{const result=cfg().set(enable?{enabled:true,heightPx:h}:{enabled:false});if(!result?.ok)throw Error(result?.error||'پیش‌نویس تغییر نکرد');
    panel.dataset.configured=enable?'1':'0';msg(enable?`مرز ${h}px در پیش‌نویس ثبت شد. حالا «ذخیره» و سپس «انتشار» را بزن.`:'حذف مرز در پیش‌نویس ثبت شد؛ برای نمایش کامل صفحه به کاربران، ذخیره و منتشر کن.');
    line();
@@ -44,7 +54,11 @@
  input.addEventListener('input',line);input.addEventListener('change',line);
  const grip=guide.querySelector('span');
  grip.addEventListener('pointerdown',e=>{if(!num(input.value))return;dragging=true;e.preventDefault();e.stopPropagation();grip.setPointerCapture?.(e.pointerId)});
- grip.addEventListener('pointermove',e=>{if(!dragging)return;e.preventDefault();const top=frame.getBoundingClientRect().top;const h=Math.round(e.clientY-top);input.value=Math.max(MIN,Math.min(MAX,h));line()});
+ grip.addEventListener('pointermove',e=>{if(!dragging)return;e.preventDefault();const rect=frame.getBoundingClientRect();
+   const scaleY=rect.height/(frame.offsetHeight||rect.height||1);
+   const doc=frame.contentDocument;
+   const docScroll=(doc?.scrollingElement||doc?.documentElement)?.scrollTop||0;
+   const h=Math.round((e.clientY-rect.top)/(scaleY||1)+docScroll);input.value=Math.max(MIN,Math.min(MAX,h));line()});
  for(const event of ['pointerup','pointercancel','lostpointercapture'])grip.addEventListener(event,()=>{if(dragging){dragging=false;msg(`مرز به ${input.value}px جابه‌جا شد؛ دکمه «ثبت مرز در پیش‌نویس» را بزن.`)}});
  const mo=new MutationObserver(sync);if($('current-title'))mo.observe($('current-title'),{childList:true,characterData:true,subtree:true});
  window.addEventListener('mmvs:state',sync);holder.addEventListener('scroll',line,{passive:true});window.addEventListener('resize',line,{passive:true});frame.addEventListener('load',()=>{setTimeout(line,300)});

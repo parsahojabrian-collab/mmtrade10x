@@ -10,7 +10,10 @@ const hex=(s,def)=>/^#[a-f\d]{6}$/i.test(String(s||''))?String(s):def;
 function assetUrl(input){
  const s=String(input||'').trim();
  if(s.length>360||s.includes('..')||/[\\\s<>"'?#]/.test(s))return '';
- if(!/^\/(?:miniapp\/p74\/assets|uploads\/home-studio)\/[A-Za-z0-9_./-]+$/.test(s))return '';
+ /* MMVS_P74_PREVIEW_LIBRARY_R4: safe same-origin catalog image paths */
+ const legacy=/^\/(?:miniapp\/p74\/assets|uploads\/home-studio)\/[A-Za-z0-9_./-]+$/;
+ const catalog=/^\/(?:miniapp|uploads|assets)\/[A-Za-z0-9_./-]+\.(?:png|jpe?g|webp|avif|gif)$/i;
+ if(!legacy.test(s)&&!catalog.test(s))return '';
  return s;
 }
 const sequence=()=>[3,4,5,6,7,8];

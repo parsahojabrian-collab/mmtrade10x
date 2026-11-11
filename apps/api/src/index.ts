@@ -5537,6 +5537,36 @@ const mmvsSpatialAnimation = z.object({
   delayMs: z.number().int().min(0).max(10000),
   loop: z.boolean()
 }).strict();
+// MMVS_R99_BACKGROUND_STUDIO: backward-compatible layered section backgrounds.
+const mmvsBgUrl = z.string().min(1).max(2048).refine(v => !v.startsWith('//') && /\.(?:png|jpe?g|webp|gif|svg|avif)(?:[?#]|$)/i.test(v) && (v.startsWith('/') || /^https:\/\//i.test(v) || /^http:\/\//i.test(v)), 'invalid_background_url');
+const mmvsBgColor = z.string().regex(/^#[0-9a-f]{6}$/i);
+const mmvsBgStop = z.object({color:mmvsBgColor,at:z.number().finite().min(0).max(100),alpha:z.number().finite().min(0).max(1).optional()}).strict();
+const mmvsBgLayerBase = {
+  id:z.string().regex(/^bg-[A-Za-z0-9_-]{1,80}$/),
+  enabled:z.boolean(),
+  opacity:z.number().finite().min(0).max(1),
+  blur:z.number().finite().min(0).max(30),
+  blend:z.enum(['normal','screen','multiply','overlay','soft-light'])
+};
+const mmvsBgLayer = z.discriminatedUnion('type',[
+  z.object({...mmvsBgLayerBase,type:z.literal('solid'),color:mmvsBgColor}).strict(),
+  z.object({...mmvsBgLayerBase,type:z.literal('linear'),angle:z.number().finite().min(0).max(360),stops:z.array(mmvsBgStop).min(2).max(5)}).strict(),
+  z.object({...mmvsBgLayerBase,type:z.literal('radial'),centerX:z.number().finite().min(0).max(100),centerY:z.number().finite().min(0).max(100),shape:z.enum(['circle','ellipse']).optional(),stops:z.array(mmvsBgStop).min(2).max(5)}).strict(),
+  z.object({...mmvsBgLayerBase,type:z.literal('image'),url:mmvsBgUrl,fit:z.enum(['cover','contain','fill']),positionX:z.number().finite().min(0).max(100),positionY:z.number().finite().min(0).max(100)}).strict()
+]);
+const mmvsSectionBackground = z.object({
+  url: mmvsBgUrl.optional(),
+  fit: z.enum(['cover','contain']).optional(),
+  position: z.enum(['center','top','bottom']).optional(),
+  dim: z.number().finite().min(0).max(0.8).optional(),
+  sourceSelector: z.string().min(1).max(500).optional(),
+  layers: z.array(mmvsBgLayer).min(1).max(8).optional()
+}).strict().refine(bg => {
+  const legacy = bg.url!==undefined && bg.fit!==undefined && bg.position!==undefined && bg.dim!==undefined;
+  const layered = Array.isArray(bg.layers) && bg.layers.length>=1;
+  return legacy || layered;
+}, 'invalid_section_background');
+
 const mmvsSpatialItem = z.object({
   selector: z.string().min(1).max(500).refine(v => !v.startsWith('#p74-home-config') && !v.startsWith('#p77-profile-config') && !v.startsWith('#mmvs-spatial-'), 'reserved_selector'),
   x: z.number().finite().min(-4000).max(4000),
@@ -5546,10 +5576,24 @@ const mmvsSpatialItem = z.object({
   hidden: z.boolean().optional(),
   zIndex: z.number().int().min(-1000).max(20000).optional(),
   opacity: z.number().finite().min(0.05).max(1).optional(),
-  animation: mmvsSpatialAnimation.optional()
+  widthPx: z.number().int().min(24).max(1600).optional(),
+  heightPx: z.number().int().min(16).max(1600).optional(),
+  // MMVS_V2_LAYER_METADATA: optional, backward-compatible; legacy zIndex untouched.
+  layerId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/).optional(),
+  groupId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/).optional(),
+  rank: z.number().int().min(1).max(500).optional(),
+  renderPlane: z.enum(['native','free']).optional(),
+  animation: mmvsSpatialAnimation.optional(),
+  sectionBackground: mmvsSectionBackground.optional()
 }).strict();
 const mmvsSpatialLayout = z.object({
-  items: z.array(mmvsSpatialItem).max(500)
+  items: z.array(mmvsSpatialItem).max(500),
+  // MMVS_DOM_ORDER_R85_SCHEMA - persisted DOM sibling/parent operations.
+  domMoves: z.array(z.object({
+    selector: z.string().min(1).max(500),
+    reference: z.string().min(1).max(500),
+    placement: z.enum(['before','after','inside'])
+  }).strict()).max(80).optional()
 }).strict().superRefine((value, ctx) => {
   const unique = new Set<string>();
   for(const [i, item] of value.items.entries()) {
@@ -6503,6 +6547,46 @@ app.get('/admin/mmvs/media-library',async(request,reply)=>{
   reply.header('cache-control','no-store');
   return {ok:true,items:result,total:all.length,truncated:f.truncated,page,limit};
 });
+// MMVS_R98_PERMANENT_MEDIA_DELETE: restrict deletion to generated P62 uploads only.
+// System/bundled assets and files referenced by current page data are never deleted.
+app.delete('/admin/mmvs/media-library/delete-permanent',async(request,reply)=>{
+ if(!(await p62Owner(request,reply)))return;
+ const b=z.object({
+   url:z.string().max(220).regex(/^\/uploads\/home-studio\/p62-[a-f0-9]{32}\.(?:png|jpg|webp)$/),
+   confirmation:z.literal('DELETE')
+ }).strict().safeParse(request.body??{});
+ if(!b.success)return reply.code(400).send({error:'invalid_or_unmanaged_media'});
+ const url=b.data.url;
+ const name=url.split('/').pop()!;
+ const fsp=await import('node:fs/promises');
+ const target=p62path.join(p62MediaDir,name);
+ let stat:import('node:fs').Stats;
+ try{stat=await fsp.lstat(target)}catch(e:any){return reply.code(e?.code==='ENOENT'?404:500).send({error:'media_not_found_or_unreadable'})}
+ if(!stat.isFile()||stat.isSymbolicLink())return reply.code(400).send({error:'non_regular_media_refused'});
+ // Reject deleting a file in current published pages, drafts or system settings.
+ // This includes spatial layout backgrounds and shared site configuration.
+ const [published,drafts,settings]=await Promise.all([
+   prisma.contentPage.findMany({select:{slug:true,blocks:true}}),
+   prisma.contentPageDraft.findMany({select:{slug:true,blocks:true}}),
+   prisma.systemSetting.findMany({select:{key:true,value:true}})
+ ]);
+ const mentions=(v:unknown)=>JSON.stringify(v??'').includes(url);
+ const used=[
+   ...published.filter(x=>mentions(x.blocks)).map(x=>'published:'+x.slug),
+   ...drafts.filter(x=>mentions(x.blocks)).map(x=>'draft:'+x.slug),
+   ...settings.filter(x=>mentions(x.value)).map(x=>'setting:'+x.key)
+ ].slice(0,20);
+ if(used.length)return reply.code(409).send({error:'media_still_referenced',usedBy:used});
+ // Audit authorization and deletion intent before the irreversible operation.
+ await prisma.auditLog.create({data:{adminUserId:adminIdOf(request),action:'MMVS_MEDIA_PERMANENT_DELETE_REQUESTED',entityType:'HomeStudioMedia',entityId:name,metadata:{url,bytes:stat.size}}});
+ try{await fsp.unlink(target)}catch{return reply.code(500).send({error:'physical_delete_failed'})}
+ mmvsMediaLibraryCacheR1=null;
+ await prisma.auditLog.create({data:{adminUserId:adminIdOf(request),action:'MMVS_MEDIA_PERMANENTLY_DELETED',entityType:'HomeStudioMedia',entityId:name,metadata:{url,bytes:stat.size}}}).catch(()=>undefined);
+ reply.header('cache-control','no-store');
+ return {ok:true,deleted:true,url};
+});
+
+// MMVS_R98_SECTION_AND_PERMANENT_DELETE
 // MMVS_MEDIA_LIBRARY_R1_API_END
 
 app.get('/admin/content/pages', async (request, reply) => {
@@ -7199,6 +7283,11 @@ app.post('/content/page', async (request, reply) => {
   }
   const who = await miniUser(b.data.initData, false);
   if ('code' in who) return reply.code(who.code).send({ error: who.error });
+  // MMTRADE_STAGE2_ROUTE_FIX_R2: mirror the real stage-2 lesson access policy.
+  if (contentSlug === 'stage2') {
+    const access = await mmStage1State(who.id);
+    if (!access.unlocked) return reply.code(403).send({ error: 'stage1_incomplete', done: access.done, total: access.total });
+  }
   const [user, page, lessons, popups] = await Promise.all([
     prisma.user.findUnique({ where: { id: who.id }, select: { registrationStage: true } }),
     prisma.contentPage.findUnique({ where: { slug: contentSlug } }),

@@ -11,7 +11,7 @@ let modelPending=null,pendingRender=null;
 function ensureObjectModel(){
  if(window.MMTradeObjectModel)return Promise.resolve();
  if(!modelPending)modelPending=new Promise((resolve,reject)=>{
-  const script=document.createElement('script');script.src='/miniapp/p74/object-model.js?v=OBJECT_STUDIO_R1';
+  const script=document.createElement('script');script.src='/miniapp/p74/object-model.js?v=MMVS_P74_PREVIEW_LIBRARY_R4';
   script.onload=()=>window.MMTradeObjectModel?resolve():reject(Error('object-model missing'));
   script.onerror=()=>reject(Error('object-model unavailable'));document.head.append(script);
  });return modelPending;
@@ -498,7 +498,7 @@ window.addEventListener('tenx:data',receivePublished);
 /* MM_P74_ENTRY_R103_CLIENT_END */
 
 window.addEventListener('message',e=>{
- if(!isPreview||e.origin!==location.origin||e.source!==window.parent||!e.data)return;
+ if(!(isPreview||(params.get('visualPreview')==='1'&&params.get('adminPreview')==='1'&&window.parent!==window))||e.origin!==location.origin||e.source!==window.parent||!e.data)return;
  if(e.data.type==='P74_PAGE_ELEMENT_SELECT'){
   window.__P77_SELECTED_ELEMENT__=String(e.data.id||'');
   const layer=document.querySelector('.p77-page-editor-layer');

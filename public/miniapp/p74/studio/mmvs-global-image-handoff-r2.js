@@ -1,10 +1,14 @@
+/* MMVS_R98_SECTION_AND_PERMANENT_DELETE */
+/* MMVS_R97_SECTION_BACKGROUNDS */
+/* MMVS_R96_COPYTRADE_BACKDROP */
+/* MMVS_R95_UNDERLAY_HOST_FIX */
 /* MMVS_GLOBAL_IMAGE_SPATIAL_R2 — resilient same-origin library-image handoff. */
 (()=>{
  'use strict';
  if(window.__MMVS_GLOBAL_IMAGE_HANDOFF_R2__)return;
  window.__MMVS_GLOBAL_IMAGE_HANDOFF_R2__=true;
  const $=id=>document.getElementById(id);
- const VERSION='MMVS_GLOBAL_IMAGE_SPATIAL_R2';
+ const VERSION='MMVS_R98_SECTION_AND_PERMANENT_DELETE';
  const CHILD='/miniapp/p74/studio/mmvs-global-image-child-r2.js?v='+VERSION;
  const BRIDGE='/miniapp/p74/studio/bridge.js?v='+VERSION;
  const SPATIAL='/miniapp/p74/studio/spatial-bridge.js?v='+VERSION;

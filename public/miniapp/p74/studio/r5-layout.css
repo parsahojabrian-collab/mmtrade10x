@@ -1,0 +1,15 @@
+/* MMVS_R5_LAYOUT: preview center, tools in independent right-hand inspector */
+@media(min-width:851px){
+ #pages-pane .designer{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(300px,340px)!important;align-items:start;gap:12px!important}
+ #pages-pane .designer>.preview-area{min-width:0;grid-column:1;grid-row:1}
+ #pages-pane .designer>.inspector{min-width:0;grid-column:2;grid-row:1;max-height:calc(100dvh - 130px)!important;min-height:560px;overflow-y:auto!important;overscroll-behavior:contain;position:sticky;top:10px}
+ #pages-pane .preview-holder{min-height:610px}
+ #pages-pane #spatial-panel{margin:0 0 14px!important}
+ #pages-pane #mmvs-r4-nav{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #pages-pane #spatial-panel .spatial-toolbar>button{flex-basis:110px}
+}
+@media(max-width:850px){
+ #pages-pane .designer{display:flex!important;flex-direction:column!important}
+ #pages-pane .designer>.preview-area{order:0;width:100%}
+ #pages-pane .designer>.inspector{order:1;width:100%;max-height:none!important}
+}

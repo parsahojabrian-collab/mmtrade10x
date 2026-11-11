@@ -4,7 +4,8 @@
  if(window.__MMVS_GLOBAL_IMAGE_CHILD_R2__)return;
  window.__MMVS_GLOBAL_IMAGE_CHILD_R2__=true;
  const query=new URLSearchParams(location.search),path=location.pathname,view=query.get('view');
- const slug=path.includes('/learning/')?'academy':path.includes('/profile/')?'profile':path.includes('/support/')?'support':path.includes('/crypto')?'crypto':path.includes('/copy-trading')?'copy-trading':path.includes('/challenge')?'challenge':view==='academy'?'academy':view==='profile'?'profile':view==='mmtrade10x'?'mmtrade10x':'index';
+ /* MMTRADE_AUDIT_FIX_R1_CHILD_SLUG: agree with spatial-bridge on selected page. */
+const slug=path.includes('/eplanet/')?'eplanet':path.includes('/learning/stage2')?'stage2':path.includes('/learning/')?'academy':path.includes('/profile/')?'profile':path.includes('/support/')?'support':path.includes('/copytrade-academy/')?'copytrade-academy':path.includes('/mmtrade-r3-preview/')?'mmtrade10x':path.includes('/crypto')?'crypto':path.includes('/copy-trading')?'copy-trading':path.includes('/challenge')?'challenge':view==='academy'?'academy':view==='profile'?'profile':view==='mmtrade10x'?'mmtrade10x':'index';
  window.addEventListener('message',event=>{
    if(event.origin!==location.origin||event.source!==window.parent)return;
    const d=event.data;

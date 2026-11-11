@@ -1,0 +1,158 @@
+/* MMVS_R9_UNIFIED_WORKSPACE: adaptive, canvas-first editor. No changes to canvas engine. */
+:root{--mm9-dark:#091c16;--mm9-line:#356b53;--mm9-accent:#53dba2}
+#workspace.workspace{display:block!important;grid-template-columns:minmax(0,1fr)!important;min-width:0!important;width:100%!important}
+#workspace.workspace[hidden]{display:none!important}
+#mmvs9-dock[hidden]{display:none!important}
+#workspace>.work{width:100%!important;min-width:0!important;padding:clamp(5px,.75vw,12px)!important}
+#workspace>.side{display:block!important;position:fixed!important;inset-block:0!important;inset-inline-start:0!important;inset-inline-end:auto!important;top:0!important;right:0!important;left:auto!important;transform:translateX(110%)!important;width:min(324px,calc(100vw - 38px))!important;max-width:none!important;max-height:100dvh!important;height:100dvh!important;overflow-y:auto!important;z-index:1100!important;background:#0b2119!important;border-inline-end:1px solid #40715b!important;padding:24px 14px!important;transition:transform .2s ease!important;box-shadow:0 12px 45px #0008!important}
+body.mmvs9-menu-open #workspace>.side{transform:translateX(0)!important}
+#mmvs9-studio-scrim{position:fixed;inset:0;background:#0008;z-index:1080;border:0;padding:0;display:none}
+body.mmvs9-menu-open #mmvs9-studio-scrim{display:block}
+body.mmvs9-menu-open{overflow:hidden}
+#page-toolbar{display:flex!important;align-items:center!important;gap:9px!important;flex-wrap:wrap!important;padding:8px 10px!important;min-height:56px;z-index:85!important}
+#page-toolbar .labelwrap{min-width:135px;flex:1 1 165px;width:auto!important}
+#page-toolbar .actions{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:6px!important;width:auto!important;flex:0 1 auto!important}
+#page-toolbar .actions button{flex:0 0 auto!important;min-height:36px!important;padding:7px 10px!important}
+#page-toolbar #publish{background:linear-gradient(125deg,#057e52,#11a775)!important;color:#fff!important;font-weight:750}
+.mmvs9-controls{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.mmvs9-control{background:#133a2a!important;border:1px solid #417f5e!important;color:#e4ffef!important;border-radius:9px!important;padding:7px 10px!important;min-height:37px!important;cursor:pointer;font-weight:650;white-space:nowrap}
+.mmvs9-control[aria-expanded="true"]{background:#226949!important;border-color:#5ce8a5!important}
+#mmvs9-more{position:relative;flex:0 0 auto;min-width:0}
+#mmvs9-more>summary{list-style:none;cursor:pointer;user-select:none}
+#mmvs9-more>summary::-webkit-details-marker{display:none}
+#mmvs9-more-content{position:absolute;top:calc(100% + 6px);inset-inline-end:0;min-width:210px;max-width:min(350px,90vw);display:flex;flex-direction:column;gap:6px;padding:10px;background:#10291e;border:1px solid #4d755e;border-radius:12px;z-index:700;box-shadow:0 18px 40px #000a}
+#mmvs9-more:not([open]) #mmvs9-more-content{display:none}
+#mmvs9-more-content button{width:100%!important;text-align:right;white-space:normal!important}
+/* R6/R7 layouts deliberately superseded, including their mobile display:none rules. */
+#pages-pane .designer{display:block!important;grid-template-columns:minmax(0,1fr)!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow:visible!important}
+#pages-pane .designer>.preview-area{display:block!important;grid-column:auto!important;grid-row:auto!important;position:relative!important;visibility:visible!important;order:unset!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:clamp(5px,1vw,12px)!important;overflow:visible!important}
+#pages-pane .preview-holder{min-width:0!important;width:100%!important;max-width:100%!important;min-height:max(500px,calc(100dvh - 185px))!important;margin:auto!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable;display:flex!important;justify-content:center;align-items:flex-start}
+#pages-pane .preview-holder>#frame{flex-shrink:0!important;max-width:100%}
+#pages-pane .designer>.mmvs-r6-layers,#pages-pane .designer>.inspector{display:block!important;grid-column:auto!important;grid-row:auto!important;position:fixed!important;top:69px!important;bottom:10px!important;width:min(346px,calc(100vw - 28px))!important;max-width:none!important;max-height:none!important;height:auto!important;min-width:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;z-index:1030!important;margin:0!important;border:1px solid #45785e!important;border-radius:13px!important;background:#0d271d!important;box-shadow:0 12px 36px #000a!important;padding:13px!important;transition:transform .2s ease,visibility .2s!important;visibility:hidden!important;pointer-events:none!important}
+#pages-pane .designer>.mmvs-r6-layers{right:10px!important;left:auto!important;transform:translateX(115%)!important}
+#pages-pane .designer>.inspector{left:10px!important;right:auto!important;transform:translateX(-115%)!important}
+#pages-pane .designer.mmvs9-tools-open>.mmvs-r6-layers{visibility:visible!important;pointer-events:auto!important;transform:translateX(0)!important}
+#pages-pane .designer.mmvs9-inspector-open>.inspector{visibility:visible!important;pointer-events:auto!important;transform:translateX(0)!important}
+#mmvs-r6-tabs,#mmvs-r7-controls{display:none!important}
+#pages-pane .mmvs-r6-layers #spatial-panel{width:100%!important;min-width:0!important;margin:0!important}
+#pages-pane .mmvs-r6-layers .spatial-toolbar button{min-height:38px}
+/* A dock on the viewport edge keeps both DOM tree and layer stack available without sacrificing canvas width. */
+#mmvs9-dock{position:fixed;left:12px;right:12px;bottom:10px;z-index:1010;background:#081e17;border:1px solid #498161;border-radius:14px;box-shadow:0 12px 36px #000b;overflow:hidden;color:#e4f6eb;max-height:min(44dvh,470px);display:flex;flex-direction:column}
+#mmvs9-dock.mmvs9-dock-collapsed{max-height:48px}
+#mmvs9-dock-header{display:flex;gap:8px;align-items:center;padding:6px 11px;min-height:47px;background:linear-gradient(100deg,#123c2b,#0b211b);border-bottom:1px solid #326047}
+#mmvs9-dock-header strong{font-size:13px;white-space:nowrap}
+#mmvs9-dock-tabs{display:flex;gap:5px;min-width:0;flex:1;align-items:center}
+#mmvs9-dock-tabs button{background:#15372b;color:#c2decf;border:1px solid #3b6351;border-radius:8px;font-size:12px;padding:5px 10px;white-space:nowrap}
+#mmvs9-dock-tabs button[aria-selected="true"]{background:#276947;color:#fff;border-color:#74d9a6}
+#mmvs9-dock-toggle{background:transparent;color:#d7fce8;border:1px solid #4b8164;border-radius:8px;font-size:12px;padding:6px 10px;white-space:nowrap}
+#mmvs9-dock-body{padding:8px 12px;overflow:auto;min-height:0;flex:1}
+#mmvs9-dock.mmvs9-dock-collapsed #mmvs9-dock-body{display:none!important}
+#mmvs9-dock[data-mode="dom"] #mmvs9-stack-slot,#mmvs9-dock[data-mode="stack"] #mmvs9-dom-slot{display:none!important}
+#mmvs9-dock .mmvs-dom-explorer,#mmvs9-dock .mmvs-visual-stack{display:block!important;margin:0!important;padding:5px!important;border:0!important;min-width:0!important;background:transparent!important}
+#mmvs9-dock .mmvs-dom-explorer>summary,#mmvs9-dock .mmvs-visual-stack>summary{display:none}
+#mmvs9-dock .mmvs-dom-list{max-height:min(27dvh,310px)!important;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2px}
+#mmvs9-dock .mmvs-visual-stack-list{max-height:min(26dvh,310px)!important;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));align-items:start;gap:5px}
+#mmvs9-dock .mmvs-dom-item{min-width:0;width:100%}
+#mmvs9-dock .mmvs-dom-tools input{width:auto!important;min-width:100px!important}
+#mmvs9-dock .mmvs-visual-stack-title,#mmvs9-dock .mmvs-dom-label{font-size:12px!important}
+#mmvs9-dock .mmvs-visual-stack-row{min-height:52px}
+/* narrow viewports: save/publish remain visible, side panels use the width of the screen */
+@media(max-width:740px){
+ #page-toolbar{gap:6px!important;padding:7px!important}
+ .mmvs9-controls{width:100%;justify-content:flex-start}
+ .mmvs9-control{flex:1 1 auto;min-width:0;padding:7px 6px!important;font-size:11px}
+ #page-toolbar .labelwrap{width:auto!important;flex:1 1 100px}
+ #page-toolbar .actions{width:auto!important;flex:0 0 auto!important}
+ #page-toolbar #publish,#page-toolbar #save{font-size:11px;padding:6px!important}
+ #mmvs9-dock{left:5px;right:5px;bottom:5px;max-height:50dvh}
+ #mmvs9-dock-header{gap:4px;padding:5px}
+ #mmvs9-dock-header strong{display:none}
+ #mmvs9-dock-tabs button{font-size:11px;padding:5px 6px}
+ #mmvs9-dock-body{padding:5px}
+ #mmvs9-dock .mmvs-dom-list,#mmvs9-dock .mmvs-visual-stack-list{display:block;max-height:28dvh!important}
+ #pages-pane .designer>.mmvs-r6-layers,#pages-pane .designer>.inspector{top:105px!important;bottom:4px!important;width:min(360px,calc(100vw - 9px))!important}
+ #pages-pane .designer>.mmvs-r6-layers{right:3px!important}
+ #pages-pane .designer>.inspector{left:3px!important}
+}
+@media(prefers-reduced-motion:reduce){#workspace>.side,#pages-pane .designer>.mmvs-r6-layers,#pages-pane .designer>.inspector{transition:none!important}}
+
+
+/* MMVS_R9_1_CANVAS_FOCUS — correct the R9 full-width dock regression.
+   Compact collapsed state by default; expanded DOM is a right-side FLOATING palette.
+   Only editor surface styling. Never changes editor objects or render engine. */
+#pages-pane .designer{min-width:0!important;max-width:100%!important}
+#pages-pane .designer>.preview-area{
+  min-width:0!important;width:100%!important;max-width:100%!important;
+  border:0!important;box-shadow:none!important;background:transparent!important;
+  padding:8px 3px 14px!important;
+}
+#pages-pane .preview-toolbar{
+  max-width:100%!important;padding:8px 14px!important;
+  border:1px solid #244a3a;border-radius:12px;background:#0e271e;
+}
+#pages-pane #preview-holder{
+  position:relative!important;min-width:0!important;width:100%!important;
+  min-height:600px!important;height:max(620px,calc(100dvh - 180px))!important;
+  padding:22px 12px!important;
+  border:1px solid #2a5643!important;border-radius:17px!important;
+  overflow:auto!important;
+  justify-content:center!important;align-items:flex-start!important;
+  background-color:#081913!important;
+  background-image:linear-gradient(#26483722 1px,transparent 1px),linear-gradient(90deg,#26483722 1px,transparent 1px),radial-gradient(ellipse at 50% 40%,#164032,#081913 72%)!important;
+  background-size:28px 28px,28px 28px,100% 100%!important;
+  background-position:center!important;
+}
+#pages-pane #preview-holder>#frame{
+  flex:0 0 auto!important;max-width:100%!important;
+  border:4px solid #385c4b!important;
+  box-shadow:0 24px 50px #000b,0 0 0 1px #76bf8c22!important;
+}
+/* R9.1 dock: a compact right-side floating tool, not a wide footer. */
+#mmvs9-dock{
+  left:auto!important;right:16px!important;bottom:15px!important;
+  width:min(465px,calc(100vw - 32px))!important;
+  height:min(67dvh,610px)!important;max-height:min(67dvh,610px)!important;
+  min-height:0!important;border-radius:14px!important;
+  z-index:1010!important;display:flex!important;
+  border:1px solid #4c8d69!important;
+  background:#0a2018!important;
+  box-shadow:0 16px 60px #000b!important;
+}
+#mmvs9-dock[hidden]{display:none!important}
+#mmvs9-dock.mmvs9-dock-collapsed{
+  width:205px!important;height:47px!important;
+  max-height:47px!important;overflow:hidden!important;
+}
+#mmvs9-dock.mmvs9-dock-collapsed #mmvs9-dock-tabs{display:none!important}
+#mmvs9-dock.mmvs9-dock-collapsed #mmvs9-dock-header{
+  border-bottom:0!important;min-height:46px!important;
+}
+#mmvs9-dock-header{min-width:0!important;padding:6px 10px!important}
+#mmvs9-dock-header strong{white-space:nowrap!important;flex:0 0 auto!important}
+#mmvs9-dock-tabs{flex-wrap:nowrap!important;overflow-x:auto!important;gap:5px!important}
+#mmvs9-dock-tabs button{min-width:0!important;flex:0 0 auto!important}
+#mmvs9-dock-toggle{padding:5px 7px!important;flex:0 0 auto!important}
+#mmvs9-dock-body{background:#091b15!important;padding:10px!important;overflow:auto!important}
+#mmvs9-dock .mmvs-dom-list,
+#mmvs9-dock .mmvs-visual-stack-list{
+  display:flex!important;flex-direction:column!important;grid-template-columns:none!important;
+  max-height:none!important;overflow:visible!important;gap:5px!important;
+}
+#mmvs9-dock .mmvs-dom-item,
+#mmvs9-dock .mmvs-visual-stack-row{
+  width:100%!important;min-width:0!important;max-width:100%!important;
+}
+#mmvs9-dock .mmvs-visual-stack-note,
+#mmvs9-dock .mmvs-dom-help{color:#aac6b7!important;font-size:11px!important}
+#mmvs9-dock .mmvs-dom-tools,
+#mmvs9-dock .mmvs-dom-reorder-toolbar{flex-wrap:wrap!important}
+#mmvs9-dock .mmvs-dom-tools input{flex:1 1 145px!important;width:auto!important}
+/* Preserve responsive mobile page proportions and avoid a full-width obstruction. */
+@media(max-width:740px){
+ #pages-pane #preview-holder{padding:8px 4px!important;height:max(520px,calc(100dvh - 210px))!important;min-height:520px!important}
+ #mmvs9-dock{left:7px!important;right:7px!important;bottom:7px!important;width:auto!important;height:min(70dvh,620px)!important;max-height:min(70dvh,620px)!important}
+ #mmvs9-dock.mmvs9-dock-collapsed{left:auto!important;right:7px!important;width:180px!important;height:46px!important;max-height:46px!important}
+ #mmvs9-dock-header strong{display:block!important;font-size:11px!important}
+ #mmvs9-dock-tabs button{font-size:10px!important;padding:5px 6px!important}
+ #mmvs9-dock-body{padding:7px!important}
+}

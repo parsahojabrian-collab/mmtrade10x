@@ -1,3 +1,8 @@
+/* MMVS_R98_SECTION_AND_PERMANENT_DELETE */
+/* MMVS_R97_SECTION_BACKGROUNDS */
+/* MMVS_R96_COPYTRADE_BACKDROP */
+/* MMVS_R95_UNDERLAY_HOST_FIX */
+/* MMVS_R94_LIBRARY_BACKMOST_LOCK_SCOPE */
 /* MMVS_DRAG_ENGINE_R10 */
 /* MMTrade10X Spatial Bridge R9: precise picking & non-destructive additive animations. */
 /* MMVS_PAGE_BOUNDARY_R3 */
@@ -5,24 +10,111 @@
 (()=>{'use strict';if(window.__MMVS_SPATIAL_R4__)return;window.__MMVS_SPATIAL_R4__=true;
 const query=new URLSearchParams(location.search),preview=query.get('visualPreview')==='1';
 const path=location.pathname;const view=query.get('view');
-const slug=path.includes('/eplanet/')?'eplanet':path.includes('/learning/stage2')?'stage2':path.includes('/learning/')?'academy':path.includes('/profile/')?'profile':path.includes('/support/')?'support':path.includes('/crypto')?'crypto':path.includes('/copytrade-academy/')?'copytrade-academy':path.includes('/copy-trading')?'copy-trading':path.includes('/challenge')?'challenge':view==='academy'?'academy':view==='profile'?'profile':view==='mmtrade10x'?'mmtrade10x':'index';
+ const mmvsIsEplanetPath=p=>
+ p==='/miniapp/p74/eplanet'||
+ p.startsWith('/miniapp/p74/eplanet/')||
+ p==='/miniapp/marhale2'||
+ p.startsWith('/miniapp/marhale2/');
+const slug=mmvsIsEplanetPath(path)?'eplanet':path.includes('/learning/stage2')?'stage2':path.includes('/learning/')?'academy':path.includes('/profile/')?'profile':path.includes('/support/')?'support':path.includes('/crypto')?'crypto':path.includes('/copytrade-academy/')?'copytrade-academy':path.includes('/copy-trading')?'copy-trading':path.includes('/challenge')?'challenge':view==='academy'?'academy':view==='profile'?'profile':view==='mmtrade10x'?'mmtrade10x':'index';
 const root=document.documentElement;
  if(preview)root.classList.add('mmvs-preview-editor');
 Object.defineProperty(window,'__MMVS_SPATIAL_EDITING__',{configurable:true,get:()=>editing});
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const safeLayout=l=>{
  const raw=Array.isArray(l?.items)?l.items:[];
- const boundary=(location.pathname==='/miniapp/p74/eplanet'||location.pathname.startsWith('/miniapp/p74/eplanet/'))?null:raw.find(x=>x&&x.selector==='html'&&Number.isFinite(x.x)&&x.x>=200&&x.x<=4000);
+ const boundary=mmvsIsEplanetPath(path)?null:raw.find(x=>x&&x.selector==='html'&&Number.isFinite(x.x)&&x.x>=200&&x.x<=4000);
  const items=raw.filter(x=>x&&typeof x.selector==='string'&&x.selector.length<=500&&Number.isFinite(x.x)&&Number.isFinite(x.y)&&Number.isFinite(x.scale)&&Math.abs(x.x)<=4000&&Math.abs(x.y)<=4000&&x.scale>=.2&&x.scale<=4&&
  (x.locked===undefined||typeof x.locked==='boolean')&&(x.hidden===undefined||typeof x.hidden==='boolean')&&
  (x.zIndex===undefined||(Number.isInteger(x.zIndex)&&x.zIndex>=-1000&&x.zIndex<=20000))&&
+  (x.widthPx===undefined||(Number.isInteger(x.widthPx)&&x.widthPx>=24&&x.widthPx<=1600))&&
+  (x.heightPx===undefined||(Number.isInteger(x.heightPx)&&x.heightPx>=16&&x.heightPx<=1600))&&
   (x.opacity===undefined||(Number.isFinite(x.opacity)&&x.opacity>=.05&&x.opacity<=1))&&
+  (x.layerId===undefined||(typeof x.layerId==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(x.layerId)))&&
+  (x.groupId===undefined||(typeof x.groupId==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(x.groupId)))&&
+  (x.rank===undefined||(Number.isInteger(x.rank)&&x.rank>=1&&x.rank<=500))&&
+  (x.renderPlane===undefined||x.renderPlane==='native'||x.renderPlane==='free')&&
+  (x.sectionBackground===undefined||mmvsBgValid(x.sectionBackground))&&
   (x.animation===undefined||(x.animation&&['float','spin','sway','pulse'].includes(x.animation.kind)&&Number.isInteger(x.animation.durationMs)&&x.animation.durationMs>=400&&x.animation.durationMs<=30000&&Number.isFinite(x.animation.amplitude)&&x.animation.amplitude>=1&&x.animation.amplitude<=150&&Number.isInteger(x.animation.delayMs)&&x.animation.delayMs>=0&&x.animation.delayMs<=10000&&typeof x.animation.loop==='boolean'))).slice(0,500);
- return {items,boundary:boundary?Math.round(boundary.x):0};
+ const domMoves=(Array.isArray(l?.domMoves)?l.domMoves:[]).filter(x=>x&&typeof x.selector==='string'&&x.selector.length>0&&x.selector.length<=500&&typeof x.reference==='string'&&x.reference.length>0&&x.reference.length<=500&&['before','after','inside'].includes(x.placement)).slice(0,80);
+ return {items,domMoves,boundary:boundary?Math.round(boundary.x):0};
 };
 const original=new Map();let layout={items:[]},selected=null,selector='',editing=false,grid=false,overlay=null,handle=null,toolbar=null,toolbarButtons={},active=new Map(),gesture=null,raf=0,gestureChanged=false,gestureStart=null,animationsPlaying=true;
 const animations=new Map();
-function get(s){if(typeof s!=='string'||s.length>500)return null;try{return document.querySelector(s)}catch{return null}}
+// MMVS_DOM_ORDER_R85: stable native DOM anchor registry; no HTML rewriting.
+const mmvsDomAnchor=new Map(),mmvsDomOrigin=new WeakMap(),mmvsDomNative=new Map();
+let mmvsDomSig=null,mmvsDomRenderedShape='';
+function mmvsDomIdentity(el){
+ if(!(el instanceof Element))return null;
+ if(el.id){const id='#'+CSS.escape(el.id);if(document.querySelectorAll(id).length===1)return id}
+ const parts=[];let node=el;
+ while(node&&node instanceof Element&&parts.length<25){
+  if(node.id){const id='#'+CSS.escape(node.id);if(document.querySelectorAll(id).length===1){parts.unshift(id);break}}
+  const tag=node.tagName.toLowerCase();let i=1;for(let x=node.previousElementSibling;x;x=x.previousElementSibling)if(x.tagName===node.tagName)i++;
+  parts.unshift(tag+':nth-of-type('+i+')');if(node===document.documentElement)break;node=node.parentElement;
+ }
+ const selector=parts.join(' > ');return selector.length<=500?selector:null;
+}
+function mmvsDomIndex(){
+ if(!document.body)return;
+ for(const [s,el] of mmvsDomAnchor)if(!el?.isConnected)mmvsDomAnchor.delete(s);
+ for(const el of [document.documentElement,...document.querySelectorAll('*')].slice(0,6500)){
+  if(mmvsDomOrigin.has(el))continue;
+  const s=mmvsDomIdentity(el);if(!s)continue;
+  mmvsDomOrigin.set(el,s);
+  if(!mmvsDomAnchor.has(s)||!mmvsDomAnchor.get(s)?.isConnected)mmvsDomAnchor.set(s,el);
+ }
+}
+function mmvsDomSafeNode(el){
+ if(!(el instanceof Element)||!el.isConnected||el.matches('html,body,script,style,link,meta,noscript,template,head,title,#p74-app,#mf62-home,#mmvs-root,#app,#page-root,.home-shell,.stage-page,.stage-shell,.p74-scroll,.p74-page,[data-mmvs-app-root]'))return false;
+ if(el.closest('#mmvs-spatial-outline,#mmvs-spatial-toolbar,#mmvs-v2-image-plane,script,template,svg,canvas,[contenteditable="true"],[data-reactroot],[data-v-app],[ng-version]'))return false;
+ if(el.tagName.includes('-')||el.matches('form,iframe,video,audio,dialog'))return false;
+ return true;
+}
+function mmvsDomCapture(parent){if(parent&&!mmvsDomNative.has(parent))mmvsDomNative.set(parent,Array.from(parent.children))}
+function mmvsDomShape(){
+ const parts=[];
+ for(const [parent] of mmvsDomNative){
+  if(!parent.isConnected)continue;
+  parts.push([...parent.children].map(n=>mmvsDomOrigin.get(n)||n.id||n.tagName).join('>'));
+ }
+ return parts.join('|');
+}
+function mmvsDomRestore(){
+ for(const [parent,children] of mmvsDomNative){
+  if(!parent.isConnected)continue;
+  // Restore using reverse order and a stable successor; avoid unnecessary mutations.
+  let after=null;
+  for(let i=children.length-1;i>=0;i--){
+    const node=children[i];if(!node.isConnected)continue;
+    if(node.parentElement!==parent||(after&&node.nextElementSibling!==after))parent.insertBefore(node,after);
+    after=node;
+  }
+ }
+}
+function mmvsDomApply(){
+ const moves=Array.isArray(layout.domMoves)?layout.domMoves:[];
+ const sig=JSON.stringify(moves);
+ if(mmvsDomSig===sig&&mmvsDomRenderedShape===mmvsDomShape()&&[...mmvsDomAnchor.values()].every(el=>el?.isConnected))return;
+ mmvsDomRestore();
+ // Identity is captured before the first move; subsequent operations use the same nodes.
+ mmvsDomIndex();
+ for(const rule of moves){
+  const a=get(rule.selector),b=get(rule.reference);
+  if(!mmvsDomSafeNode(a)||!mmvsDomSafeNode(b)||a===b||a.contains(b))continue;
+  const parent=rule.placement==='inside'?b:b.parentElement;
+  if(!(parent instanceof Element)||a.contains(parent))continue;
+  if(rule.placement==='inside'&&!b.matches('div,section,article,aside,header,footer,main,nav,ul,ol,li,figure,figcaption,blockquote,details'))continue;
+  if(rule.placement==='inside'&&b.closest('form,[contenteditable="true"]'))continue;
+  mmvsDomCapture(a.parentElement);mmvsDomCapture(parent);
+  const next=rule.placement==='before'?b:rule.placement==='after'?b.nextSibling:null;
+  if(a.parentElement!==parent||a.nextSibling!==next)parent.insertBefore(a,next);
+ }
+ mmvsDomSig=sig;mmvsDomRenderedShape=mmvsDomShape();
+}
+window.__MMVS_DOM_BASE_SELECTOR__=el=>mmvsDomOrigin.get(el)||mmvsDomIdentity(el);
+window.__MMVS_DOM_GET__=s=>mmvsDomAnchor.get(s)?.isConnected?mmvsDomAnchor.get(s):get(s);
+
+function get(s){if(typeof s!=='string'||s.length>500)return null;const anchor=mmvsDomAnchor.get(s);if(anchor?.isConnected)return anchor;try{return document.querySelector(s)}catch{return null}}
 // MMVS_R11_SAFE_PICK: prohibit moving page roots and multi-child, viewport-sized layout wrappers.
 function mmvsR11Unsafe(el){
  if(!(el instanceof Element))return true;
@@ -36,7 +128,7 @@ function mmvsR11Unsafe(el){
  }
  return false;
 }
-function eligible(el){if(mmvsR11Unsafe(el))return false;return el instanceof Element&&!protectedRoot(el)&&!el.closest('#mmvs-spatial-outline,#mmvs-spatial-toolbar,#mmvs-overlay')&&!['HTML','BODY','SCRIPT','STYLE','LINK','META','TITLE','NOSCRIPT'].includes(el.tagName)}
+function eligible(el){if(mmvsR11Unsafe(el))return false;return el instanceof Element&&!protectedRoot(el)&&!el.closest('#mmvs-spatial-outline,#mmvs-spatial-toolbar,#mmvs-overlay,#mmvs-v2-image-plane')&&!['HTML','BODY','SCRIPT','STYLE','LINK','META','TITLE','NOSCRIPT'].includes(el.tagName)}
 function protectedRoot(el){return el===document.body||el===document.documentElement||!!el?.matches?.('#p74-app,#mf62-home,#mmvs-root,#app,main.home-shell,#page-root,.stage-page,.stage-shell')}
 function isBroadContainer(el){if(!el||!el.children?.length)return false;const r=el.getBoundingClientRect();return r.width>=innerWidth*.93&&r.height>=innerHeight*.75}
 function deepCandidate(x,y){
@@ -95,7 +187,7 @@ function hasVisual(el){
  if(!eligible(el)||el.closest('#mmvs-managed-content,#mmvs-overlay'))return false;
  if(el.hasAttribute('data-mmvs-layer'))return true;
  const c=getComputedStyle(el),b=el.getBoundingClientRect();
- if(c.display==='none'||(c.visibility==='hidden'&&!el.dataset.mmvsSpatialHidden)||Number(c.opacity)<.05||b.width<5||b.height<5)return false;
+ if(c.display==='none'||(c.visibility==='hidden'&&!el.dataset.mmvsSpatialHidden&&!el.dataset.mmvsV2Plane)||Number(c.opacity)<.05||b.width<5||b.height<5)return false;
  const tag=el.tagName.toLowerCase();
  if(['img','svg','canvas','video'].includes(tag))return true;
  if(/(?:sphere|globe|planet|earth|decor|float|coin|crown|ring|cube|orb|particle|sculpt|mountain)/i.test(String(typeof el.className==='string'?el.className:(el.className?.baseVal||''))+' '+el.id))return true;
@@ -155,11 +247,13 @@ function styleFor(el,p){
  if(!original.has(el))original.set(el,{
   translate:el.style.translate,scale:el.style.scale,visibility:el.style.visibility,
   pointerEvents:el.style.pointerEvents,zIndex:el.style.zIndex,position:el.style.position,
-  opacity:el.style.opacity
+  opacity:el.style.opacity,width:el.style.width,height:el.style.height
  });
  const old=original.get(el);
  // Individual CSS translate/scale properties don't overwrite animated transform keyframes.
  el.style.translate=p.x+'px '+p.y+'px';el.style.scale=String(p.scale);
+ el.style.width=p.widthPx!==undefined?p.widthPx+'px':old.width;
+ el.style.height=p.heightPx!==undefined?p.heightPx+'px':old.height;
  if(p.zIndex!==undefined){
   if(getComputedStyle(el).position==='static')el.style.position='relative';
   el.style.zIndex=String(p.zIndex);
@@ -174,14 +268,14 @@ function styleFor(el,p){
 function clearFor(el){
  stopAnimation(el);
  const o=original.get(el);if(!o)return;
- for(const k of ['translate','scale','visibility','pointerEvents','zIndex','position','opacity'])el.style[k]=o[k];
+ for(const k of ['translate','scale','visibility','pointerEvents','zIndex','position','opacity','width','height'])el.style[k]=o[k];
  delete el.dataset.mmvsSpatial;delete el.dataset.mmvsSpatialHidden;delete el.dataset.mmvsLocked;
  original.delete(el);
 }
-function applyOne(s){const el=get(s);if(!eligible(el))return;const p=layout.items.find(x=>x.selector===s);if(p)styleFor(el,p);else clearFor(el);scheduleOutline()}
+function applyOne(s){mmvsUnderlayRestore();mmvsV2Restore();const el=get(s);if(!eligible(el))return;const p=layout.items.find(x=>x.selector===s);if(p)styleFor(el,p);else clearFor(el);mmvsV2Sync();mmvsUnderlaySync();scheduleOutline()}
 // MMVS_HOME_BOUNDARY_R13: document-flow clipping and fixed P74 home support.
 const boundaryOriginal={html:null,body:null};
- const mmvsEplanetNativeScroll=location.pathname==='/miniapp/p74/eplanet'||location.pathname.startsWith('/miniapp/p74/eplanet/');
+ const mmvsEplanetNativeScroll=mmvsIsEplanetPath(path);
 let boundaryFrame=0;
 function mmvsBoundaryRemember(el,props){
  const original={};
@@ -256,6 +350,9 @@ function mmvsBoundaryLimitScroll(){
  if(y>maxY+1)window.scrollTo(0,maxY);
 }
 function applyBoundary(){
+ // MMVS_RESTORE_R1: disable forced page boundaries.
+ return;
+
  if(boundaryFrame)cancelAnimationFrame(boundaryFrame);
  boundaryFrame=requestAnimationFrame(()=>{
   boundaryFrame=0;
@@ -291,11 +388,389 @@ function applyBoundary(){
 }
 window.addEventListener('scroll',mmvsBoundaryLimitScroll,{passive:true});
 window.addEventListener('resize',()=>{applyBoundary();mmvsBoundaryLimitScroll()},{passive:true});
+
+// MMVS_R92_LIBRARY_UNDERLAY: library decoration rendered as page-host background,
+// rather than a high-z-index portal or reparented interactive DOM node.
+const mmvsUnderlaySource=new Map(),mmvsUnderlayHosts=new Map(),mmvsUnderlayPointers=new Map();
+const mmvsUnderlayChrome=new Map();
+let mmvsUnderlayFrame=0,mmvsUnderlayFailure='';
+const mmvsUnderlayKey='mmvs_underlay';
+function mmvsUnderlayRestore(){
+ for(const [host,props] of mmvsUnderlayHosts){
+  if(!host.isConnected)continue;
+  for(const [prop,save] of Object.entries(props)){
+   if(save[0])host.style.setProperty(prop,save[0],save[1]);
+   else host.style.removeProperty(prop);
+  }
+ }
+ mmvsUnderlayHosts.clear();
+ for(const [el,old] of mmvsUnderlayPointers){
+  if(!el.isConnected)continue;
+  if(old[0])el.style.setProperty('pointer-events',old[0],old[1]);
+  else el.style.removeProperty('pointer-events');
+ }
+ mmvsUnderlayPointers.clear();
+ for(const [el,old] of mmvsUnderlaySource){
+  if(!el.isConnected)continue;
+  if(old[0])el.style.setProperty('visibility',old[0],old[1]);
+  else el.style.removeProperty('visibility');
+ }
+ mmvsUnderlaySource.clear();
+ for(const [el,props] of mmvsUnderlayChrome){
+  if(!el.isConnected)continue;
+  for(const [prop,old] of Object.entries(props)){
+   if(old[0])el.style.setProperty(prop,old[0],old[1]);
+   else el.style.removeProperty(prop);
+  }
+ }
+ mmvsUnderlayChrome.clear();
+
+}
+// MMVS_R96_COPYTRADE_BACKDROP: choose actual native content roots, not a single guessed host.
+// A background on its own root paints above that root's background but beneath descendants.
+function mmvsUnderlayHostsFor(el){
+ const r=el.getBoundingClientRect();
+ if(r.width<8||r.height<8)return [];
+ const nativeRootSelectors='#p74-app .p74-page,#p74-app .p74-stage,#p74-app,.p74-stage,.p74-page,main.stage,main.home-shell,main#app,main,.stage-page,.stage-shell,#app,#page-root,.copytrade-page,.copytrade-stage,.copy-trading-page,[data-mmvs-page-root],[data-page-root]';
+ const rootSet=new Set(document.querySelectorAll(nativeRootSelectors));
+ // Include large native ancestors of objects underneath the managed artwork.
+ for(const [rx,ry] of [[.5,.5],[.2,.2],[.8,.2],[.2,.8],[.8,.8]]){
+  const x=r.left+r.width*rx,y=r.top+r.height*ry;
+  if(x<0||x>innerWidth||y<0||y>innerHeight)continue;
+  for(const n of document.elementsFromPoint(x,y)){
+   if(n.closest('#mmvs-managed-content,#mmvs-spatial-toolbar,#mmvs-spatial-outline,#mmvs-v2-image-plane'))continue;
+   let p=n;
+   while(p&&p!==document.body){
+    if(p.matches?.(nativeRootSelectors))rootSet.add(p);
+    p=p.parentElement;
+   }
+   break;
+  }
+ }
+ const ranked=[];
+ for(const h of rootSet){
+  if(!h?.isConnected||h.contains(el)||h.closest('#mmvs-managed-content'))continue;
+  const b=h.getBoundingClientRect(),cs=getComputedStyle(h);
+  if(b.width<120||b.height<120||cs.display==='none'||cs.visibility==='hidden')continue;
+  const ox=Math.max(0,Math.min(r.right,b.right)-Math.max(r.left,b.left));
+  const oy=Math.max(0,Math.min(r.bottom,b.bottom)-Math.max(r.top,b.top));
+  const share=ox*oy/Math.max(1,r.width*r.height);
+  if(share<.22)continue;
+  // Prefer page artboards to wrappers, but paint on both when the foreground
+  // stage has its own opaque background that would cover its parent's background.
+  const depth=(()=>{let n=0,p=h;while((p=p.parentElement)&&n<30)n++;return n})();
+  const priority=h.matches('.p74-stage,.p74-page,main.stage,.stage-page,.stage-shell,.copytrade-stage,.copytrade-page')?5:h.matches('main,main#app,#app,#p74-app,#page-root')?3:0;
+  ranked.push({h,share,score:share*10+priority+depth*.08});
+ }
+ ranked.sort((a,b)=>b.score-a.score);
+ // Draw in at most three substantial native artboards, all aligned to the same
+ // screen coordinates. Never use body: it is often concealed by a solid page shell.
+ return ranked.slice(0,3).map(x=>x.h);
+}
+
+
+function mmvsUnderlayFailureNotice(selector){
+ if(!preview||mmvsUnderlayFailure===selector)return;
+ mmvsUnderlayFailure=selector;
+ window.parent.postMessage({type:'MMVS_UNDERLAY_UNAVAILABLE',selector,slug},location.origin);
+}
+function mmvsUnderlaySync(){
+ mmvsUnderlayRestore();
+ mmvsUnderlayFailure='';
+ const layers=layout.items.filter(x=>x.layerId===mmvsUnderlayKey&&!x.hidden&&x.renderPlane!=='free');
+ const byHost=new Map(),painted=new Set();
+ for(const item of layers){
+  const el=get(item.selector);
+  if(!el||el.tagName!=='IMG'||!el.matches('#mmvs-managed-content .mmvs-c-block > img, #mmvs-managed-content .mmvs-c-image > img')||!el.isConnected)continue;
+  if(!el.complete||!el.naturalWidth){el.addEventListener('load',mmvsUnderlaySchedule,{once:true});continue}
+  if(el.getAnimations?.().length||item.animation){mmvsUnderlayFailureNotice(item.selector);continue}
+  const hosts=mmvsUnderlayHostsFor(el);
+  if(!hosts.length){mmvsUnderlayFailureNotice(item.selector);continue}
+  const b=el.getBoundingClientRect();
+  const url=el.currentSrc||el.src;
+  if(!/^https?:\/\//.test(url)&&!url.startsWith(location.origin+'/')){mmvsUnderlayFailureNotice(item.selector);continue}
+  for(const host of hosts){
+   const h=host.getBoundingClientRect();
+   const sx=host.offsetWidth>0?h.width/host.offsetWidth:1;
+   const sy=host.offsetHeight>0?h.height/host.offsetHeight:1;
+   if(!(sx>0&&sy>0&&Number.isFinite(sx)&&Number.isFinite(sy)))continue;
+   const left=(b.left-h.left)/sx+host.scrollLeft-host.clientLeft;
+   const top=(b.top-h.top)/sy+host.scrollTop-host.clientTop;
+   const width=b.width/sx,height=b.height/sy;
+   if(width<8||height<8||!Number.isFinite(left+top+width+height))continue;
+   const rule={item,el,url,left,top,width,height};
+   if(!byHost.has(host))byHost.set(host,[]);
+   byHost.get(host).push(rule);
+  }
+ }
+ for(const [host,rules] of byHost){
+  const props={};
+  for(const prop of ['background-image','background-position','background-size','background-repeat','background-attachment'])
+   props[prop]=[host.style.getPropertyValue(prop),host.style.getPropertyPriority(prop)];
+  const computed=getComputedStyle(host);
+  const order=[...rules].sort((a,b)=>(b.item.rank??1)-(a.item.rank??1));
+  const urls=order.map(x=>'url('+JSON.stringify(x.url)+')');
+  const pos=order.map(x=>x.left.toFixed(2)+'px '+x.top.toFixed(2)+'px');
+  const sizes=order.map(x=>x.width.toFixed(2)+'px '+x.height.toFixed(2)+'px');
+  const existing=computed.backgroundImage==='none'?'':','+computed.backgroundImage;
+  host.style.setProperty('background-image',urls.join(',')+existing,'important');
+  host.style.setProperty('background-position',pos.join(',')+','+computed.backgroundPosition,'important');
+  host.style.setProperty('background-size',sizes.join(',')+','+computed.backgroundSize,'important');
+  host.style.setProperty('background-repeat',order.map(()=> 'no-repeat').join(',')+','+computed.backgroundRepeat,'important');
+  host.style.setProperty('background-attachment',order.map(()=> 'scroll').join(',')+','+computed.backgroundAttachment,'important');
+  mmvsUnderlayHosts.set(host,props);
+  for(const rule of order)painted.add(rule.el);
+ }
+ // Do not make the original image disappear unless a native page host was painted.
+ for(const item of layers){
+  const el=get(item.selector);
+  if(!painted.has(el))continue;
+  const wrapper=el.parentElement;
+  const hideNode=wrapper?.matches('.mmvs-c-block,.mmvs-c-image')&&wrapper.children.length===1?wrapper:el;
+  if(!mmvsUnderlaySource.has(hideNode)){
+   mmvsUnderlaySource.set(hideNode,[hideNode.style.getPropertyValue('visibility'),hideNode.style.getPropertyPriority('visibility')]);
+   hideNode.style.setProperty('visibility','hidden','important');
+  }
+  for(const node of [el,wrapper]){
+   if(!node||mmvsUnderlayPointers.has(node))continue;
+   mmvsUnderlayPointers.set(node,[node.style.getPropertyValue('pointer-events'),node.style.getPropertyPriority('pointer-events')]);
+   node.style.setProperty('pointer-events','none','important');
+  }
+  window.parent.postMessage({type:'MMVS_UNDERLAY_APPLIED',selector:item.selector,slug},location.origin);
+ }
+ // The managed-content panel has its own painted backdrop. When it contains
+ // only underlaid image blocks, that backdrop must not remain over the page.
+ const panel=document.querySelector('#mmvs-managed-content');
+ if(panel){
+  const blocks=[...panel.children].filter(x=>x.classList?.contains('mmvs-c-block'));
+  const onlyImages=blocks.length>0&&blocks.length===panel.children.length&&
+   blocks.every(b=>b.childElementCount===1&&b.firstElementChild?.tagName==='IMG'&&painted.has(b.firstElementChild));
+  if(onlyImages){
+   const props={};
+   for(const prop of ['background','border','border-color','box-shadow','pointer-events'])
+    props[prop]=[panel.style.getPropertyValue(prop),panel.style.getPropertyPriority(prop)];
+   mmvsUnderlayChrome.set(panel,props);
+   panel.style.setProperty('background','transparent','important');
+   panel.style.setProperty('border','0','important');
+   panel.style.setProperty('box-shadow','none','important');
+   panel.style.setProperty('pointer-events','none','important');
+  }
+ }
+}
+
+
+function mmvsUnderlaySchedule(){
+ if(mmvsUnderlayFrame)return;
+ mmvsUnderlayFrame=requestAnimationFrame(()=>{mmvsUnderlayFrame=0;mmvsUnderlaySync()});
+}
+window.addEventListener('scroll',()=>{if(mmvsUnderlaySource.size)mmvsUnderlaySchedule()},{passive:true,capture:true});
+window.addEventListener('resize',()=>{if(mmvsUnderlaySource.size)mmvsUnderlaySchedule()},{passive:true});
+
+// MMVS_LAYER_V2_PILOT: opt-in visual-only portal for static decorative IMG elements.
+// A cloned image is painted in a common *top* plane, without moving the real DOM node.
+// This does not make interactive / animated / transformed elements globally reorderable.
+const mmvsV2Nodes=new Map();
+let mmvsV2Host=null,mmvsV2Raf=0;
+function mmvsV2HostNode(){
+ if(mmvsV2Host?.isConnected)return mmvsV2Host;
+ const e=document.createElement('div');e.id='mmvs-v2-image-plane';e.setAttribute('aria-hidden','true');
+ e.style.cssText='position:fixed!important;inset:0!important;width:0!important;height:0!important;overflow:visible!important;pointer-events:none!important;z-index:2140000000!important;isolation:isolate!important';
+ document.body.append(e);mmvsV2Host=e;return e;
+}
+function mmvsV2Allowed(el){
+ if(!(el instanceof HTMLImageElement)||!eligible(el)||!el.isConnected)return false;
+ if(el.closest('a,button,form,label,[role="button"],[contenteditable="true"]'))return false;
+ const s=getComputedStyle(el),r=el.getBoundingClientRect();
+ if(s.display==='none'||s.visibility==='hidden'||s.position==='fixed'||s.position==='sticky'||r.width<8||r.height<8||r.width>innerWidth*.9||r.height>innerHeight*2)return false;
+ if((s.transform&&s.transform!=='none')||(s.rotate&&s.rotate!=='none')||
+  (s.scale&&s.scale!=='none'&&s.scale!=='1')||(s.filter&&s.filter!=='none'&&s.filter!=='blur(0px)')||
+  (s.mixBlendMode&&s.mixBlendMode!=='normal')||(s.clipPath&&s.clipPath!=='none'))return false;
+ if(el.getAnimations?.().length)return false;
+ for(let p=el.parentElement;p&&p!==document.documentElement;p=p.parentElement){
+  const a=getComputedStyle(p);
+  if(Number(a.opacity)<1||(a.filter&&a.filter!=='none')||(a.mixBlendMode&&a.mixBlendMode!=='normal')||(a.clipPath&&a.clipPath!=='none')||p.getAnimations?.().length)return false;
+  if(a.transform&&a.transform!=='none'&&/matrix\(([^)]+)\)/.test(a.transform)){
+   const m=a.transform.match(/matrix\(([^)]+)\)/)[1].split(',').map(Number);
+   if(m.length===6&&(Math.abs(m[1])>.001||Math.abs(m[2])>.001))return false;
+  }
+ }
+ return true;
+}
+function mmvsV2Restore(){
+ for(const [el,data] of mmvsV2Nodes){
+  if(data.previousVisibility)el.style.setProperty('visibility',data.previousVisibility,data.previousPriority);
+  else el.style.removeProperty('visibility');
+  data.clone.remove();delete el.dataset.mmvsV2Plane;
+ }
+ mmvsV2Nodes.clear();
+ if(mmvsV2Host){mmvsV2Host.remove();mmvsV2Host=null}
+}
+function mmvsV2Clip(el,rect){
+ let left=0,top=0,right=innerWidth,bottom=innerHeight;
+ for(let p=el.parentElement;p;p=p.parentElement){
+  const s=getComputedStyle(p);
+  if(/(?:hidden|scroll|auto|clip)/.test(`${s.overflowX} ${s.overflowY}`)){
+   const r=p.getBoundingClientRect();left=Math.max(left,r.left);top=Math.max(top,r.top);
+   right=Math.min(right,r.right);bottom=Math.min(bottom,r.bottom);
+  }
+ }
+ const t=Math.max(0,top-rect.top),l=Math.max(0,left-rect.left),b=Math.max(0,rect.bottom-bottom),r=Math.max(0,rect.right-right);
+ return `inset(${t}px ${r}px ${b}px ${l}px)`;
+}
+function mmvsV2Paint(){
+ if(!mmvsV2Nodes.size)return;
+ for(const [el,data] of [...mmvsV2Nodes]){
+  if(!el.isConnected){data.clone.remove();mmvsV2Nodes.delete(el);continue}
+  const item=layout.items.find(x=>x.selector===data.selector);
+  if(!item||item.renderPlane!=='free'||item.hidden){mmvsV2Sync();return}
+  const rect=el.getBoundingClientRect(),s=getComputedStyle(el);
+  const c=data.clone;
+  // Source is visibility:hidden during overlay rendering; size remains in normal flow.
+  const url=el.currentSrc||el.src;if(c.src!==url)c.src=url;
+  c.style.left=rect.left+'px';c.style.top=rect.top+'px';
+  c.style.width=rect.width+'px';c.style.height=rect.height+'px';
+  c.style.objectFit=s.objectFit;c.style.objectPosition=s.objectPosition;
+  c.style.borderRadius=s.borderRadius;c.style.boxShadow=s.boxShadow;
+  c.style.opacity=s.opacity;c.style.zIndex=String(item.rank??1);
+  c.style.clipPath=mmvsV2Clip(el,rect);
+ }
+}
+function mmvsV2Schedule(){if(mmvsV2Raf)return;mmvsV2Raf=requestAnimationFrame(()=>{mmvsV2Raf=0;mmvsV2Paint()})}
+function mmvsV2Sync(){
+ mmvsV2Restore();
+ const wanted=layout.items.filter(x=>x.renderPlane==='free'&&!x.hidden);
+ if(!wanted.length)return;
+ for(const item of wanted){
+  const el=get(item.selector);
+  if(!mmvsV2Allowed(el))continue;
+  const c=document.createElement('img');c.dataset.mmvsV2Image='1';c.alt='';c.draggable=false;c.decoding='async';
+  c.style.cssText='position:fixed!important;pointer-events:none!important;display:block!important;margin:0!important;padding:0!important;border:0!important;max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;animation:none!important;transition:none!important;box-sizing:border-box!important';
+  mmvsV2HostNode().append(c);
+  const v=el.style.getPropertyValue('visibility'),pr=el.style.getPropertyPriority('visibility');
+  mmvsV2Nodes.set(el,{selector:item.selector,clone:c,previousVisibility:v,previousPriority:pr});
+  el.dataset.mmvsV2Plane='1';
+  el.style.setProperty('visibility','hidden','important');
+ }
+ mmvsV2Paint();
+}
+window.addEventListener('scroll',mmvsV2Schedule,true);
+window.addEventListener('resize',mmvsV2Schedule,{passive:true});
+// MMVS_R97_SECTION_BACKGROUNDS — draw directly on target sections, beneath children.
+const mmvsBgOriginals=new Map(),mmvsBgHiddenSources=new Map(),mmvsBgHiddenContainers=new Map();
+function mmvsBgRestore(){
+ for(const [node,props] of mmvsBgOriginals){
+  if(!node.isConnected)continue;
+  for(const [prop,old] of Object.entries(props)){
+   if(old[0])node.style.setProperty(prop,old[0],old[1]);
+   else node.style.removeProperty(prop);
+  }
+ }
+ mmvsBgOriginals.clear();
+ for(const [node,old] of mmvsBgHiddenSources){
+  if(!node.isConnected)continue;
+  if(old[0])node.style.setProperty('display',old[0],old[1]);
+  else node.style.removeProperty('display');
+ }
+ mmvsBgHiddenSources.clear();
+ for(const [node,old] of mmvsBgHiddenContainers){
+  if(!node.isConnected)continue;
+  if(old[0])node.style.setProperty('display',old[0],old[1]);
+  else node.style.removeProperty('display');
+ }
+ mmvsBgHiddenContainers.clear();
+}
+function mmvsBgValid(entry){
+ if(!entry||typeof entry.url!=='string'||entry.url.length>2048||entry.url.startsWith('//')||!/\.(?:png|jpe?g|webp|gif|svg|avif)(?:[?#]|$)/i.test(entry.url)||!['cover','contain'].includes(entry.fit)||!['center','top','bottom'].includes(entry.position)||typeof entry.dim!=='number'||entry.dim<0||entry.dim>.8)return false;
+ try{const u=new URL(entry.url,location.origin);return u.protocol==='https:'||(u.protocol==='http:'&&u.origin===location.origin)}catch{return false}
+}
+// MMVS_R98_SECTION_BACKDROP: a child layer inside the selected section;
+// independent of the global CSS z-index and the managed-content sibling.
+const mmvsR98Layers=new Map();
+function mmvsR98RestoreLayers(){
+ for(const [host,record] of mmvsR98Layers){
+   record.layer.remove();
+   for(const [node,styles] of record.children){
+     if(!node.isConnected)continue;
+     for(const [prop,old] of Object.entries(styles)){
+       if(old[0])node.style.setProperty(prop,old[0],old[1]);
+       else node.style.removeProperty(prop);
+     }
+   }
+ }
+ mmvsR98Layers.clear();
+}
+function mmvsBgSync(){
+ mmvsBgRestore();
+ mmvsR98RestoreLayers();
+ for(const item of layout.items){
+  const bg=item.sectionBackground;if(!mmvsBgValid(bg))continue;
+  const target=get(item.selector);
+  if(!(target instanceof Element)||!target.isConnected||target.matches('html,body,head,script,style,button,input,textarea,select,svg,canvas')
+    ||target.closest('#mmvs-spatial-outline,#mmvs-spatial-toolbar,#mmvs-managed-content,#mmvs-v2-image-plane'))continue;
+  const props={};
+  for(const p of ['position','isolation'])props[p]=[target.style.getPropertyValue(p),target.style.getPropertyPriority(p)];
+  mmvsBgOriginals.set(target,props);
+  if(getComputedStyle(target).position==='static')target.style.setProperty('position','relative','important');
+  target.style.setProperty('isolation','isolate','important');
+  const layer=document.createElement('div');layer.className='mmvs-r98-section-backdrop';
+  layer.setAttribute('aria-hidden','true');
+  const u=new URL(bg.url,location.origin),dim=Number(bg.dim).toFixed(2);
+  layer.style.cssText='position:absolute!important;inset:0!important;display:block!important;pointer-events:none!important;'
+    +'z-index:0!important;overflow:hidden!important;border-radius:inherit!important;'
+    +'background-image:linear-gradient(rgba(0,0,0,'+dim+'),rgba(0,0,0,'+dim+')),url('+JSON.stringify(u.href)+')!important;'
+    +'background-position:'+bg.position+'!important;background-size:cover,'+bg.fit+'!important;'
+    +'background-repeat:no-repeat,no-repeat!important;';
+  const children=[];
+  for(const child of [...target.children]){
+    if(child.matches('script,style,link,template'))continue;
+    const st=getComputedStyle(child),styles={};
+    if(st.position==='static'){
+      styles.position=[child.style.getPropertyValue('position'),child.style.getPropertyPriority('position')];
+      child.style.setProperty('position','relative','important');
+    }
+    if(st.zIndex==='auto'||Number(st.zIndex)<=0){
+      styles['z-index']=[child.style.getPropertyValue('z-index'),child.style.getPropertyPriority('z-index')];
+      child.style.setProperty('z-index','1','important');
+    }
+    if(Object.keys(styles).length)children.push([child,styles]);
+  }
+  target.insertBefore(layer,target.firstChild);
+  mmvsR98Layers.set(target,{layer,children});
+  // Hide the duplicate floating source only AFTER the new backdrop has loaded.
+  const source=typeof bg.sourceSelector==='string'?get(bg.sourceSelector):null;
+  if(source?.matches?.('#mmvs-managed-content .mmvs-c-block > img,#mmvs-managed-content .mmvs-c-image > img')){
+    const wrapper=source.closest('.mmvs-c-block');
+    const test=new Image();
+    test.onload=()=>{
+      if(mmvsR98Layers.get(target)?.layer!==layer||!wrapper?.isConnected)return;
+      if(!mmvsBgHiddenSources.has(wrapper)){
+        mmvsBgHiddenSources.set(wrapper,[wrapper.style.getPropertyValue('display'),wrapper.style.getPropertyPriority('display')]);
+      }
+      wrapper.style.setProperty('display','none','important');
+      const managed=document.getElementById('mmvs-managed-content');
+      if(managed){const kids=[...managed.children];if(kids.length&&kids.every(n=>getComputedStyle(n).display==='none')){
+        mmvsBgHiddenContainers.set(managed,[managed.style.getPropertyValue('display'),managed.style.getPropertyPriority('display')]);
+        managed.style.setProperty('display','none','important');
+      }}
+    };
+    test.onerror=()=>{window.parent?.postMessage?.({type:'MMVS_SECTION_BG_LOAD_FAILED',selector:item.selector,slug},location.origin)};
+    test.src=u.href;
+  }
+ }
+}
+
 function apply(){
+ mmvsBgRestore();
+ mmvsDomApply();
+ mmvsUnderlayRestore();
+ mmvsV2Restore();
  applyBoundary();
  const seen=new Set();
  for(const item of layout.items){const el=get(item.selector);if(!eligible(el))continue;seen.add(el);styleFor(el,item)}
  for(const el of [...original.keys()])if(!seen.has(el)||!el.isConnected)clearFor(el);
+ mmvsV2Sync();
+ mmvsUnderlaySync();
+ mmvsBgSync();
  scheduleOutline();
 }
 function reportOverlaps(){
@@ -313,20 +788,59 @@ function reportOverlaps(){
  found.sort((a,b)=>b.z-a.z);
  window.parent.postMessage({type:'MMVS_SPATIAL_OVERLAPS',selector,items:found.slice(0,28),slug},location.origin);
 }
+
+// MMVS_MULTI_R1: editing-only group selection; separate from persisted layout.
+let groupMode=false,groupSelectors=[],groupStart=null;
+function groupValid(list){
+ const result=[];
+ for(const s of Array.isArray(list)?list:[]){
+  const el=get(s);
+  if(typeof s!=='string'||s.length>500||!eligible(el)||entry(s).locked||entry(s).hidden||result.includes(s))continue;
+  // Prevent nested parent+child transforms (the cause of double movement).
+  if(result.some(other=>{const node=get(other);return node?.contains(el)||el.contains(node)}))continue;
+  result.push(s);if(result.length>=32)break;
+ }
+ return result;
+}
+function setGroup(list,report=false){
+ groupSelectors=groupValid(list);
+ if(groupSelectors.length){selector=groupSelectors[groupSelectors.length-1];selected=get(selector)}
+ else if(groupMode){selector='';selected=null}
+ if(report)window.parent.postMessage({type:'MMVS_SPATIAL_GROUP_SELECTED',selectors:groupSelectors,slug},location.origin);
+ scheduleOutline();
+}
+function groupChange(s){setGroup(groupSelectors.includes(s)?groupSelectors.filter(x=>x!==s):[...groupSelectors,s],true)}
+function groupEntries(){return groupSelectors.map(s=>({selector:s,...entry(s)})).filter(x=>!x.locked&&!x.hidden)}
+function shiftGroup(dx,dy,report){
+ if(!groupMode||groupSelectors.length<2||!Number.isFinite(dx)||!Number.isFinite(dy))return;
+ const items=groupEntries();if(items.length!==groupSelectors.length)return;
+ for(const p of items)update({selector:p.selector,x:clamp(p.x+dx,-4000,4000),y:clamp(p.y+dy,-4000,4000)},false);
+ if(report)window.parent.postMessage({type:'MMVS_SPATIAL_GROUP_COMMIT',items:groupEntries(),slug},location.origin);
+ scheduleOutline();
+}
+function groupBox(){
+ const rects=groupSelectors.map(s=>get(s)?.getBoundingClientRect()).filter(b=>b&&b.width>1&&b.height>1);
+ if(!rects.length)return null;
+ const left=Math.min(...rects.map(b=>b.left)),top=Math.min(...rects.map(b=>b.top));
+ const right=Math.max(...rects.map(b=>b.right)),bottom=Math.max(...rects.map(b=>b.bottom));
+ return {left,top,right,bottom,width:right-left,height:bottom-top};
+}
+
 function drawOutline(){
  if(!preview||!overlay)return;
  if(selector&&(!selected||!selected.isConnected))selected=get(selector);
  if(!selected){overlay.hidden=true;if(toolbar)toolbar.hidden=true;return;}
- const b=selected.getBoundingClientRect(),p=entry(selector);
+ const multi=groupMode&&groupSelectors.length>1;
+ const b=multi?groupBox():selected.getBoundingClientRect(),p=entry(selector);if(!b){overlay.hidden=true;return;}
  if(p.locked){overlay.hidden=true;if(toolbar)toolbar.hidden=true;return;}
  overlay.style.left=b.left+'px';overlay.style.top=b.top+'px';
  overlay.style.width=b.width+'px';overlay.style.height=b.height+'px';overlay.hidden=false;
  overlay.classList.toggle('mmvs-is-locked',!!p.locked);
  overlay.classList.toggle('mmvs-is-hidden',!!p.hidden);
- if(handle)handle.hidden=!editing||!!p.locked||!!p.hidden;
+ if(handle)handle.hidden=multi||!editing||!!p.locked||!!p.hidden;
  const grab=overlay.querySelector('#mmvs-spatial-grab');if(grab)grab.hidden=!editing||!!p.locked||!!p.hidden;
  if(toolbar){
-  toolbar.hidden=!editing;
+  toolbar.hidden=!editing||multi;
   const width=Math.min(innerWidth-12,400);
   toolbar.style.width=width+'px';
   const height=Math.max(42,toolbar.getBoundingClientRect().height||42);
@@ -334,6 +848,7 @@ function drawOutline(){
   const above=b.top-height-9,below=b.bottom+9;
   const top=above>=6?above:below+height<=innerHeight-6?below:clamp(b.top+9,6,Math.max(6,innerHeight-height-6));
   toolbar.style.left=left+'px';toolbar.style.top=top+'px';
+  if(toolbarButtons.underlay){toolbarButtons.underlay.hidden=!((selected instanceof HTMLImageElement&&selected.matches('#mmvs-managed-content .mmvs-c-block > img, #mmvs-managed-content .mmvs-c-image > img')||selected?.matches?.('#mmvs-managed-content .mmvs-c-block')&&!!selected.querySelector('img')));toolbarButtons.underlay.textContent=p.layerId==='mmvs_underlay'?'↩ روی صفحه':'⬇ پشت صفحه';}
   toolbarButtons.lock.textContent=p.locked?'🔒 بازکردن':'🔓 قفل';
   toolbarButtons.hide.textContent=p.hidden?'↩ نمایش':'◉ حذف/مخفی';
  }
@@ -354,7 +869,7 @@ function makeOverlay(){
  const style=document.createElement('style');style.id='mmvs-spatial-ui-r7';
  style.textContent=`
  html.mmvs-preview-editor [data-mmvs-locked]{outline:none!important}
-  #mmvs-spatial-outline{position:fixed;pointer-events:none;border:2px solid #49eeb8;box-shadow:0 0 0 1px #061b12;outline:1px dashed #1119;z-index:2147483200;box-sizing:border-box}
+  #mmvs-spatial-outline{position:fixed;pointer-events:none;border:2px solid #49eeb8;box-shadow:none!important;outline:none!important;z-index:2147483200;box-sizing:border-box}
  #mmvs-spatial-outline.mmvs-is-locked{display:none!important}
  #mmvs-spatial-outline.mmvs-is-hidden{border-color:#ed8a85;border-style:dotted;background:#75202012}
  #mmvs-spatial-grab{position:absolute;inset:0;pointer-events:auto;touch-action:none!important;user-select:none;-webkit-user-select:none;cursor:grab;background:transparent}
@@ -373,7 +888,7 @@ function makeOverlay(){
  handle=document.createElement('div');handle.id='mmvs-spatial-handle';handle.textContent='⤡';handle.title='بکش تا بزرگ یا کوچک شود';
  overlay.append(handle);document.body.append(overlay);
  toolbar=document.createElement('div');toolbar.id='mmvs-spatial-toolbar';toolbar.hidden=true;
- const actions=[['lock','قفل'],['hide','مخفی/حذف'],['front','جلوترین'],['back','عقب‌ترین'],['animation','✦ انیمیشن'],['reset','بازنشانی']];
+ const actions=[['lock','قفل'],['hide','مخفی/حذف'],['front','جلوترین'],['back','عقب‌ترین'],['underlay','⬇ پشت صفحه'],['animation','✦ انیمیشن'],['reset','بازنشانی']];
  for(const [id,label] of actions){
   const b=document.createElement('button');b.type='button';b.textContent=label;b.title=label;
   b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(selector)window.parent.postMessage({type:'MMVS_SPATIAL_ACTION',action:id,selector,slug},location.origin)});
@@ -395,6 +910,8 @@ function update(p,report){
  if(p.hidden!==undefined)fixed.hidden=!!p.hidden;
  if(p.zIndex!==undefined)fixed.zIndex=clamp(Math.round(p.zIndex),-1000,20000);
  if(p.opacity!==undefined)fixed.opacity=clamp(p.opacity,.05,1);
+ if(p.widthPx!==undefined)fixed.widthPx=Math.round(clamp(p.widthPx,24,1600));
+ if(p.heightPx!==undefined)fixed.heightPx=Math.round(clamp(p.heightPx,16,1600));
  if(p.animation!==undefined)fixed.animation=p.animation;
  const index=layout.items.findIndex(x=>x.selector===fixed.selector);
  if(index>=0)layout.items[index]=fixed;else if(layout.items.length<500)layout.items.push(fixed);else return;
@@ -403,12 +920,22 @@ function update(p,report){
 function points(){return [...active.values()]}
 function begin(){
  const pts=points(),p=entry(selector);if(!pts.length)return;
+ if(groupMode&&groupSelectors.length>1)groupStart=groupEntries();
  const mid=pts.length>=2?{x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2}:{x:pts[0].x,y:pts[0].y};
  gesture={x0:p.x,y0:p.y,s0:p.scale,startMid:mid,
   dist:pts.length>=2?Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y):0,kind:pts[0].kind};
 }
 function move(){
  if(!gesture||!selector||entry(selector).locked)return;
+ if(groupMode&&groupSelectors.length>1&&groupStart?.length===groupSelectors.length){
+  const pts=points();if(!pts.length)return;
+  const mid=pts.length>=2?{x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2}:pts[0];
+  let dx=mid.x-gesture.startMid.x,dy=mid.y-gesture.startMid.y;
+  if(grid){dx=Math.round(dx/8)*8;dy=Math.round(dy/8)*8}
+  if(Math.abs(dx)+Math.abs(dy)<.1)return;gestureChanged=true;
+  for(const p of groupStart)update({selector:p.selector,x:clamp(p.x+dx,-4000,4000),y:clamp(p.y+dy,-4000,4000)},false);
+  scheduleOutline();return;
+ }
  const pts=points();if(!pts.length)return;
  const mid=pts.length>=2?{x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2}:pts[0];
  let scale=gesture.s0;
@@ -423,7 +950,7 @@ function pointerDown(e){
  if(editing){
   const __mmctHit=targetForPoint(e);
   const __mmctSel=__mmctHit?selectorOf(__mmctHit):null;
-  if(__mmctHit?.closest?.('[data-mmvs-locked]')||(__mmctSel&&entry(__mmctSel).locked)||((e.target===handle||e.target?.id==='mmvs-spatial-grab')&&selector&&entry(selector).locked)){
+  if((__mmctSel&&entry(__mmctSel).locked)||((e.target===handle||e.target?.id==='mmvs-spatial-grab')&&selector&&entry(selector).locked)){
    e.preventDefault();e.stopImmediatePropagation();return;
   }
  }
@@ -436,7 +963,8 @@ function pointerDown(e){
  if(!s||mmvsR11Unsafe(get(s)))return; // R11: never move an app wrapper
 if(!s)return;
  if(!fromHandle&&!fromGrab&&!active.size){
-  activate(s,true);e.preventDefault();e.stopImmediatePropagation();return;
+  if(groupMode)groupChange(s);else activate(s,true);
+  e.preventDefault();e.stopImmediatePropagation();return;
  }
  e.preventDefault();e.stopImmediatePropagation();
  if(entry(s).locked||entry(s).hidden)return;
@@ -457,17 +985,18 @@ function pointerUp(e){
  if(e.type==='pointercancel'&&active.has(e.pointerId)){
    e.preventDefault();e.stopImmediatePropagation();
    active.clear();gesture=null;
-   if(gestureChanged&&gestureStart&&selector)update(gestureStart,false);
+   if(groupMode&&groupStart?.length>1){for(const p of groupStart)update(p,false)}else if(gestureChanged&&gestureStart&&selector)update(gestureStart,false);groupStart=null;
    gestureChanged=false;gestureStart=null;scheduleOutline();return;
  }
 
  if(!active.has(e.pointerId))return;e.preventDefault();e.stopImmediatePropagation();
- const result=entry(selector);active.delete(e.pointerId);
+ const result=entry(selector);const p=active.get(e.pointerId);active.delete(e.pointerId);
  try{if(p.captureEl?.hasPointerCapture(e.pointerId))p.captureEl.releasePointerCapture(e.pointerId)}catch{}
  try{if(document.documentElement.hasPointerCapture(e.pointerId))document.documentElement.releasePointerCapture(e.pointerId)}catch{}
- if(active.size)begin();else{gesture=null;if(gestureChanged){window.parent.postMessage({type:'MMVS_SPATIAL_COMMIT',item:result,slug},location.origin);reportOverlaps()}gestureChanged=false;gestureStart=null}
+ if(active.size)begin();else{gesture=null;if(gestureChanged){if(groupMode&&groupSelectors.length>1){window.parent.postMessage({type:'MMVS_SPATIAL_GROUP_COMMIT',items:groupEntries(),slug},location.origin)}else{window.parent.postMessage({type:'MMVS_SPATIAL_COMMIT',item:result,slug},location.origin);reportOverlaps()}}gestureChanged=false;gestureStart=null;groupStart=null}
 }
 function setup(){
+ mmvsDomIndex();
  if(preview){
   makeOverlay();document.addEventListener('pointerdown',pointerDown,true);
   document.addEventListener('pointermove',pointerMove,true);
@@ -478,8 +1007,14 @@ function setup(){
    const d=e.data;if(d.slug&&d.slug!==slug)return;
    if(d.type==='MMVS_SPATIAL_MODE'){
     editing=!!d.enabled;grid=!!d.grid;root.classList.toggle('mmvs-spatial-on',editing);
-    if(!editing){active.clear();gesture=null;gestureChanged=false}
+    if(!editing){active.clear();gesture=null;gestureChanged=false;groupMode=false;groupSelectors=[]}
     scheduleOutline();
+   }else if(d.type==='MMVS_SPATIAL_GROUP_MODE'){
+    groupMode=!!d.enabled&&editing;if(!groupMode)setGroup([]);scheduleOutline();
+   }else if(d.type==='MMVS_SPATIAL_GROUP_SET'){
+    if(groupMode)setGroup(d.selectors);
+   }else if(d.type==='MMVS_SPATIAL_GROUP_NUDGE'){
+    if(groupMode&&Array.isArray(d.selectors)&&d.selectors.length===groupSelectors.length&&d.selectors.every((s,i)=>s===groupSelectors[i])&&Math.abs(d.dx)<=100&&Math.abs(d.dy)<=100)shiftGroup(d.dx,d.dy,true);
    }else if(d.type==='MMVS_SPATIAL_ANIMATION_PLAY'){
     animationsPlaying=!!d.playing;
     for(const a of animations.values()){try{animationsPlaying?a.effect.play():a.effect.pause()}catch(_e){}}
@@ -504,7 +1039,7 @@ function setup(){
   window.parent.postMessage({type:'MMVS_SPATIAL_READY',slug},location.origin);
   scheduleVisuals();
   new MutationObserver(ms=>{
-   if(ms.some(m=>Array.from(m.addedNodes||[]).some(x=>x.nodeType===1&&x.id!=='mmvs-spatial-outline'&&x.id!=='mmvs-spatial-toolbar'))){apply();scheduleVisuals();}
+   if(ms.some(m=>Array.from(m.addedNodes||[]).some(x=>x.nodeType===1&&x.id!=='mmvs-spatial-outline'&&x.id!=='mmvs-spatial-toolbar'&&x.id!=='mmvs-v2-image-plane'&&!x.hasAttribute?.('data-mmvs-v2-image')&&!x.closest?.('#mmvs-v2-image-plane')))){apply();scheduleVisuals();}
   }).observe(document.body,{childList:true,subtree:true});
  }else{
   fetch('/public/mmvs/layout/'+encodeURIComponent(slug),{cache:'no-store'})
@@ -512,7 +1047,7 @@ function setup(){
     if(!d?.layout)return;
     layout=safeLayout(d.layout);apply();let pending=false;
     new MutationObserver(ms=>{
-     if(pending||!ms.some(m=>m.addedNodes.length))return;
+     if(pending||!ms.some(m=>Array.from(m.addedNodes).some(x=>x.nodeType===1&&x.id!=='mmvs-v2-image-plane'&&!x.hasAttribute?.('data-mmvs-v2-image')&&!x.closest?.('#mmvs-v2-image-plane'))))return;
      pending=true;setTimeout(()=>{pending=false;apply()},120);
     }).observe(document.body,{subtree:true,childList:true});
    }).catch(()=>{});

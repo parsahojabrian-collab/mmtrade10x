@@ -1,12 +1,28 @@
+<!-- MMVS_R98_SECTION_AND_PERMANENT_DELETE -->
+<!-- MMVS_R97_SECTION_BACKGROUNDS -->
+/* MMVS_R96_COPYTRADE_BACKDROP */
+/* MMVS_R95_UNDERLAY_HOST_FIX */
 <!doctype html><html lang="fa" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#071a15"><title>MMTrade10X · Visual Studio R9</title>
-<link rel="stylesheet" href="./studio.css?v=STUDIO_MOBILE_COMPACT_R2"><style>
+<link rel="stylesheet" href="./studio.css?v=MMVS_DOM_ORDER_R85"><style>
 html.mmvs-embedded .header{display:none!important}
 html.mmvs-embedded body{margin:0!important}
 html.mmvs-embedded #app{min-height:100dvh}
 html.mmvs-embedded .workspace{min-height:100dvh}
 
+
+/* MMVS_MULTI_R1B: always-visible multi-select control on narrow screens */
+.mmvs-r1b-quick{display:flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0}
+#spatial-multi-mode{display:inline-flex!important;align-items:center;justify-content:center;min-height:44px;padding:8px 11px;color:#e8fff4;background:#12533b;border:1px solid #30dfaa;font-weight:800;white-space:normal}
+#spatial-multi-mode.active{background:#087f54;border-color:#a4ffe1;color:#fff}
+#spatial-multi-count{font-size:11px;min-height:0;padding:3px 6px}
+@media(max-width:650px){.spatial-head .mmvs-r1b-quick{order:3;width:100%;justify-content:flex-start}.spatial-head #spatial-multi-mode{flex:1 1 auto}}
+
+/* MMVS_MULTI_R1 UI */
+#spatial-multi-mode.active{background:#075c3c;border-color:#00efaa;color:#fff}
+#spatial-multi-count{display:inline-flex;align-items:center;padding:3px 8px;min-height:34px;color:#baffdf;font-weight:700}
+#spatial-layer-list .mmvs-multi-selected{outline:2px solid #21efb1!important;outline-offset:-2px;background:#075b3d!important}
 /* MMVS_PAGE_BOUNDARY_R2 */
 .spatial-boundary-panel{margin:10px 0;padding:10px 12px;border:1px solid #315448;border-radius:12px;background:rgba(12,35,29,.55)}
 .spatial-boundary-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:10px}
@@ -18,8 +34,15 @@ html.mmvs-embedded .workspace{min-height:100dvh}
 <link rel="stylesheet" href="./mmvs-media-gallery-layout-r2.css?v=MMVS_MEDIA_GALLERY_LAYOUT_R2">
 <link rel="stylesheet" href="./mmvs-media-thumbs-r3.css?v=MMVS_MEDIA_THUMBS_R3">
 <link rel="stylesheet" href="./mmvs-media-square-preview-r4.css?v=MMVS_MEDIA_SQUARE_PREVIEW_R4">
-<link rel="stylesheet" href="./mmvs-preview-canvas-r2.css?v=MMVS_PREVIEW_CANVAS_R2">
-<link rel="stylesheet" href="./mmvs-published-fold-r1.css?v=MMVS_PUBLISHED_FOLD_R1">
+
+<style id="mmvs-remove-panels-r2">
+#mmvs-preview-canvas-panel,
+#mmvs-pub-fold-panel {
+  display: none !important;
+}
+</style>
+<link rel="stylesheet" href="./r4-tools.css?v=MMVS_R4_TOOLS_FIX"><link rel="stylesheet" href="./r5-layout.css?v=MMVS_R5_LAYOUT"><link rel="stylesheet" href="./r6-workspace.css?v=MMVS_R6_WORKSPACE"><link rel="stylesheet" href="./r7-canvas.css?v=MMVS_R7_CANVAS"><link rel="stylesheet" href="./mmvs-r9-workspace.css?v=MMVS_R9_1_CANVAS_FOCUS"><link rel="stylesheet" href="./mmvs-section-background-r1.css?v=MMVS_R98_SECTION_AND_PERMANENT_DELETE">
+<link rel="stylesheet" href="./mmvs-r99-ux.css?v=MMVS_R99_UX_REFINEMENT">
 </head><body>
 <div id="app">
 <header class="header"><div class="brand"><span class="mark">10X</span><div><strong>MMTrade Studio</strong><small>R9 · انتخاب دقیق آبجکت‌ها و انیمیشن‌ساز مستقل</small></div></div><div id="who" class="who">بررسی دسترسی...</div><a href="/admin/panel" class="minor">پنل اصلی</a></header>
@@ -63,17 +86,21 @@ html.mmvs-embedded .workspace{min-height:100dvh}
  <p>این خط فقط بعد از ذخیره پیش‌نویس و زدن «انتشار» برای کاربران اعمال می‌شود. قاب واقعی گوشی در دستگاه‌های مختلف ارتفاع متفاوت دارد؛ این محدودیت یک ارتفاع ثابتِ محتوایی است، نه تغییر اندازه فیزیکی صفحه گوشی. محتوای مخفی‌شده از نظر امنیتی محرمانه نیست. عناصر ثابت و نوارهای پایین هم ممکن است بریده شوند؛ حتماً پیش از انتشار روی گوشی آزمایش کن.</p>
 </section>
 <section id="spatial-panel" class="spatial-panel" aria-label="ویرایش لمسی و آزاد چیدمان">
- <div class="spatial-head"><strong>✥ جابه‌جایی و تغییر اندازه آزاد</strong><span id="spatial-state" class="state">آماده</span><button id="spatial-collapse-toggle" class="minor spatial-collapse-toggle" type="button" aria-expanded="false" aria-controls="spatial-panel">نمایش ابزارها</button></div>
+ <div class="spatial-head"><strong>✥ جابه‌جایی و تغییر اندازه آزاد</strong><span id="spatial-state" class="state">آماده</span><div class="mmvs-r1b-quick"><button id="spatial-multi-mode" type="button" class="minor" aria-pressed="false">☐ انتخاب چندتایی</button><span id="spatial-multi-count" aria-live="polite">انتخاب معمولی</span></div><button id="spatial-collapse-toggle" class="minor spatial-collapse-toggle" type="button" aria-expanded="false" aria-controls="spatial-panel">نمایش ابزارها</button></div>
  <!-- MMVS_PAGE_BOUNDARY_R2_BEGIN -->
  <details class="spatial-boundary-panel" open><summary>⌁ تعیین انتهای محدوده نمایش صفحه</summary><div class="spatial-boundary-controls"><label class="spatial-check"><input id="spatial-boundary-enabled" type="checkbox"> محدودکردن نمایش صفحه</label><label>ارتفاع محدوده (پیکسل)<input id="spatial-boundary-height" type="number" min="200" max="4000" step="10" value="850" inputmode="numeric"></label><small>محتوای پایین‌تر از این ارتفاع در صفحه عمومی بریده می‌شود. این تنظیم برای هر صفحه مستقل است.</small></div></details>
  <!-- MMVS_PAGE_BOUNDARY_R2_END -->
  <div class="spatial-toolbar"><button id="spatial-mode" type="button" class="primary">✋ فعال‌سازی جابه‌جایی</button>
+  <button id="spatial-multi-clear" type="button" class="minor" disabled>پاک‌کردن انتخاب</button>
  <label class="spatial-check"><input id="spatial-grid" type="checkbox"> آهنربای شبکه ۸ پیکسلی</label>
  <button id="spatial-save" class="minor" type="button">ذخیره چیدمان</button><button id="spatial-publish" class="primary" type="button">انتشار چیدمان</button></div>
  <details id="spatial-tools" class="spatial-tools" open><summary>تنظیمات لایه انتخاب‌شده</summary><div class="spatial-fields"><span id="spatial-chosen" class="spatial-chosen">روی عنصر در پیش‌نمایش بزن</span>
  <label>افقی X <input id="spatial-x" type="number" min="-4000" max="4000" step="1"></label>
  <label>عمودی Y <input id="spatial-y" type="number" min="-4000" max="4000" step="1"></label>
  <label>اندازه <input id="spatial-scale" type="number" min="0.2" max="4" step="0.05"></label>
+ <label>عرض مستقل <output id="spatial-width-value">خودکار</output><input id="spatial-width-number" type="number" min="24" max="1600" step="1" inputmode="numeric" aria-label="عرض به پیکسل" style="width:88px;max-width:100%;box-sizing:border-box" disabled><input id="spatial-width" type="range" min="24" max="1600" step="1" value="240"></label>
+ <label>ارتفاع مستقل <output id="spatial-height-value">خودکار</output><input id="spatial-height-number" type="number" min="16" max="1600" step="1" inputmode="numeric" aria-label="ارتفاع به پیکسل" style="width:88px;max-width:100%;box-sizing:border-box" disabled><input id="spatial-height" type="range" min="16" max="1600" step="1" value="80"></label>
+ <button id="spatial-size-reset" class="minor" type="button">بازنشانی عرض و ارتفاع</button>
  <button id="spatial-reset" class="minor" type="button">بازنشانی عنصر</button>
 </div>
  <div class="spatial-object-tools" aria-label="کنترل عنصر انتخاب‌شده">
@@ -86,7 +113,9 @@ html.mmvs-embedded .workspace{min-height:100dvh}
   <button id="spatial-to-back" type="button" class="minor">⇊ عقب‌ترین لایه</button>
  </div>
  <div class="spatial-object-row spatial-advanced">
-  <label>ترتیب لایه Z<input id="spatial-z" type="number" min="-1000" max="20000" step="1"></label>
+  <label>رتبه لایه (۱ = عقب‌ترین؛ ۰ یا منفی = عقب‌ترین امن؛ خالی = خودکار)<input id="spatial-z" type="number" min="-1000" max="20000" step="1"></label>
+  <button id="spatial-v2-plane" type="button" class="minor" disabled>✦ انتقال تصویر تزئینی به سطح آزاد</button>
+<button id="spatial-underlay" type="button" class="minor" disabled aria-pressed="false">⬇ تصویر کتابخانه پشت محتوای صفحه</button>
   <label>شفافیت<input id="spatial-opacity" type="number" min="0.05" max="1" step="0.05"></label>
   <span id="spatial-object-tip">هر عنصر را انتخاب کن تا ابزارها فعال شوند.</span>
  </div>
@@ -122,6 +151,16 @@ html.mmvs-embedded .workspace{min-height:100dvh}
  <p class="spatial-layer-hint">از این فهرست می‌توان آبجکتی را که پشت بقیه قرار گرفته انتخاب کرد. ترتیب Z داخل محدوده لایه‌بندی والد اثر دارد.</p>
  </details>
  </details>
+
+<!-- MMVS_STUDIO_V2_R3_DOM_EXPLORER -->
+<details id="mmvs-dom-explorer" class="mmvs-dom-explorer" open><summary>⌘ درخت کامل HTML صفحه · DOM Explorer</summary><!-- MMVS_VISUAL_STACK_R86: visual overlap stack; does NOT reorder HTML structure -->
+<details id="mmvs-visual-stack" class="mmvs-visual-stack" open>
+ <summary>▤ ترتیب بصری روی‌هم‌افتادن عناصر</summary>
+ <div class="mmvs-visual-stack-top"><span>بالا = روی آبجکت‌های دیگر</span><button id="mmvs-visual-stack-refresh" type="button" class="minor">↻ نوسازی</button></div>
+ <p id="mmvs-visual-stack-status" class="mmvs-visual-stack-status" role="status">یک عنصر انتخاب کن.</p>
+ <div id="mmvs-visual-stack-list" class="mmvs-visual-stack-list" role="list" aria-label="ترتیب بصری لایه‌ها"></div>
+ <p class="mmvs-visual-stack-note">لایه‌ها را بکش و زیر هم رها کن، یا «زیر این» را بزن. فقط عناصر در زمینهٔ CSS مشترک قابل جابه‌جایی مستقل هستند؛ ترتیب اصلی HTML تغییر نمی‌کند.</p>
+</details><div class="mmvs-dom-tools"><input id="mmvs-dom-search" type="search" placeholder="جست‌وجوی تگ، کلاس، شناسه یا متن" aria-label="جست‌وجوی ساختار HTML"><button id="mmvs-dom-refresh" type="button" class="minor">↻ بازخوانی HTML</button></div><div class="mmvs-dom-reorder-toolbar" role="group" aria-label="تغییر ترتیب واقعی DOM"><button id="mmvs-dom-move-up" class="minor" type="button">↑ بالاتر</button><button id="mmvs-dom-move-down" class="minor" type="button">↓ پایین‌تر</button><button id="mmvs-dom-move-after" class="minor" type="button">↳ قرار دادن زیر آیتم…</button><button id="mmvs-dom-move-inside" class="minor" type="button">⇥ انتقال داخل آیتم…</button><button id="mmvs-dom-move-reset" class="minor" type="button">↶ بازگردانی آیتم</button><button id="mmvs-dom-move-cancel" class="minor" type="button">× لغو انتقال</button></div><div id="mmvs-dom-status" class="mmvs-dom-status" role="status">در انتظار بارگذاری صفحه…</div><div id="mmvs-dom-list" class="mmvs-dom-list" role="tree" aria-label="ساختار HTML صفحه"></div><p class="mmvs-dom-help">آیتم مبدا را انتخاب کن، سپس «زیر آیتم» یا «داخل آیتم» را بزن و روی مقصد کلیک کن. با کشیدن و رهاکردن نیز می‌توان آیتم را زیر مقصد گذاشت. برای ذخیره و انتشار از دکمه‌های چیدمان استفاده کن. انتقال عناصر ساختاری حساس محدود است. انتخاب هر عنصر، آن را به Inspector و موتور چیدمان متصل می‌کند. ترتیب ظاهری DOM لزوماً ترتیب روی‌هم‌افتادن نیست؛ کنترل‌های جلو/عقب فقط در محدوده امن CSS فعال‌اند. محتوای داخلی Canvas یا تصویر یک لایه مستقل HTML نیست.</p></details>
 <details id="spatial-layer-panel" class="spatial-layer-panel" open>
   <summary>✦ لایه‌های تصویری و آبجکت‌های تزئینی <span id="spatial-layer-count">(در حال اسکن)</span></summary>
   <div class="spatial-layer-tools"><input id="spatial-layer-search" type="search" placeholder="جست‌وجو: کره، SVG، Canvas، سکه، عکس، ..." aria-label="جست‌وجوی لایه‌ها"><button id="spatial-layer-refresh" type="button" class="minor">↻ اسکن دوباره</button></div>
@@ -134,11 +173,12 @@ html.mmvs-embedded .workspace{min-height:100dvh}
 <section class="panel mmvs-library"><div class="mmvs-library-head"><div><h3>کتابخانه محتوای صفحه</h3><p class="hint">بخش‌های جدید به انتهای محتوای صفحه اضافه می‌شوند؛ اجزای اصلی R4 دست‌نخورده می‌مانند.</p></div><span id="block-count" class="mmvs-count">۰/۴۰</span></div>
 <div class="mmvs-block-tools"><label>عنوان مدیریتی صفحه<input id="page-title" maxlength="200" placeholder="عنوان اختیاری"></label><label>نوع المان جدید<select id="block-type"><option value="heading">عنوان</option><option value="text">متن</option><option value="image">تصویر</option><option value="button">دکمه</option><option value="banner">بنر</option><option value="progress">نوار پیشرفت</option><option value="divider">جداکننده</option></select></label><button id="add-block" class="primary">+ افزودن المان</button></div>
 <div class="mmvs-block-layout"><div><h4>ترتیب المان‌های محتوا</h4><div id="blocks-list" class="mmvs-block-list"></div></div><div><h4>تنظیمات المان</h4><div id="block-properties" class="mmvs-block-props"><p class="hint">یک المان را انتخاب کن.</p></div></div></div></section></div>
-<div id="popups-pane" class="pane" hidden><div class="two"><section class="panel"><h3>فهرست پاپ‌آپ‌ها</h3><input id="popup-search" type="search" placeholder="جست‌وجوی پاپ‌آپ"><div class="mmvs-popup-filters"><select id="popup-filter-page"><option value="">تمام صفحه‌ها</option></select><select id="popup-filter-status"><option value="">همه وضعیت‌ها</option><option value="PUBLISHED">فعال</option><option value="DRAFT">پیش‌نویس</option></select></div><div id="popup-list"></div><button id="popup-new" class="minor">+ ساخت پاپ‌آپ جدید</button></section><section class="panel"><h3>تنظیمات پاپ‌آپ</h3><form id="popup-form"><label>عنوان<input name="title" maxlength="200" required></label><label>متن<textarea name="body" maxlength="2000" required rows="4"></textarea></label><label>آدرس تصویر (HTTPS یا مسیر داخلی)<input name="imageUrl" dir="ltr"></label><label>آپلود مستقیم تصویر (PNG/JPG/WebP تا ۱۲MB)<input type="file" id="popup-upload" accept="image/png,image/jpeg,image/webp"><small id="popup-upload-status" class="hint"></small></label><label>متن دکمه<input name="buttonText" maxlength="80"></label><label>لینک دکمه<input name="buttonUrl" dir="ltr"></label><label>صفحه نمایش<select name="pageSlug" id="popup-page"></select></label><label>دفعات نمایش<select name="frequency"><option value="ONCE">یک بار برای هر کاربر</option><option value="EVERY_VISIT">هر بار ورود</option></select></label><label>وضعیت<select name="status"><option value="DRAFT">پیش‌نویس (غیرفعال)</option><option value="PUBLISHED">منتشرشده (فعال)</option></select></label><div class="actions"><button class="primary" type="submit">ذخیره پاپ‌آپ</button><button type="button" id="popup-preview" class="minor">پیش‌نمایش پاپ‌آپ</button><button type="button" id="popup-duplicate" class="minor">کپی به‌عنوان پیش‌نویس</button><button type="button" id="popup-disable" class="minor">غیرفعال‌سازی سریع</button><button type="button" id="popup-delete" class="danger">حذف</button></div></form><p class="hint">API فعلی فقط یک پاپ‌آپ واجدشرایط را در هر درخواست صفحه برمی‌گرداند. زمان‌بندی و هدف‌گیری پیشرفته نیازمند توسعه جداست.</p></section></div></div>
+<div id="popups-pane" class="pane" hidden><div class="two"><section class="panel"><h3>فهرست پاپ‌آپ‌ها</h3><input id="popup-search" type="search" placeholder="جست‌وجوی پاپ‌آپ"><div class="mmvs-popup-filters"><select id="popup-filter-page"><option value="">تمام صفحه‌ها</option></select><select id="popup-filter-status"><option value="">همه وضعیت‌ها</option><option value="PUBLISHED">فعال</option><option value="DRAFT">پیش‌نویس</option></select></div><div id="popup-list"></div><button id="popup-new" class="minor">+ ساخت پاپ‌آپ جدید</button></section><section class="panel"><h3>تنظیمات پاپ‌آپ</h3><form id="popup-form"><label>عنوان<input name="title" maxlength="200" required></label><label>متن<textarea name="body" maxlength="2000" required rows="4"></textarea></label><label>آدرس تصویر (HTTPS یا مسیر داخلی)<input name="imageUrl" dir="ltr"></label><label>آپلود مستقیم تصویر (PNG/JPG/WebP تا ۱۲MB)<input type="file" id="popup-upload" accept="image/*,.heic,.heif,.avif,.bmp,.tif,.tiff,.gif"><small id="popup-upload-status" class="hint"></small></label><label>متن دکمه<input name="buttonText" maxlength="80"></label><label>لینک دکمه<input name="buttonUrl" dir="ltr"></label><label>صفحه نمایش<select name="pageSlug" id="popup-page"></select></label><label>دفعات نمایش<select name="frequency"><option value="ONCE">یک بار برای هر کاربر</option><option value="EVERY_VISIT">هر بار ورود</option></select></label><label>وضعیت<select name="status"><option value="DRAFT">پیش‌نویس (غیرفعال)</option><option value="PUBLISHED">منتشرشده (فعال)</option></select></label><div class="actions"><button class="primary" type="submit">ذخیره پاپ‌آپ</button><button type="button" id="popup-preview" class="minor">پیش‌نمایش پاپ‌آپ</button><button type="button" id="popup-duplicate" class="minor">کپی به‌عنوان پیش‌نویس</button><button type="button" id="popup-disable" class="minor">غیرفعال‌سازی سریع</button><button type="button" id="popup-delete" class="danger">حذف</button></div></form><p class="hint">API فعلی فقط یک پاپ‌آپ واجدشرایط را در هر درخواست صفحه برمی‌گرداند. زمان‌بندی و هدف‌گیری پیشرفته نیازمند توسعه جداست.</p></section></div></div>
 <div id="versions-pane" class="pane" hidden><section class="panel"><div class="release-heading"><div><h3>نسخه‌های محتوا و چیدمان</h3><p class="hint">پیش‌نمایش فقط خواندنی است. بازیابی ابتدا هر دو بخش را به پیش‌نویس برمی‌گرداند؛ نسخه عمومی تا انتشار تغییر نمی‌کند.</p></div><div class="release-actions"><button id="release-checkpoint" class="minor" type="button">ثبت نقطه بازگشت از نسخه عمومی</button><button id="release-refresh" class="minor" type="button">به‌روزرسانی تاریخچه</button></div></div><div id="version-list"></div></section></div>
 </main></div><div id="notice" role="status" aria-live="polite"></div>
-</div><script src="./release-history.js?v=STUDIO_RELEASE_R1" defer></script><script src="./studio.js?v=MMVS_R3_PREVIEW_HARD_SWITCH_R2" defer></script><script src="./spatial.js?v=MMCT_STUDIO_R2" defer></script><script src="./mmct-studio-nav.js?v=MMCT_STUDIO_R2" defer></script><script src="./mmvs-media-library-r1.js?v=MMVS_MEDIA_SQUARE_PREVIEW_R4" defer></script>
-<script src="./mmvs-global-image-handoff-r2.js?v=MMVS_GLOBAL_IMAGE_SPATIAL_R2" defer></script>
-<script src="./mmvs-preview-canvas-r2.js?v=MMVS_PREVIEW_CANVAS_R2" defer></script>
-<script defer src="./mmvs-published-fold-r1.js?v=MMVS_PUBLISHED_FOLD_R1"></script>
+</div><script src="./release-history.js?v=STUDIO_RELEASE_R1" defer></script><script src="/miniapp/p74/image-optimizer.js?v=MMTRADE_IMAGE_OPT_R32" defer></script>
+<script src="./studio.js?v=MMVS_HOME_LIVE_EDIT_R1" defer></script><script src="./spatial.js?v=MMVS_R97_SECTION_BACKGROUNDS" defer></script><script src="./mmct-studio-nav.js?v=MMCT_STUDIO_R2" defer></script><script src="./mmvs-media-library-r1.js?v=MMVS_R98_SECTION_AND_PERMANENT_DELETE" defer></script>
+<script src="./mmvs-global-image-handoff-r2.js?v=MMVS_R98_SECTION_AND_PERMANENT_DELETE" defer></script>
+<script src="./r4-tools.js?v=MMVS_R4_TOOLS_FIX" defer></script><script defer src="./r5-layout.js?v=MMVS_R5_LAYOUT"></script><script defer src="./r6-workspace.js?v=MMVS_R6_WORKSPACE"></script><script defer src="./r7-canvas.js?v=MMVS_R7_CANVAS"></script><script defer src="./mmvs-r9-workspace.js?v=MMVS_R9_1_CANVAS_FOCUS"></script><script src="./mmvs-section-background-r1.js?v=MMVS_R98_SECTION_AND_PERMANENT_DELETE" defer></script>
+<script defer src="./mmvs-r99-ux.js?v=MMVS_R99_UX_REFINEMENT"></script>
 </body></html>

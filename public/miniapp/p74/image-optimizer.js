@@ -1,146 +1,204 @@
-/* MMTrade Object Studio: client-side image optimization before authenticated upload.
-   No remote services, token access, or image retention. */
+/* MMTRADE_IMAGE_OPTIMIZER_R32
+ * Image optimization for Visual Studio library, Home Studio and Object Studio.
+ * Quality-first, transparent-background-safe, no external service or data upload.
+ * 10:1 is a target, not a guarantee; never silently destroy GIF animation.
+ */
 (function (global) {
   'use strict';
   const MiB = 1024 * 1024;
-  const OUTPUT_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
-  const TYPES = new Set([...OUTPUT_TYPES, 'image/heic', 'image/heif']);
+  const VERSION = 'MMTRADE_IMAGE_OPTIMIZER_R32';
+  const ACCEPTED = new Set([
+    'image/png', 'image/jpeg', 'image/webp', 'image/avif',
+    'image/heic', 'image/heif', 'image/bmp', 'image/gif', 'image/tiff'
+  ]);
+  const SERVER_ACCEPTED = new Set(['image/png', 'image/jpeg', 'image/webp']);
+  const MIME_BY_EXT = {
+    jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', webp:'image/webp',
+    avif:'image/avif', heic:'image/heic', heif:'image/heif',
+    bmp:'image/bmp', dib:'image/bmp', gif:'image/gif', tif:'image/tiff', tiff:'image/tiff'
+  };
+  const MAX_SOURCE = 80 * MiB;
+  const MAX_UPLOAD = 12 * MiB; // Current P62 API limit. Do not relax this in the browser.
+  const MAX_PIXELS = 64 * 1000 * 1000;
   const LIMITS = Object.freeze({
-    background: Object.freeze({ width: 1440, height: 3200, target: 1.4 * MiB, qualities: [.86, .78, .70] }),
-    object: Object.freeze({ width: 1600, height: 1600, target: .65 * MiB, qualities: [.92, .85, .78] })
+    library: Object.freeze({ width: 16000, height: 16000, targetRatio: 10 }),
+    background: Object.freeze({ width: 1440, height: 3200, targetRatio: 10 }),
+    object: Object.freeze({ width: 1600, height: 1600, targetRatio: 10 })
   });
-  const MAX_UPLOAD = 12 * MiB;
-  const MAX_SOURCE = 35 * MiB;
-  function readable(bytes) { return bytes >= MiB ? (bytes / MiB).toFixed(2) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB'; }
-  function bounds(width, height, config) {
-    const scale = Math.min(1, config.width / width, config.height / height);
+  const OUTPUTS = Object.freeze([
+    ['image/webp', .96], ['image/webp', .92],
+    ['image/webp', .88], ['image/webp', .84]
+  ]);
+  const readable = bytes => bytes >= MiB ? (bytes / MiB).toFixed(2) + ' MB' :
+    Math.max(1, Math.round(bytes / 1024)) + ' KB';
+  function bounds(width, height, limits) {
+    const scale = Math.min(1, limits.width / width, limits.height / height);
     return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
   }
-  function canvasBlob(canvas, type, quality) {
-    return new Promise(resolve => canvas.toBlob(blob => resolve(blob && blob.size && blob.type === type ? blob : null), type, quality));
+  function mimeType(file) {
+    const ext = String(file.name || '').split('.').pop().toLowerCase();
+    const declared = String(file.type || '').toLowerCase();
+    const normalized = ({'image/jpg':'image/jpeg', 'image/x-png':'image/png',
+      'image/x-ms-bmp':'image/bmp', 'image/x-bmp':'image/bmp', 'image/x-tiff':'image/tiff'})[declared] || declared;
+    return ACCEPTED.has(normalized) ? normalized : (MIME_BY_EXT[ext] || normalized);
   }
-  // Safari/WebView can reject a Blob URL even for a supported image.
-  // Try the native bitmap decoder and a FileReader URL before reporting failure.
-  function decodeUrl(src) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => { image.onload = image.onerror = null; resolve(image); };
-      image.onerror = () => { image.onload = image.onerror = null; reject(new Error('IMAGE_DECODE_FAILED')); };
-      image.src = src;
+  function canvasBlob(canvas, mime, quality) {
+    return new Promise(resolve => {
+      try { canvas.toBlob(blob => resolve(blob && blob.size > 0 && blob.type === mime ? blob : null), mime, quality); }
+      catch (_) { resolve(null); }
     });
   }
-  async function imageFromFile(file) {
-    try {
-      const url = URL.createObjectURL(file);
-      try { return await decodeUrl(url); }
-      finally { URL.revokeObjectURL(url); }
-    } catch (_) { /* fallback below */ }
+  function loadUrl(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => { img.onerror = img.onload = null; resolve(img); };
+      img.onerror = () => { img.onerror = img.onload = null; reject(new Error('IMAGE_DECODE_FAILED')); };
+      img.src = url;
+    });
+  }
+  async function readImage(file) {
+    let url;
+    try { url = URL.createObjectURL(file); return await loadUrl(url); }
+    catch (_) { /* Safari/WebView fallback */ }
+    finally { if (url) URL.revokeObjectURL(url); }
     if (typeof createImageBitmap === 'function') {
-      try { return await createImageBitmap(file); }
-      catch (_) { /* fallback below */ }
+      try { return await createImageBitmap(file); } catch (_) {}
     }
     if (typeof FileReader !== 'undefined' && file.size <= 12 * MiB) {
       try {
         const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = () => reject(new Error('FILE_READ_FAILED'));
-          reader.readAsDataURL(file);
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = () => reject(new Error('FILE_READ_FAILED'));
+          r.readAsDataURL(file);
         });
-        if (typeof dataUrl === 'string' && dataUrl.startsWith('data:image/')) return await decodeUrl(dataUrl);
-      } catch (_) { /* show a useful format error below */ }
+        if (typeof dataUrl === 'string' && dataUrl.startsWith('data:image/')) return await loadUrl(dataUrl);
+      } catch (_) {}
     }
-    throw new Error('فایل تصویر در این مرورگر قابل باز شدن نیست. برای پوستر خروجی JPG یا PNG واقعی بگیر؛ تغییر پسوند کافی نیست.');
+    throw new Error('مرورگر امکان بازکردن این فرمت را ندارد؛ نسخه JPG، PNG یا WebP تصویر را انتخاب کن.');
   }
-  function mimeType(file) {
-    const given = String(file.type || '').toLowerCase();
-    if (given) return given;
-    const extension = String(file.name || '').toLowerCase().split('.').pop();
-    return ({ jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif' })[extension] || '';
-  }
-  async function encode(image, size, type, quality) {
-    const canvas = document.createElement('canvas');
-    canvas.width = size.width;
-    canvas.height = size.height;
-    const context = canvas.getContext('2d', { alpha: true });
-    if (!context) throw new Error('مرورگر امکان پردازش تصویر را ندارد');
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = 'high';
-    context.drawImage(image, 0, 0, size.width, size.height);
-    const blob = await canvasBlob(canvas, type, quality);
-    canvas.width = canvas.height = 0;
-    return blob;
-  }
-  async function optimize(file, options = {}) {
-    const role = options.role === 'background' ? 'background' : 'object';
-    const spec = LIMITS[role];
-    const notify = typeof options.onProgress === 'function' ? options.onProgress : () => {};
-    if (!(file instanceof Blob)) throw new Error('فقط تصویر PNG، JPG، WebP یا HEIC پذیرفته می‌شود');
-    const actualType = mimeType(file);
-    if (!TYPES.has(actualType)) throw new Error('فقط تصویر PNG، JPG، WebP یا HEIC پذیرفته می‌شود');
-    if (file.type !== actualType) file = new File([file], file.name || 'image', { type: actualType, lastModified: Date.now() });
-    const mustConvert = !OUTPUT_TYPES.has(actualType);
-    if (!file.size || file.size > MAX_SOURCE) throw new Error('حجم اولیه تصویر باید کمتر از ۳۵ مگابایت باشد');
-    notify('در حال آماده‌سازی و بهینه‌سازی تصویر…');
-    let bestBlob = null;
-    let bestSize = null;
-    let imageWidth = 0, imageHeight = 0;
-    let image;
-    try {
-      image = await imageFromFile(file);
-      imageWidth = image.naturalWidth || image.width;
-      imageHeight = image.naturalHeight || image.height;
-      if (!imageWidth || !imageHeight || imageWidth * imageHeight > 64000000 || imageWidth > 16000 || imageHeight > 16000) {
-        throw new Error('ابعاد تصویر بسیار بزرگ است؛ تصویر کوچک‌تری انتخاب کن');
+  /* A GIF must be proven single-frame before using canvas, which otherwise
+   * silently turns a multi-frame animation into a still picture. */
+  async function gifIsAnimated(file) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (bytes.length < 13 || String.fromCharCode(...bytes.slice(0, 3)) !== 'GIF') throw Error('فایل GIF معتبر نیست');
+    let i = 13, frames = 0;
+    if (bytes[10] & 0x80) i += 3 * (1 << ((bytes[10] & 7) + 1));
+    const skipSubBlocks = () => {
+      while (i < bytes.length) {
+        const length = bytes[i++]; if (!length) return true;
+        i += length;
       }
-      let size = bounds(imageWidth, imageHeight, spec);
-      const resized = size.width !== imageWidth || size.height !== imageHeight;
-      // Small assets should remain untouched unless a resize is needed, avoiding blurry icons.
-      if (!resized && file.size <= 48 * 1024 && !mustConvert) return result(file, file, imageWidth, imageHeight);
-      const format = 'image/webp'; // WebP keeps alpha, including transparent PNG cutouts.
-      for (let round = 0; round < 2; round++) {
-        for (const quality of spec.qualities) {
-          const blob = await encode(image, size, format, quality);
-          // If WebP encoding is unavailable, try a native format below instead.
-          if (!blob) break;
-          if (!bestBlob || blob.size < bestBlob.size) { bestBlob = blob; bestSize = { ...size }; }
-          if (blob.size <= spec.target && blob.size < file.size) break;
-        }
-        if ((bestBlob && bestBlob.size <= spec.target) || round) break;
-        size = { width: Math.max(1, Math.round(size.width * .82)), height: Math.max(1, Math.round(size.height * .82)) };
-      }
-      if (!bestBlob) {
-        // PNG for potentially transparent input; JPEG only for JPEG input.
-        const fallbackType = file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png';
-        bestBlob = await encode(image, size, fallbackType, fallbackType === 'image/jpeg' ? .85 : undefined);
-        bestSize = { ...size };
-      }
-    } catch (error) {
-      // Never upload an undecodable image or an unconverted HEIC to the existing API.
-      if (/بسیار بزرگ|قابل باز شدن نیست/.test(String(error.message))) throw error;
-      if (mustConvert) throw new Error('این مرورگر نتوانست HEIC را به WebP تبدیل کند؛ تصویر را به JPG یا PNG تبدیل و دوباره انتخاب کن');
-      if (file.size > MAX_UPLOAD) throw new Error('مرورگر نتوانست تصویر بزرگ را بهینه کند؛ از تصویر کوچک‌تری استفاده کن');
-      notify('فشرده‌سازی در این مرورگر در دسترس نبود؛ فایل اصلی استفاده شد');
-      return result(file, file, imageWidth, imageHeight);
-    } finally {
-      if (image && typeof image.close === 'function') image.close();
+      return false;
+    };
+    while (i < bytes.length) {
+      const tag = bytes[i++];
+      if (tag === 0x3b) return frames > 1;
+      if (tag === 0x21) { // extension: label + data subblocks
+        if (++i >= bytes.length || !skipSubBlocks()) break;
+      } else if (tag === 0x2c) {
+        if (i + 9 > bytes.length) break;
+        const packed = bytes[i + 8]; i += 9;
+        if (packed & 0x80) i += 3 * (1 << ((packed & 7) + 1));
+        if (i >= bytes.length) break;
+        i++; // LZW minimum code size
+        if (!skipSubBlocks()) break;
+        if (++frames > 1) return true;
+      } else break;
     }
-    if (mustConvert && !bestBlob) throw new Error('مرورگر نتوانست فرمت HEIC را تبدیل کند؛ فایل را به JPG یا PNG تبدیل کن');
-    if (!bestBlob || (!mustConvert && bestBlob.size >= file.size && file.size <= MAX_UPLOAD)) return result(file, file, imageWidth, imageHeight);
-    if (bestBlob.size > MAX_UPLOAD) throw new Error('حجم نهایی تصویر از محدودیت ۱۲ مگابایت بیشتر است');
-    const extension = bestBlob.type === 'image/webp' ? '.webp' : bestBlob.type === 'image/png' ? '.png' : '.jpg';
-    const name = (String(file.name || 'image').replace(/\.[^.]+$/, '').slice(0, 75) || 'image') + extension;
-    const output = new File([bestBlob], name, { type: bestBlob.type, lastModified: Date.now() });
-    return result(file, output, bestSize.width, bestSize.height);
+    // Fail closed: an unparseable GIF must not be flattened.
+    throw Error('امکان تشخیص فریم‌های GIF وجود ندارد؛ لطفاً PNG یا WebP انتخاب کن');
   }
-  function result(original, output, width, height) {
-    const savings = Math.max(0, Math.round(100 * (original.size - output.size) / original.size));
+  function summary(source, final, width, height, resized) {
+    const savings = Math.max(0, Math.round((1 - final.size / source.size) * 100));
+    const ratio = source.size / final.size;
+    const note = source === final ? 'نسخه اصلی حفظ شد؛ کاهش بیشتر بدون افت محسوس کیفیت ممکن نبود' :
+      'حجم: ' + readable(source.size) + ' ← ' + readable(final.size) +
+      ' | ' + savings + '٪ کاهش | ' + ratio.toFixed(1) + ' برابر';
     return {
-      file: output, originalBytes: original.size, uploadedBytes: output.size,
-      savings, width, height,
-      summary: original === output ? 'تصویر با حجم اصلی (' + readable(original.size) + ') استفاده شد' :
-        'کاهش حجم: ' + readable(original.size) + ' ← ' + readable(output.size) + ' (' + savings + '٪ کمتر)'
+      file: final, originalBytes: source.size, uploadedBytes: final.size,
+      savings, ratio, targetReached: ratio >= 10, width, height,
+      summary: (resized ? 'ابعاد برای جایگاه تصویر تنظیم شد؛ ' : '') + note
     };
   }
-  global.MMTradeImageOptimizer = Object.freeze({ optimize, bounds, readable, LIMITS });
+  async function optimize(file, options = {}) {
+    const role = Object.hasOwn(LIMITS, options.role) ? options.role : 'library';
+    const limits = LIMITS[role];
+    const progress = typeof options.onProgress === 'function' ? options.onProgress : () => {};
+    if (!(file instanceof Blob)) throw Error('فایل تصویر نامعتبر است');
+    if (!file.size || file.size > MAX_SOURCE) throw Error('حجم فایل اولیه باید بین ۱ بایت و ۸۰ مگابایت باشد');
+    const mime = mimeType(file);
+    if (!ACCEPTED.has(mime)) throw Error('فرمت پشتیبانی نمی‌شود؛ PNG، JPG، WebP، AVIF، HEIC، BMP، TIFF و GIF ثابت قابل بررسی هستند');
+    if (mime === 'image/gif' && await gifIsAnimated(file))
+      throw Error('GIF متحرک قابل تبدیل با Canvas نیست، چون انیمیشن حذف می‌شود. برای انیمیشن از فایل ویدیویی استفاده کن.');
+    const hasServerNativeType = SERVER_ACCEPTED.has(mime);
+    const source = file.type === mime ? file : new File([file], file.name || 'image', { type: mime, lastModified: Date.now() });
+    let image, canvas;
+    try {
+      progress('در حال بررسی ابعاد و فشرده‌سازی با حفظ جزئیات…');
+      image = await readImage(source);
+      const w = image.naturalWidth || image.width;
+      const h = image.naturalHeight || image.height;
+      if (!w || !h || w > 16000 || h > 16000 || w * h > MAX_PIXELS)
+        throw Error('ابعاد تصویر از محدوده پردازش امن مرورگر بیشتر است');
+      const maxDimension = Number(options.maxDimension);
+      const effectiveLimits = Number.isFinite(maxDimension) && maxDimension >= 128 && maxDimension <= 16000
+        ? {width:Math.min(limits.width,maxDimension),height:Math.min(limits.height,maxDimension)} : limits;
+      const size = bounds(w, h, effectiveLimits);
+      const resized = size.width !== w || size.height !== h;
+      if (hasServerNativeType && !resized && source.size <= 48 * 1024)
+        return summary(file, file, w, h, false);
+      canvas = document.createElement('canvas');
+      canvas.width = size.width;
+      canvas.height = size.height;
+      const ctx = canvas.getContext('2d', { alpha: true });
+      if (!ctx) throw Error('Canvas در مرورگر فعال نیست');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(image, 0, 0, size.width, size.height);
+      let selected = null;
+      for (let i = 0; i < OUTPUTS.length; i++) {
+        const [type, quality] = OUTPUTS[i];
+        progress('بهینه‌سازی تصویر، مرحله ' + (i + 1) + ' از ' + OUTPUTS.length + '…');
+        const candidate = await canvasBlob(canvas, type, quality);
+        if (!candidate) continue; // Browser may not encode AVIF; exact MIME is checked.
+        if (!selected || candidate.size < selected.size) selected = candidate;
+        if (candidate.size <= file.size / limits.targetRatio && candidate.size <= MAX_UPLOAD) {
+          selected = candidate;
+          break; // Keep the highest-fidelity candidate meeting 10:1.
+        }
+      }
+      if (!selected) {
+        // Some WebViews do not support WebP encoding.
+        const fallback = mime === 'image/jpeg' ? 'image/jpeg' : 'image/png';
+        selected = await canvasBlob(canvas, fallback, fallback === 'image/jpeg' ? .94 : undefined);
+      }
+      // Avoid a second lossy generation when an already optimized JPEG/WebP
+      // would save only a negligible amount. The source remains untouched.
+      const minGain = (mime === 'image/jpeg' || mime === 'image/webp') ? .20 : .05;
+      if (!selected || (hasServerNativeType && !resized &&
+          selected.size >= file.size * (1 - minGain) && file.size <= MAX_UPLOAD))
+        return summary(file, file, w, h, false);
+      if (selected.size > MAX_UPLOAD) {
+        if (hasServerNativeType && file.size <= MAX_UPLOAD) return summary(file, file, w, h, false);
+        throw Error('با حفظ کیفیت، حجم تصویر به زیر سقف ۱۲ مگابایت نرسید');
+      }
+      const validExt = selected.type === 'image/webp' ? '.webp' : selected.type === 'image/png' ? '.png' : '.jpg';
+      const filename = (String(file.name || 'image').replace(/\.[^.]+$/, '').slice(0, 70) || 'image') + validExt;
+      const output = new File([selected], filename, { type: selected.type, lastModified: Date.now() });
+      return summary(file, output, size.width, size.height, resized);
+    } catch (e) {
+      // Never upload an unsupported source MIME or truncated animation.
+      if (!hasServerNativeType) throw e;
+      if (file.size <= MAX_UPLOAD && /بازکردن|Canvas|مرورگر فعال نیست|encode/i.test(String(e.message))) {
+        progress('بهینه‌سازی در این مرورگر پشتیبانی نشد؛ نسخه اصلی سالم حفظ شد');
+        return summary(file, file, 0, 0, false);
+      }
+      throw e;
+    } finally {
+      if (canvas) canvas.width = canvas.height = 0;
+      if (image && typeof image.close === 'function') image.close();
+    }
+  }
+  global.MMTradeImageOptimizer = Object.freeze({ optimize, bounds, readable, LIMITS, VERSION });
 })(window);

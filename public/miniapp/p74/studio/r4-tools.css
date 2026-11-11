@@ -1,0 +1,25 @@
+/* MMVS_R4_TOOLS_FIX: editor-only non-invasive tool layout */
+#spatial-panel{display:block!important;min-width:0;padding:12px!important;overflow:visible}
+#spatial-panel .spatial-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+#spatial-panel .spatial-toolbar{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}
+#spatial-panel .spatial-toolbar>button{flex:1 1 135px;min-height:42px;margin:0}
+#spatial-panel .spatial-toolbar>.spatial-check{flex:1 1 180px}
+#mmvs-r4-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0;padding:6px;background:#061a15;border:1px solid #315b49;border-radius:12px}
+#mmvs-r4-nav button{min-width:0;margin:0!important;padding:9px 5px!important;min-height:42px;border-radius:8px;font-size:11px;white-space:normal}
+#mmvs-r4-nav button[aria-selected=true]{background:#1c6047;color:#fff;border-color:#76d7a7}
+#mmvs-r4-deck{min-width:0;max-width:100%;padding:0}
+#mmvs-r4-deck>[data-mmvs-r4-panel]{display:none!important}
+#mmvs-r4-deck>[data-mmvs-r4-panel].mmvs-r4-visible{display:block!important;margin:0 0 8px!important;max-width:100%;min-width:0}
+#mmvs-r4-deck>details.mmvs-r4-visible{display:block!important}
+#mmvs-r4-deck .mmvs-dom-list{max-height:380px}
+#mmvs-r4-deck .spatial-layer-list{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));max-height:340px}
+#spatial-panel .spatial-object-row{display:flex;flex-wrap:wrap;gap:6px}
+#spatial-panel .spatial-object-row button{flex:1 1 130px;margin:0!important;min-width:0}
+#spatial-panel .spatial-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));align-items:end;gap:9px}
+#spatial-panel .spatial-fields label{min-width:0;display:flex;flex-direction:column;align-items:stretch}
+#spatial-panel .spatial-fields input{width:100%;max-width:100%;min-width:0}
+#spatial-panel .spatial-fields .spatial-chosen{grid-column:1/-1;max-width:100%}
+#spatial-panel details>summary{cursor:pointer;padding:7px 4px}
+#spatial-panel .spatial-note{margin:9px 0;padding:8px 10px;background:#09241b;border:1px solid #285744;border-radius:9px}
+@media(min-width:1180px){.workspace{grid-template-columns:190px minmax(0,1fr)!important}.designer{grid-template-columns:minmax(0,1fr) 290px!important;gap:10px!important}.work{padding:10px!important}.preview-area,.inspector{padding:10px!important}}
+@media(max-width:800px){#mmvs-r4-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.designer{display:flex!important;flex-direction:column!important}}

@@ -1,3 +1,5 @@
+/* MMVS_R98_SECTION_AND_PERMANENT_DELETE */
+/* MMVS_R97_SECTION_BACKGROUNDS */
 /* MMTRADE MEDIA LIBRARY R1 -- compatible with the existing secure P62 chunk uploader.
    All actions require the super-admin session already established by Visual Studio.
    No DOM HTML from server filenames is inserted unsafely. */
@@ -7,7 +9,7 @@ const VERSION='MMVS_MEDIA_LIBRARY_R1';
 let root=null, grid=null, info=null, search=null, group=null, pageNode=null, pending=null;
 let page=1, pages=1, total=0, mode='insert', loading=false, allCount=null, recently=[];
 const LIMIT=32, $=id=>document.getElementById(id);
-const allowed=['image/png','image/jpeg','image/webp'];
+const allowed=['image/png','image/jpeg','image/webp']; // MMTRADE_IMAGE_OPT_R32: library upload
 const isUrl=u=>typeof u==='string'&&/^\/(?!\/)[^\s]*\.(?:png|jpe?g|webp|gif|svg|avif)(?:\?[^\s]*)?$/i.test(u);
 function el(t,c,txt){const n=document.createElement(t);if(c)n.className=c;if(txt!==undefined)n.textContent=txt;return n}
 function token(){return sessionStorage.getItem('tenx_admin_token')||''}
@@ -17,6 +19,10 @@ async function getCatalog(refresh=false){okay();let q=new URLSearchParams({page:
 function option(label,value){let n=el('option','',label);n.value=value;return n}
 function input(t,attrs){const n=document.createElement('input');n.type=t;for(const [k,v] of Object.entries(attrs||{}))n.setAttribute(k,v);return n}
 async function choose(item){try{okay();if(!isUrl(item.url))throw Error('آدرس تصویر کتابخانه نامعتبر است.');
+ if(mode==='background'){
+  window.dispatchEvent(new CustomEvent('mmvs:background-image-picked',{detail:{url:item.url,name:item.name||''}}));
+  status('تصویر به ابزار پس‌زمینه بخش منتقل شد.');close();return;
+ }
  if(mode==='copy'){
   try{await navigator.clipboard.writeText(location.origin+item.url)}catch{throw Error('مرورگر اجازه کپی لینک نمی‌دهد.')}status('لینک تصویر کپی شد.');return;
  }
@@ -98,6 +104,30 @@ function mmvsR4OnScroll(){
  if(remaining<650){page++;load()}
 }
 
+async function mmvsR98PermanentDelete(item){
+  try{
+    okay();
+    if(!/^\/uploads\/home-studio\/p62-[a-f0-9]{32}\.(png|jpg|webp)$/.test(item.url))
+      throw Error('فایل سیستمی است؛ حذف دائمی فقط برای آپلودهای اختصاصی مجاز است.');
+    if(loading)throw Error('کتابخانه در حال بارگذاری است.');
+    const typed=window.prompt('حذف فیزیکی و غیرقابل‌بازگشت است. برای تأیید، نام کامل فایل را وارد کن:\n'+item.name,'');
+    if(typed===null)return;
+    if(typed!==item.name)throw Error('نام فایل مطابقت نداشت؛ حذف لغو شد.');
+    const r=await fetch('/admin/mmvs/media-library/delete-permanent',{
+      method:'DELETE',headers:{authorization:'Bearer '+token(),'content-type':'application/json'},
+      body:JSON.stringify({url:item.url,confirmation:'DELETE'}),cache:'no-store'
+    });
+    const data=await r.json().catch(()=>({}));
+    if(r.status===409&&data.error==='media_still_referenced')
+      throw Error('این تصویر هنوز در صفحه یا تنظیمات استفاده شده: '+(data.usedBy||[]).slice(0,5).join('، ')+'. ابتدا ارجاع‌ها را حذف و ذخیره/منتشر کن.');
+    if(!r.ok||data.deleted!==true)throw Error(data.error||'حذف فیزیکی موفق نبود ('+r.status+')');
+    recently=recently.filter(x=>x.url!==item.url);
+    if(mmvsR4PreviewItem?.url===item.url)mmvsR4HidePreview();
+    page=1;await load(true);
+    status('فایل به‌صورت دائمی از سرور حذف شد: '+item.name);
+  }catch(err){status(err.message||String(err),true)}
+}
+
 function render(items, append=false){if(!append)grid.replaceChildren();if(!items.length&&!append)grid.append(el('p','mmvs-media-empty','تصویری با این مشخصات پیدا نشد.'));
  for(const item of items){if(!isUrl(item.url))continue;const card=el('div','mmvs-media-card');
   const pick=el('button','mmvs-media-thumb');pick.type='button';pick.title='انتخاب این تصویر';
@@ -105,6 +135,12 @@ function render(items, append=false){if(!append)grid.replaceChildren();if(!items
   const label=el('small','mmvs-media-name',item.name);label.title=item.url;
   const group=el('span','mmvs-media-meta',(item.group==='uploads'?'آپلودشده':item.group==='academy'?'آکادمی':'سایت')+(item.bytes?' · '+readSize(item.bytes):''));
   const actions=el('div','mmvs-media-card-actions');const use=el('button','mmvs-media-use','انتخاب');use.type='button';use.onclick=()=>choose(item);actions.append(use);
+  if(/^\/uploads\/home-studio\/p62-[a-f0-9]{32}\.(png|jpg|webp)$/.test(item.url)){
+    const destroy=el('button','mmvs-media-permanent-delete','حذف دائمی');
+    destroy.type='button';destroy.title='حذف غیرقابل‌بازگشت فایل از سرور';
+    destroy.style.cssText='background:#772d2d;color:#fff0e8;border:1px solid #f5a29c;';
+    destroy.onclick=()=>mmvsR98PermanentDelete(item);actions.append(destroy);
+  }
   card.append(pick,label,group,actions);grid.append(card);
  }
 }
@@ -119,7 +155,7 @@ async function load(refresh=false){if(loading)return;loading=true;if(page===1||r
  }
  render(visible,page>1&&!refresh);
  pageNode.textContent='نمایش '+grid.querySelectorAll('.mmvs-media-card').length.toLocaleString('fa-IR')+' از '+total.toLocaleString('fa-IR')+' تصویر'+(page<pages?' · برای دیدن ادامه، به پایین بروید':' · همه تصاویر بارگذاری شدند');
- allCount=total;status('کتابخانه آماده است. تصاویر موجود حذف یا بازنویسی نمی‌شوند.');
+ allCount=total;status('کتابخانه آماده است. برای فایل‌های آپلودیِ بدون استفاده، دکمه «حذف دائمی» فعال است.');
  }catch(e){grid.replaceChildren(el('p','mmvs-media-empty',e.message));status(e.message,true)}finally{loading=false;setTimeout(mmvsR4OnScroll,60)}}
 function close(){mmvsR4HidePreview();if(root){root.hidden=true;document.body.classList.remove('mmvs-media-open')}}
 function open(nextMode='insert'){try{okay()}catch(e){window.alert(e.message);return}build();mode=nextMode;$('mmvs-media-mode').value=mode;root.hidden=false;document.body.classList.add('mmvs-media-open');page=1;load();}
@@ -130,12 +166,12 @@ function build(){if(root)return;
  const x=makeBtn('✕',close,'mmvs-media-x');x.setAttribute('aria-label','بستن کتابخانه');head.append(title,x);panel.append(head);
  const controls=el('div','mmvs-media-controls');search=input('search',{placeholder:'جست‌وجوی تصویر، آیکون یا مسیر…','aria-label':'جست‌وجوی تصاویر'});
  group=document.createElement('select');group.append(option('همه تصاویر','all'),option('آپلودشده‌ها','uploads'),option('آکادمی','academy'),option('بقیه سایت','site'));
- const usage=document.createElement('select');usage.id='mmvs-media-mode';usage.append(option('افزودن به صفحه','insert'),option('جایگزینی تصویر انتخاب‌شده','replace'),option('تصویر پاپ‌آپ','popup'),option('کپی لینک','copy'));usage.onchange=()=>{mode=usage.value};
+ const usage=document.createElement('select');usage.id='mmvs-media-mode';usage.append(option('افزودن به صفحه','insert'),option('جایگزینی تصویر انتخاب‌شده','replace'),option('تصویر پاپ‌آپ','popup'),option('کپی لینک','copy'),option('پس‌زمینه بخش','background'));usage.onchange=()=>{mode=usage.value};
  const refresh=makeBtn('↻ به‌روزرسانی',()=>load(true));controls.append(search,group,usage,refresh);panel.append(controls);
  let pendingSearch=0;search.oninput=()=>{clearTimeout(pendingSearch);pendingSearch=setTimeout(()=>{page=1;load()},320)};group.onchange=()=>{page=1;load()};
- const uploadBox=el('div','mmvs-media-upload');const file=input('file',{accept:'image/png,image/jpeg,image/webp',multiple:''});file.id='mmvs-media-file';
+ const uploadBox=el('div','mmvs-media-upload');const file=input('file',{accept:'image/*,.heic,.heif,.avif,.bmp,.tif,.tiff,.gif',multiple:''});file.id='mmvs-media-file';
  const settings=el('div','mmvs-media-upload-settings');const size=document.createElement('select');size.id='mmvs-media-preset';size.append(option('هوشمند · تا ۱۶۰۰px','smart'),option('آیکون · تا ۶۴۰px','icon'),option('کارت · تا ۱۱۰۰px','card'),option('بنر · تا ۲۰۰۰px','hero'));
- const preserve=el('label','','حفظ PNG شفافِ اصلی');const check=input('checkbox',{});check.id='mmvs-media-preserve';check.checked=true;preserve.prepend(check);
+ const preserve=el('label','','حفظ PNG شفافِ اصلی');const check=input('checkbox',{});check.id='mmvs-media-preserve';check.checked=false;preserve.prepend(check);
  settings.append(size,preserve);const uploadName=el('strong','','تصویر جدید اضافه کن');const uploadTip=el('small','','PNG / JPEG / WebP · هر فایل حداکثر ۱۲ MB؛ خودکار کم‌حجم می‌شود');
  uploadBox.append(uploadName,uploadTip,file,settings);panel.append(uploadBox);
  info=el('p','mmvs-media-status','');info.setAttribute('role','status');panel.append(info);
@@ -148,6 +184,15 @@ function build(){if(root)return;
 function decode(file){return createImageBitmap(file)}
 function toBlob(canvas,type,quality){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('پردازش تصویر ناموفق بود.')),type,quality))}
 async function optimize(file,progress=()=>{}){
+  if(!window.MMTradeImageOptimizer)throw Error('فشرده‌ساز تصویر بارگذاری نشده؛ صفحه را تازه‌سازی کن');
+  const preset=$('mmvs-media-preset')?.value||'smart';
+  const maxDimension=({smart:1600,icon:640,card:1100,hero:2000})[preset]||1600;
+  if($('mmvs-media-preserve')?.checked && file.type==='image/png')return legacyOptimize(file,progress);
+  const result=await window.MMTradeImageOptimizer.optimize(file,{role:'library',maxDimension,onProgress:progress});
+  progress(result.summary);
+  return result.file;
+ }
+ async function legacyOptimize(file,progress=()=>{}){
  if(!allowed.includes(file?.type))throw Error('فرمت مجاز: PNG، JPEG یا WebP');
  if(!file.size||file.size>12*1048576)throw Error('حجم تصویر باید کمتر از ۱۲ مگابایت باشد.');
  if(!window.createImageBitmap||!HTMLCanvasElement.prototype.toBlob)return file;
