@@ -168,3 +168,49 @@
 .mmvs-visual-stack-actions button{min-height:29px;min-width:28px;font-size:11px;padding:3px!important;white-space:nowrap;border-radius:5px}
 .mmvs-visual-stack-actions button:disabled{opacity:.35}
 @media(max-width:650px){.mmvs-visual-stack-list{max-height:240px}.mmvs-visual-stack-actions button{min-width:27px}}
+
+/* MMVS_PAGE_PUBLIC_LINKS_R1 */
+
+/* MMVS_PAGE_PUBLIC_LINKS_R1 */
+.mmvs-page-entry{
+ display:flex;
+ flex-direction:column;
+ gap:5px;
+ padding:6px 0;
+ border-bottom:1px solid #294638;
+ min-width:0;
+}
+.mmvs-page-select{
+ width:100%!important;
+ margin:0!important;
+ text-align:right;
+}
+.mmvs-page-public{
+ display:flex;
+ align-items:center;
+ gap:6px;
+ min-width:0;
+ padding:0 4px;
+}
+.mmvs-page-url{
+ flex:1;
+ min-width:0;
+ color:#8fe0ba;
+ font-size:10px;
+ line-height:1.6;
+ direction:ltr;
+ text-align:left;
+ overflow-wrap:anywhere;
+ text-decoration:underline;
+}
+.mmvs-page-copy{
+ flex-shrink:0;
+ padding:4px 8px;
+ font-size:10px;
+ white-space:nowrap;
+}
+.mmvs-page-unavailable{
+ color:var(--muted);
+ font-size:10px;
+ padding:0 4px;
+}

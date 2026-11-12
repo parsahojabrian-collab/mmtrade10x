@@ -4,8 +4,8 @@
 const MARK='#p74-home-config',TOKEN='tenx_admin_token';
 if(!window.MMTradeObjectModel)throw Error('Object Studio model was not loaded');
 const SEED=[
- ['شروع چالش','/miniapp/p74/learning/academy-home.html'],['آموزش‌های کلیدی','/miniapp/p74/learning/stage2.html'],
- ['تمرین و اجرا','/miniapp/challenge.html'],['مدیریت ریسک','/miniapp/copy-trading.html'],
+ ['شروع چالش','https://mmtrade10x.ir/mmtrade10x'],['آموزش‌های کلیدی','/copytrade-academy'],
+ ['تمرین و اجرا','/miniapp/challenge.html'],['مدیریت ریسک','/eplanet'],
  ['رشد و مقیاس','/miniapp/profile.html'],['ماموریت ششم','/miniapp/challenge.html'],
  ['ماموریت هفتم','/miniapp/challenge.html'],['ماموریت هشتم','/miniapp/challenge.html']];
 const DEF={version:74,stepLinksVersion:1,enabled:true,brand:'MM trade challenge 10x',tagline:'چالش رشد ۱۰ برابری در معاملات',
@@ -212,7 +212,7 @@ function normalize(raw){const a=clone(DEF);if(!raw||typeof raw!=='object'){a.ste
  const seed=clone(DEF.steps[i]);
  const v=Array.isArray(raw.steps)?raw.steps[i]:null;
  const step={...seed,...(v||{}),position:{...auto[i],...(v?.position||{})}};
- if(raw.stepLinksVersion!==1&&i<2)step.href=i===0?'/miniapp/p74/learning/academy-home.html':'/miniapp/p74/learning/stage2.html';
+ if(raw.stepLinksVersion!==1&&[0,1,3].includes(i))step.href=SEED[i][1];
  return step;
 });
  if(Array.isArray(raw.nav))a.nav=a.nav.map((v,i)=>({...v,...(raw.nav[i]||{})}));a.objects=window.MMTradeObjectModel.normalizeObjects(raw.objects);a.backgrounds=window.MMTradeObjectModel.backgrounds(raw.backgrounds);a.pageLayout=normalizePageLayout(raw.pageLayout);a.pageStyles=normalizePageStyles(raw.pageStyles);return a}

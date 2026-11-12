@@ -9,8 +9,9 @@ const operations=studio.slice(studio.indexOf('function setOperation('),studio.in
 function controller(extra={}){
  const controls={save:{},publish:{},reload:{}};
  const scope={reviewSnapshot:null,document:{querySelector:()=>null},busy:false,canWrite:()=>true,page:'index',pageRequestId:1,title:'First',blocks:[{type:'text',text:'First'}],initial:'',
-  editor:{hasDraft:true,revision:'a'.repeat(64)},window:{},clone:structuredClone,validateAllBlocks(){},syncDirty(){},toast(){},confirm:()=>true,
+  isPublishedHomePreview:()=>false,pageLoading:false,pageLoadError:false,popupBusy:false,uploadPending:0,updateHistoryButtons(){},refreshPublicPageRegistry:async()=>{},drawPageList(){},editor:{hasDraft:true,revision:'a'.repeat(64)},window:{},clone:structuredClone,validateAllBlocks(){},syncDirty(){},toast(){},confirm:()=>true,
   $:id=>controls[id],loadPage:async()=>{},...extra};
+ scope.workspaceBusy=()=>scope.busy||scope.pageLoading||scope.popupBusy||scope.uploadPending>0||!!scope.window.MMVS_Spatial?.isBusy();
  scope.dirty=()=>JSON.stringify({title:scope.title,blocks:scope.blocks})!==scope.initial;
  runInNewContext(operations,scope);return scope;
 }

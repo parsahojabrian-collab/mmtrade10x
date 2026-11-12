@@ -54,9 +54,9 @@ function homeNormalizer(){
  const source=readFileSync(new URL('../public/miniapp/p74/home.js',import.meta.url),'utf8').replace('window.P74={','window.__HomeNormalize=normalized;window.P74={');
  vm.runInNewContext(source,scope);return window.__HomeNormalize;
 }
-test('legacy home markers keep their existing first two public routes',()=>{
- const normalize=homeNormalizer();const result=normalize({steps:[{href:'/old-unused-1'},{href:'/old-unused-2'}],stepCount:3});
- assert.equal(result.steps[0].href,'/miniapp/p74/learning/academy-home.html');assert.equal(result.steps[1].href,'/miniapp/p74/learning/stage2.html');
+test('legacy home markers preserve the reviewed server challenge, copytrade and ePlanet routes',()=>{
+ const normalize=homeNormalizer();const result=normalize({steps:[{href:'/old-unused-1'},{href:'/old-unused-2'}],stepCount:5});
+ assert.equal(result.steps[0].href,'https://mmtrade10x.ir/mmtrade10x');assert.equal(result.steps[1].href,'/copytrade-academy');assert.equal(result.steps[3].href,'/eplanet');
 });
 test('new home markers honor edited links for the first and second stages',()=>{
  const normalize=homeNormalizer();const result=normalize({stepLinksVersion:1,steps:[{href:'/custom-1'},{href:'/custom-2'}],stepCount:3});

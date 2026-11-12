@@ -4853,12 +4853,15 @@ function tenxCustomBackupIdOk(v: any): v is string {
 const rm6PageInfo: Record<string, { label: string; defaultPath: string; target: string; legacy: string[] }> = {
   index: {label:'خانه',defaultPath:'/miniapp/index.html',target:'/miniapp/index.html',legacy:['/miniapp/index.html','/miniapp/']},
   academy: {label:'آموزش / مرحله اول',defaultPath:'/academy',target:'/miniapp/p74/learning/academy-home.html',legacy:['/miniapp/academy.html','/miniapp/index.html?view=academy']},
+  stage2: {label:'آموزش مرحله دوم',defaultPath:'/marhaleh2',target:'/miniapp/p74/learning/stage2.html',legacy:['/miniapp/p74/learning/stage2.html']},
   crypto: {label:'رمزارز',defaultPath:'/crypto',target:'/miniapp/crypto.html',legacy:['/miniapp/crypto.html']},
   'copy-trading': {label:'کپی‌ترید',defaultPath:'/copy-trading',target:'/miniapp/copy-trading.html',legacy:['/miniapp/copy-trading.html']},
   challenge: {label:'چالش',defaultPath:'/challenge',target:'/miniapp/index.html?view=mmtrade10x',legacy:['/miniapp/challenge.html']},
   support: {label:'پشتیبانی',defaultPath:'/support',target:'/miniapp/p74/support/support.html',legacy:['/miniapp/support.html','/miniapp/p74/support/support.html']},
   profile: {label:'پروفایل',defaultPath:'/profile',target:'/miniapp/p74/profile/profile.html',legacy:['/miniapp/profile.html','/miniapp/p74/profile/profile.html']},
-  mmtrade10x: {label:'چالش 10X در مینی‌اپ',defaultPath:'/mmtrade10x',target:'/miniapp/index.html?view=mmtrade10x',legacy:[]}
+  mmtrade10x: {label:'چالش 10X در مینی‌اپ',defaultPath:'/mmtrade10x',target:'/miniapp/p74/mmtrade-r3-preview/index.html?view=mmtrade10x',legacy:[]},
+  eplanet: {label:'مرکز فعال‌سازی ePlanet',defaultPath:'/eplanet',target:'/miniapp/p74/eplanet/index.html',legacy:['/miniapp/p74/eplanet/index.html']},
+  'copytrade-academy': {label:'آموزش کپی‌ترید ۱۰ایکس',defaultPath:'/copytrade-academy',target:'/miniapp/p74/copytrade-academy/index.html',legacy:['/miniapp/p74/copytrade-academy/index.html']}
 };
 const rm6Slugs = Object.keys(rm6PageInfo);
 const rm6AliasesKey='MM_ROUTE_ALIASES_R6';
@@ -5108,7 +5111,7 @@ app.post('/admin/route-manager/publish',async(request,reply)=>{
 // Reversible registry of published and archived pages. No Prisma schema change.
 const r10Key='MM_PAGE_LIFECYCLE_R10';
 const r10SlugSchema=z.string().regex(/^[a-z][a-z0-9-]{2,39}$/);
-const r10Builtins=['index','academy','crypto','copy-trading','challenge','support','profile','mmtrade10x'];
+const r10Builtins=['index','academy','stage2','crypto','copy-trading','challenge','support','profile','mmtrade10x','eplanet','copytrade-academy'];
 const r10Engine=z.enum(['p74','p62','legacy']);
 const r10Status=z.enum(['DRAFT','PUBLISHED','ARCHIVED']);
 const r10CustomSchema=z.object({slug:r10SlugSchema,title:z.string().min(1).max(120),status:r10Status,previousStatus:z.enum(['DRAFT','PUBLISHED']).optional()}).strict();

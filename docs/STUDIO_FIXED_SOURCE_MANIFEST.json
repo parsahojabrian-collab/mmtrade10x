@@ -1,0 +1,28 @@
+{
+  "base": "a6fca367382e5adf131190f7f09cc288f5212c0c",
+  "files": {
+    "apps/api/src/index.ts": "ecda3d04189dcc8ba4ee1c2bb70fdac674b1737dee3c97ca7329d20a2c183399",
+    "docs/MMTRADE_REVIEWED_LIVE_RELEASE_FA.md": "be9d4eb956ad80966892fa648063881c843484385ca6e3a5c14d5ee05eb86f4e",
+    "docs/MMTRADE_STUDIO_STATE_FIXES_FA.md": "f7dca912513a8348224855e7e7b05fd3231028cebef8d2ad9f09cefee0f61324",
+    "public/miniapp/index.html": "8e5d3f323f5f958736574225b5cdc7c0c901c49251a1e8a5f7bab48cefd2eb50",
+    "public/miniapp/p74/eplanet/index.html": "3fb94a91054f056d0e0cf4c04634531388a00b129f650a70ea3d306c0c37f76f",
+    "public/miniapp/p74/home.js": "f4e81104b30f040d7965750f5618bb8d3bda9d38dac3f736e5de352679d60ff4",
+    "public/miniapp/p74/learning/academy-home.html": "f79217a1b4c8444cc1d0318bb3a441b045eb6ac91ea4ab075c75ae87e5f562da",
+    "public/miniapp/p74/learning/stage1.html": "8b88fcb4ed063bfdccc6f75db70130b830e3e8e8b2e6270fbe4df36c8702d7b4",
+    "public/miniapp/p74/preview.html": "af9c5c6c444837e80d78be339b22624cf0759db1e590e7a5ceb96c0a354334dd",
+    "public/miniapp/p74/profile/preview.html": "ab3d8f49ec0de36a71b5a8fe5401db738dff8edbb6b04a7039d9fd7e960940ed",
+    "public/miniapp/p74/profile/profile.html": "3e9e01a2228e37baad34f48fd67846296242674e6194078696ffd23f82b331a5",
+    "public/miniapp/p74/studio/home-object-editor.js": "8ce3d2d8c23c0022066b00569ea23de5d69669a0b408940b94041d8aa55cec9f",
+    "public/miniapp/p74/studio/index.html": "3e979dce2b128aed7f39eb1a0a9f60b316ba91fcf51cea81cee5169a67223773",
+    "public/miniapp/p74/studio/mmvs-media-library-r1.js": "b64549cf3c24694c46634ddcd90650da56d20ff4e2eb0b24d91eb3fe6fccc66c",
+    "public/miniapp/p74/studio/spatial-bridge.js": "6e6339307c78b7518d95dc011f67bf31d226961821749751264cee9741ffc3c0",
+    "public/miniapp/p74/studio/spatial.js": "cfba34f45f1693da6d34c108c25a83a9aebba5b5b6f9739f6f88ba6f941f1b81",
+    "public/miniapp/p74/studio/studio.css": "df5c71df1efb9ff2af3fd3c5386a2994d603dca53c157dc668c5f8ea4659d404",
+    "public/miniapp/p74/studio/studio.js": "75ede2ef56172fffc9051f8a3ea5c440619f36c78673a22e9e77fb3947148381",
+    "public/miniapp/p74/support/support.html": "b2e6d9d8a01e7279cd8292fdab703323bf4a1d0b6d6aadfbd0c894faa6166575",
+    "tests/admin-workspace.test.mjs": "934d70a0a06cec8889875861d9bef9ac44064aa5ac9863ffd5e1e4827495641c",
+    "tests/home-object-integration.test.mjs": "4ec16c801a30c6c3c382a5446e5bf4efa546ba9804bfe386b2b02af7716f2894",
+    "tests/live-release-merge.test.mjs": "7b966774f25be47720087641569a084dfa972216e7a47bf5d07596484ae86e64",
+    "tests/studio-state-regressions.test.mjs": "381455166d7f3970275e48ad713712b7939112f1cc2d183fed6cf982674003f4"
+  }
+}

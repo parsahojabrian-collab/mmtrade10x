@@ -11,7 +11,7 @@
   const prohibited = s => new Set(['#p74-app','#mf62-home','#mmvs-root','#app','main.home-shell','.stage-page','.stage-shell']).has(String(s||'').trim());
   const animationKinds = new Set(['float','spin','sway','pulse']);
   const animationValid = a => a && animationKinds.has(a.kind) && Number.isInteger(a.durationMs) && a.durationMs>=400 && a.durationMs<=30000 && Number.isFinite(a.amplitude) && a.amplitude>=1 && a.amplitude<=150 && Number.isInteger(a.delayMs) && a.delayMs>=0 && a.delayMs<=10000 && typeof a.loop==='boolean';
-  let animationPlaying=true,reviewLayout=null;
+  let animationPlaying=true,reviewLayout=null,loadFailed=false,historySuspended=false,lastHistoryDoc='',externalBusy=false;
   let page='academy', revision=0, published={items:[]}, draft=null;
   let doc={items:[],domMoves:[]}, initial='{"items":[],"domMoves":[]}', dirty=false;
   let mode=false,grid=false,selected='',ready=false,loading=false,history=[],session=0,publishing=false;
@@ -42,19 +42,21 @@
     renderProps();groupSync();
   }
   function groupToggle(s){
-    if(!groupMode||loading||publishing||reviewLayout)return;
+    if(!groupMode||loading||loadFailed||publishing||externalBusy||reviewLayout)return;
     const next=groupSelection.includes(s)?groupSelection.filter(x=>x!==s):[...groupSelection,s];
     groupSet(next);
   }
   function groupMove(dx,dy){
-    if(!groupMode||groupSelection.length<2||loading||publishing||reviewLayout)return false;
+    if(!groupMode||groupSelection.length<2||loading||loadFailed||publishing||externalBusy||reviewLayout)return false;
     send('MMVS_SPATIAL_GROUP_NUDGE',{selectors:groupSelection,dx,dy});
     return true;
   }
   function groupCommit(items){
-    if(!groupMode||loading||publishing||reviewLayout||!Array.isArray(items)||items.length<2||items.length>32)return;
+    if(!groupMode||loading||loadFailed||publishing||externalBusy||reviewLayout||!Array.isArray(items)||items.length<2||items.length>32)return;
     const allowed=new Set(groupClean(groupSelection));
     if(items.length!==allowed.size||items.some(x=>!x||!allowed.has(x.selector)))return;
+    const added=new Set(items.filter(x=>!doc.items.some(p=>p.selector===x.selector)).map(x=>x.selector));
+    if(doc.items.length+added.size>500){toast('سقف ۵۰۰ تنظیم پر می‌شود؛ جابه‌جایی گروهی انجام نشد.',true);preview();return false}
     const fixes=items.map(x=>normalize({...savedFor(x.selector),x:x.x,y:x.y}));
     if(fixes.some(x=>!x))return;
     for(const item of fixes){const ix=doc.items.findIndex(x=>x.selector===item.selector);if(ix>=0)doc.items[ix]=item;else doc.items.push(item)}
@@ -89,7 +91,7 @@
   const BOUNDARY_SELECTOR='html';
   function boundaryItem(){return doc.items.find(x=>x.selector===BOUNDARY_SELECTOR)||null}
   function setBoundary(enabled,height){
-    if(loading||publishing||reviewLayout)return;
+    if(loading||loadFailed||publishing||externalBusy||reviewLayout)return;
     /* MMTRADE_AUDIT_FIX_R1_BOUNDARY_CONFLICT: prevent dual configurations. */
     if(enabled&&window.MMVS_PublishedFold?.get?.()?.enabled===true){
       toast('خط انتشار جدید برای این صفحه فعال است. ابتدا آن را در پیش‌نویس غیرفعال کن.',true);
@@ -106,8 +108,8 @@
   }
   function renderBoundary(){
     const p=boundaryItem(),on=!!p,check=$('spatial-boundary-enabled'),height=$('spatial-boundary-height');
-    if(check){check.checked=on;check.disabled=loading||publishing||!!reviewLayout}
-    if(height){height.value=String(on?Math.round(p.x):850);height.disabled=!on||loading||publishing||!!reviewLayout}
+    if(check){check.checked=on;check.disabled=loading||loadFailed||publishing||externalBusy||!!reviewLayout}
+    if(height){height.value=String(on?Math.round(p.x):850);height.disabled=!on||loading||loadFailed||publishing||externalBusy||!!reviewLayout}
   }
   function send(type,data={}) {
     const target=$('frame')?.contentWindow;
@@ -121,15 +123,17 @@
   function savedFor(selector) {return doc.items.find(item=>item.selector===selector)||defaults(selector)}
   function scanLayers(){send('MMVS_SPATIAL_SCAN')}
   function state() {
-    dirty=JSON.stringify(doc)!==initial;
+    const serialized=JSON.stringify(doc);
+    if(lastHistoryDoc&&lastHistoryDoc!==serialized&&!loading&&!publishing&&!reviewLayout&&!historySuspended)window.MMVSWorkspace?.recordLayoutHistory?.(JSON.parse(lastHistoryDoc));
+    lastHistoryDoc=serialized;dirty=serialized!==initial;
     const title=$('spatial-state');if(title){
       title.textContent=dirty?'چیدمان ذخیره‌نشده':draft?'پیش‌نویس چیدمان موجود':'چیدمان منتشرشده';
       title.classList.toggle('dirty',dirty);
     }
-    $('spatial-mode').disabled=loading||publishing||!!reviewLayout;
-    $('spatial-save').disabled=!dirty||loading||publishing||!!reviewLayout;
-    $('spatial-publish').disabled=loading||publishing||!!reviewLayout||(!dirty&&!draft);
-    $('spatial-reset').disabled=!selected||loading||publishing||!!reviewLayout;
+    $('spatial-mode').disabled=loading||loadFailed||publishing||externalBusy||!!reviewLayout;
+    $('spatial-save').disabled=!dirty||loading||loadFailed||publishing||externalBusy||!!reviewLayout;
+    $('spatial-publish').disabled=loading||loadFailed||publishing||externalBusy||!!reviewLayout||(!dirty&&!draft);
+    $('spatial-reset').disabled=!selected||loading||loadFailed||publishing||externalBusy||!!reviewLayout;
     window.dispatchEvent(new Event('mmvs:state'));
   }
 
@@ -163,7 +167,7 @@
     return true;
   }
   function mmvsDomMove(source,target,placement){
-    if(loading||publishing||reviewLayout||false)return toast('در زمان بارگذاری، انتشار یا بازبینی تاریخی، جابه‌جایی غیرفعال است.',true);
+    if(loading||loadFailed||publishing||externalBusy||reviewLayout||false)return toast('در زمان بارگذاری، انتشار یا بازبینی تاریخی، جابه‌جایی غیرفعال است.',true);
     const d=$('frame')?.contentDocument;
     if(!d?.body)return toast('صفحه آماده نیست.',true);
     const a=mmvsDomGet(source,d),b=mmvsDomGet(target,d);
@@ -284,31 +288,31 @@
     const locked=!!p.locked;
     for(const k of ['x','y','scale']){
       const el=$('spatial-'+k);if(!el)continue;
-      el.value=String(p[k]);el.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;
+      el.value=String(p[k]);el.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked;
     }
     for(const [axis,min,fallback] of [['width',24,240],['height',16,80]]){
       const el=$('spatial-'+axis),out=$('spatial-'+axis+'-value'),num=$('spatial-'+axis+'-number');
-      const val=p[axis+'Px'];if(el){el.value=String(val??fallback);el.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked}
+      const val=p[axis+'Px'];if(el){el.value=String(val??fallback);el.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked}
       if(out)out.textContent=val===undefined?'خودکار':val+'px';
-      if(num){num.value=String(val??fallback);num.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;}
+      if(num){num.value=String(val??fallback);num.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked;}
     }
-    const resetSize=$('spatial-size-reset');if(resetSize)resetSize.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;
+    const resetSize=$('spatial-size-reset');if(resetSize)resetSize.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked;
     $('spatial-chosen').textContent=selected||'برای انتخاب، روی عنصر در پیش‌نمایش بزن';
     const lock=$('spatial-lock');if(lock){
-      lock.textContent=locked?'🔒 بازکردن قفل':'🔓 قفل عنصر';lock.disabled=!selectedEnough||loading||publishing||!!reviewLayout;
+      lock.textContent=locked?'🔒 بازکردن قفل':'🔓 قفل عنصر';lock.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout;
       lock.classList.toggle('mmvs-locked',locked);
     }
-    const hide=$('spatial-hide');if(hide){hide.textContent=p.hidden?'↩ بازگردانی به صفحه':'◉ مخفی/حذف از صفحه';hide.disabled=!selectedEnough||loading||publishing||!!reviewLayout;hide.classList.toggle('mmvs-hidden',!!p.hidden)}
+    const hide=$('spatial-hide');if(hide){hide.textContent=p.hidden?'↩ بازگردانی به صفحه':'◉ مخفی/حذف از صفحه';hide.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout;hide.classList.toggle('mmvs-hidden',!!p.hidden)}
     for(const id of ['spatial-forward','spatial-backward','spatial-to-front','spatial-to-back']){
-      const e=$(id);if(e)e.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;
+      const e=$(id);if(e)e.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked;
     }
     for(const id of ['spatial-nudge-up','spatial-nudge-down','spatial-nudge-left','spatial-nudge-right']){
-      const e=$(id);if(e)e.disabled=!(selectedEnough||(groupMode&&groupSelection.length>=2))||loading||publishing||!!reviewLayout||(locked&&!(groupMode&&groupSelection.length>=2));
+      const e=$(id);if(e)e.disabled=!(selectedEnough||(groupMode&&groupSelection.length>=2))||loading||loadFailed||publishing||externalBusy||!!reviewLayout||(locked&&!(groupMode&&groupSelection.length>=2));
     }
-    const z=$('spatial-z');if(z){z.value=p.renderPlane==='free'?(p.rank??1):(p.zIndex??'');z.placeholder=p.renderPlane==='free'?'رتبه سطح آزاد':'پیش‌فرض';z.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked}
-    const v2=$('spatial-v2-plane');if(v2){v2.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;v2.textContent=p.renderPlane==='free'?'↩ بازگشت تصویر به لایه معمولی':'✦ انتقال تصویر تزئینی به سطح آزاد';v2.setAttribute('aria-pressed',String(p.renderPlane==='free'))}
-    const bg=$('spatial-underlay');if(bg){bg.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;bg.textContent=p.layerId===mmvsUnderlayKey?'↩ بازگردانی تصویر از پس‌زمینه':'⬇ قرار دادن تصویر کتابخانه پشت محتوای صفحه';bg.setAttribute('aria-pressed',String(p.layerId===mmvsUnderlayKey))}
-    const op=$('spatial-opacity');if(op){op.value=p.opacity??1;op.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked}
+    const z=$('spatial-z');if(z){z.value=p.renderPlane==='free'?(p.rank??1):(p.zIndex??'');z.placeholder=p.renderPlane==='free'?'رتبه سطح آزاد':'پیش‌فرض';z.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked}
+    const v2=$('spatial-v2-plane');if(v2){v2.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked;v2.textContent=p.renderPlane==='free'?'↩ بازگشت تصویر به لایه معمولی':'✦ انتقال تصویر تزئینی به سطح آزاد';v2.setAttribute('aria-pressed',String(p.renderPlane==='free'))}
+    const bg=$('spatial-underlay');if(bg){bg.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked;bg.textContent=p.layerId===mmvsUnderlayKey?'↩ بازگردانی تصویر از پس‌زمینه':'⬇ قرار دادن تصویر کتابخانه پشت محتوای صفحه';bg.setAttribute('aria-pressed',String(p.layerId===mmvsUnderlayKey))}
+    const op=$('spatial-opacity');if(op){op.value=p.opacity??1;op.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked}
     const tip=$('spatial-object-tip');if(tip){tip.textContent=p.hidden?'این عنصر برای کاربران مخفی می‌شود؛ با «بازگردانی» دوباره نمایش بده.':locked?'قفل فعال است: حرکت و تغییر اندازه غیرفعال؛ انیمیشن باقی می‌ماند.':'تنظیم لایه و شفافیت، انیمیشن اصلی عنصر را متوقف نمی‌کند.'}
     const a=p.animation||null;
     const aKind=$('spatial-animation-kind');if(aKind)aKind.value=a?.kind||'none';
@@ -317,17 +321,17 @@
     const aDelay=$('spatial-animation-delay');if(aDelay)aDelay.value=String((a?.delayMs??0)/1000);
     const aLoop=$('spatial-animation-loop');if(aLoop)aLoop.checked=a?.loop!==false;
     for(const id of ['spatial-animation-kind','spatial-animation-duration','spatial-animation-amplitude','spatial-animation-delay','spatial-animation-loop','spatial-animation-apply','spatial-animation-remove']){
-      const el=$(id);if(el)el.disabled=!selectedEnough||loading||publishing||!!reviewLayout||locked;
+      const el=$(id);if(el)el.disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout||locked;
     }
     const aniTip=$('spatial-animation-tip');if(aniTip)aniTip.textContent=locked?'ابتدا قفل آبجکت را باز کن تا بتوانی انیمیشنش را تغییر بدهی.':a?'✦ '+a.kind+' · برای انتشار، «ذخیره چیدمان» و «انتشار چیدمان» را بزن.':'نوع حرکت را انتخاب و روی «اعمال انیمیشن» بزن. حرکت CSS قبلی حذف نمی‌شود.';
-    $('spatial-reset').disabled=!selectedEnough||loading||publishing||!!reviewLayout;
+    $('spatial-reset').disabled=!selectedEnough||loading||loadFailed||publishing||externalBusy||!!reviewLayout;
     renderLayers();renderOverlap();
   }
   /* MMVS_HOME_PREVIEW_PARITY_R2: published spatial snapshot in live comparison */
   function preview(){
-    const liveHome=false;
+    const liveHome=window.MMVSWorkspace?.isPublishedHomePreview?.()===true;
     send('MMVS_SPATIAL_PREVIEW',{layout:clone(reviewLayout||(liveHome?published:doc))});
-    send('MMVS_SPATIAL_MODE',{enabled:!liveHome&&!reviewLayout&&mode,grid});
+    send('MMVS_SPATIAL_MODE',{enabled:!externalBusy&&!liveHome&&!reviewLayout&&mode,grid});
     send('MMVS_SPATIAL_ANIMATION_PLAY',{playing:animationPlaying});
     if(selected&&!reviewLayout)send('MMVS_SPATIAL_PICK',{selector:selected});
     groupSync();scanLayers();
@@ -367,7 +371,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
   }
   function edit(mutator,allowWhenLocked=false){
 
-    if(!selected||loading||publishing||!!reviewLayout)return;
+    if(!selected||loading||loadFailed||publishing||externalBusy||!!reviewLayout)return;
     const p={...current()};
     if(p.locked&&!allowWhenLocked){toast('این عنصر قفل است؛ ابتدا قفل را باز کن.',true);return}
     mutator(p);
@@ -378,12 +382,85 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     if(typeof url!=='string'||!url||url.length>2048||url.startsWith('//')||!/\.(?:png|jpe?g|webp|gif|svg|avif)(?:[?#]|$)/i.test(url))return false;
     try{const u=new URL(url,location.origin);return u.protocol==='https:'||(u.protocol==='http:'&&u.origin===location.origin)}catch{return false}
   }
+
+  function mmvsBgValidStop(stop){
+    return !!stop &&
+      /^#[0-9a-f]{6}$/i.test(stop.color||'') &&
+      Number.isFinite(stop.at) &&
+      stop.at>=0 && stop.at<=100 &&
+      (stop.alpha===undefined ||
+        (Number.isFinite(stop.alpha)&&stop.alpha>=0&&stop.alpha<=1));
+  }
+
+  function mmvsBgValidLayer(layer){
+    if(!layer ||
+      !/^bg-[A-Za-z0-9_-]{1,80}$/.test(layer.id||'') ||
+      typeof layer.enabled!=='boolean' ||
+      !Number.isFinite(layer.opacity)||layer.opacity<0||layer.opacity>1 ||
+      !Number.isFinite(layer.blur)||layer.blur<0||layer.blur>30 ||
+      !['normal','screen','multiply','overlay','soft-light'].includes(layer.blend)
+    )return false;
+
+    if(layer.type==='solid')
+      return /^#[0-9a-f]{6}$/i.test(layer.color||'');
+
+    const validStops=Array.isArray(layer.stops) &&
+      layer.stops.length>=2 && layer.stops.length<=5 &&
+      layer.stops.every(mmvsBgValidStop);
+
+    if(layer.type==='linear')
+      return Number.isFinite(layer.angle)&&
+        layer.angle>=0&&layer.angle<=360&&validStops;
+
+    if(layer.type==='radial')
+      return Number.isFinite(layer.centerX)&&
+        layer.centerX>=0&&layer.centerX<=100&&
+        Number.isFinite(layer.centerY)&&
+        layer.centerY>=0&&layer.centerY<=100&&
+        (layer.shape===undefined||['circle','ellipse'].includes(layer.shape))&&
+        validStops;
+
+    if(layer.type==='image')
+      return mmvsBgValidUrl(layer.url)&&
+        ['cover','contain','fill'].includes(layer.fit)&&
+        Number.isFinite(layer.positionX)&&layer.positionX>=0&&layer.positionX<=100&&
+        Number.isFinite(layer.positionY)&&layer.positionY>=0&&layer.positionY<=100;
+
+    return false;
+  }
+
   function mmvsBgValid(bg){
-    return !!bg&&mmvsBgValidUrl(bg.url)&&['cover','contain'].includes(bg.fit)&&['center','top','bottom'].includes(bg.position)&&Number.isFinite(bg.dim)&&bg.dim>=0&&bg.dim<=.8&&
-      (bg.sourceSelector===undefined||(typeof bg.sourceSelector==='string'&&bg.sourceSelector.length<=500&&bg.sourceSelector.length>0));
+    if(!bg||typeof bg!=='object')return false;
+
+    const legacy=
+      bg.url!==undefined &&
+      bg.fit!==undefined &&
+      bg.position!==undefined &&
+      bg.dim!==undefined &&
+      mmvsBgValidUrl(bg.url) &&
+      ['cover','contain'].includes(bg.fit) &&
+      ['center','top','bottom'].includes(bg.position) &&
+      Number.isFinite(bg.dim)&&bg.dim>=0&&bg.dim<=.8;
+
+    const layered=
+      Array.isArray(bg.layers)&&
+      bg.layers.length>=1&&
+      bg.layers.length<=8&&
+      bg.layers.every(mmvsBgValidLayer);
+
+    if(bg.url!==undefined&&!mmvsBgValidUrl(bg.url))return false;
+    if(bg.fit!==undefined&&!['cover','contain'].includes(bg.fit))return false;
+    if(bg.position!==undefined&&!['center','top','bottom'].includes(bg.position))return false;
+    if(bg.dim!==undefined&&(!Number.isFinite(bg.dim)||bg.dim<0||bg.dim>.8))return false;
+
+    if(bg.sourceSelector!==undefined&&
+      (typeof bg.sourceSelector!=='string'||
+       !bg.sourceSelector.length||bg.sourceSelector.length>500))return false;
+
+    return legacy||layered;
   }
   function mmvsBgChange(selector,bg){
-    if(typeof selector!=='string'||!selector||selector.length>500||/^(?:html|body)$/i.test(selector)||selector.startsWith('#mmvs-')||loading||publishing||reviewLayout||window.MMVSWorkspace?.isPublishedHomePreview?.())return false;
+    if(typeof selector!=='string'||!selector||selector.length>500||/^(?:html|body)$/i.test(selector)||selector.startsWith('#mmvs-')||loading||loadFailed||publishing||externalBusy||reviewLayout||window.MMVSWorkspace?.isPublishedHomePreview?.())return false;
     if(bg!==null&&!mmvsBgValid(bg))return false;
     const el=mmvsDomGet(selector,$('frame')?.contentDocument);
     if(!el||!el.isConnected||el.closest('#mmvs-spatial-outline,#mmvs-spatial-toolbar,#mmvs-managed-content'))return false;
@@ -403,7 +480,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
 
   function setLock(){edit(p=>{p.locked=!p.locked},true)}
   function animateSelection(){
-    if(!selected||loading||publishing||!!reviewLayout)return;
+    if(!selected||loading||loadFailed||publishing||externalBusy||!!reviewLayout)return;
     if(current().renderPlane==='free')return toast('قبل از فعال‌کردن انیمیشن، تصویر را از سطح آزاد به لایه معمولی برگردان.',true);
     const kind=$('spatial-animation-kind')?.value;
     if(kind==='none'){edit(p=>{delete p.animation});toast('انیمیشن سفارشی برداشته شد.');return}
@@ -483,7 +560,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     return n.id?('#'+CSS.escape(n.id)):mmvsDomSelector(n,f);
   }
   function mmvsUnderlayToggle(){
-    if(!selected||loading||publishing||reviewLayout)return;
+    if(!selected||loading||loadFailed||publishing||externalBusy||reviewLayout)return;
     const target=underlayImage();
     if(!target)return toast('تصویر کتابخانه را انتخاب کن.',true);
     if(selected!==target)choose(target);
@@ -503,7 +580,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
       'در حال اعمال تصویر پشت محتوا…');
   }
   function mmvsV2Toggle(){
-    if(!selected||loading||publishing||reviewLayout||savedFor(selected).locked||groupMode&&groupSelection.length>1)return;
+    if(!selected||loading||loadFailed||publishing||externalBusy||reviewLayout||savedFor(selected).locked||groupMode&&groupSelection.length>1)return;
     const isFree=current().renderPlane==='free';
     if(!isFree&&(current().animation||!mmvsV2Candidate(selected)))return toast('سطح آزاد فقط برای IMG تزئینیِ بدون انیمیشن/تعامل/افکت پیچیده فعال است.',true);
     edit(p=>{
@@ -531,7 +608,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     return mmvsLayerPeers()||[];
   }
   function mmvsVisualStackCommit(topOrder){
-    if(loading||publishing||reviewLayout||groupMode&&groupSelection.length>1||false){
+    if(loading||loadFailed||publishing||externalBusy||reviewLayout||groupMode&&groupSelection.length>1||false){
       toast('در حالت انتشار، بازبینی یا انتخاب چندتایی نمی‌توان ترتیب را تغییر داد.',true);return false;
     }
     const peers=mmvsVisualStackPeers();
@@ -600,11 +677,11 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     }
     let unlock=$('mmvs-r94-unlock-all');
     if(!unlock){unlock=document.createElement('button');unlock.id='mmvs-r94-unlock-all';unlock.type='button';unlock.className='minor';unlock.style.cssText='margin:4px 0 9px;max-width:100%;white-space:normal;';search.after(unlock);
-      unlock.onclick=()=>{if(loading||publishing||reviewLayout||false)return toast('در زمان بارگذاری، انتشار یا بازبینی تاریخی، قفل‌ها قابل تغییر نیستند.',true);
+      unlock.onclick=()=>{if(loading||loadFailed||publishing||externalBusy||reviewLayout||false)return toast('در زمان بارگذاری، انتشار یا بازبینی تاریخی، قفل‌ها قابل تغییر نیستند.',true);
         const locks=doc.items.filter(x=>x.locked===true);if(!locks.length)return;
         if(!confirm('قفل '+locks.length+' آبجکت از چیدمان Draft برداشته شود؟'))return;
         for(const x of locks)delete x.locked;renderProps();state();preview();mmvsVisualStackSchedule();toast('قفل‌ها برداشته شد؛ Draft را ذخیره کن.');};}
-    const count=doc.items.filter(x=>x.locked===true).length;unlock.textContent=count?'🔓 بازکردن قفل '+count+' آبجکت':'🔓 قفل ذخیره‌شده‌ای وجود ندارد';unlock.disabled=!count||loading||publishing||!!reviewLayout;
+    const count=doc.items.filter(x=>x.locked===true).length;unlock.textContent=count?'🔓 بازکردن قفل '+count+' آبجکت':'🔓 قفل ذخیره‌شده‌ای وجود ندارد';unlock.disabled=!count||loading||loadFailed||publishing||externalBusy||!!reviewLayout;
     const query=search.value.trim().toLocaleLowerCase();
     const all=[d.documentElement,d.body,...d.body.querySelectorAll('*')];
     const excluded='script,style,template,noscript,link,meta,source,track,svg *,#mmvs-spatial-overlay,#mmvs-spatial-outline,#mmvs-spatial-toolbar,#mmvs-overlay,#mmvs-v2-image-plane';
@@ -655,7 +732,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
       below.disabled=!selected||!peer||selector===selected||locked||!!savedFor(selected).locked;
       below.onclick=()=>mmvsVisualStackMove(selected,selector,'below');
       if(valid&&el.tagName==='IMG'&&el.matches('#mmvs-managed-content .mmvs-c-block > img, #mmvs-managed-content .mmvs-c-image > img')){
-        const back=document.createElement('button');back.type='button';back.title='تصویر کتابخانه را به پس‌زمینه صفحه منتقل کن';back.textContent=savedFor(selector).layerId===mmvsUnderlayKey?'↩ روی صفحه':'⬇ پشت کل محتوا';back.disabled=locked||loading||publishing||!!reviewLayout;
+        const back=document.createElement('button');back.type='button';back.title='تصویر کتابخانه را به پس‌زمینه صفحه منتقل کن';back.textContent=savedFor(selector).layerId===mmvsUnderlayKey?'↩ روی صفحه':'⬇ پشت کل محتوا';back.disabled=locked||loading||loadFailed||publishing||externalBusy||!!reviewLayout;
         back.onclick=()=>{choose(selector);mmvsUnderlayToggle();mmvsVisualStackSchedule()};actions.append(back);
       }
       actions.append(up,down,below);row.append(pick,actions);
@@ -813,7 +890,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     return order;
   }
   function mmvsSetSafeLayerRank(rank){
-    if(!selected||loading||publishing||reviewLayout||groupMode&&groupSelection.length>1)return;
+    if(!selected||loading||loadFailed||publishing||externalBusy||reviewLayout||groupMode&&groupSelection.length>1)return;
     if(savedFor(selected).locked){toast('ابتدا قفل لایه را باز کن.',true);return}
     const peers=mmvsLayerPeers();
     if(!peers){
@@ -825,7 +902,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     mmvsApplySafeLayerOrder(order);
   }
   function layer(action){
-    if(!selected||loading||publishing||reviewLayout||groupMode&&groupSelection.length>1)return;
+    if(!selected||loading||loadFailed||publishing||externalBusy||reviewLayout||groupMode&&groupSelection.length>1)return;
     // MMVS_R94_LIBRARY_BACKMOST
     const target=underlayImage();
     if(target&&action==='back'){
@@ -846,9 +923,9 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     mmvsApplySafeLayerOrder(order);
   }
   function nudge(dx,dy,step=1){if(groupMove(dx*step,dy*step))return;edit(p=>{p.x=clamp(p.x+dx*step,-4000,4000);p.y=clamp(p.y+dy*step,-4000,4000)})}
-  async function api(path,method='GET',body){
+  async function api(path,method='GET',body,slug=page){
     const token=sessionStorage.getItem('tenx_admin_token');if(!token)throw Error('ابتدا با سوپرادمین وارد شو');
-    const r=await fetch('/admin/mmvs/layout/'+encodeURIComponent(page)+path,{
+    const r=await fetch('/admin/mmvs/layout/'+encodeURIComponent(slug)+path,{
       method,cache:'no-store',headers:{authorization:'Bearer '+token,'content-type':'application/json'},
       body:body===undefined?undefined:JSON.stringify(body)
     });
@@ -870,18 +947,23 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     if(!history.length)list.textContent='تاریخچه‌ای ثبت نشده.';
   }
   async function load(slug){
-    const id=++session;mmvsVisualPinned.clear();page=slug;loading=true;selected='';groupSelection=[];groupMode=false;groupSync();overlapItems=[];layerItems=[];state();
-    let result;try{result=await api('')}catch(e){loading=false;state();throw e}
-    if(id!==session)return;
-    revision=result.revision;
-    published=clone(result.published||{items:[]});draft=result.draft?clone(result.draft):null;
-    history=Array.isArray(result.history)?result.history:[];
-    doc.items=clone(draft||published).items||[];doc.domMoves=clone(draft||published).domMoves||[];
-    initial=JSON.stringify(doc);loading=false;state();renderProps();renderBoundary();preview();drawHistory();mmvsVisualStackSchedule();
-    toast('یک عنصر را انتخاب کن؛ روی خودش قفل، مخفی‌کردن و جلو/عقب بردن لایه را داری.');
+    const id=++session;loading=true;loadFailed=false;state();
+    try{
+      const result=await api('','GET',undefined,slug);
+      if(id!==session)return false;
+      const nextPublished=clone(result.published||{items:[]}),nextDraft=result.draft?clone(result.draft):null;
+      const next=clone(nextDraft||nextPublished);
+      if(!Array.isArray(next.items)||!Number.isInteger(result.revision))throw Error('چیدمان دریافتی نامعتبر است');
+      mmvsVisualPinned.clear();page=slug;selected='';groupSelection=[];groupMode=false;groupSync();overlapItems=[];layerItems=[];
+      revision=result.revision;published=nextPublished;draft=nextDraft;
+      history=Array.isArray(result.history)?result.history:[];
+      doc={items:next.items,domMoves:next.domMoves||[]};initial=JSON.stringify(doc);lastHistoryDoc=initial;
+      loading=false;loadFailed=false;state();renderProps();renderBoundary();preview();drawHistory();mmvsVisualStackSchedule();
+      toast('یک عنصر را انتخاب کن؛ روی خودش قفل، مخفی‌کردن و جلو/عقب بردن لایه را داری.');return true;
+    }catch(error){if(id===session){loading=false;loadFailed=true;state();toast('چیدمان دریافت نشد؛ بارگذاری دوباره لازم است.',true)}throw error}
   }
   async function save(){
-    if(!dirty)return true;if(loading||publishing||!!reviewLayout)return false;loading=true;state();
+    if(loading||loadFailed||publishing||!!reviewLayout)return false;if(!dirty)return true;loading=true;state();
     try{
       const snapshot=clone(doc);
       const result=await api('/draft','PUT',{expectedRevision:revision,layout:snapshot});
@@ -891,7 +973,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     finally{loading=false;state()}
   }
   async function publish(){
-    if(loading||publishing||!!reviewLayout)return false;if(dirty&&!(await save()))return false;if(!draft)return true;
+    if(loading||loadFailed||publishing||externalBusy||!!reviewLayout)return false;if(dirty&&!(await save()))return false;if(!draft)return true;
     loading=true;state();
     try{
       const result=await api('/publish','POST',{expectedRevision:revision});
@@ -939,10 +1021,10 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     $('mmvs-dom-move-cancel')?.addEventListener('click',mmvsDomCancel);
     $('mmvs-dom-move-reset')?.addEventListener('click',mmvsDomUnmove);
     $('spatial-layer-refresh').onclick=scanLayers;
-    $('spatial-multi-mode').onclick=()=>{if(loading||publishing||reviewLayout)return;if(compactPanel?.classList.contains('is-mobile-collapsed')){compactPanel.classList.remove('is-mobile-collapsed');compactToggle.textContent='جمع‌کردن ابزارها';compactToggle.setAttribute('aria-expanded','true')}if(!groupMode&&!mode)$('spatial-mode').click();groupMode=!groupMode;groupSelection=groupMode&&selected?[selected]:[];groupSet(groupSelection)};
+    $('spatial-multi-mode').onclick=()=>{if(loading||loadFailed||publishing||externalBusy||reviewLayout)return;if(compactPanel?.classList.contains('is-mobile-collapsed')){compactPanel.classList.remove('is-mobile-collapsed');compactToggle.textContent='جمع‌کردن ابزارها';compactToggle.setAttribute('aria-expanded','true')}if(!groupMode&&!mode)$('spatial-mode').click();groupMode=!groupMode;groupSelection=groupMode&&selected?[selected]:[];groupSet(groupSelection)};
     $('spatial-multi-clear').onclick=()=>groupSet([]);
     const modeBtn=$('spatial-mode');modeBtn.onclick=()=>{
-      if(loading||publishing||reviewLayout)return toast('در حال ذخیره یا بازبینی، جابه‌جایی امکان‌پذیر نیست.',true);
+      if(loading||loadFailed||publishing||externalBusy||reviewLayout)return toast('در حال ذخیره یا بازبینی، جابه‌جایی امکان‌پذیر نیست.',true);
       mode=!mode;modeBtn.classList.toggle('active',mode);
       modeBtn.textContent=mode?'✋ جابه‌جایی روشن':'✋ فعال‌سازی جابه‌جایی';
       send('MMVS_SPATIAL_MODE',{enabled:reviewLayout?false:mode,grid});
@@ -1035,7 +1117,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
         if(mmvsR11RootSelector(d.item.selector))return;
         choose(d.item.selector);touchedSelection=d.item;
       }else if(d.type==='MMVS_SPATIAL_COMMIT' && d.item?.selector){
-        if(!mode||loading||publishing||!!reviewLayout||savedFor(d.item.selector).locked)return;
+        if(!mode||loading||loadFailed||publishing||externalBusy||!!reviewLayout||window.MMVSWorkspace?.isPublishedHomePreview?.()||savedFor(d.item.selector).locked)return;
         put({...savedFor(d.item.selector),...d.item},false);
       }else if(d.type==='MMVS_SPATIAL_ACTION'){
         if(d.selector!==selected)choose(d.selector);
@@ -1053,13 +1135,17 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     });
     window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
   }
-  function start(){bind();groupSync();if(window.matchMedia('(max-width:650px)').matches)$('spatial-tools').open=false;state();renderProps();renderBoundary();$('frame')?.addEventListener('load',()=>{ready=true;preview();mmvsDomSchedule()})}
-  window.MMVS_Spatial={review:layout=>{reviewLayout=layout?clone(layout):null;preview();state();renderProps()},getDraftLayout:()=>clone(doc),getSelected:()=>selected,
+  function restoreLocal(layout){
+    if(loading||loadFailed||publishing||externalBusy||reviewLayout||!layout||!Array.isArray(layout.items)||layout.items.length>500)return false;
+    historySuspended=true;try{doc=clone(layout);state();renderProps();renderBoundary();preview();return true}finally{historySuspended=false}
+  }
+  function start(){lastHistoryDoc=JSON.stringify(doc);bind();groupSync();if(window.matchMedia('(max-width:650px)').matches)$('spatial-tools').open=false;state();renderProps();renderBoundary();$('frame')?.addEventListener('load',()=>{ready=true;preview();mmvsDomSchedule()})}
+  window.MMVS_Spatial={setEditingBlocked:value=>{externalBusy=Boolean(value);preview()},restoreLocal,review:layout=>{reviewLayout=layout?clone(layout):null;preview();state();renderProps()},getDraftLayout:()=>clone(doc),getSelected:()=>selected,
     getSectionBackground:s=>clone(doc.items.find(x=>x.selector===s)?.sectionBackground||null),
     setSectionBackground:(s,bg)=>mmvsBgChange(s,bg),
     clearSectionBackground:s=>mmvsBgChange(s,null),loadPage:load,saveIfDirty:save,publishIfPending:publish,
     hasPending:()=>Boolean(dirty||draft),refresh:preview,isDirty:()=>JSON.stringify(doc)!==initial,
     acceptPublished:next=>{if(Number.isInteger(next)){revision=next;published=clone(draft||published);draft=null;state()}},
-    isBusy:()=>loading||publishing,getRevision:()=>loading?undefined:revision,setPublishing:value=>{publishing=value;state();renderProps()}};
+    isBusy:()=>loading||publishing,getRevision:()=>loading||loadFailed?undefined:revision,setPublishing:value=>{publishing=value;state();renderProps()}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

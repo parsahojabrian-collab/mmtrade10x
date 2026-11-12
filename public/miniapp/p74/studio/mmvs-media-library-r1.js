@@ -8,6 +8,7 @@ if(window.MMVS_MediaLibrary)return;
 const VERSION='MMVS_MEDIA_LIBRARY_R1';
 let root=null, grid=null, info=null, search=null, group=null, pageNode=null, pending=null;
 let page=1, pages=1, total=0, mode='insert', loading=false, allCount=null, recently=[];
+let queuedLoad=false,queuedRefresh=false;
 const LIMIT=32, $=id=>document.getElementById(id);
 const allowed=['image/png','image/jpeg','image/webp']; // MMTRADE_IMAGE_OPT_R32: library upload
 const isUrl=u=>typeof u==='string'&&/^\/(?!\/)[^\s]*\.(?:png|jpe?g|webp|gif|svg|avif)(?:\?[^\s]*)?$/i.test(u);
@@ -145,18 +146,30 @@ function render(items, append=false){if(!append)grid.replaceChildren();if(!items
  }
 }
 function readSize(bytes){return bytes>1024*1024?(bytes/1048576).toFixed(1)+' MB':Math.max(1,Math.ceil(bytes/1024))+' KB'}
-async function load(refresh=false){if(loading)return;loading=true;if(page===1||refresh)grid.replaceChildren(el('p','mmvs-media-empty','در حال دریافت تصاویر…'));try{
- const d=await getCatalog(refresh);total=d.total||0;pages=Math.max(1,Math.ceil(total/LIMIT));
- let visible=Array.isArray(d.items)?d.items:[];
- if(page===1&&group.value==='uploads'&&!search.value.trim()){
-   const existing=new Set(visible.map(x=>x.url));
-   visible=[...recently.filter(x=>!existing.has(x.url)),...visible].slice(0,LIMIT);
+async function load(refresh=false){
+ if(loading){queuedLoad=true;queuedRefresh=queuedRefresh||refresh;return}
+ loading=true;const query={page,group:group.value,search:search.value.trim()};
+ if(query.page===1||refresh)grid.replaceChildren(el('p','mmvs-media-empty','در حال دریافت تصاویر…'));
+ try{
+  const d=await getCatalog(refresh);
+  if(queuedLoad||query.page!==page||query.group!==group.value||query.search!==search.value.trim())return;
+  total=d.total||0;pages=Math.max(1,Math.ceil(total/LIMIT));
+  let visible=Array.isArray(d.items)?d.items:[];
+  if(query.page===1&&query.group==='uploads'&&!query.search){
+   const existing=new Set(visible.map(x=>x.url));visible=[...recently.filter(x=>!existing.has(x.url)),...visible].slice(0,LIMIT);
    visible=visible.map(x=>recently.find(r=>r.url===x.url)||x);
+  }
+  render(visible,query.page>1&&!refresh);
+  pageNode.textContent='نمایش '+grid.querySelectorAll('.mmvs-media-card').length.toLocaleString('fa-IR')+' از '+total.toLocaleString('fa-IR')+' تصویر'+(query.page<pages?' · برای دیدن ادامه، به پایین بروید':' · همه تصاویر بارگذاری شدند');
+  allCount=total;status('کتابخانه آماده است.');
+ }catch(error){if(!queuedLoad){grid.replaceChildren(el('p','mmvs-media-empty',error.message));status(error.message,true)}}
+ finally{
+  loading=false;
+  if(queuedLoad){const refreshNext=queuedRefresh;queuedLoad=false;queuedRefresh=false;await load(refreshNext)}
+  else setTimeout(mmvsR4OnScroll,60);
  }
- render(visible,page>1&&!refresh);
- pageNode.textContent='نمایش '+grid.querySelectorAll('.mmvs-media-card').length.toLocaleString('fa-IR')+' از '+total.toLocaleString('fa-IR')+' تصویر'+(page<pages?' · برای دیدن ادامه، به پایین بروید':' · همه تصاویر بارگذاری شدند');
- allCount=total;status('کتابخانه آماده است. برای فایل‌های آپلودیِ بدون استفاده، دکمه «حذف دائمی» فعال است.');
- }catch(e){grid.replaceChildren(el('p','mmvs-media-empty',e.message));status(e.message,true)}finally{loading=false;setTimeout(mmvsR4OnScroll,60)}}
+}
+
 function close(){mmvsR4HidePreview();if(root){root.hidden=true;document.body.classList.remove('mmvs-media-open')}}
 function open(nextMode='insert'){try{okay()}catch(e){window.alert(e.message);return}build();mode=nextMode;$('mmvs-media-mode').value=mode;root.hidden=false;document.body.classList.add('mmvs-media-open');page=1;load();}
 function makeBtn(label,fn,cls=''){const b=el('button',cls,label);b.type='button';b.onclick=fn;return b}
@@ -176,7 +189,7 @@ function build(){if(root)return;
  uploadBox.append(uploadName,uploadTip,file,settings);panel.append(uploadBox);
  info=el('p','mmvs-media-status','');info.setAttribute('role','status');panel.append(info);
  grid=el('div','mmvs-media-grid');panel.append(grid);
- const footer=el('footer','mmvs-media-footer');const previous=makeBtn('قبلی',()=>{if(page>1){page--;load()}});const next=makeBtn('بعدی',()=>{if(page<pages){page++;load()}});pageNode=el('span','','');footer.append(previous,pageNode,next);panel.append(footer);
+ const footer=el('footer','mmvs-media-footer');const previous=makeBtn('قبلی',()=>{if(!loading&&page>1){page--;load()}});const next=makeBtn('بعدی',()=>{if(!loading&&page<pages){page++;load()}});pageNode=el('span','','');footer.append(previous,pageNode,next);panel.append(footer);
  file.onchange=async()=>{const files=[...file.files||[]];file.disabled=true;let uploaded=0,error=null;for(const f of files){try{status('آماده‌سازی '+f.name+'…');const after=await optimize(f,status);if(!after)continue;const url=await upload(after,status);if(!isUrl(url))throw Error('آدرس تصویر آپلودشده نامعتبر است.');recently.unshift({url,name:f.name,group:'uploads',bytes:after.size});recently=recently.slice(0,15);uploaded++;}
  catch(e){error='آپلود '+f.name+': '+e.message;break}}file.value='';file.disabled=false;page=1;group.value='uploads';search.value='';await load(true);if(error)status(error,true);else if(uploaded)status(uploaded.toLocaleString('fa-IR')+' تصویر با موفقیت به کتابخانه اضافه شد.');};
  root.addEventListener('scroll',mmvsR4OnScroll,{passive:true});root.addEventListener('click',e=>{if(e.target===root)close()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!root.hidden)close()});document.body.append(root);
