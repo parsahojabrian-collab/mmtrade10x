@@ -1,0 +1,12 @@
+{
+  "base": "a1af2b4c53ea37cb4479f284aac417ea88c9b475",
+  "files": {
+    "apps/api/src/index.ts": "4d5d98ef121a8583c2f8395b6f9bdaf30714c845f72a27c08bdfabd2c73d900b",
+    "apps/api/public/admin.html": "23b9e8c27f80afca65caf98ffaa4bc28d4bf1659f23a822bc6b82154cf9787a0",
+    "apps/api/src/transaction-lock.ts": "57a6db6dd1c89541b50e2e4556f1a872a3e5a204794aa7f0e7331e570e7af432",
+    "packages/shared/src/bot-menu-validation.ts": "109124ab0881d9394bf4693cd23cb2db1f4c081df004870a8f403d38cf2948a3",
+    "tests/main-audit-fixes.test.mjs": "c789c11397113267899c689977635c2e4292bc0caa5d965342f0d81fdd2fb343",
+    "tests/bugfixes.test.mjs": "55c4f8b1109d7c43f3798a8f6c8b26ce61fd5d6ecc974c480cff7bc0d1acc9d3",
+    "docs/MMTRADE_MAIN_AUDIT_FIXES_FA.md": "47280771c2af789ec08b6bb28319936494123a0a0bf52f3dda1a0f2a126a979f"
+  }
+}

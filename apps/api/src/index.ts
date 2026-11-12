@@ -1,3 +1,5 @@
+import { withSystemLock } from './transaction-lock.js';
+import { botMenuConflict } from '../../../packages/shared/src/bot-menu-validation.js';
 import { recordStudioRelease, studioReleaseKey } from './studio-releases.js';
 import { contentRevision, assertContentRevision, withContentLock, ContentConflict } from './content-workflow.js';
 import { authenticateTeamAdmin } from './team-auth-p37.js';
@@ -174,16 +176,16 @@ app.post('/public/pre-register', { config: { rateLimit: { max: 10, timeWindow: '
   if (!/^\+?[0-9]{7,15}$/.test(phone)) return reply.code(400).send({ error: 'invalid_phone' });
   try {
     // Unverified website input must never modify an existing user or add consent records for them.
-    const existing = await prisma.user.findFirst({ where: { phone: { in: phoneVariants(phone) } }, select: { id: true } });
-    if (!existing) {
-      await prisma.$transaction(async tx => {
+    await withSystemLock(prisma, 'WEBSITE_PHONE_LOCK_' + mmChallengeHash('sha256').update(phone).digest('hex'), async tx => {
+      const existing = await tx.user.findFirst({ where: { phone: { in: phoneVariants(phone) } }, select: { id: true } });
+      if (!existing) {
         const saved = await tx.user.create({ data: { firstName: parsed.data.firstName, lastName: parsed.data.lastName, phone, registrationSource: parsed.data.source, registrationStatus: 'STARTED', registrationStage: 'STARTED' } });
         await tx.userConsent.create({ data: { userId: saved.id, type: 'PRIVACY_PROCESSING', channel: 'WEBSITE', granted: true, wordingVersion: 'website-pre-registration-v1', ipAddress: request.ip } });
         if (parsed.data.smsConsent) await tx.userConsent.create({ data: { userId: saved.id, type: 'SMS_MARKETING', channel: 'WEBSITE', granted: true, wordingVersion: 'website-sms-consent-v1', ipAddress: request.ip } });
         await tx.registrationStageEvent.create({ data: { userId: saved.id, stage: saved.registrationStage, detail: { source: parsed.data.source, preRegistration: true } } });
         await tx.auditLog.create({ data: { userId: saved.id, action: 'WEBSITE_PRE_REGISTRATION', entityType: 'User', entityId: saved.id, metadata: { smsConsent: parsed.data.smsConsent, existingUser: false } } });
-      });
-    }
+      }
+    });
     return reply.code(201).send({ ok: true, message: 'درخواست پیش‌ثبت‌نام ثبت شد.' });
   } catch (error) {
     request.log.error({ err: error }, 'pre-registration failed');
@@ -363,7 +365,9 @@ app.patch('/admin/p60/section-admins/:id',async(request,reply)=>{
     const existing=await prisma.systemSetting.findUnique({where:{key:p60TgPrefix+body.data.telegramId}});
     if(existing && (existing.value as any)?.adminId!==admin.id)return reply.code(409).send({error:'telegram_id_already_assigned'});
   }
-  await prisma.$transaction(async tx=>{
+  await withSystemLock(prisma, 'ADMIN_SUPER_ROLE_LOCK_V1', async tx=>{
+    const current = await tx.adminUser.findUnique({where:{id:admin.id},select:{role:true}});
+    if (!current || current.role === 'SUPER_ADMIN') throw new ContentConflict('owner_is_immutable');
     if(body.data.telegramId!==undefined){
       const mapped=await tx.systemSetting.findMany({where:{key:{startsWith:p60TgPrefix}},select:{key:true,value:true}});
       for(const row of mapped)if((row.value as any)?.adminId===admin.id && row.key!==p60TgPrefix+body.data.telegramId)
@@ -701,20 +705,23 @@ app.patch('/admin/admins/:id', async (request, reply) => {
   const { id } = z.object({ id: z.string().min(1).max(100) }).parse(request.params);
   const body = z.object({ role: z.enum(ADMIN_ROLES).optional(), isActive: z.boolean().optional(), password: z.string().min(MIN_ADMIN_PASSWORD_LENGTH).max(200).optional() }).safeParse(request.body);
   if (!body.success || Object.keys(body.data).length === 0) return reply.code(400).send({ error: 'invalid_body' });
-  const target = await prisma.adminUser.findUnique({ where: { id } });
-  if (!target) return reply.code(404).send({ error: 'not_found' });
-  const losesSuper = target.role === 'SUPER_ADMIN' && target.isActive && ((body.data.role !== undefined && body.data.role !== 'SUPER_ADMIN') || body.data.isActive === false);
-  if (losesSuper) {
-    const otherSupers = await prisma.adminUser.count({ where: { role: 'SUPER_ADMIN', isActive: true, id: { not: id } } });
-    if (otherSupers === 0) return reply.code(409).send({ error: 'last_super_admin', message: 'آخرین مدیر کل را نمی‌شود غیرفعال یا تنزل داد.' });
-  }
   const data: { role?: (typeof ADMIN_ROLES)[number]; isActive?: boolean; passwordHash?: string } = {};
   if (body.data.role !== undefined) data.role = body.data.role;
   if (body.data.isActive !== undefined) data.isActive = body.data.isActive;
   if (body.data.password !== undefined) data.passwordHash = await hashPassword(body.data.password);
-  const updated = await prisma.adminUser.update({ where: { id }, data, select: { id: true, email: true, role: true, isActive: true } });
-  await prisma.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'ADMIN_UPDATED', entityType: 'AdminUser', entityId: id, metadata: { fields: Object.keys(body.data) } } });
-  return updated;
+  return await withSystemLock(prisma, 'ADMIN_SUPER_ROLE_LOCK_V1', async tx => {
+    const target = await tx.adminUser.findUnique({ where: { id } });
+    if (!target) return reply.code(404).send({ error: 'not_found' });
+    const losesSuper = target.role === 'SUPER_ADMIN' && target.isActive &&
+      ((data.role !== undefined && data.role !== 'SUPER_ADMIN') || data.isActive === false);
+    if (losesSuper) {
+      const otherSupers = await tx.adminUser.count({ where: { role: 'SUPER_ADMIN', isActive: true, id: { not: id } } });
+      if (otherSupers === 0) return reply.code(409).send({ error: 'last_super_admin', message: 'آخرین مدیر کل را نمی‌شود غیرفعال یا تنزل داد.' });
+    }
+    const updated = await tx.adminUser.update({ where: { id }, data, select: { id: true, email: true, role: true, isActive: true } });
+    await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'ADMIN_UPDATED', entityType: 'AdminUser', entityId: id, metadata: { fields: Object.keys(body.data) } } });
+    return updated;
+  });
 });
 
 
@@ -1536,6 +1543,9 @@ app.put('/admin/bot/config', { preHandler: botControlGuard }, async (request: an
       error: 'PROTECTED_MENU_ITEM'
     });
   }
+
+  const menuError = botMenuConflict(parsed.data.builtInButtons, defaultBotConfig.builtInButtons, parsed.data.customMenu);
+  if (menuError) return reply.code(400).send({ error: menuError, message: 'شناسه‌ها و متن دکمه‌ها باید یکتا باشند؛ متن پیش‌فرض دکمه‌های دیگر هم رزرو است.' });
 
   const config = parsed.data;
 
@@ -3137,8 +3147,30 @@ app.post('/admin/notifications/:id/retry', async (request, reply) => {
 
 app.get('/admin/tickets', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
-  const items = await prisma.supportTicket.findMany({ orderBy: { updatedAt: 'desc' }, take: 100, include: { user: { select: { id: true, telegramId: true, username: true, firstName: true, lastName: true } }, messages: { orderBy: { createdAt: 'asc' }, take: 20, select: { id: true, senderType: true, body: true, createdAt: true } } } });
-  return { items };
+  const items = await prisma.supportTicket.findMany({orderBy:{updatedAt:'desc'},take:100,
+    include:{user:{select:{id:true,telegramId:true,username:true,firstName:true,lastName:true}},
+      messages:{orderBy:[{createdAt:'desc'},{id:'desc'}],take:21,select:{id:true,senderType:true,body:true,createdAt:true}}}});
+  return {items:items.map(ticket => {
+    const messages=ticket.messages.slice(0,20).reverse();
+    return {...ticket,messages,nextMessagesCursor:ticket.messages.length>20?messages[0].id:null};
+  })};
+});
+
+app.get('/admin/tickets/:id/messages', async (request, reply) => {
+  if (!(await adminGuard(request, reply))) return;
+  const p=z.object({id:z.string().min(1).max(100)}).safeParse(request.params);
+  const q=z.object({cursor:z.string().min(1).max(100).optional()}).strict().safeParse(request.query);
+  if(!p.success||!q.success)return reply.code(400).send({error:'invalid_request'});
+  const ticket=await prisma.supportTicket.findUnique({where:{id:p.data.id},select:{id:true}});
+  if(!ticket)return reply.code(404).send({error:'ticket_not_found'});
+  const before=q.data.cursor?await prisma.supportMessage.findFirst({where:{id:q.data.cursor,ticketId:p.data.id},select:{id:true,createdAt:true}}):null;
+  if(q.data.cursor&&!before)return reply.code(400).send({error:'invalid_cursor'});
+  const rows=await prisma.supportMessage.findMany({
+    where:{ticketId:p.data.id,...(before?{OR:[{createdAt:{lt:before.createdAt}},{createdAt:before.createdAt,id:{lt:before.id}}]}:{})},
+    orderBy:[{createdAt:'desc'},{id:'desc'}],take:21,select:{id:true,senderType:true,body:true,createdAt:true}
+  });
+  const items=rows.slice(0,20).reverse();
+  return {items,nextCursor:rows.length>20?items[0].id:null};
 });
 
 app.post('/admin/tickets/:id/reply', async (request, reply) => {
@@ -4806,7 +4838,7 @@ function tenxCustomBackupIdOk(v: any): v is string {
 // All write operations below require SUPER_ADMIN and use one DB transaction.
 const rm6PageInfo: Record<string, { label: string; defaultPath: string; target: string; legacy: string[] }> = {
   index: {label:'خانه',defaultPath:'/miniapp/index.html',target:'/miniapp/index.html',legacy:['/miniapp/index.html','/miniapp/']},
-  academy: {label:'آموزش / مرحله اول',defaultPath:'/academy',target:'/miniapp/p74/learning/stage1.html',legacy:['/miniapp/academy.html','/miniapp/index.html?view=academy']},
+  academy: {label:'آموزش / مرحله اول',defaultPath:'/academy',target:'/miniapp/p74/learning/academy-home.html',legacy:['/miniapp/academy.html','/miniapp/index.html?view=academy']},
   crypto: {label:'رمزارز',defaultPath:'/crypto',target:'/miniapp/crypto.html',legacy:['/miniapp/crypto.html']},
   'copy-trading': {label:'کپی‌ترید',defaultPath:'/copy-trading',target:'/miniapp/copy-trading.html',legacy:['/miniapp/copy-trading.html']},
   challenge: {label:'چالش',defaultPath:'/challenge',target:'/miniapp/index.html?view=mmtrade10x',legacy:['/miniapp/challenge.html']},
@@ -6656,7 +6688,7 @@ app.put('/admin/content/pages/:slug/draft', async (request, reply) => {
 
   const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
   const b = z.object({
-    expectedRevision: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+    expectedRevision: z.string().regex(/^[a-f0-9]{64}$/),
     title: z.string().trim().max(200).nullable().optional(),
     blocks: z.array(blockSchema).max(220)
   }).strict().safeParse(request.body);
@@ -6719,7 +6751,7 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
   if (!p.success) return reply.code(400).send({ error: 'invalid_request' });
 
   const body=z.object({
-    expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(),
+    expectedRevision:z.string().regex(/^[a-f0-9]{64}$/),
     spatialExpectedRevision:z.number().int().min(0).optional()
   }).strict().safeParse(request.body??{});
   if(!body.success)return reply.code(400).send({error:'invalid_request'});
@@ -6809,26 +6841,7 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
 
 app.put('/admin/content/pages/:slug', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
-  const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
-  const b = z.object({ title: z.string().trim().max(200).nullable().optional(), status: z.enum(['DRAFT', 'PUBLISHED']), blocks: z.array(blockSchema).max(220) }).strict().safeParse(request.body);
-  if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request', details: b.success ? undefined : b.error.flatten() });
-  const blocks = JSON.parse(JSON.stringify(b.data.blocks));
-  const saved = await withContentLock(prisma,p.data.slug,async (tx) => {
-    const page = await tx.contentPage.upsert({
-      where: { slug: p.data.slug },
-      create: { slug: p.data.slug, status: b.data.status, blocks, ...pick('title', b.data.title) },
-      update: { status: b.data.status, blocks, ...pick('title', b.data.title) }
-    });
-    const latest = await tx.contentPageVersion.aggregate({ where: { pageSlug: page.slug }, _max: { version: true } });
-    await tx.contentPageVersion.create({ data: {
-      pageSlug: page.slug, version: (latest._max.version ?? 0) + 1,
-      title: page.title, blocks: toInputJson(page.blocks), status: page.status,
-      createdByAdminId: adminIdOf(request)
-    } });
-    await tx.auditLog.create({ data: { adminUserId: adminIdOf(request), action: page.status === 'PUBLISHED' ? 'CONTENT_PAGE_PUBLISHED' : 'CONTENT_PAGE_DRAFT_SAVED', entityType: 'ContentPage', entityId: page.slug, metadata: { status: page.status } } });
-    return page;
-  });
-  return { ok: true, updatedAt: saved.updatedAt };
+  return reply.code(409).send({ error: 'legacy_content_writer_retired', message: 'از ذخیره پیش‌نویس و انتشار نسخه‌دار در ویرایشگر استفاده کنید.' });
 });
 
 app.get('/admin/content/pages/:slug/versions', async (request, reply) => {
@@ -6842,109 +6855,32 @@ app.get('/admin/content/pages/:slug/versions', async (request, reply) => {
   return { items };
 });
 
+// Legacy content-only history restores a draft, never public content or layout.
 app.post('/admin/content/pages/:slug/rollback', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
   const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
-  const b = z.object({ versionId: z.string().min(1).max(64) }).strict().safeParse(request.body);
+  const b = z.object({ versionId: z.string().min(1).max(64), expectedRevision: z.string().regex(/^[a-f0-9]{64}$/) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request' });
-
-  const result = await withContentLock(prisma,p.data.slug,async (tx) => {
-    const target = await tx.contentPageVersion.findFirst({
-      where: { id: b.data.versionId, pageSlug: p.data.slug }
-    });
+  const result = await withContentLock(prisma, p.data.slug, async tx => {
+    const current = await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}})
+      ?? await tx.contentPage.findUnique({where:{slug:p.data.slug}});
+    assertContentRevision(current, b.data.expectedRevision);
+    const target = await tx.contentPageVersion.findFirst({where:{id:b.data.versionId,pageSlug:p.data.slug}});
     if (!target) return null;
-
-    let restoredStatus = target.status;
-
-    if (target.status === 'DRAFT') {
-      const restored = await tx.contentPageDraft.upsert({
-        where: { slug: p.data.slug },
-        create: {
-          slug: p.data.slug,
-          title: target.title,
-          blocks: toInputJson(target.blocks)
-        },
-        update: {
-          title: target.title,
-          blocks: toInputJson(target.blocks)
-        }
-      });
-      await tx.auditLog.create({
-        data: {
-          adminUserId: adminIdOf(request),
-          action: 'CONTENT_PAGE_DRAFT_ROLLED_BACK',
-          entityType: 'ContentPageDraft',
-          entityId: p.data.slug,
-          metadata: { sourceVersion: target.version }
-        }
-      });
-      restoredStatus = 'DRAFT';
-    } else {
-      const restored = await tx.contentPage.upsert({
-        where: { slug: p.data.slug },
-        create: {
-          slug: p.data.slug,
-          title: target.title,
-          blocks: toInputJson(target.blocks),
-          status: 'PUBLISHED'
-        },
-        update: {
-          title: target.title,
-          blocks: toInputJson(target.blocks),
-          status: 'PUBLISHED'
-        }
-      });
-
-      // Keep the editor draft aligned with the version just restored live.
-      await tx.contentPageDraft.upsert({
-        where: { slug: p.data.slug },
-        create: {
-          slug: p.data.slug,
-          title: restored.title,
-          blocks: toInputJson(restored.blocks)
-        },
-        update: {
-          title: restored.title,
-          blocks: toInputJson(restored.blocks)
-        }
-      });
-    }
-
-    const latest = await tx.contentPageVersion.aggregate({
-      where: { pageSlug: p.data.slug },
-      _max: { version: true }
+    const draft = await tx.contentPageDraft.upsert({
+      where:{slug:p.data.slug},
+      create:{slug:p.data.slug,title:target.title,blocks:toInputJson(target.blocks)},
+      update:{title:target.title,blocks:toInputJson(target.blocks)}
     });
-
-    const version = await tx.contentPageVersion.create({
-      data: {
-        pageSlug: p.data.slug,
-        version: (latest._max.version ?? 0) + 1,
-        title: target.title,
-        blocks: toInputJson(target.blocks),
-        status: restoredStatus,
-        createdByAdminId: adminIdOf(request)
-      }
-    });
-
-    await tx.auditLog.create({
-      data: {
-        adminUserId: adminIdOf(request),
-        action: 'CONTENT_PAGE_ROLLED_BACK',
-        entityType: 'ContentPage',
-        entityId: p.data.slug,
-        metadata: {
-          sourceVersion: target.version,
-          createdVersion: version.version,
-          restoredStatus
-        }
-      }
-    });
-
-    return { version: version.version, status: restoredStatus };
+    const latest = await tx.contentPageVersion.aggregate({where:{pageSlug:p.data.slug},_max:{version:true}});
+    const version = await tx.contentPageVersion.create({data:{pageSlug:p.data.slug,version:(latest._max.version??0)+1,
+      title:draft.title,blocks:toInputJson(draft.blocks),status:'DRAFT',createdByAdminId:adminIdOf(request)}});
+    await tx.auditLog.create({data:{adminUserId:adminIdOf(request),action:'CONTENT_PAGE_DRAFT_ROLLED_BACK',entityType:'ContentPageDraft',
+      entityId:p.data.slug,metadata:{sourceVersion:target.version,createdVersion:version.version,contentOnly:true}}});
+    return {version:version.version,status:'DRAFT',revision:contentRevision(draft)};
   });
-
-  if (!result) return reply.code(404).send({ error: 'version_not_found' });
-  return { ok: true, ...result };
+  if (!result) return reply.code(404).send({error:'version_not_found'});
+  return {ok:true,...result};
 });
 
 app.get('/admin/content/popups', async (request, reply) => {

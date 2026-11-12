@@ -66,6 +66,6 @@ test('content page versioning and rollback are implemented server-side', async (
   assert.match(migration, /CREATE TABLE `ContentPageVersion`/);
   assert.match(api, /app\.get\('\/admin\/content\/pages\/:slug\/versions'/);
   assert.match(api, /app\.post\('\/admin\/content\/pages\/:slug\/rollback'/);
-  assert.match(api, /CONTENT_PAGE_ROLLED_BACK/);
+  assert.match(api, /CONTENT_PAGE_DRAFT_ROLLED_BACK/);
   assert.match(panel, /pageHistory\(r\.slug\)/);
 });
