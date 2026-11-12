@@ -30,7 +30,7 @@ function botHarness({complete=false,users=[],notifications=[],send=async()=>{},f
    try{return await action(prisma)}catch(error){tickets.splice(0,tickets.length,...saved.tickets);messages.splice(0,messages.length,...saved.messages);consents.splice(0,consents.length,...saved.consents);settings.clear();for(const [k,v] of saved.settings)settings.set(k,v);throw error}finally{release()}
   }
  };
- class Keys{constructor(){this.labels=[]}text(x){this.labels.push(x);return this}row(){return this}resized(){return this}oneTime(){return this}requestContact(x){return this.text(x)}}
+ class Keys{constructor(){this.labels=[]}text(x){this.labels.push(x);return this}row(){return this}resized(){return this}oneTime(){return this}requestContact(x){return this.text(x)}webApp(label,url){this.webAppUrl=url;return this.text(label)}}
  class Bot{constructor(){this.api={sendMessage:async(...args)=>{sent.push(args);return send(...args)}}}use(fn){middleware.push(fn)}on(filter,fn){handlers.push({filter,fn})}command(name,fn){commands.set(name,fn)}isRunning(){return false}async stop(){}callbackQuery(name,fn){callbacks.set(name,fn)}catch(){}}
  const DateMock=class extends Date{constructor(...args){super(...(args.length?args:[clock]))}static now(){return clock}};
  const context=vm.createContext({require:name=>name==='grammy'?{Bot,Keyboard:Keys,InlineKeyboard:Keys}:name==='@prisma/client'?{PrismaClient:class{constructor(){return prisma}}}:name==='./notification-retry.js'?retry:name==='./account-state.js'?accountState:{},exports:{},process:{env:{TELEGRAM_BOT_TOKEN:'test'},once(){}},console:{log(){},error(){}},URL,Date:DateMock,Set,setInterval,clearInterval});
@@ -148,4 +148,44 @@ test('shutdown waits for the in-flight automation before disconnecting the datab
 });
 test('invalid startup mode fails before opening the database or sending reminders',async()=>{
  const h=botHarness();h.context.process.env.TELEGRAM_MODE='webhook';await assert.rejects(h.run('main()'),/polling/);assert.equal(h.connects(),0);assert.equal(h.sent.length,0);
+});
+
+
+test('mini-app-only mode removes the reply keyboard and shows exactly one Web App entry for /start',async()=>{
+ const h=botHarness();h.settings.set('MINI_APP_URL','https://example.com/miniapp');h.settings.set('BOT_CONTROL_CONFIG',{miniAppOnly:true});
+ h.ctx.message={text:'/start'};let reachedRegistration=false;
+ await h.middleware[1](h.ctx,()=>{reachedRegistration=true});
+ assert.equal(reachedRegistration,false);assert.equal(h.replies.length,2);
+ assert.equal(h.replies[0][1].reply_markup.remove_keyboard,true);
+ assert.deepEqual(h.replies[1][1].reply_markup.labels,['🚀 ورود به مینی‌اپ']);
+ assert.equal(h.replies[1][1].reply_markup.webAppUrl,'https://example.com/miniapp');
+ assert.equal(h.stages.length,0);assert.equal(h.consents.length,0);
+});
+test('mini-app-only mode intercepts old buttons, custom commands and contacts before hidden actions run',async()=>{
+ for(const message of [{text:'💬 پشتیبانی'},{text:'/menu'},{text:'/closesupport'},{text:'Custom menu'},{contact:{user_id:42,phone_number:'09121234567'}}]){
+  const h=botHarness();h.settings.set('MINI_APP_URL','https://example.com/app');h.settings.set('BOT_CONTROL_CONFIG',{miniAppOnly:true});h.ctx.message=message;
+  let called=false;await h.middleware[1](h.ctx,()=>{called=true});
+  assert.equal(called,false);assert.equal(h.tickets.length,0);assert.equal(h.stages.length,0);assert.equal(h.consents.length,0);
+ }
+});
+test('mini-app-only mode acknowledges obsolete consent callbacks without accepting consent',async()=>{
+ const h=botHarness();h.settings.set('MINI_APP_URL','https://example.com/app');h.settings.set('BOT_CONTROL_CONFIG',{miniAppOnly:true});
+ h.ctx.callbackQuery={data:'consent_yes'};let acknowledged=0;h.ctx.answerCallbackQuery=async()=>{acknowledged++};
+ let next=false;await h.middleware[1](h.ctx,()=>{next=true});
+ assert.equal(acknowledged,1);assert.equal(next,false);assert.equal(h.consents.length,0);assert.equal(h.stages.length,0);
+});
+test('turning mini-app-only off restores the original menus after the settings cache refreshes',async()=>{
+ const h=botHarness();h.settings.set('MINI_APP_URL','https://example.com/app');h.settings.set('BOT_CONTROL_CONFIG',{miniAppOnly:true});h.ctx.message={text:'/menu'};
+ await h.middleware[1](h.ctx,()=>assert.fail('mode should intercept'));
+ h.settings.set('BOT_CONTROL_CONFIG',{miniAppOnly:false});h.tick(10001);
+ let next=false;await h.middleware[1](h.ctx,()=>{next=true});assert.equal(next,true);
+ h.replies.length=0;h.ctx.testPerson=h.person;await h.run('showMainMenu(ctx,ctx.testPerson)');assert.ok(h.replies[0][1].reply_markup.labels.includes('💬 پشتیبانی'));assert.equal(h.replies[0][1].reply_markup.webAppUrl,undefined);
+});
+test('a missing or unsafe Mini App URL removes the old keyboard and sends setup guidance',async()=>{
+ for(const url of ['', 'http://example.com/app','https://user:secret@example.com/app']){
+  const h=botHarness();h.settings.set('MINI_APP_URL',url);h.settings.set('BOT_CONTROL_CONFIG',{miniAppOnly:true});h.ctx.message={text:'/menu'};
+  await h.middleware[1](h.ctx,()=>assert.fail('must not expose normal menu'));
+  assert.equal(h.replies[0][1].reply_markup.remove_keyboard,true);assert.match(h.replies.at(-1)[0],/تنظیم/);
+  assert.equal(h.replies.at(-1)[1],undefined);
+ }
 });

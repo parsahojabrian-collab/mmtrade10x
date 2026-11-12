@@ -1431,6 +1431,7 @@ const BOT_CONFIG_KEY = 'BOT_CONTROL_CONFIG';
 
 const defaultBotConfig = {
   enabled: true,
+  miniAppOnly: false,
   welcomeMessage: 'به ربات 10X خوش آمدی.',
   challengeLessonId: null,
   autoReplies: [],
@@ -1462,6 +1463,7 @@ async function readBotConfig() {
 
   return {
     enabled: saved.enabled !== false,
+    miniAppOnly: saved.miniAppOnly === true,
     welcomeMessage: typeof saved.welcomeMessage === 'string'
       ? saved.welcomeMessage.slice(0, 2000)
       : defaultBotConfig.welcomeMessage,
@@ -1486,6 +1488,7 @@ app.get('/admin/bot/config', { preHandler: botControlGuard }, async () => {
 app.put('/admin/bot/config', { preHandler: botControlGuard }, async (request: any, reply: any) => {
   const parsed = z.object({
     enabled: z.boolean(),
+    miniAppOnly: z.boolean().optional(),
     welcomeMessage: z.string().trim().min(1).max(2000),
     autoReplies: z.array(z.object({
       keyword: z.string().trim().min(1).max(100),
@@ -1547,7 +1550,17 @@ app.put('/admin/bot/config', { preHandler: botControlGuard }, async (request: an
   const menuError = botMenuConflict(parsed.data.builtInButtons, defaultBotConfig.builtInButtons, parsed.data.customMenu);
   if (menuError) return reply.code(400).send({ error: menuError, message: 'شناسه‌ها و متن دکمه‌ها باید یکتا باشند؛ متن پیش‌فرض دکمه‌های دیگر هم رزرو است.' });
 
-  const config = parsed.data;
+  // Older clients that omit this field must not silently turn the mode off.
+  const config = {...parsed.data, miniAppOnly: parsed.data.miniAppOnly ?? (await readBotConfig()).miniAppOnly};
+  if (config.miniAppOnly) {
+    const setting = await prisma.systemSetting.findUnique({where:{key:'MINI_APP_URL'}});
+    try {
+      const url = new URL(String(setting?.value ?? process.env.MINI_APP_URL ?? ''));
+      if (url.protocol !== 'https:' || url.username || url.password) throw new Error('invalid mini app URL');
+    } catch {
+      return reply.code(400).send({error:'MINI_APP_URL_REQUIRED',message:'ابتدا یک لینک HTTPS معتبر برای مینی‌اپ در تنظیمات اصلی ثبت کنید.'});
+    }
+  }
 
   if (config.challengeLessonId) {
     const lesson = await prisma.lesson.findFirst({
@@ -1603,6 +1616,7 @@ app.put('/admin/bot/config', { preHandler: botControlGuard }, async (request: an
       entityType: 'SystemSetting',
       entityId: BOT_CONFIG_KEY,
       metadata: {
+        miniAppOnly: config.miniAppOnly,
         autoReplyCount: config.autoReplies.length,
         menuCount: config.customMenu.length,
         enabled: config.enabled

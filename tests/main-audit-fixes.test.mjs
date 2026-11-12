@@ -105,7 +105,7 @@ test('legacy draft restoration rolls back on audit failure',async t=>{
 });
 test('bot configuration rejects duplicate identifiers and labels, including renamed and legacy aliases',async t=>{
  const {app,db,defaults}=await harness([['put','/admin/bot/config']]);t.after(()=>app.close());
- const body={enabled:true,welcomeMessage:'Hello',autoReplies:[],customMenu:[],builtInButtons:copy(defaults)};
+ const body={enabled:true,miniAppOnly:false,welcomeMessage:'Hello',autoReplies:[],customMenu:[],builtInButtons:copy(defaults)};
  const save=payload=>app.inject({method:'PUT',url:'/admin/bot/config',payload});assert.equal((await save(body)).statusCode,200);
  const duplicateId=copy(body);duplicateId.builtInButtons[1].id=duplicateId.builtInButtons[0].id;assert.equal((await save(duplicateId)).statusCode,400);
  const duplicateLabel=copy(body);duplicateLabel.builtInButtons[6].label=duplicateLabel.builtInButtons[5].label;assert.equal((await save(duplicateLabel)).statusCode,400);

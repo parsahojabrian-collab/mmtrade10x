@@ -37,6 +37,7 @@ type BotMenuBlock = {
 
 type DynamicBotConfig = {
   enabled: boolean;
+  miniAppOnly: boolean;
   welcomeMessage: string;
   challengeLessonId?: string;
   autoReplies: { keyword: string; response: string; enabled: boolean }[];
@@ -92,6 +93,7 @@ type BotSettings = {
 };
 const DEFAULT_DYNAMIC_CONFIG: DynamicBotConfig = {
   enabled: true,
+  miniAppOnly: false,
   welcomeMessage: 'به 10X خوش آمدی، {name}!',
   autoReplies: [],
   customMenu: [],
@@ -143,6 +145,7 @@ async function loadBotSettings(): Promise<BotSettings> {
         : [];
       return {
         enabled: v.enabled !== false,
+        miniAppOnly: v.miniAppOnly === true,
         welcomeMessage: typeof v.welcomeMessage === 'string' && v.welcomeMessage.trim()
           ? v.welcomeMessage.slice(0, 2000) : DEFAULT_DYNAMIC_CONFIG.welcomeMessage,
         challengeLessonId: typeof v.challengeLessonId === 'string'
@@ -268,8 +271,27 @@ async function sendConsentPrompt(ctx: any, userId: string) {
     .resized();
   await ctx.reply('برای ادامه ثبت‌نام، لازم است با پردازش اطلاعاتی که در این مسیر ارسال می‌کنی موافقت کنی. شماره تلفن فقط پس از اقدام خودت و با دکمه رسمی تلگرام دریافت می‌شود. متن سیاست حریم خصوصی باید پیش از استقرار نهایی در وب‌سایت منتشر شود.', { reply_markup: keyboard });
 }
+/** Removing a reply keyboard and sending an inline Web App button require
+ * separate Telegram messages: a message has only one reply_markup field.
+ */
+async function showMiniAppOnly(ctx: any, settings: BotSettings) {
+  await ctx.reply('برای ادامه، مینی‌اپ را باز کن.', {reply_markup:{remove_keyboard:true}});
+  let url: URL;
+  try {
+    url = new URL(settings.miniAppUrl);
+    if (url.protocol !== 'https:' || url.username || url.password) throw new Error('invalid mini app URL');
+  } catch {
+    await ctx.reply('لینک مینی‌اپ هنوز به‌درستی تنظیم نشده است. لطفاً به پشتیبانی اطلاع بده.');
+    return;
+  }
+  await ctx.reply('ورود به مینی‌اپ:', {
+    reply_markup: new InlineKeyboard().webApp('🚀 ورود به مینی‌اپ', url.toString())
+  });
+}
+
 async function showMainMenu(ctx: any, user: any) {
   const settings = await getBotSettings();
+  if (settings.dynamicConfig.miniAppOnly) return showMiniAppOnly(ctx, settings);
   const keyboard = new Keyboard();
   const menuButtons = settings.dynamicConfig.builtInButtons
     .filter(item => item.enabled && ['registration_status', 'academy', 'challenge', 'support', 'miniapp'].includes(item.id))
@@ -331,6 +353,21 @@ async function growthAttributeStart(ctx:any,userId:string){
 }
 // === TENX_P50_BOT_ATTRIBUTION_V1_END ===
 
+
+// Registered before commands, old callback buttons, contact and support handlers.
+// Stop at the gateway so old keyboards cannot still trigger hidden actions.
+bot.use(async (ctx, next) => {
+  if (!ctx.message && !ctx.callbackQuery) return next();
+  const settings = await getBotSettings();
+  if (!settings.dynamicConfig.miniAppOnly) return next();
+  if (!ctx.from) return;
+  if (ctx.callbackQuery) await ctx.answerCallbackQuery().catch(() => undefined);
+  const user = await upsertTelegramUser(ctx);
+  if (ctx.message?.text && /^\/start(?:@\w+)?(?:\s|$)/.test(ctx.message.text)) {
+    await growthAttributeStart(ctx, user.id).catch(error => console.error('growth_attribution_failed', error));
+  }
+  return showMiniAppOnly(ctx, settings);
+});
 
 bot.command('start', async ctx => {
   if (!ctx.from) return;

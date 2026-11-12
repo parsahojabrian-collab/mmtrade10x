@@ -1,0 +1,12 @@
+{
+  "base": "9097b2cded63ea20da4b6bd3837dbc6b81b8bf61",
+  "files": {
+    "apps/api/public/admin.html": "9d9377d52dfc32559c831f690f2cc882d44cfc9d07d5935d97e77fee7ab675b5",
+    "apps/api/src/index.ts": "d309fdff9f50d03792178fd6ef18d2fcabc94cd7b66f677339ebf8f8646b1d8b",
+    "apps/bot/src/index.ts": "fd2bcbf00958725f8485c5ddfac9b45baeed339e2ed5186d35371a8e82815ab9",
+    "tests/bot-preview-regressions.test.mjs": "c6059ab37f615809402dab893307c9e26fadef4606a0141aa3383eee6a272b7d",
+    "tests/main-audit-fixes.test.mjs": "a1029c4ebbfa335c90c4e8fe90758801f58083e242d39e168cf8993823bba5d4",
+    "tests/bot-miniapp-only.test.mjs": "c2dfa344de8bab5fd30b03d8cf814c83f6d11382a7c9f745d01a63fd4e3364b0",
+    "docs/MMTRADE_BOT_MINIAPP_ONLY_FA.md": "5f8c7979f6d482ceaac48a30c875fc823f2cece5df5c10a60c4e6f01e52a4379"
+  }
+}

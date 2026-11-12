@@ -5595,6 +5595,11 @@ if(token)boot();
 
 <div id="tenx-bot-config" class="hide" style="margin-top:22px;padding-top:18px;border-top:1px solid #8885">
 <h3>تنظیمات ربات تلگرام</h3>
+<div style="margin:12px 0;padding:14px;border:1px solid #4a8;border-radius:12px">
+<label><input id="tbc-miniapp-only" type="checkbox"> حالت فقط مینی‌اپ — خاموش‌کردن تمام کیبورد ربات</label>
+<p style="margin:8px 0 0">با فعال‌کردن این گزینه، دکمه‌های ثبت‌نام، آکادمی، پشتیبانی و منوی سفارشی در ربات اجرا نمی‌شوند و فقط دکمه ورود به مینی‌اپ نمایش داده می‌شود. گزینه‌های منو برای استفاده دوباره حفظ می‌شوند.</p>
+<p class="mut">ابتدا لینک HTTPS مینی‌اپ را در تنظیمات اصلی ثبت کنید. تغییر حداکثر ظرف ۱۰ ثانیه به ربات می‌رسد و کیبورد قبلی پس از پیام بعدی کاربر جمع می‌شود. ثبت‌نام تلفنی برای بخش‌های نیازمند آن همچنان لازم است؛ کاربران جدید در این حالت از کیبورد ربات ثبت‌نام نمی‌کنند.</p>
+</div>
 <label><input id="tbc-enabled" type="checkbox" checked> فعال بودن تنظیمات پیام و منو</label>
 <div style="margin:12px 0">
 <label>پیام خوشامدگویی (متغیر {name} قابل استفاده است)</label>
@@ -5631,7 +5636,7 @@ if(token)boot();
  async function call(path,method='GET',body){
   const r=await fetch(path,{method,headers:{'Authorization':'Bearer '+token(),'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
   const data=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.error||('HTTP '+r.status));
+  if(!r.ok) throw new Error(data.message||data.error||('HTTP '+r.status));
   return data;
  }
  window.tenxBotStatus=async function(){
@@ -5859,6 +5864,7 @@ if(token)boot();
     const academy=await call('/admin/academy/courses');
     window.tbcLessons=(academy.items||[]).filter(c=>c.status==='PUBLISHED').flatMap(c=>(c.lessons||[]).filter(l=>l.status==='PUBLISHED').map(l=>({id:l.id,title:l.title,courseTitle:c.title})));
    }catch(academyError){console.warn('Academy lesson list unavailable',academyError);}
+   document.getElementById('tbc-miniapp-only').checked=tenxConfig.miniAppOnly===true;
    document.getElementById('tbc-enabled').checked=tenxConfig.enabled!==false;
    document.getElementById('tbc-welcome').value=tenxConfig.welcomeMessage||'';
    tbcRenderButtons();
@@ -5898,6 +5904,7 @@ if(token)boot();
   }
   const config={
    enabled:document.getElementById('tbc-enabled').checked,
+   miniAppOnly:document.getElementById('tbc-miniapp-only').checked,
    welcomeMessage:document.getElementById('tbc-welcome').value.trim(),
    challengeLessonId:tenxConfig.challengeLessonId||null,
    autoReplies:tenxConfig.autoReplies,
@@ -5907,7 +5914,7 @@ if(token)boot();
   msg.textContent='در حال ذخیره...';
   try{
    await call('/admin/bot/config','PUT',config);
-   msg.textContent='تنظیمات با موفقیت ذخیره شد.';
+   msg.textContent='تنظیمات ذخیره شد؛ اعمال در ربات حداکثر ۱۰ ثانیه زمان می‌برد.';
    toast('تنظیمات ربات ذخیره شد.');
    await tenxBotLoadConfig();
   }catch(e){msg.textContent='ذخیره ناموفق: '+e.message;}
