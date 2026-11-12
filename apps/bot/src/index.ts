@@ -31,6 +31,12 @@ type BotMenuBlock = {
 type DynamicBotConfig = {
   enabled: boolean;
   welcomeMessage: string;
+  miniAppCard: {
+    enabled: boolean;
+    message: string;
+    buttonLabel: string;
+    style: 'default' | 'primary' | 'success' | 'danger';
+  };
   challengeLessonId?: string;
   autoReplies: { keyword: string; response: string; enabled: boolean }[];
   customMenu: {
@@ -81,6 +87,12 @@ type BotSettings = {
 const DEFAULT_DYNAMIC_CONFIG: DynamicBotConfig = {
   enabled: true,
   welcomeMessage: 'به 10X خوش آمدی، {name}!',
+  miniAppCard: {
+    enabled: true,
+    message: '✨ به دنیای 10X خوش آمدی\nبرای ورود به فضای اختصاصی، دکمه زیر را لمس کن:',
+    buttonLabel: '🚀 ورود به 10X Mini App',
+    style: 'default'
+  },
   autoReplies: [],
   customMenu: [],
   builtInButtons: DEFAULT_BUILTIN_BUTTONS
@@ -133,6 +145,20 @@ async function loadBotSettings(): Promise<BotSettings> {
         enabled: v.enabled !== false,
         welcomeMessage: typeof v.welcomeMessage === 'string' && v.welcomeMessage.trim()
           ? v.welcomeMessage.slice(0, 2000) : DEFAULT_DYNAMIC_CONFIG.welcomeMessage,
+        miniAppCard: (() => {
+          const rawCard = v.miniAppCard;
+          const card = rawCard && typeof rawCard === 'object' && !Array.isArray(rawCard)
+            ? rawCard as Record<string, unknown> : {};
+          return {
+            enabled: card.enabled !== false,
+            message: typeof card.message === 'string' && card.message.trim()
+              ? card.message.slice(0, 1000) : DEFAULT_DYNAMIC_CONFIG.miniAppCard.message,
+            buttonLabel: typeof card.buttonLabel === 'string' && card.buttonLabel.trim()
+              ? card.buttonLabel.slice(0, 60) : DEFAULT_DYNAMIC_CONFIG.miniAppCard.buttonLabel,
+            style: (['default', 'primary', 'success', 'danger'].includes(String(card.style))
+              ? String(card.style) : 'default') as DynamicBotConfig['miniAppCard']['style']
+          };
+        })(),
         challengeLessonId: typeof v.challengeLessonId === 'string'
           ? v.challengeLessonId.slice(0, 128) : '',
         autoReplies: list(v.autoReplies).filter(x => x.keyword) as DynamicBotConfig['autoReplies'],
@@ -242,38 +268,27 @@ async function sendConsentPrompt(ctx: any, userId: string) {
 }
 async function showMainMenu(ctx: any, user: any) {
   const settings = await getBotSettings();
-  const keyboard = new Keyboard();
-  const menuButtons = settings.dynamicConfig.builtInButtons
-    .filter(item => item.enabled && ['registration_status', 'academy', 'challenge', 'support', 'miniapp'].includes(item.id))
-    .filter(item => item.id !== 'miniapp' || !!settings.miniAppUrl)
-    .sort((x, y) => x.order - y.order);
+  // MMVS_REMOVE_REPLY_KEYBOARD_R1
+  // Remove any persistent Telegram reply keyboard from the user's chat.
+  // A zero-width word-joiner keeps this cleanup message visually empty.
+  await ctx.reply('\u2060', {
+    reply_markup: { remove_keyboard: true }
+  } as any);
 
-  for (const item of menuButtons) {
-    keyboard.text(item.label).row();
+  // MMVS_MINIAPP_INLINE_CHAT_CTA_R2
+  const miniCard = settings.dynamicConfig.miniAppCard;
+  if (settings.miniAppUrl && miniCard.enabled) {
+    await ctx.reply(miniCard.message, {
+      reply_markup: {
+        inline_keyboard: [[{
+          text: miniCard.buttonLabel,
+          web_app: { url: settings.miniAppUrl },
+          ...(miniCard.style !== 'default' ? { style: miniCard.style } : {})
+        }]]
+      } as any
+    });
   }
 
-  const reserved = new Set([
-    ...settings.dynamicConfig.builtInButtons.map(x => x.label),
-    '🔄 بررسی مجدد عضویت', '✅ موافقم و ادامه می‌دهم',
-    '❌ فعلاً ادامه نمی‌دهم', '📝 وضعیت ثبت‌نام',
-    '🎓 آکادمی', '🏆 چالش 10X', '💬 پشتیبانی',
-    '🚀 ورود به 10X Mini App', '📱 اشتراک‌گذاری شماره تلفن'
-  ]);
-
-
-  if (settings.dynamicConfig.enabled) {
-    const seen = new Set<string>();
-    for (const item of settings.dynamicConfig.customMenu) {
-      const label = item.label?.trim();
-      if (!item.enabled || !label || reserved.has(label) ||
-          seen.has(label) || label.length > 60 || label.includes('\n')) continue;
-      seen.add(label);
-      keyboard.row().text(label);
-    }
-  }
-  await ctx.reply(`وضعیت فعلی ثبت‌نام: ${stageLabel(user.registrationStage)}\n\nاز کیبورد پایین ادامه بده.`, {
-    reply_markup: keyboard.resized()
-  });
 }
 
 // === TENX_P50_BOT_ATTRIBUTION_V1_START ===
@@ -544,12 +559,19 @@ bot.command('closesupport', async ctx => {
 
 hearsBuiltin('miniapp', async (ctx: any) => {
   const settings = await getBotSettings();
-  if (settings.miniAppUrl) {
-    await ctx.reply('برای ورود به مینی‌اپ از این لینک استفاده کن:', {
-      reply_markup: new InlineKeyboard().webApp('🚀 ورود به 10X Mini App', settings.miniAppUrl)
+  const card = settings.dynamicConfig.miniAppCard;
+  if (settings.miniAppUrl && card.enabled) {
+    await ctx.reply(card.message, {
+      reply_markup: {
+        inline_keyboard: [[{
+          text: card.buttonLabel,
+          web_app: { url: settings.miniAppUrl },
+          ...(card.style !== 'default' ? { style: card.style } : {})
+        }]]
+      } as any
     });
   } else {
-    await ctx.reply('لینک Mini App هنوز توسط مدیر تنظیم نشده است.');
+    await ctx.reply('ورود به Mini App فعلاً غیرفعال است یا لینک آن تنظیم نشده است.');
   }
 });
 bot.on('message:text', async (ctx, next) => {
