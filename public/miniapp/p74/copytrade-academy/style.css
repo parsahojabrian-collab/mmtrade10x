@@ -227,3 +227,118 @@ bdi{unicode-bidi:isolate;direction:ltr;font-family:var(--font-en)}
  .lesson-footer {padding:1px 2px;}
  .lesson-panel::after{border-width:9px;border-image-width:9px}
 }
+
+
+/* MMCT_LESSON_LIST_OVERLAP_FIX_R1 */
+
+.lesson-hero {
+  flex-basis: clamp(54px, 11dvh, 98px);
+}
+
+.lesson-hero img {
+  max-height: 92%;
+}
+
+.lesson-items {
+  grid-template-rows: repeat(3, minmax(48px, auto));
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.item {
+  min-height: 48px;
+  height: auto;
+}
+
+.item-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.item-copy strong,
+.item-copy > span {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.lesson-panel {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(75,238,157,.48) transparent;
+}
+
+.note,
+.connect-cta {
+  flex: 0 0 auto;
+}
+
+@media (max-height: 620px) {
+  .lesson-hero {
+    flex-basis: 54px;
+  }
+  .lesson-items {
+    grid-template-rows: repeat(3, minmax(44px, auto));
+  }
+  .item {
+    min-height: 44px;
+  }
+}
+
+
+/* MMCT_LESSON_LAYOUT_FIX_R2 */
+
+.lesson-panel {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+.lesson-items {
+  display: grid;
+  grid-template-rows: none;
+  grid-auto-rows: minmax(66px, auto);
+  flex: 0 0 auto;
+  min-height: 0;
+  gap: 7px;
+}
+
+.item {
+  min-height: 66px;
+  height: auto;
+  padding: 7px 9px;
+  align-items: center;
+}
+
+.item-copy {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.item-copy strong,
+.item-copy > span {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+@media (max-height: 620px) {
+  .lesson-items {
+    grid-auto-rows: minmax(58px, auto);
+    gap: 4px;
+  }
+
+  .item {
+    min-height: 58px;
+    padding: 5px 7px;
+  }
+}

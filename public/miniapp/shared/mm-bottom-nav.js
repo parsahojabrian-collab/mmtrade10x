@@ -14,7 +14,7 @@
  const defaults=[
   {id:'home',label:'خانه',href:'/miniapp',icon:'home',enabled:true,sort:10},
   {id:'academy',label:'آکادمی',href:'/academy',icon:'academy',enabled:true,sort:20},
-  {id:'challenge',label:'چالش 10X',href:'/challenge',icon:'trophy',enabled:true,sort:30},
+  {id:'challenge',label:'چالش 10X',href:'/miniapp/index.html?view=mmtrade10x',icon:'trophy',enabled:true,sort:30},
   {id:'support',label:'پشتیبانی',href:'/support',icon:'support',enabled:true,sort:40},
   {id:'profile',label:'پروفایل',href:'/profile',icon:'user',enabled:true,sort:50}
  ];
@@ -30,8 +30,8 @@
  };
  const routeIds={
   home:['/','/miniapp','/miniapp/index.html'],
-  academy:['/academy','/miniapp/academy.html','/miniapp/p74/learning/stage1.html','/miniapp/p74/learning/academy-home.html'],
-  challenge:['/challenge','/miniapp/challenge.html','/miniapp/p74/learning/stage2.html'],
+  academy:['/academy','/miniapp/academy.html','/miniapp/p74/learning/academy-home.html'],
+  challenge:['/challenge','/miniapp/p74/learning/stage2.html'],
   support:['/support','/miniapp/support.html','/miniapp/p74/support/support.html'],
   profile:['/profile','/miniapp/profile.html','/miniapp/p74/profile/profile.html']
  };

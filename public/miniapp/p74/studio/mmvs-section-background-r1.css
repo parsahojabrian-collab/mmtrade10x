@@ -1,30 +1,46 @@
-/* MMVS_R98_SECTION_AND_PERMANENT_DELETE */
-/* MMVS_R97_SECTION_BACKGROUNDS */
+/* MMVS_R100_BG_IMPORT_FIX */
 #mmvs-section-background-r97{position:fixed;z-index:7000;left:14px;bottom:14px;direction:rtl;font-family:Tahoma,Arial,sans-serif;font-size:13px;color:#e9f5ed;pointer-events:none}
 #mmvs-section-background-r97>*{pointer-events:auto;box-sizing:border-box}
 #mmvs-bg-toggle{background:linear-gradient(135deg,#0c6a4e,#06412f);color:#f5f4de;border:1px solid #d3ac6f;border-radius:12px;padding:11px 15px;box-shadow:0 8px 30px #0008;font:700 13px Tahoma,Arial;cursor:pointer;white-space:nowrap}
-#mmvs-bg-panel{position:absolute;bottom:48px;left:0;width:min(390px,calc(100vw - 28px));max-height:min(680px,76dvh);overflow-y:auto;border:1px solid #9a8c55;border-radius:15px;padding:14px;background:#08251f;box-shadow:0 24px 50px #000d}
+#mmvs-bg-panel{position:absolute;bottom:48px;left:0;width:min(460px,calc(100vw - 28px));max-height:min(780px,82dvh);overflow-y:auto;border:1px solid #9a8c55;border-radius:15px;padding:14px;background:linear-gradient(145deg,#08251f,#061811);box-shadow:0 24px 50px #000d}
 #mmvs-bg-panel[hidden]{display:none!important}
 #mmvs-bg-panel header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-#mmvs-bg-panel label{display:flex;flex-direction:column;gap:6px;margin-bottom:11px;font-size:12px;line-height:1.6}
-#mmvs-bg-panel select,#mmvs-bg-panel input[type=text]{box-sizing:border-box;width:100%;max-width:100%;color:#f5fffa;background:#0b3b2d;border:1px solid #47745c;border-radius:9px;padding:10px;min-height:41px;font:12px Tahoma,Arial;direction:rtl}
-#mmvs-bg-panel input[type=text]{direction:ltr;text-align:left}
+#mmvs-bg-panel label{display:flex;flex-direction:column;gap:6px;margin-bottom:9px;font-size:12px;line-height:1.6}
+#mmvs-bg-panel select,#mmvs-bg-panel input:not([type=range]):not([type=color]):not([type=checkbox]){box-sizing:border-box;width:100%;max-width:100%;color:#f5fffa;background:#0b3b2d;border:1px solid #47745c;border-radius:9px;padding:9px;min-height:38px;font:12px Tahoma,Arial;direction:rtl}
 #mmvs-bg-panel input[type=range]{width:100%;accent-color:#5de4a0}
-#mmvs-bg-panel button{border:1px solid #518c6b;color:#e6f9ec;background:#124f3a;border-radius:9px;padding:9px;font:12px Tahoma,Arial;cursor:pointer;max-width:100%;white-space:normal}
+#mmvs-bg-panel input[type=color]{width:100%;height:35px;border:1px solid #47745c;border-radius:8px;background:#0b3b2d;padding:3px}
+#mmvs-bg-panel button{border:1px solid #518c6b;color:#e6f9ec;background:#124f3a;border-radius:9px;padding:8px 10px;font:12px Tahoma,Arial;cursor:pointer;max-width:100%;white-space:normal}
 #mmvs-bg-panel button:focus-visible,#mmvs-bg-toggle:focus-visible{outline:2px solid #f4d28e;outline-offset:2px}
 #mmvs-bg-panel button:hover{background:#197250}
+#mmvs-bg-panel button:disabled{opacity:.35;cursor:not-allowed}
 #mmvs-bg-panel #mmvs-bg-close{background:transparent;min-width:34px}
-#mmvs-bg-library,#mmvs-bg-from-page{display:block;width:100%;margin:7px 0}
-.mmvs-bg-double,.mmvs-bg-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#mmvs-bg-panel .mmvs-bg-presets{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;margin:8px 0}
+#mmvs-bg-panel #mmvs-r98-pick-section{width:100%;border-color:#d9b876!important;margin:4px 0 8px}
 #mmvs-bg-panel .mmvs-bg-hint{font-size:11px;line-height:1.8;color:#b7d6c5;margin:6px 0 12px}
+#mmvs-bg-layers{display:grid;gap:9px}
+#mmvs-bg-panel .mmvs-bg-empty{padding:13px;border:1px dashed #54816b;border-radius:10px;color:#b7d6c5;line-height:1.9;font-size:11px}
+#mmvs-bg-panel .mmvs-bg-layer-card{border:1px solid #47745c;border-radius:12px;background:linear-gradient(135deg,#103d2d,#09271e);padding:10px}
+#mmvs-bg-panel .mmvs-bg-layer-head{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+#mmvs-bg-panel .mmvs-bg-layer-head strong{flex:1;min-width:90px;color:#eafff0}
+#mmvs-bg-panel .mmvs-bg-layer-head button{padding:5px 8px}
+#mmvs-bg-panel .mmvs-bg-layer-head button.danger{border-color:#a45b56;background:#542a28}
+#mmvs-bg-panel .mmvs-bg-enable{display:flex;align-items:center;gap:5px;margin:0;font-size:10px}
+#mmvs-bg-panel .mmvs-bg-enable input{accent-color:#5de4a0}
+#mmvs-bg-panel .mmvs-bg-layer-controls{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+#mmvs-bg-panel .mmvs-bg-field{min-width:0}
+#mmvs-bg-panel .mmvs-bg-field>span{color:#cde7d7}
+#mmvs-bg-panel .mmvs-bg-url{display:block;direction:ltr;overflow-wrap:anywhere;color:#a5cdb7;font-size:10px;margin-top:4px}
+#mmvs-bg-panel .mmvs-bg-pick{width:100%;border-color:#d5b66d!important}
+#mmvs-bg-panel .mmvs-bg-add{border:1px dashed #729b7e;border-radius:12px;padding:10px;margin-top:10px}
+#mmvs-bg-panel .mmvs-bg-add>strong{display:block;margin-bottom:8px}
+#mmvs-bg-panel .mmvs-bg-add>div{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+#mmvs-bg-panel .mmvs-bg-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 #mmvs-bg-panel #mmvs-bg-apply{background:#21885d;color:white;border-color:#e3b56a;font-weight:700}
-#mmvs-bg-status{font-size:11px;line-height:1.8;color:#e0c58c;min-height:32px;overflow-wrap:anywhere;margin:11px 0 0}
-#mmvs-bg-status.bad{color:#ff9b91}
-@media(max-width:600px){#mmvs-section-background-r97{left:8px;bottom:8px}#mmvs-bg-panel{max-height:66dvh;width:min(390px,calc(100vw - 16px))}}
-
-#mmvs-bg-panel .mmvs-bg-check{flex-direction:row;align-items:center;gap:7px;cursor:pointer}
-#mmvs-bg-panel .mmvs-bg-check input{accent-color:#5de4a0}
+#mmvs-bg-panel #mmvs-bg-status{font-size:11px;line-height:1.8;color:#e0c58c;min-height:32px;overflow-wrap:anywhere;margin:11px 0 0}
+#mmvs-bg-panel #mmvs-bg-status.bad{color:#ff9b91}
 #mmvs-bg-panel .mmvs-bg-save{display:block;width:100%;margin:10px 0;background:#355d4a;border-color:#d5a967;font-weight:700}
+@media(max-width:600px){#mmvs-section-background-r97{left:8px;bottom:8px}#mmvs-bg-panel{max-height:72dvh;width:min(460px,calc(100vw - 16px));padding:10px}#mmvs-bg-panel .mmvs-bg-layer-controls{grid-template-columns:1fr 1fr}}
 
-/* MMVS_R98_SECTION_AND_PERMANENT_DELETE */
-#mmvs-r98-pick-section{width:100%;border-color:#d9b876!important;margin-bottom:8px}
+#mmvs-bg-panel .mmvs-bg-stop{display:grid;grid-template-columns:48px minmax(50px,1fr) minmax(50px,1fr) 28px;align-items:center;gap:6px}
+#mmvs-bg-panel .mmvs-bg-stop input[type=color]{width:48px}
+#mmvs-bg-panel .mmvs-bg-stop button{padding:3px 6px}

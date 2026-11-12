@@ -121,6 +121,7 @@ function mmvsR11Unsafe(el){
  if(el===document.body||el===document.documentElement)return true;
  if(el.matches?.('html,body,main,#app,#root,#page-root,#p74-app,#mf62-home,#mmvs-root,.home-shell,.stage-shell,.stage-page,[data-mmvs-app-root]'))return true;
  // A group spanning most of the viewport should be edited via its individual children.
+ if(el.matches?.('.lesson-panel'))return false;
  if(el.children?.length>1&&!el.hasAttribute('data-mmvs-layer')){
   const r=el.getBoundingClientRect(),w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);
   if(r.width>=w*.87&&r.height>=h*.52)return true;
@@ -166,7 +167,7 @@ const tag=el.tagName.toLowerCase();for(const c of [...el.classList].filter(s=>/^
 let p=el,parts=[];while(p&&p!==document.body&&parts.length<10){if(p.id){parts.unshift('#'+CSS.escape(p.id));break}const sib=[...p.parentElement.children].filter(x=>x.tagName===p.tagName),ix=sib.indexOf(p)+1;parts.unshift(p.tagName.toLowerCase()+(sib.length>1?':nth-of-type('+ix+')':''));const s=parts.join(' > ');if(document.querySelectorAll(s).length===1&&s.length<=500)return s;p=p.parentElement}const result=parts.join(' > ');return result.length<=500?result:null}
 // R5: discover visual DOM layers including pointer-events:none graphics, CSS backgrounds and canvas/svgs.
 let cachedLayers=[],layerRefreshTimer=0;
-const graphicSelector='img,svg,canvas,video,figure,[data-mmvs-layer],[class*="sphere"],[class*="globe"],[class*="planet"],[class*="earth"],[class*="decor"],[class*="float"],[class*="coin"],[class*="crown"],[class*="ring"],[class*="cube"],[class*="orb"],[class*="particle"],[class*="sculpt"],[class*="mountain"],[style*="background-image"], [style*="background:"]';
+const graphicSelector='img,svg,canvas,video,figure,.lesson-panel,[data-mmvs-layer],[class*="sphere"],[class*="globe"],[class*="planet"],[class*="earth"],[class*="decor"],[class*="float"],[class*="coin"],[class*="crown"],[class*="ring"],[class*="cube"],[class*="orb"],[class*="particle"],[class*="sculpt"],[class*="mountain"],[style*="background-image"], [style*="background:"]';
 function graphicKind(el){
  const n=el.tagName.toLowerCase(),c=String(typeof el.className==='string'?el.className:(el.className?.baseVal||'')).toLowerCase(), id=String(el.id||'').toLowerCase(),joined=c+' '+id;
  if(n==='canvas')return ['Canvas (کل صحنه)','🖼️','canvas'];
@@ -180,12 +181,13 @@ function graphicKind(el){
  if(/ring|orb|particle/.test(joined))return ['افکت گرافیکی','✧','effect'];
  if(/sculpt/.test(joined))return ['آبجکت سه‌بعدی نمایشی','◈','sculpt'];
  if(/decor|float|mountain/.test(joined))return ['آبجکت تزئینی','✦','decor'];
+ if(el.matches?.('.lesson-panel'))return ['پنل درس','◈','glass'];
  if(el.hasAttribute('data-mmvs-layer'))return [el.getAttribute('data-mmvs-layer-label')||'لایه سفارشی','◈','custom'];
  return ['پس‌زمینه یا گروه گرافیکی','▦','background'];
 }
 function hasVisual(el){
  if(!eligible(el)||el.closest('#mmvs-managed-content,#mmvs-overlay'))return false;
- if(el.hasAttribute('data-mmvs-layer'))return true;
+ if(el.hasAttribute('data-mmvs-layer')||el.matches?.('.lesson-panel'))return true;
  const c=getComputedStyle(el),b=el.getBoundingClientRect();
  if(c.display==='none'||(c.visibility==='hidden'&&!el.dataset.mmvsSpatialHidden&&!el.dataset.mmvsV2Plane)||Number(c.opacity)<.05||b.width<5||b.height<5)return false;
  const tag=el.tagName.toLowerCase();
@@ -247,13 +249,14 @@ function styleFor(el,p){
  if(!original.has(el))original.set(el,{
   translate:el.style.translate,scale:el.style.scale,visibility:el.style.visibility,
   pointerEvents:el.style.pointerEvents,zIndex:el.style.zIndex,position:el.style.position,
-  opacity:el.style.opacity,width:el.style.width,height:el.style.height
+  opacity:el.style.opacity,width:el.style.width,height:el.style.height,flex:el.style.flex
  });
  const old=original.get(el);
  // Individual CSS translate/scale properties don't overwrite animated transform keyframes.
  el.style.translate=p.x+'px '+p.y+'px';el.style.scale=String(p.scale);
  el.style.width=p.widthPx!==undefined?p.widthPx+'px':old.width;
  el.style.height=p.heightPx!==undefined?p.heightPx+'px':old.height;
+ if(el.matches?.('.lesson-panel'))el.style.flex=(p.widthPx!==undefined||p.heightPx!==undefined)?'0 0 auto':old.flex;
  if(p.zIndex!==undefined){
   if(getComputedStyle(el).position==='static')el.style.position='relative';
   el.style.zIndex=String(p.zIndex);

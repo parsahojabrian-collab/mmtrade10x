@@ -1562,6 +1562,8 @@ app.put('/admin/bot/config', { preHandler: botControlGuard }, async (request: an
     }
   }
 
+  // BOT_CONFIG_SAVE_FIX_R1
+  // A stale challenge lesson must not block unrelated bot settings.
   if (config.challengeLessonId) {
     const lesson = await prisma.lesson.findFirst({
       where: {
@@ -1571,8 +1573,12 @@ app.put('/admin/bot/config', { preHandler: botControlGuard }, async (request: an
       },
       select: { id: true }
     });
+
     if (!lesson) {
-      return reply.code(400).send({ error: 'CHALLENGE_LESSON_NOT_PUBLISHED' });
+      config.challengeLessonId = null;
+      request.log.warn(
+        'Invalid challengeLessonId cleared while saving bot config'
+      );
     }
   }
 

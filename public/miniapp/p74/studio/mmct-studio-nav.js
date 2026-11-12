@@ -7,7 +7,7 @@
  if(!frame||!toolbar||!current)return;
  const root=document.createElement('div');root.id='mmct-studio-nav';root.hidden=true;
  root.setAttribute('aria-label','ناوبری آموزش کپی‌ترید در استودیو');
- root.innerHTML=`<label>نمایش <select id="mmct-studio-lesson"><option value="-1">فهرست هفت درس</option>${Array.from({length:7},(_,i)=>`<option value="${i}">درس ${i+1}</option>`).join('')}</select></label><label>بخش درس <select id="mmct-studio-slide">${Array.from({length:4},(_,i)=>`<option value="${i}">بخش ${i+1}</option>`).join('')}</select></label><span class="mmct-tip">آیکون یا متن را انتخاب و در «تنظیمات عنصر» ویرایش کن. قفل از لیست لایه‌ها باز می‌شود.</span>`;
+ root.innerHTML=`<label>نمایش <select id="mmct-studio-lesson"><option value="-1">فهرست هفت درس</option>${Array.from({length:7},(_,i)=>`<option value="${i}">درس ${i+1}</option>`).join('')}</select></label><label>بخش درس <select id="mmct-studio-slide">${Array.from({length:2},(_,i)=>`<option value="${i}">بخش ${i+1}</option>`).join('')}</select></label><span class="mmct-tip">آیکون یا متن را انتخاب و در «تنظیمات عنصر» ویرایش کن. قفل از لیست لایه‌ها باز می‌شود.</span>`;
  toolbar.insertAdjacentElement('afterend',root);
  const css=document.createElement('style');css.textContent=`
   #mmct-studio-nav{padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#0a201b;border:1px solid #39654f;border-radius:12px;color:#e6f9ee;direction:rtl;margin:8px 0}

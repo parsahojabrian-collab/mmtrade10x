@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
+<!-- MMTRADE_TYPE_RETIRE_R1 -->
+<link rel="stylesheet" href="/miniapp/shared/mm-global-type-r1.css?v=LIVE_SYNC_R1">
+
 <!-- MM_P74_HOME_NO_FLASH_R1_BEGIN -->
 <style id="mm-p74-home-no-flash-style">
 /* Never paint the retired Home on the P74 entry URL. Other views are untouched. */
@@ -81,7 +84,7 @@ html.mm-p74-home-only #mm-p74-startup-error button {
     params.get('view') === 'mmtrade10x' &&
     params.get('adminPreview') !== '1'
   ) {
-    window.location.replace('/miniapp/p74/learning/stage1.html');
+    window.location.replace('/miniapp/p74/mmtrade-r3-preview/index.html?view=mmtrade10x');
   }
 })();
 </script>
@@ -1408,7 +1411,7 @@ html.mm-p74-home-only #mm-p74-startup-error button {
 
 <!-- MMU_BOTTOM_NAV_R4_BEGIN -->
 <link rel="stylesheet" href="/miniapp/shared/mm-bottom-nav.css?v=MMU_R6_SUPERADMIN_STUDIO">
-<script defer src="/miniapp/shared/mm-bottom-nav.js?v=MMU_R6_SUPERADMIN_STUDIO"></script>
+<script defer src="/miniapp/shared/mm-bottom-nav.js?v=LIVE_SYNC_R1"></script>
 <!-- MMU_BOTTOM_NAV_R4_END -->
 </head>
 <body>
@@ -1504,7 +1507,7 @@ html.mm-p74-home-only #mm-p74-startup-error button {
           <span>دسترسی به فضای بازار</span>
           <i>←</i>
         </a>
-        <a class="home-feature-card" href="/copy-trading" data-link-key="home.copy-trading">
+        <a class="home-feature-card" href="/miniapp/p74/copytrade-academy/index.html" data-link-key="home.copy-trading">
           <span class="home-card-icon">◈</span>
           <strong>کپی تریدینگ</strong>
           <span>ابزارها و خدمات معاملاتی</span>
@@ -1660,12 +1663,12 @@ html.mm-p74-home-only #mm-p74-startup-error button {
           if (placeholder) {
             placeholder.id = 'mmtrade10x';
             placeholder.label = 'MMTrade10X';
-            placeholder.href = '/miniapp/p74/learning/stage1.html';
+            placeholder.href = '/miniapp/p74/mmtrade-r3-preview/index.html?view=mmtrade10x';
           } else if (!items.some(function(x){return x.id === 'mmtrade10x';})) {
             items.push({
               id:'mmtrade10x',
               label:'MMTrade10X',
-              href:'/miniapp/p74/learning/stage1.html',
+              href:'/miniapp/p74/mmtrade-r3-preview/index.html?view=mmtrade10x',
               icon:'trophy'
             });
           }
@@ -3616,7 +3619,7 @@ var wf = user.eplanetWorkflow || {};
   img.onerror=function(){
    if(!img.dataset.jpg){
     img.dataset.jpg='1';
-    img.src='/miniapp/mmtrade10x-logo.jpg';
+    img.src='/miniapp/mmtrade10x-logo.png';
    }else{
     img.remove();
     if(old)scene.appendChild(old);
@@ -3810,13 +3813,13 @@ var wf = user.eplanetWorkflow || {};
 
 
 <!-- P74_HOME_MATCH_R1 BODY START -->
-<script defer src="/miniapp/p74/home.js?v=MMTRADE_LIVE_RELEASE_R1"></script>
+<script defer src="/miniapp/p74/home.js?v=LIVE_SYNC_R1"></script>
 <!-- P74_HOME_MATCH_R1 BODY END -->
 <script defer src="/miniapp/p74/studio/bridge.js?v=BOT_PREVIEW_FIX_20261111_R1" data-mmvs-bridge="R3"></script>
-<script defer src="/miniapp/p74/studio/spatial-bridge.js?v=MMTRADE_LIVE_RELEASE_R1" data-mmvs-spatial="R4"></script>
+<script defer src="/miniapp/p74/studio/spatial-bridge.js?v=LIVE_SYNC_R1" data-mmvs-spatial="R4"></script>
 <script defer src="/miniapp/p74/studio/link-resolver.js?v=MMR6" data-mmtrade-route-r6="1"></script>
 
 <!-- MATIN_FUTURE_NAVIGATION_R1_JS -->
-<script defer src="/miniapp/p74/mf-navigation.js?v=MF_NAV_R1"></script>
+<script defer src="/miniapp/p74/mf-navigation.js?v=LIVE_SYNC_R1"></script>
 </body>
 </html>

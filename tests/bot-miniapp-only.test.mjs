@@ -12,7 +12,7 @@ function declaration(name){return ast.statements.find(n=>ts.isFunctionDeclaratio
 function route(method,path){return ast.statements.find(n=>ts.isExpressionStatement(n)&&ts.isCallExpression(n.expression)&&n.expression.expression.getText(ast)==='app.'+method&&n.expression.arguments[0]?.text===path).getText(ast);}
 async function harness(){
  const settings=new Map(),logs=[],app=Fastify();
- const prisma={systemSetting:{findUnique:async({where})=>settings.has(where.key)?{value:structuredClone(settings.get(where.key))}:null,
+ const prisma={lesson:{findFirst:async()=>null},systemSetting:{findUnique:async({where})=>settings.has(where.key)?{value:structuredClone(settings.get(where.key))}:null,
  upsert:async({where,create,update})=>{settings.set(where.key,structuredClone(settings.has(where.key)?update.value:create.value));return {value:settings.get(where.key)}}},auditLog:{create:async({data})=>{logs.push(data);return data}}};
  const context={app,prisma,z,botMenuConflict,URL,process:{env:{}},adminIdOf:()=>null,adminGuard:async(req,reply)=>{
   const role=req.headers['x-role'];if(!role){reply.code(401).send({error:'unauthorized'});return false}req.admin={role};return true;
@@ -49,4 +49,9 @@ test('only superadmins can read or change bot mode; nonboolean values are reject
  assert.equal((await h.save({...h.initial,miniAppOnly:true},null)).statusCode,401);
  assert.equal((await h.app.inject({url:'/admin/bot/config',headers:{'x-role':'CONTENT_MANAGER'}})).statusCode,403);
  assert.equal((await h.save({...h.initial,miniAppOnly:'true'})).statusCode,400);assert.equal(h.logs.length,0);
+});
+
+
+test('a retired challenge lesson is cleared without blocking unrelated bot settings',async t=>{
+ const h=await harness();t.after(()=>h.app.close());const r=await h.save({...h.initial,challengeLessonId:'retired-lesson'});assert.equal(r.statusCode,200,r.body);assert.equal((await h.get()).json().config.challengeLessonId,null);
 });

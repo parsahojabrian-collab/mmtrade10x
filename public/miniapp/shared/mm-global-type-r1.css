@@ -1,0 +1,36 @@
+/* MMTrade10X global type system, R1 (2026-11-12)
+   Persian display: Doran / DoranFaNum (already configured in /miniapp/10x-fonts.css)
+   Persian UI: locally installed Peyda, otherwise the existing Doran fallback. Missing Peyda files are never requested.
+   No commercial font binaries are supplied here. */
+@import url('/miniapp/10x-fonts.css?v=MM_TYPE_R1');
+@font-face { font-family:'MM Peyda'; src:local('Peyda'); font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:'MM Peyda'; src:local('Peyda Medium'); font-weight:500; font-style:normal; font-display:swap; }
+@font-face { font-family:'MM Peyda'; src:local('Peyda SemiBold'); font-weight:600; font-style:normal; font-display:swap; }
+@font-face { font-family:'MM Peyda'; src:local('Peyda Bold'); font-weight:700; font-style:normal; font-display:swap; }
+@font-face { font-family:'MM Peyda'; src:local('Peyda ExtraBold'); font-weight:800 900; font-style:normal; font-display:swap; }
+:root {
+  --mm-font-display:'DoranFaNum','Doran','MM Peyda','Vazirmatn',Tahoma,sans-serif;
+  --mm-font-ui:'MM Peyda','DoranFaNum','Doran','Vazirmatn',Tahoma,sans-serif;
+  --mm-font-latin:'Space Grotesk',Inter,'Segoe UI',Arial,sans-serif;
+  --mm-font-mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  --font-fa:var(--mm-font-ui);
+  --font-latin:var(--mm-font-latin);
+}
+/* Only typography: no dimensions, positions, animations, colors or borders change. */
+html body { font-family:var(--mm-font-ui)!important; font-synthesis:none; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+html body :is(button,input,textarea,select,option,label,p,li,small,summary,blockquote,figcaption,td,th) {
+  font-family:var(--mm-font-ui)!important;
+}
+html body :is(h1,h2,.hero-title,.page-title,.section-title,.lesson-title,.brand-title,.mm-title,.mm-display) {
+  font-family:var(--mm-font-display)!important;
+}
+html body :is(h3,h4,.card-title,.tab-title,.nav-label,.lesson-heading) {
+  font-family:var(--mm-font-ui)!important;
+}
+html body :is([lang='en'],[dir='ltr'].mm-latin,.mm-latin,.mm-english) {
+  font-family:var(--mm-font-latin)!important;
+  font-variant-numeric:tabular-nums;
+}
+html body :is(code,pre,kbd,samp) { font-family:var(--mm-font-mono)!important; }
+/* RTL numerical alignment without converting existing account or transaction digits. */
+html body :is(.mm-number,.mm-stat,.amount,.balance,.price) { font-variant-numeric:tabular-nums; }

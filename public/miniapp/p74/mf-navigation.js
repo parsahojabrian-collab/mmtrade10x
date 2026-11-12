@@ -6,7 +6,7 @@
 
   var NAV_ID = 'mf-global-bottom-nav';
   var ACADEMY_HOME = '/miniapp/p74/learning/academy-home.html';
-  var STAGE1 = '/miniapp/p74/learning/stage1.html';
+  var STAGE1 = '/miniapp/index.html?view=mmtrade10x';
 
   var iconPaths = {
     home: 'M3 10 L12 3 L21 10 V21 H14 V14 H10 V21 H3 Z',
@@ -23,7 +23,7 @@
     { id: 'home', label: 'خانه', href: '/miniapp', icon: 'home', enabled: true, sort: 10 },
     { id: 'academy', label: 'آکادمی', href: ACADEMY_HOME, icon: 'academy', enabled: true, sort: 20 },
     { id: 'support', label: 'پشتیبانی', href: '/miniapp/p74/support/support.html', icon: 'support', enabled: true, sort: 30 },
-    { id: 'copy-trading', label: 'کپی‌ترید', href: '/copy-trading', icon: 'chart', enabled: true, sort: 40 }
+    { id: 'copy-trading', label: 'آموزش کپی‌ترید', href: '/miniapp/p74/copytrade-academy/index.html', icon: 'chart', enabled: true, sort: 40 }
   ];
 
   function cleanPath(value) {
@@ -31,6 +31,8 @@
   }
 
   function validHref(value) {
+
+    if (value === '/miniapp/index.html?view=mmtrade10x') return true; // MMTRADE_TYPE_R1_HREF
     return typeof value === 'string' &&
       /^\/(?!\/)[a-zA-Z0-9/_-]+$/.test(value) &&
       value.indexOf('..') === -1;
