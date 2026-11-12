@@ -1,0 +1,97 @@
+/* MMVS_R99_UX_REFINEMENT: presentation only, scoped to Visual Studio shell.
+   Does not affect iframe content, CSS stacking, image/background rendering, or APIs. */
+:root{--r99-surface:#0d211a;--r99-surface2:#132f23;--r99-border:#315443;--r99-accent:#68dbaa;--r99-muted:#adc9b9}
+#workspace>.work{min-width:0!important;width:100%!important;max-width:none!important;overflow:visible!important}
+#page-toolbar{
+  position:sticky!important;top:0!important;z-index:1040!important;
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:auto auto!important;column-gap:12px!important;row-gap:7px!important;
+  padding:9px 13px!important;margin:0 0 10px!important;
+  border:1px solid var(--r99-border)!important;border-radius:13px!important;
+  background:linear-gradient(120deg,#0c281d,#0c1e18)!important;
+  box-shadow:0 8px 22px #0005!important;
+}
+#page-toolbar>.labelwrap{grid-column:1;grid-row:1;min-width:0!important;display:flex!important;gap:10px!important;align-items:center!important}
+#page-toolbar #current-title{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px!important}
+#page-toolbar #state{flex:0 0 auto;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page-toolbar>.actions{grid-column:2;grid-row:1;display:flex!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:nowrap!important;gap:7px!important;min-width:0!important}
+#page-toolbar>.actions #save,#page-toolbar>.actions #publish{display:inline-flex;align-items:center;justify-content:center;min-height:38px!important;padding:8px 14px!important;white-space:nowrap!important;border-radius:9px!important;font-size:12px!important}
+#page-toolbar>.actions #save{border-color:#7aa88b!important;background:#1b4933!important;color:#eefff4!important}
+#page-toolbar>.actions #publish{background:#17a36d!important;border:1px solid #6de4ab!important;color:#06241a!important;font-weight:850!important}
+#page-toolbar>.mmvs9-controls{grid-column:1/-1;grid-row:2;display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:7px!important;min-width:0!important;overflow-x:auto!important;padding:0 0 1px!important;scrollbar-width:thin}
+#page-toolbar .mmvs9-control,#page-toolbar .mmvs99-control{
+  color:#d9f7e7!important;background:#112e22!important;border:1px solid #355d49!important;
+  border-radius:9px!important;padding:7px 11px!important;min-height:37px!important;
+  font:650 12px/1.5 Tahoma,Arial,sans-serif!important;white-space:nowrap!important;flex:0 0 auto!important;
+}
+#page-toolbar .mmvs9-control[aria-expanded="true"],#page-toolbar .mmvs99-control[aria-pressed="true"]{
+  background:#216448!important;border-color:#81d7a9!important;color:#fff!important;
+}
+#page-toolbar .mmvs99-control{cursor:pointer}
+#page-toolbar .mmvs99-control:focus-visible,#mmvs99-dock-side:focus-visible,#page-toolbar button:focus-visible{outline:2px solid #e9c68a!important;outline-offset:2px!important}
+#mmvs99-control-divider{width:1px;height:23px;background:#37614a;flex:0 0 auto}
+#pages-pane .designer{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important}
+#pages-pane .designer>.preview-area{width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:0!important;background:transparent!important}
+#pages-pane .preview-toolbar{display:flex!important;align-items:center!important;gap:8px!important;justify-content:space-between!important;margin:0 0 9px!important;padding:8px 12px!important;border:1px solid #294d3c!important;background:#10281e!important;border-radius:12px!important}
+#pages-pane .preview-toolbar strong{font-size:12px!important;white-space:nowrap!important;color:#bfe5cf!important}
+#pages-pane .preview-toolbar>div{width:auto!important;display:flex!important;gap:5px!important;flex-wrap:wrap!important}
+#pages-pane .preview-toolbar button{min-height:34px!important;padding:5px 10px!important;font-size:11px!important;flex:0 0 auto!important}
+#pages-pane #preview-holder{
+  width:100%!important;max-width:100%!important;min-height:530px!important;
+  height:max(620px,calc(100dvh - 236px))!important;
+  display:flex!important;justify-content:center!important;align-items:flex-start!important;
+  overflow:auto!important;scrollbar-gutter:stable!important;
+  border:1px solid #294f3c!important;border-radius:14px!important;
+  padding:14px 8px 22px!important;
+  background-color:#091b15!important;
+  background-image:linear-gradient(#366c4a17 1px,transparent 1px),linear-gradient(90deg,#366c4a17 1px,transparent 1px)!important;
+  background-size:32px 32px!important;
+}
+#pages-pane #preview-holder>#frame{flex-shrink:0!important;max-width:100%!important;outline:0!important}
+/* Only the Studio settings UI is collapsed; the preview iframe sizing engine is unchanged. */
+body.mmvs99-size-hidden #mmvs-preview-canvas-panel{display:none!important}
+#mmvs-preview-canvas-panel{margin:0 0 10px!important;max-width:none!important;border:1px solid #2a6048!important;border-radius:12px!important;background:#11271e!important}
+/* R9.1 dock retained, now a consistent narrow utility palette. */
+#mmvs9-dock:not(.mmvs9-dock-collapsed){
+  left:auto!important;right:14px!important;top:132px!important;bottom:auto!important;
+  width:min(400px,calc(100vw - 28px))!important;
+  height:min(68dvh,680px)!important;max-height:min(68dvh,680px)!important;
+  border:1px solid #4d8162!important;border-radius:13px!important;
+  box-shadow:0 16px 45px #000b!important;
+}
+body.mmvs99-dock-left #mmvs9-dock:not(.mmvs9-dock-collapsed){left:14px!important;right:auto!important}
+#mmvs9-dock.mmvs9-dock-collapsed{left:auto!important;right:14px!important;bottom:12px!important;top:auto!important;width:198px!important;height:47px!important}
+body.mmvs99-dock-left #mmvs9-dock.mmvs9-dock-collapsed{left:14px!important;right:auto!important}
+#mmvs9-dock-header{gap:6px!important}
+#mmvs9-dock-header strong{font-size:12px!important}
+#mmvs99-dock-side{flex:0 0 auto;min-width:31px!important;min-height:29px!important;padding:4px!important;border:1px solid #41765a;background:#143e2b;color:#d4ffe9;border-radius:8px;cursor:pointer;font-size:14px}
+#mmvs9-dock-body{padding:9px!important;overscroll-behavior:contain!important}
+#mmvs9-dock .mmvs-dom-list,#mmvs9-dock .mmvs-visual-stack-list{display:flex!important;flex-direction:column!important;grid-template-columns:none!important;gap:4px!important}
+#mmvs9-dock .mmvs-dom-item,#mmvs9-dock .mmvs-visual-stack-row{width:100%!important;max-width:100%!important;min-width:0!important}
+#pages-pane .designer>.mmvs-r6-layers,#pages-pane .designer>.inspector{
+ top:133px!important;bottom:12px!important;max-height:none!important;
+ width:min(335px,calc(100vw - 20px))!important;
+ border-radius:13px!important;border-color:#466e57!important;
+}
+/* Section background editor remains reachable; keep it separate from the main layer stack. */
+#mmvs-section-background-r97{z-index:1080!important}
+#mmvs-bg-panel{max-height:min(77dvh,680px)!important;border-radius:14px!important}
+body.mmvs99-focus #page-toolbar>.mmvs9-controls{display:none!important}
+body.mmvs99-focus #pages-pane .preview-toolbar{margin-bottom:6px!important}
+body.mmvs99-focus #pages-pane #preview-holder{height:max(650px,calc(100dvh - 150px))!important}
+body.mmvs99-focus #mmvs-section-background-r97{display:none!important}
+@media(max-width:760px){
+  #page-toolbar{grid-template-columns:minmax(0,1fr) auto!important;padding:7px!important;row-gap:6px!important}
+  #page-toolbar #current-title{font-size:11px!important}
+  #page-toolbar #state{max-width:90px;font-size:10px!important}
+  #page-toolbar>.actions #save,#page-toolbar>.actions #publish{padding:6px!important;font-size:10px!important;min-height:34px!important}
+  #page-toolbar .mmvs9-control,#page-toolbar .mmvs99-control{font-size:11px!important;padding:7px 8px!important;min-height:35px!important}
+  #pages-pane .preview-toolbar button{padding:5px 7px!important;font-size:10px!important}
+  #pages-pane #preview-holder{height:max(515px,calc(100dvh - 220px))!important;min-height:515px!important;padding:8px 4px!important}
+  #mmvs9-dock:not(.mmvs9-dock-collapsed){left:7px!important;right:7px!important;top:105px!important;bottom:auto!important;width:auto!important;height:min(75dvh,620px)!important;max-height:min(75dvh,620px)!important}
+  body.mmvs99-dock-left #mmvs9-dock:not(.mmvs9-dock-collapsed){left:7px!important;right:7px!important}
+  #pages-pane .designer>.mmvs-r6-layers,#pages-pane .designer>.inspector{top:105px!important}
+}
+@media(prefers-reduced-motion:reduce){#mmvs9-dock,#page-toolbar{scroll-behavior:auto!important}}
+
+#mmvs9-dock.mmvs9-dock-collapsed #mmvs99-dock-side{display:none!important}

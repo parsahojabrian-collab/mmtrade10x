@@ -1,0 +1,27 @@
+/* MMVS_PREVIEW_CANVAS_R2 · static Safari-friendly control markup; editor only. */
+#mmvs-preview-canvas-panel{padding:12px 14px;margin:10px 0 14px;background:linear-gradient(125deg,#0b251b,#071b16);border:1px solid #416a54;border-radius:14px;color:#e4efe5;direction:rtl}
+#mmvs-preview-canvas-panel summary{font-weight:800;cursor:pointer;color:#d9be8c;font-size:13px;line-height:1.8}
+#mmvs-preview-canvas-panel .mmvs-pc-grid{display:grid;grid-template-columns:minmax(160px,1.4fr) repeat(2,minmax(115px,1fr));gap:10px;margin-top:12px}
+#mmvs-preview-canvas-panel label{margin:0;font-size:11px;color:#b8d5c2}
+#mmvs-preview-canvas-panel input,#mmvs-preview-canvas-panel select{margin-top:5px;min-height:40px;padding:8px 9px;max-width:100%;font-size:12px}
+#mmvs-preview-canvas-panel .mmvs-pc-mode,#mmvs-preview-canvas-panel .mmvs-pc-navigation{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+#mmvs-preview-canvas-panel button{flex:1 1 auto;padding:8px 9px;min-height:38px;font-size:11px;border-color:#426a58;background:#133b2d;color:#dff5e6}
+#mmvs-preview-canvas-panel button.active{background:#226a4d;color:#fff;border-color:#d9be8c}
+#mmvs-preview-canvas-panel .mmvs-pc-readout{margin:11px 0 3px;line-height:1.7;color:#6de6ac;font-size:11px;overflow-wrap:anywhere}
+#mmvs-preview-canvas-panel .mmvs-pc-readout.mmvs-pc-error{color:#ffb19b}
+#mmvs-preview-canvas-panel .mmvs-pc-hint{font-size:10px;color:#a9bdb2;line-height:1.85;margin:6px 0 0}
+/* Higher specificity defeats base mobile @media iframe height:590px without touching application content. */
+#preview-holder.mmvs-canvas-active{display:block;position:relative;text-align:center;overflow:auto;min-width:0;max-width:100%;padding:12px;overscroll-behavior:contain}
+#preview-holder.mmvs-canvas-active iframe#frame{display:block;box-sizing:content-box;width:var(--mmvs-pc-width,393px)!important;height:var(--mmvs-pc-height,852px)!important;max-width:none!important;margin:0 auto;vertical-align:top}
+#preview-holder.mmvs-canvas-active.desktop iframe#frame{width:var(--mmvs-pc-width,393px)!important;height:var(--mmvs-pc-height,852px)!important;max-width:none!important}
+#mmvs-pc-fold{position:absolute;z-index:9;box-sizing:border-box;border-top:2px dashed #f2bd78;color:#fff5df;background:rgba(6,23,17,.8);font-size:10px;font-weight:800;padding:5px 2px;text-align:center;pointer-events:none;white-space:nowrap}
+#mmvs-pc-fold[hidden]{display:none!important}
+@media(max-width:620px){#mmvs-preview-canvas-panel .mmvs-pc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#mmvs-preview-canvas-panel .mmvs-pc-grid label:first-child{grid-column:1/-1}#mmvs-preview-canvas-panel{padding:11px}#mmvs-preview-canvas-panel button{font-size:10px}}
+
+/* Safari fallback: controls are always present as HTML even before JS initializes. */
+#pages-pane .preview-area #mmvs-preview-canvas-panel{display:block!important;visibility:visible!important;opacity:1!important;width:100%;max-width:100%;box-sizing:border-box;position:relative;z-index:1;overflow:visible}
+#mmvs-preview-canvas-panel details,#mmvs-preview-canvas-panel summary{display:block}
+#mmvs-preview-canvas-panel .mmvs-pc-grid>*{min-width:0}
+#mmvs-preview-canvas-panel .mmvs-pc-navigation button,#mmvs-preview-canvas-panel .mmvs-pc-mode button{white-space:normal}
+
+#mmvs-preview-canvas-panel .mmvs-pc-heading{font-size:13px;font-weight:800;color:#d9be8c;margin:0 0 4px;line-height:1.8}

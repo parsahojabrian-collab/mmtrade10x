@@ -46,9 +46,11 @@ test('content and layout use exactly one publication request with both revision 
  assert.equal(requests.length,1);assert.equal(requests[0].path,'/content/pages/index/publish');
  assert.equal(requests[0].body.spatialExpectedRevision,4);assert.equal(requests[0].body.expectedRevision,'a'.repeat(64));
 });
-test('Object Studio cancellation preserves its unsaved configuration',()=>{
- const admin=read('apps/api/public/admin.html');const start=admin.indexOf('function close(force=false){');const code=admin.slice(start,admin.indexOf('\nfunction validate(){',start));
- const config={brand:'Unsaved'};let removed=false;
- const scope={modal:{remove(){removed=true}},config,operation:false,objectDirty:()=>true,confirm:()=>false};runInNewContext(code,scope);
- assert.equal(scope.close(),false);assert.equal(removed,false);assert.equal(scope.config,config);
+test('parent navigation sees unsaved home changes through the unified visual workspace',async()=>{
+ const admin=read('apps/api/public/admin.html');const start=admin.indexOf('  async visualStudio(){');const end=admin.indexOf('// TENX_P60_SECTION_RBAC_PANEL_V1',start);const method=admin.slice(start,end);
+ let asked=0;const window={addEventListener(){},confirm(){asked++;return false},alert(){}};runInNewContext(workspace,{window});
+ const scope={window,me:{role:'SUPER_ADMIN'},selectedStudioPage:'index',selectedStudioHomeTools:true,
+  h(tag){return {isConnected:true,append(){},...(tag==='iframe'?{contentWindow:{MMVSWorkspace:{isDirty:()=>true,isBusy:()=>false}}}:{})}}};
+ await runInNewContext('const views={'+method+'};views.visualStudio()',scope);
+ assert.equal(window.MMAdminWorkspace.canLeave(),false);assert.equal(asked,1);
 });

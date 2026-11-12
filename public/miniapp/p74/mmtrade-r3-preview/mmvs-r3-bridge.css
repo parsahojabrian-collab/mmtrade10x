@@ -1,0 +1,7 @@
+/* MMVS page-content bridge: add-on blocks only; original MMTrade R3 styles remain unchanged. */
+.mmvs-r3-addons{display:grid;gap:12px;margin:20px 0 0;direction:rtl}
+.mmvs-r3-content{padding:13px 15px;border:1px solid #36e9a36b;border-radius:20px;background:linear-gradient(145deg,#77ffcc16,#03352839);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:0 0 12px #08ed951e;color:#eafff4}
+.mmvs-r3-content h3{margin:0 0 7px;font-size:17px;color:#7affc7}.mmvs-r3-content p{margin:0;font-size:12px;line-height:2}
+.mmvs-r3-content img{display:block;width:min(100%,330px);height:auto;margin:auto}
+.mmvs-r3-content a{display:inline-block;color:#b1ffda;border:1px solid #34ffae70;background:#058c5c35;border-radius:100px;padding:9px 22px;margin-top:8px}
+.mmvs-r3-content hr{border:0;border-top:1px solid #29ffad88;margin:3px 0}

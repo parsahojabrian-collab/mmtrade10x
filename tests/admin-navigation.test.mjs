@@ -43,7 +43,7 @@ for (const id of ['objectStudio', 'users']) {
     runInNewContext(`${navigate}\n${render}\nrender([['${id}', '${id}']]);`, scope);
     groupsHost.querySelectorAll('button.p53-item')[0].handlers.click();
     await new Promise(resolve => setImmediate(resolve));
-    assert.deepEqual(calls, id === 'objectStudio' ? ['pages', 'studio'] : ['users']);
+    assert.deepEqual(calls, id === 'objectStudio' ? ['visualStudio'] : ['users']);
   });
 }
 
@@ -67,5 +67,5 @@ test('empty-menu recovery preserves the Object Studio navigation route', async (
   runInNewContext(`${navigate}\n${code}`, scope);
   assert.equal(typeof callback, 'function');
   await callback('objectStudio');
-  assert.deepEqual(calls, ['pages', 'studio']);
+  assert.deepEqual(calls, ['visualStudio']);
 });

@@ -1,0 +1,60 @@
+/* MMVS Media Gallery Scroll R1 — scoped to gallery elements identified by the JS. */
+.mmvs-mg-r1-panel {
+  box-sizing:border-box!important;
+  max-height:calc(100dvh - 20px)!important;
+  min-height:0!important;
+  overscroll-behavior:contain!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+.mmvs-mg-r1-scroll {
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(min(130px,38vw),1fr))!important;
+  gap:12px!important;
+  align-items:start!important;
+  align-content:start!important;
+  max-height:min(62dvh,660px)!important;
+  min-height:160px!important;
+  min-width:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  touch-action:pan-y!important;
+  scrollbar-width:thin;
+  padding:8px 8px 20px!important;
+  scroll-padding-bottom:20px;
+}
+.mmvs-mg-r1-scroll > * {
+  min-width:0!important;
+  max-width:100%!important;
+  flex:initial!important;
+  box-sizing:border-box!important;
+}
+.mmvs-mg-r1-scroll img {
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:210px!important;
+  aspect-ratio:4/3!important;
+  object-fit:contain!important;
+  object-position:center!important;
+}
+@media(max-width:530px){
+  .mmvs-mg-r1-panel {max-height:calc(100dvh - 12px)!important;}
+  .mmvs-mg-r1-scroll {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    max-height:min(64dvh,620px)!important;
+    gap:9px!important;
+    padding:7px 7px 24px!important;
+  }
+  .mmvs-mg-r1-scroll img{max-height:165px!important;}
+}
+@media(max-width:350px){
+  .mmvs-mg-r1-scroll{gap:6px!important;}
+  .mmvs-mg-r1-scroll img{max-height:138px!important;}
+}

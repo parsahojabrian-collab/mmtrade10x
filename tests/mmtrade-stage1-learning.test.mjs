@@ -26,7 +26,7 @@ test('stage two content is server-guarded and refuses incomplete course',()=>{
  assert.ok(start>0&&end>start);
  const route=api.slice(start,end);
  assert.match(route,/if \(!state\.unlocked\) return reply\.code\(403\)/);
- assert.ok(route.indexOf('state.unlocked')<route.indexOf('return { unlocked: true'));
+ assert.ok(route.indexOf('state.unlocked')<route.indexOf('return mmStage2PreviewContent()'));
 });
 test('study requires explicit confirmed POST and cannot be marked by opening',()=>{
  assert.match(html,/مطالعه کردم/);

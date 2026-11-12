@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#061b13">
+  <title>MATIN FUTURE | استودیوی آکادمی</title>
+  <link rel="stylesheet" href="/miniapp/10x-fonts.css?v=doran-p1">
+  <link rel="stylesheet" href="./academy-studio.css?v=MATIN_FUTURE_R5_1_20261107">
+</head>
+<body>
+  <main class="studio-shell">
+    <header class="studio-header">
+      <div class="studio-brandline">
+        <span class="studio-monogram" aria-hidden="true">MF</span>
+        <div>
+          <span class="studio-kicker">MATIN FUTURE · ACADEMY STUDIO · SUPER ADMIN</span>
+          <h1>مرکز مدیریت آکادمی</h1>
+          <p>کنترل یکپارچه هویت بصری، مراحل، محتوای آموزشی و انتشار</p>
+        </div>
+      </div>
+      <div class="studio-header-actions">
+        <span id="save-state" class="studio-state">در حال اتصال…</span>
+        <button id="reload" class="btn ghost" type="button">بازخوانی</button>
+        <button id="save" class="btn secondary" type="button">ذخیره پیش‌نویس</button>
+        <button id="publish" class="btn gold" type="button">انتشار برای کاربران</button>
+      </div>
+    </header>
+
+    <nav class="studio-tabs" aria-label="بخش‌های مدیریت">
+      <button class="tab active" data-tab="overview" type="button">نمای کلی</button>
+      <button class="tab" data-tab="general" type="button">هویت بصری</button>
+      <button class="tab" data-tab="stages" type="button">هفت مرحله</button>
+      <button class="tab" data-tab="lesson" type="button">محتوای آموزشی</button>
+      <button class="tab" data-tab="preview" type="button">پیش‌نمایش زنده</button>
+      <button class="tab" data-tab="history" type="button">نسخه‌ها</button>
+      <button class="tab" data-tab="analytics" type="button">تحلیل عملکرد</button>
+    </nav>
+
+    <section class="studio-panel active" id="tab-overview">
+      <div class="overview-hero">
+        <div>
+          <span class="studio-kicker">MATIN FUTURE / CONTROL ROOM</span>
+          <h2>نمای کلی آکادمی</h2>
+          <p id="overview-academy-title">آکادمی متین فیوچر</p>
+          <small>وضعیت محتوای فعلی، پیش‌نویس و مسیر هفت‌مرحله‌ای را از این بخش کنترل کن.</small>
+        </div>
+        <div class="overview-hero-actions">
+          <button class="btn secondary" type="button" data-go-tab="preview">مشاهده پیش‌نمایش</button>
+          <button class="btn ghost" type="button" data-go-tab="general">ویرایش ظاهر</button>
+        </div>
+      </div>
+      <div class="overview-metrics">
+        <article class="overview-metric"><span>کل مراحل</span><strong id="overview-total">۷</strong><small>ساختار ثابت آکادمی</small></article>
+        <article class="overview-metric"><span>مراحل فعال</span><strong id="overview-enabled">۷</strong><small>قابل مشاهده برای کاربران</small></article>
+        <article class="overview-metric"><span>مراحل قفل‌شده</span><strong id="overview-locked">۰</strong><small>نیازمند بازکردن توسط مدیر</small></article>
+        <article class="overview-metric"><span>نسخه منتشرشده</span><strong id="overview-revision">۰</strong><small>آخرین نسخه عمومی</small></article>
+      </div>
+      <div class="overview-grid">
+        <section class="overview-card">
+          <div class="overview-card-head"><h3>وضعیت انتشار</h3><span class="overview-live-dot"></span></div>
+          <div class="overview-status-row"><span>وضعیت پیش‌نویس</span><strong id="overview-draft-state">در حال دریافت…</strong></div>
+          <div class="overview-status-row"><span>دکمه ثبت‌نام</span><strong id="overview-cta-state">فعال</strong></div>
+          <div class="overview-status-row"><span>نمایش آکادمی</span><strong id="overview-enabled-state">فعال</strong></div>
+          <div class="overview-progress"><span id="overview-progress-fill"></span></div>
+          <small class="overview-hint">تغییرات ابتدا ذخیره می‌شوند و فقط پس از انتشار برای کاربران قابل مشاهده‌اند.</small>
+        </section>
+        <section class="overview-card">
+          <div class="overview-card-head"><h3>دسترسی سریع</h3><span class="pill">Quick actions</span></div>
+          <button class="quick-action" type="button" data-go-tab="stages"><span>۰۱</span><b>مدیریت هفت مرحله</b><small>ترتیب، نمایش، قفل و آیکون</small><i>←</i></button>
+          <button class="quick-action" type="button" data-go-tab="lesson"><span>۰۲</span><b>ویرایش محتوای درس‌ها</b><small>متن، بخش‌ها، تصاویر و لینک‌ها</small><i>←</i></button>
+          <button class="quick-action" type="button" data-go-tab="preview"><span>۰۳</span><b>پیش‌نمایش واقعی</b><small>نمایش موبایل و دسکتاپ با نوار منو</small><i>←</i></button>
+        </section>
+      </div>
+    </section>
+
+    <section class="studio-panel" id="tab-general">
+      <div class="panel-heading"><div><h2>تنظیمات عمومی آکادمی</h2><p>هویت صفحه، تصاویر اصلی و مقصد دکمه ثبت‌نام را مدیریت کن.</p></div><span class="pill">Global settings</span></div>
+      <div class="form-grid">
+        <label class="field full"><span>عنوان اصلی صفحه</span><input id="global-title" maxlength="120" placeholder="آکادمی متین فیوچر"></label>
+        <label class="field full"><span>زیرعنوان صفحه</span><input id="global-subtitle" maxlength="240" placeholder="مسیر آموزشی ۷ مرحله‌ای برای شروع کپی‌ترید"></label>
+        <div class="field media-field"><span>لوگوی آکادمی</span><div class="media-row"><input id="global-logo" dir="ltr" placeholder="/miniapp/assets/...jpg"><label class="upload-btn">بارگذاری لوگو<input id="upload-logo" type="file" accept="image/png,image/jpeg,image/webp" hidden></label></div><div class="media-preview"><img id="global-logo-image" alt="پیش‌نمایش لوگو" hidden><span>پیش‌نمایش نشان برند</span></div></div>
+        <div class="field media-field"><span>بک‌گراند عمودی اصلی</span><div class="media-row"><input id="global-background" dir="ltr" placeholder="مسیر تصویر بک‌گراند"><label class="upload-btn">جایگزینی تصویر<input id="upload-background" type="file" accept="image/png,image/jpeg,image/webp" hidden></label></div><div class="media-preview wide"><img id="global-background-image" alt="پیش‌نمایش پس‌زمینه" hidden><span>پیش‌نمایش بک‌گراند اصلی</span></div></div>
+        <div class="field media-field"><span>بک‌گراند کوهستان پایین صفحه</span><div class="media-row"><input id="global-footer-bg" dir="ltr" placeholder="مسیر تصویر کوهستان"><label class="upload-btn">جایگزینی تصویر<input id="upload-footer-bg" type="file" accept="image/png,image/jpeg,image/webp" hidden></label></div><div class="media-preview wide"><img id="global-footer-image" alt="پیش‌نمایش کوهستان پایین صفحه" hidden><span>پیش‌نمایش بخش پایانی و کوهستان</span></div></div>
+        <label class="field"><span>متن دکمه اصلی</span><input id="global-cta-text" maxlength="80" placeholder="شروع ثبت‌نام"></label>
+        <label class="field"><span>آیکون دکمه</span><input id="global-cta-icon" maxlength="12" placeholder="➜"></label>
+        <label class="field full"><span>لینک مقصد دکمه اصلی</span><input id="global-cta-href" dir="ltr" maxlength="1000" placeholder="/profile"><small>پیش‌فرض /profile است؛ یعنی ورود به مسیر ثبت‌نام فعلی پروژه. لینک خارجی باید HTTPS باشد.</small></label>
+        <label class="field full"><span>متن زیر دکمه</span><input id="global-footer-text" maxlength="180" placeholder="آماده ورود به مرحله بعدی هستید؟"></label>
+        <label class="field full"><span>هشدار ریسک پایین صفحه</span><textarea id="global-risk-text" rows="2" maxlength="400"></textarea></label>
+        <div class="mf-layout-card field full" id="mf-background-layout-controls">
+          <div class="mf-layout-card-head">
+            <strong>رفتار پس‌زمینه و محدوده نمایش</strong>
+            <span>BACKGROUND LAYOUT</span>
+          </div>
+          <label class="toggle-field mf-bg-scroll-toggle">
+            <input id="global-background-scroll" type="checkbox">
+            <span>پس‌زمینه همراه با اسکرول کاربر حرکت کند</span>
+          </label>
+          <label class="field mf-coverage-field">
+            <span>میزان پوشش عمودی تصویر <b id="global-background-coverage-value">۱۰۰٪</b></span>
+            <input id="global-background-coverage" type="range" min="50" max="100" step="5" value="100">
+            <small>مشخص می‌کند تصویر پس‌زمینه چه سهمی از ارتفاع صفحه را پوشش دهد.</small>
+          </label>
+          <p class="mf-layout-note">برای مشاهده تغییرات در پیش‌نمایش، ابتدا پیش‌نویس را ذخیره کن. تنظیمات فقط پس از انتشار برای کاربران اعمال می‌شوند.</p>
+        </div>
+        <label class="toggle-field"><input id="global-enabled" type="checkbox"><span>نمایش آکادمی برای کاربران فعال باشد</span></label>
+        <label class="toggle-field"><input id="global-cta-enabled" type="checkbox"><span>دکمه شروع ثبت‌نام نمایش داده شود</span></label>
+      </div>
+    </section>
+
+    <section class="studio-panel" id="tab-stages" hidden>
+      <div class="panel-heading"><div><h2>مدیریت مراحل آموزشی</h2><p>هفت مرحله اصلی ثابت هستند؛ ترتیب، نمایش، قفل بودن و آیکون هر مرحله قابل مدیریت است.</p></div><span class="pill">۷ Stages</span></div>
+      <div class="stage-manager-layout">
+        <div class="stage-list-panel"><div class="subheading">فهرست مراحل</div><div id="stage-list" class="stage-list"></div></div>
+        <div class="stage-editor-panel" id="stage-editor"><p class="empty-hint">یک مرحله را از فهرست انتخاب کن.</p></div>
+      </div>
+    </section>
+
+    <section class="studio-panel" id="tab-lesson" hidden>
+      <div class="panel-heading"><div><h2>ویرایش محتوای آموزشی</h2><p id="lesson-editor-subtitle">محتوای درس مرحله انتخاب‌شده را ویرایش کن.</p></div><span class="pill">Lesson CMS</span></div>
+      <div id="lesson-editor" class="lesson-editor"><p class="empty-hint">ابتدا از بخش «هفت مرحله» یک مرحله انتخاب کن.</p></div>
+    </section>
+
+    <section class="studio-panel preview-panel" id="tab-preview" hidden>
+      <div class="panel-heading"><div><h2>پیش‌نمایش زنده</h2><p>همان صفحه کاربران با نوار منوی مشترک؛ تغییرات ذخیره‌نشده فقط در این پیش‌نمایش مدیر دیده می‌شوند.</p></div><div class="preview-switch"><button class="preview-size active" data-size="mobile" type="button">موبایل</button><button class="preview-size" data-size="desktop" type="button">دسکتاپ</button></div></div>
+      <div class="preview-frame-wrap" id="preview-frame-wrap"><iframe id="preview-frame" title="پیش‌نمایش آکادمی" src="/miniapp/p74/learning/academy-preview.html?preview=1&v=MF_BG_R65_20261108" loading="eager"></iframe></div>
+    </section>
+
+    <section class="studio-panel" id="tab-history" hidden>
+      <div class="panel-heading"><div><h2>تاریخچه انتشار</h2><p>نسخه‌های منتشرشده را ببین و در صورت نیاز نسخه قبلی را بازگردانی کن.</p></div><span class="pill">Version history</span></div>
+      <div id="history-list" class="history-list"><p class="empty-hint">در حال دریافت تاریخچه…</p></div>
+    </section>
+
+    <section class="studio-panel" id="tab-analytics" hidden>
+      <div class="panel-heading"><div><h2>آمار آکادمی</h2><p>فقط رویدادهایی نمایش داده می‌شوند که واقعاً در سیستم ثبت شده‌اند.</p></div><button id="refresh-analytics" class="btn ghost" type="button">به‌روزرسانی آمار</button></div>
+      <div id="analytics-summary" class="analytics-grid"></div>
+      <div id="analytics-stages" class="analytics-stage-list"></div>
+    </section>
+
+    <footer class="studio-footer"><span id="revision-label">نسخه منتشرشده: —</span><span>تغییرات تا قبل از انتشار روی کاربران اعمال نمی‌شوند.</span></footer>
+    <div id="studio-toast" class="studio-toast" role="status" aria-live="polite"></div>
+  </main>
+  <script defer src="./academy-studio.js?v=MATIN_FUTURE_R5_1_20261107"></script>
+
+<script>
+/* MF_R6_1_FIXED_MOBILE_VIEWPORT */
+(function () {
+  'use strict';
+  var wrap = document.getElementById('preview-frame-wrap');
+  var frame = document.getElementById('preview-frame');
+  if (!wrap || !frame) return;
+  var BASE_WIDTH = 393;
+  var BASE_HEIGHT = 643;
+  function fitPreview() {
+    var desktop = wrap.classList.contains('desktop');
+    if (desktop) {
+      wrap.style.removeProperty('--mf-preview-scale');
+      wrap.style.height = '';
+      return;
+    }
+    var css = window.getComputedStyle(wrap);
+    var horizontalPadding = (parseFloat(css.paddingLeft) || 0) + (parseFloat(css.paddingRight) || 0);
+    var verticalPadding = (parseFloat(css.paddingTop) || 0) + (parseFloat(css.paddingBottom) || 0);
+    var availableWidth = Math.max(1, wrap.clientWidth - horizontalPadding);
+    var scale = Math.min(1, availableWidth / BASE_WIDTH);
+    wrap.style.setProperty('--mf-preview-scale', String(scale));
+    wrap.style.height = Math.ceil(BASE_HEIGHT * scale + verticalPadding + 2) + 'px';
+  }
+  if (window.ResizeObserver) {
+    var resizeObserver = new ResizeObserver(fitPreview);
+    resizeObserver.observe(wrap);
+    if (wrap.parentElement) resizeObserver.observe(wrap.parentElement);
+  }
+  if (window.MutationObserver) {
+    new MutationObserver(fitPreview).observe(wrap, { attributes: true, attributeFilter: ['class'] });
+  }
+  window.addEventListener('resize', fitPreview, { passive: true });
+  window.addEventListener('orientationchange', fitPreview, { passive: true });
+  document.querySelectorAll('.preview-size').forEach(function (button) {
+    button.addEventListener('click', function () { window.requestAnimationFrame(fitPreview); });
+  });
+  frame.addEventListener('load', fitPreview);
+  fitPreview();
+  window.setTimeout(fitPreview, 80);
+})();
+</script>
+
+</body>
+</html>

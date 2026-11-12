@@ -1,0 +1,471 @@
+/* MMTrade 10X — Unified Liquid Glass Bottom Bar R2
+   Translucent lens: background is deliberately see-through. No baked-in backdrop. */
+@font-face {
+  font-family: MMU-Doran;
+  src: url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: MMU-Doran;
+  src: url('/miniapp/fonts/doran/DoranFaNum-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+:root { --mmu-nav-reserve: calc(111px + env(safe-area-inset-bottom, 0px)); }
+
+/* Switch over only once the new shared navigation has mounted. */
+html.mmu-nav-ready .tenx-bottom-nav,
+html.mmu-nav-ready .tabbar,
+html.mmu-nav-ready .p74-nav,
+html.mmu-nav-ready .p77-nav,
+html.mmu-nav-ready .p78-nav,
+html.mmu-nav-ready .r10-bottom { display: none !important; }
+
+html.mmu-nav-ready body { padding-bottom: var(--mmu-nav-reserve); }
+html.mmu-nav-ready #p74-app .p74-scroll {
+  padding-bottom: var(--mmu-nav-reserve) !important;
+  scroll-padding-bottom: var(--mmu-nav-reserve);
+}
+html.mmu-nav-ready .stage,
+html.mmu-nav-ready .p77-shell,
+html.mmu-nav-ready .p78-shell,
+html.mmu-nav-ready .home-shell,
+html.mmu-nav-ready #r10-content,
+html.mmu-nav-ready .tenx-custom-page {
+  padding-bottom: max(116px, var(--mmu-nav-reserve));
+}
+
+#mmu-bottom-nav {
+  --mmu-light-x: 50%;
+  --mmu-light-y: 0%;
+  position: fixed !important;
+  z-index: 2147483600 !important; /* above the p74 scenic fullscreen layer */
+  left: 50% !important;
+  right: auto !important;
+  bottom: max(9px, env(safe-area-inset-bottom, 0px)) !important;
+  transform: translateX(-50%) translateZ(0) !important;
+  width: min(calc(100% - 20px), 548px) !important;
+  height: 80px;
+  margin: 0 !important;
+  padding: 7px !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3px;
+  isolation: isolate;
+  box-sizing: border-box;
+  overflow: hidden;
+  direction: rtl;
+  border: 1px solid rgba(228, 255, 243, .43);
+  border-radius: 29px;
+  /* The page itself remains visible through the bar (alpha <= .18). */
+  background:
+    linear-gradient(155deg, rgba(248, 255, 253, .18), rgba(96, 224, 191, .075) 42%, rgba(9, 54, 47, .16) 100%);
+  -webkit-backdrop-filter: blur(24px) saturate(1.85) brightness(1.11);
+  backdrop-filter: blur(24px) saturate(1.85) brightness(1.11);
+  box-shadow:
+    0 11px 29px rgba(0, 11, 9, .28),
+    0 2px 5px rgba(0, 8, 6, .11),
+    inset 0 1px 0 rgba(255, 255, 255, .52),
+    inset 0 -2px 2px rgba(3, 40, 30, .17),
+    0 0 19px rgba(35, 242, 175, .09);
+  font-family: MMU-Doran, Tahoma, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+#mmu-bottom-nav *, #mmu-bottom-nav *::before, #mmu-bottom-nav *::after { box-sizing: border-box; }
+
+/* Specular light + pale caustic at the inner rim, following pointer movement. */
+#mmu-bottom-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 32% 85% at var(--mmu-light-x) var(--mmu-light-y), rgba(255, 255, 255, .25), transparent 82%),
+    linear-gradient(180deg, rgba(249, 255, 251, .16), transparent 27%, transparent 66%, rgba(93, 240, 180, .065)),
+    linear-gradient(96deg, rgba(248, 255, 250, .10), transparent 21%, transparent 79%, rgba(227, 255, 241, .07));
+}
+/* Refractive-looking illuminated edge, with a transparent center. */
+#mmu-bottom-nav::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.3px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(122deg, rgba(255, 255, 255, .82), rgba(191, 255, 224, .23) 20%, rgba(118, 248, 204, .08) 48%, rgba(249, 214, 163, .35) 70%, rgba(255, 255, 255, .62));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+#mmu-bottom-nav .mmu-tab {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 1px 4px;
+  border-radius: 22px;
+  border: 1px solid transparent;
+  color: rgba(237, 255, 246, .88);
+  text-shadow: 0 1px 5px rgba(0, 14, 11, .66);
+  background: transparent;
+  text-decoration: none !important;
+  font: 700 10.8px/1.4 MMU-Doran, Tahoma, Arial, sans-serif;
+  white-space: nowrap;
+  transition: color .24s ease, background .27s ease, box-shadow .27s ease, transform .27s cubic-bezier(.2,.8,.2,1);
+}
+#mmu-bottom-nav .mmu-icon { display: grid; place-items: center; flex: 0 0 auto; }
+#mmu-bottom-nav .mmu-tab svg {
+  display: block;
+  flex: none;
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .16));
+}
+#mmu-bottom-nav .mmu-tab > span:last-child { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+#mmu-bottom-nav .mmu-tab:hover { color: #ffffff; background: rgba(214, 255, 232, .07); }
+#mmu-bottom-nav .mmu-tab:active { transform: translateY(1px) scale(.96); background: rgba(220, 255, 239, .15); }
+
+/* The active tab is another small optical lens, not an opaque green tile. */
+#mmu-bottom-nav .mmu-tab.is-active {
+  color: #c5ffe0;
+  text-shadow: 0 0 9px rgba(57, 255, 175, .4), 0 1px 6px rgba(0, 12, 8, .7);
+  border-color: rgba(227, 255, 245, .35);
+  background: linear-gradient(150deg, rgba(226, 255, 242, .21), rgba(49, 230, 161, .075) 67%, rgba(17, 100, 81, .09));
+  -webkit-backdrop-filter: blur(8px) saturate(1.7);
+  backdrop-filter: blur(8px) saturate(1.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(84, 250, 183, .10), 0 0 14px rgba(43, 251, 168, .17);
+}
+#mmu-bottom-nav .mmu-tab.is-active::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 23%; right: 23%;
+  height: 2px;
+  border-radius: 40px;
+  background: rgba(214, 255, 231, .90);
+  box-shadow: 0 0 10px 2px rgba(51, 251, 164, .42);
+  pointer-events: none;
+}
+#mmu-bottom-nav .mmu-tab.is-active svg { filter: drop-shadow(0 0 6px rgba(60, 248, 176, .50)); }
+
+/* A subtle champagne / emerald lens only around the 10X symbol. */
+#mmu-bottom-nav .mmu-tab--challenge .mmu-icon {
+  position: relative;
+  width: 37px;
+  height: 36px;
+  margin-top: -7px;
+  margin-bottom: -1px;
+  border-radius: 14px;
+  color: #ffe1af;
+  border: 1px solid rgba(255, 231, 184, .57);
+  background: linear-gradient(150deg, rgba(255, 238, 202, .18), rgba(19, 130, 103, .11));
+  -webkit-backdrop-filter: blur(5px) saturate(1.6);
+  backdrop-filter: blur(5px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 249, 229, .41), 0 0 13px rgba(225, 185, 121, .23);
+}
+#mmu-bottom-nav .mmu-tab--challenge svg { width: 24px; height: 24px; }
+#mmu-bottom-nav .mmu-tab--challenge > span:last-child { color: #ffe1ac; }
+#mmu-bottom-nav .mmu-tab--challenge.is-active .mmu-icon {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .46), 0 0 19px rgba(47, 238, 159, .38);
+}
+#mmu-bottom-nav .mmu-tab:focus-visible { outline: 2px solid #caffdf; outline-offset: 2px; }
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  /* Older browsers get readable translucent fallback instead of a broken empty bar. */
+  #mmu-bottom-nav { background: rgba(13, 47, 41, .82); }
+  #mmu-bottom-nav .mmu-tab.is-active { background: rgba(50, 116, 84, .58); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  #mmu-bottom-nav { background: rgba(10, 44, 37, .92); }
+}
+@media (max-width: 360px) {
+  #mmu-bottom-nav { width: calc(100% - 12px) !important; padding: 5px !important; gap: 1px; height: 76px; border-radius: 25px; }
+  #mmu-bottom-nav .mmu-tab { font-size: 9.8px; min-height: 64px; border-radius: 19px; }
+  #mmu-bottom-nav .mmu-tab svg { width: 23px; height: 23px; }
+  #mmu-bottom-nav .mmu-tab--challenge .mmu-icon { width: 33px; height: 33px; }
+}
+@media (prefers-reduced-motion: reduce) { #mmu-bottom-nav .mmu-tab { transition: none; } }
+
+/* R4: guarantee one optical layer above the P74 full-screen stage in WebView. */
+#mmu-bottom-nav {
+  z-index: 2147483646 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  contain: layout style;
+  max-width: min(548px, calc(100vw - 12px));
+}
+html.mmu-nav-ready #p74-app { z-index: 2147483000; }
+html.mmu-nav-ready body > #mmu-bottom-nav { visibility: visible !important; opacity: 1 !important; }
+/* Normalize button styling even when each page defines global a/svg rules. */
+#mmu-bottom-nav > a.mmu-tab { box-shadow: none; margin: 0; }
+#mmu-bottom-nav > a.mmu-tab.is-active {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 14px rgba(43,251,168,.17);
+}
+
+/* MMTrade 10X — R5.1 Light Support Reference Glass Skin.
+   Visual reference: user-provided Telegram support screenshot, 2026-11-08.
+   Inherits R4 renderer, five tabs, routes, and page mount. Only the optical skin changes.
+*/
+/* MMU_R5_1_LIGHT_GLASS_BEGIN */
+/* Tint opacity reduced substantially; retain glass rim, blur, typography and geometry. */
+
+html body > #mmu-bottom-nav {
+  --mmu-light-x: 24%;
+  --mmu-light-y: 0%;
+  width: min(calc(100% - 18px), 548px) !important;
+  max-width: min(calc(100vw - 18px), 548px) !important;
+  height: 80px !important;
+  min-height: 80px;
+  bottom: max(9px, env(safe-area-inset-bottom, 0px)) !important;
+  padding: 6px !important;
+  gap: 2px !important;
+  border: 1.5px solid rgba(225, 250, 238, .80) !important;
+  border-radius: 31px !important;
+  background:
+    radial-gradient(ellipse 70% 110% at 15% 6%, rgba(186, 255, 228, .11) 0%, rgba(137, 224, 185, .055) 48%, transparent 78%),
+    radial-gradient(ellipse 92% 78% at 58% 112%, rgba(79, 153, 101, .075) 0%, transparent 77%),
+    linear-gradient(105deg, rgba(20, 93, 72, .18) 0%, rgba(10, 88, 66, .135) 35%, rgba(3, 65, 50, .16) 67%, rgba(3, 59, 45, .20) 100%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(1.55) brightness(1.04) !important;
+  backdrop-filter: blur(25px) saturate(1.55) brightness(1.04) !important;
+  box-shadow:
+    0 0 0 1px rgba(4, 48, 36, .55),
+    0 9px 22px rgba(0, 15, 10, .29),
+    0 0 21px rgba(99, 255, 189, .07),
+    inset 0 1px 1px rgba(255, 255, 255, .74),
+    inset 0 -1.6px 1.5px rgba(204, 255, 221, .46),
+    inset 0 0 0 3px rgba(231, 255, 241, .038) !important;
+  color: #effff4;
+  font-family: MMU-Doran, Tahoma, sans-serif;
+}
+
+html body > #mmu-bottom-nav::before {
+  content: '';
+  z-index: 0;
+  inset: 0;
+  opacity: 1;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 50% 69% at var(--mmu-light-x) var(--mmu-light-y), rgba(252, 255, 251, .15), transparent 83%),
+    linear-gradient(180deg, rgba(236, 255, 245, .13) 0%, transparent 16%, transparent 72%, rgba(118, 226, 167, .065) 94%, rgba(236, 255, 234, .09) 100%),
+    radial-gradient(ellipse 40% 60% at 0% 22%, rgba(195, 255, 224, .04), transparent 100%);
+  pointer-events: none;
+}
+
+html body > #mmu-bottom-nav::after {
+  inset: 0;
+  z-index: 3;
+  padding: 1.5px;
+  opacity: .97;
+  background: linear-gradient(115deg,
+    rgba(239, 255, 245, .98) 0%,
+    rgba(214, 252, 230, .64) 20%,
+    rgba(198, 245, 215, .46) 54%,
+    rgba(238, 255, 245, .85) 78%,
+    rgba(243, 255, 241, .96) 100%);
+  pointer-events: none;
+}
+
+html body > #mmu-bottom-nav .mmu-tab {
+  min-height: 65px;
+  gap: 2px;
+  padding: 6px 1px 4px;
+  border: 1px solid transparent;
+  border-radius: 23px;
+  color: #effff4;
+  text-shadow: 0 1px 4px rgba(0, 21, 13, .77);
+  font: 700 11.8px/1.35 MMU-Doran, Tahoma, Arial, sans-serif;
+  background: transparent;
+}
+
+html body > #mmu-bottom-nav .mmu-tab .mmu-icon {
+  min-height: 27px;
+}
+html body > #mmu-bottom-nav .mmu-tab svg {
+  width: 27px;
+  height: 27px;
+  stroke-width: 2;
+  filter: drop-shadow(0 1px 3px rgba(0, 17, 12, .20));
+}
+html body > #mmu-bottom-nav .mmu-tab > span:last-child {
+  text-overflow: clip;
+  overflow: visible;
+  letter-spacing: -.15px;
+}
+
+/* Raised inner glass lens as in the support screenshot. */
+html body > #mmu-bottom-nav > .mmu-tab.is-active {
+  color: #d6ffeb;
+  border: 1px solid rgba(190, 249, 216, .47);
+  background:
+    radial-gradient(ellipse 120% 100% at 50% 1%, rgba(186, 255, 225, .15), transparent 68%),
+    linear-gradient(180deg, rgba(154, 245, 206, .13), rgba(69, 186, 142, .085) 51%, rgba(25, 129, 87, .095)) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow:
+    inset 0 1px 1px rgba(239, 255, 244, .38),
+    inset 0 -1px 1px rgba(136, 252, 190, .27),
+    0 0 1px rgba(218, 255, 234, .33),
+    0 -1px 11px rgba(117, 255, 193, .095) !important;
+}
+html body > #mmu-bottom-nav > .mmu-tab.is-active::before {
+  top: 0;
+  left: 26%;
+  right: 26%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(213, 255, 234, .99) 18%, rgba(222, 255, 234, .99) 82%, transparent);
+  box-shadow: 0 0 7px 1px rgba(120, 255, 189, .30);
+}
+html body > #mmu-bottom-nav > .mmu-tab.is-active svg {
+  filter: drop-shadow(0 0 5px rgba(140, 255, 203, .50));
+}
+
+/* The gold trophy is the only always-accented icon, even on inactive pages. */
+html body > #mmu-bottom-nav .mmu-tab--challenge .mmu-icon {
+  min-height: 36px;
+  width: 37px;
+  height: 36px;
+  margin-top: -7px;
+  margin-bottom: -1px;
+  border: 1.4px solid rgba(241, 213, 156, .72);
+  border-radius: 14px;
+  color: #ffe3a9;
+  background: linear-gradient(170deg, rgba(237, 226, 177, .24), rgba(29, 121, 83, .10) 89%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 249, 217, .43),
+    0 0 9px rgba(255, 221, 167, .12) !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+html body > #mmu-bottom-nav .mmu-tab--challenge svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.9;
+  filter: drop-shadow(0 0 4px rgba(247, 206, 132, .19));
+}
+html body > #mmu-bottom-nav .mmu-tab--challenge > span:last-child {
+  color: #f6d8a5;
+}
+
+@media (max-width: 360px) {
+  html body > #mmu-bottom-nav {
+    height: 76px !important;
+    min-height: 76px;
+    width: calc(100% - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    padding: 5px !important;
+    gap: 1px !important;
+    border-radius: 27px !important;
+  }
+  html body > #mmu-bottom-nav .mmu-tab { min-height: 63px; font-size: 10.3px; border-radius: 20px; }
+  html body > #mmu-bottom-nav .mmu-tab svg { width: 24px; height: 24px; }
+  html body > #mmu-bottom-nav .mmu-tab--challenge svg { width: 24px; height: 24px; }
+}
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  html body > #mmu-bottom-nav {
+    background: linear-gradient(105deg, rgba(21, 90, 70, .96), rgba(3, 59, 45, .98)) !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html body > #mmu-bottom-nav {
+    background: linear-gradient(105deg, rgba(21, 90, 70, .96), rgba(3, 59, 45, .98)) !important;
+  }
+}
+/* MMU_R5_1_LIGHT_GLASS_END */
+
+/* MMU_R6_NAV_STUDIO_SKIN_BEGIN — all variables are controlled by super-admin DB settings. */
+html body > #mmu-bottom-nav {
+  --mmu-tint-alpha: .14;
+  --mmu-active-alpha: .16;
+  --mmu-glow-alpha: .18;
+  --mmu-rim-alpha: .82;
+  --mmu-blur: 25px;
+  --mmu-duration: 310ms;
+  grid-template-columns: repeat(var(--mmu-columns, 5), minmax(0,1fr)) !important;
+  background:
+    radial-gradient(ellipse 90% 100% at 17% 0%,rgba(226,255,244,calc(var(--mmu-tint-alpha) * .75)),transparent 80%),
+    linear-gradient(120deg,rgba(22,113,86,var(--mmu-tint-alpha)),rgba(8,84,66,var(--mmu-tint-alpha)) 52%,rgba(4,66,51,var(--mmu-tint-alpha))) !important;
+  -webkit-backdrop-filter: blur(var(--mmu-blur)) saturate(1.5) !important;
+  backdrop-filter: blur(var(--mmu-blur)) saturate(1.5) !important;
+  box-shadow:
+    0 0 0 1px rgba(1,48,32,.34),
+    0 10px 26px rgba(0,16,9,.22),
+    0 0 24px rgba(79,242,168,var(--mmu-glow-alpha)),
+    inset 0 1px rgba(255,255,255,.55),
+    inset 0 -1.5px rgba(215,255,227,.26) !important;
+  transform: translateX(-50%) translateY(0) translateZ(0) !important;
+  transition: transform var(--mmu-duration) cubic-bezier(.22,.85,.18,1),
+              opacity var(--mmu-duration) ease,
+              filter var(--mmu-duration) ease !important;
+  opacity:1;
+  will-change:transform;
+}
+html body > #mmu-bottom-nav::after { opacity:var(--mmu-rim-alpha) !important; }
+html body > #mmu-bottom-nav::before { opacity:calc(.35 + var(--mmu-rim-alpha) * .65) !important; }
+html body > #mmu-bottom-nav > .mmu-tab.is-active {
+  background:
+    radial-gradient(ellipse 110% 100% at 48% 0%,rgba(224,255,238,calc(var(--mmu-active-alpha) * 1.25)),transparent 72%),
+    linear-gradient(180deg,rgba(142,252,202,var(--mmu-active-alpha)),rgba(38,167,121,var(--mmu-active-alpha))) !important;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.32),
+             0 0 17px rgba(84,253,163,calc(var(--mmu-glow-alpha) * .52)) !important;
+}
+html body > #mmu-bottom-nav.mmu-nav-hidden {
+  opacity:0 !important;
+  transform:translateX(-50%) translateY(calc(100% + 35px + env(safe-area-inset-bottom, 0px))) translateZ(0) !important;
+  pointer-events:none !important;
+}
+html body > #mmu-bottom-nav[data-mmu-skin="reference"] {
+  background:
+    radial-gradient(ellipse 80% 80% at 9% 0%,rgba(215,255,241,calc(var(--mmu-tint-alpha) * 1.30)),transparent 85%),
+    linear-gradient(110deg,rgba(39,135,102,var(--mmu-tint-alpha)),rgba(3,70,51,var(--mmu-tint-alpha))) !important;
+}
+html body > #mmu-bottom-nav[data-mmu-skin="crystal"] {
+  background:
+    linear-gradient(130deg,rgba(244,255,250,var(--mmu-tint-alpha)),rgba(160,225,207,var(--mmu-tint-alpha))) !important;
+  -webkit-backdrop-filter:blur(var(--mmu-blur)) saturate(1.12) brightness(1.1) !important;
+  backdrop-filter:blur(var(--mmu-blur)) saturate(1.12) brightness(1.1) !important;
+  border-color:rgba(249,255,253,.72) !important;
+}
+html body > #mmu-bottom-nav[data-mmu-skin="minimal"] {
+  background:rgba(16,26,24,var(--mmu-tint-alpha)) !important;
+  border-color:rgba(221,244,235,.42) !important;
+  box-shadow:0 7px 22px rgba(0,10,8,.18),inset 0 1px rgba(255,255,255,.15) !important;
+}
+html body > #mmu-bottom-nav[data-mmu-skin="minimal"]::before {opacity:.22!important;}
+html body > #mmu-bottom-nav[data-mmu-skin="solid"] {
+  background:linear-gradient(125deg,#183e33,#06251c) !important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+  box-shadow:0 9px 30px rgba(0,10,7,.32),inset 0 1px rgba(240,255,246,.24)!important;
+}
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
+  html body > #mmu-bottom-nav:not([data-mmu-skin="solid"]){
+    background:linear-gradient(120deg,rgba(12,56,42,.96),rgba(5,43,34,.98))!important;
+  }
+}
+@media(prefers-reduced-transparency:reduce){
+  html body > #mmu-bottom-nav:not([data-mmu-skin="solid"]){
+    background:linear-gradient(120deg,rgba(12,56,42,.96),rgba(5,43,34,.98))!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html body > #mmu-bottom-nav {transition:none!important;will-change:auto!important;}
+}
+/* MMU_R6_NAV_STUDIO_SKIN_END */

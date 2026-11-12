@@ -1,0 +1,11 @@
+/* MMVS_R6_WORKSPACE: three-column editor, independent panes */
+#pages-pane .designer{direction:rtl;display:grid!important;grid-template-columns:minmax(250px,290px) minmax(0,1fr) minmax(260px,310px)!important;gap:12px!important;align-items:start!important}
+#pages-pane .designer>.mmvs-r6-layers{grid-column:1;grid-row:1;min-width:0;max-height:calc(100dvh - 130px);overflow:auto;overscroll-behavior:contain;position:sticky;top:10px;background:#10291f;border:1px solid #466854;border-radius:14px;padding:10px}
+#pages-pane .designer>.preview-area{grid-column:2!important;grid-row:1!important;min-width:0;width:auto!important;order:unset!important}
+#pages-pane .designer>.inspector{grid-column:3!important;grid-row:1!important;min-width:0;width:auto!important;max-height:calc(100dvh - 130px)!important;overflow:auto!important;position:sticky;top:10px;order:unset!important}
+#pages-pane #spatial-panel{margin:0!important;min-width:0}
+#pages-pane .preview-holder{min-height:640px;overflow:auto}
+#pages-pane .preview-area iframe{flex-shrink:0}
+#mmvs-r6-tabs{display:none}
+@media(max-width:1450px) and (min-width:1051px){#pages-pane .designer{grid-template-columns:minmax(220px,250px) minmax(0,1fr) minmax(220px,260px)!important;gap:8px!important}#pages-pane .designer>.mmvs-r6-layers,#pages-pane .designer>.inspector{padding:8px}}
+@media(max-width:1050px){#mmvs-r6-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:10px;position:sticky;top:0;z-index:30;padding:8px;background:#071610;border:1px solid #466854;border-radius:12px}#mmvs-r6-tabs button{min-width:0;padding:9px 4px}#pages-pane .designer{display:block!important}#pages-pane .designer>.mmvs-r6-layers,#pages-pane .designer>.preview-area,#pages-pane .designer>.inspector{display:none!important;width:100%!important;max-height:none!important;position:static!important;overflow:visible!important}#pages-pane .designer[data-r6-view="canvas"]>.preview-area,#pages-pane .designer[data-r6-view="layers"]>.mmvs-r6-layers,#pages-pane .designer[data-r6-view="inspector"]>.inspector{display:block!important}#pages-pane .preview-holder{min-height:570px}#pages-pane .designer>.mmvs-r6-layers{padding:10px}}

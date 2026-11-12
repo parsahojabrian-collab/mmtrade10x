@@ -103,7 +103,7 @@ function template(){
    ${['pencil','gear','chart','trophy','headset'].map((k,i)=>`<button type="button" class="p77-menu" data-action="${['edit','settings','activity','awards','support'][i]}">${I(k)}<span class="p77-menu-label" data-menu="${i}"></span>${I('chevron','p77-chevron')}</button>`).join('')}
  </section>
  <a class="p77-cta" id="p77-main-cta" href="/miniapp/challenge.html">${I('rocket')}<span class="p77-cta-text" data-text="ctaText"></span>${I('chevron')}</a>
- </main><nav class="p77-nav" aria-label="منوی اصلی" id="p77-nav"></nav>`;
+ </main><!-- R3: navigation comes only from /miniapp/shared/mm-bottom-nav.js -->`;
 }
 function applyConfig(){
  const x=cfg.settings;ROOT.style.setProperty('--p77-radius',x.radius+'px');ROOT.style.setProperty('--p77-gap',x.gap+'px');ROOT.style.setProperty('--p77-scale',x.scale);ROOT.style.setProperty('--p77-hero-height',x.heroHeight+'px');
@@ -114,7 +114,7 @@ function applyConfig(){
  ROOT.querySelectorAll('[data-menu]').forEach(n=>n.textContent=cfg.menuTitles[Number(n.dataset.menu)]||'');
  ROOT.querySelectorAll('[data-award]').forEach((n,i)=>n.querySelector('span').textContent=cfg.awardTitles[i]);
  const cta=ROOT.querySelector('#p77-main-cta');cta.href=safeHref(cfg.ctaHref)||'/miniapp/challenge.html';
- const nav=ROOT.querySelector('#p77-nav');nav.replaceChildren();cfg.nav.forEach((n,i)=>{if(i===2&&!x.showRewardsNav)return;const a=document.createElement('a');a.href=safeHref(n.href)||'#p77-awards';a.setAttribute('aria-label',n.title);if(i===3)a.setAttribute('aria-current','page');a.innerHTML=I(n.icon);const label=document.createElement('span');label.textContent=n.title;a.append(label);nav.append(a)});
+ /* R3: legacy profile navigation renderer removed. */
 }
 function applyData(){
  const nickname=getNickname(),display=nickname||data.displayName||'کاربر MMTrade';ROOT.querySelector('#p77-name').textContent=display;

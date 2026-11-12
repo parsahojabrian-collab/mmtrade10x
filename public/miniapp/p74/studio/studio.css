@@ -126,3 +126,45 @@
 .version-item{gap:14px;flex-wrap:wrap}.version-item strong,.version-item small{display:block}.version-item small{line-height:1.9}.release-warning{color:#eac58c;font-size:12px;max-width:44em}
 .spatial-tools>summary{color:var(--gold);font-weight:700;cursor:pointer;padding:6px 0}.spatial-tools[open]>summary{margin-bottom:10px}.spatial-tools .spatial-fields{margin-bottom:10px}
 @media(max-width:650px){.toolbar{top:0;gap:8px;padding:10px}.toolbar .labelwrap{width:100%}.toolbar .actions{width:100%;display:flex;flex-wrap:wrap;gap:6px}.toolbar .actions button{flex:1 1 28%;min-height:42px}.release-preview{align-items:stretch;flex-direction:column}.release-preview button{min-height:44px}.release-actions{width:100%}.release-actions button{flex:1;min-height:44px}.version-item{align-items:stretch}.spatial-layer-list{max-height:144px}.spatial-tools>summary{min-height:44px;display:flex;align-items:center}.release-heading h3{font-size:17px}}
+
+/* MMVS mobile compact panel R2 */
+.spatial-collapse-toggle{display:none}
+.spatial-head{gap:8px}
+.spatial-collapse-toggle{white-space:nowrap;min-height:38px;padding:6px 11px;font-size:11px}
+@media(max-width:650px){
+ .spatial-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap}
+ .spatial-head strong{flex:1 1 auto;min-width:0}
+ .spatial-collapse-toggle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+ #spatial-panel.is-mobile-collapsed > :not(.spatial-head){display:none!important}
+ #spatial-panel.is-mobile-collapsed{padding:8px 10px;gap:0}
+ #spatial-panel.is-mobile-collapsed .spatial-head{min-height:40px}
+}
+
+
+/* MMVS_STUDIO_V2_R3_DOM_EXPLORER — isolated editor-only styling */
+@media(min-width:1150px){.workspace{grid-template-columns:190px minmax(0,1fr)}.designer{grid-template-columns:minmax(0,1fr) 285px;gap:10px}.work{padding:10px}.preview-area,.inspector{padding:10px}.preview-holder{min-height:690px}}
+.toolbar{border-color:#294d42;background:#0b211c}.toolbar .actions{gap:5px}.toolbar button{padding:7px 10px}.side{background:#091b18}.preview-area,.inspector{border-color:#2d5145;background:#0c211c}.spatial-panel{background:#0c2821;border-color:#2d5949}.spatial-panel details:not([open]){padding-bottom:5px}.spatial-layer-list{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));max-height:240px}
+.mmvs-dom-explorer{border:1px solid #3b7761;border-radius:12px;background:#091e1a;padding:10px;min-width:0;margin:8px 0}.mmvs-dom-explorer>summary{cursor:pointer;font-weight:700;color:#70e9b5}.mmvs-dom-tools{display:flex;gap:6px;margin:9px 0;align-items:center}.mmvs-dom-tools input{flex:1;min-width:0;padding:7px}.mmvs-dom-tools button{white-space:nowrap}.mmvs-dom-list{max-height:350px;overflow:auto;overscroll-behavior:contain;border:1px solid #284b40;border-radius:9px;background:#071713;padding:4px}.mmvs-dom-item{display:flex;align-items:center;width:100%;text-align:right;gap:8px;min-height:32px;margin:1px 0!important;padding:5px 7px!important;border:1px solid transparent;background:transparent;color:#d6eae0;border-radius:6px;overflow:hidden}.mmvs-dom-item:hover,.mmvs-dom-item.active{background:#164637;border-color:#5acb9b}.mmvs-dom-tag{font:11px monospace;color:#69d6aa;direction:ltr;flex:none}.mmvs-dom-label{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mmvs-dom-meta{font-size:10px;color:#a5bdaf}.mmvs-dom-item.is-hidden{opacity:.5}.mmvs-dom-item.is-isolated .mmvs-dom-tag{color:#e6bd85}.mmvs-dom-status{font-size:10px;color:#a7c6b8;margin:6px 0}.mmvs-dom-help{font-size:10px;color:#b0c7ba;line-height:1.8;margin:5px 0 0}
+@media(max-width:650px){.mmvs-dom-tools{flex-wrap:wrap}.mmvs-dom-tools button{flex:1}.mmvs-dom-list{max-height:260px}}
+
+/* MMVS_DOM_ORDER_R85 */
+.mmvs-dom-reorder-toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0}.mmvs-dom-reorder-toolbar button{font-size:12px;min-height:33px}.mmvs-dom-list.mmvs-dom-target-mode .mmvs-dom-item{cursor:crosshair;outline-offset:-1px}.mmvs-dom-list.mmvs-dom-target-mode .mmvs-dom-item:hover{outline:1px dashed #23bd8a;background:rgba(20,180,129,.16)}.mmvs-dom-item[draggable=true]{user-select:none}
+
+/* MMVS_VISUAL_STACK_R86: DOM Explorer overlay stack */
+.mmvs-visual-stack{margin:10px 0;padding:9px;border:1px solid #3d8166;border-radius:11px;background:linear-gradient(155deg,#0b2922,#081b18);min-width:0}
+.mmvs-visual-stack>summary{font-weight:700;font-size:12px;cursor:pointer;color:#8af1be}
+.mmvs-visual-stack-top{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px;color:#a9c7b9;margin-top:9px}
+.mmvs-visual-stack-top button{font-size:11px;min-height:28px;white-space:nowrap}
+.mmvs-visual-stack-status,.mmvs-visual-stack-note{color:#b6d2c3;font-size:11px;line-height:1.65;margin:7px 0}
+.mmvs-visual-stack-list{display:flex;flex-direction:column;gap:5px;max-height:290px;overflow:auto;overscroll-behavior:contain;padding:5px;background:#061813;border:1px solid #294f42;border-radius:9px}
+.mmvs-visual-stack-row{min-width:0;display:flex;gap:5px;align-items:stretch;border-radius:7px;border:1px solid #2a5948;background:#103229;padding:4px;position:relative;cursor:grab}
+.mmvs-visual-stack-row:before{content:'⠿';font-size:16px;color:#74ab92;align-self:center;padding:0 2px}
+.mmvs-visual-stack-row.is-selected{border-color:#6af5af;background:#174d39}
+.mmvs-visual-stack-row.is-drop-target{outline:2px dashed #5cf5b2;outline-offset:-1px}
+.mmvs-visual-stack-pick{min-width:0;flex:1;background:transparent!important;border:0!important;padding:3px!important;display:flex;flex-direction:column;text-align:right;gap:3px;justify-content:center;color:#dffbea!important}
+.mmvs-visual-stack-title{font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.mmvs-visual-stack-desc{font-size:10px;color:#a5cbb8;white-space:nowrap}
+.mmvs-visual-stack-actions{display:flex;gap:3px;align-items:center}
+.mmvs-visual-stack-actions button{min-height:29px;min-width:28px;font-size:11px;padding:3px!important;white-space:nowrap;border-radius:5px}
+.mmvs-visual-stack-actions button:disabled{opacity:.35}
+@media(max-width:650px){.mmvs-visual-stack-list{max-height:240px}.mmvs-visual-stack-actions button{min-width:27px}}

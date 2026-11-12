@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const code = readFileSync(new URL('../public/miniapp/p74/image-optimizer.js', import.meta.url), 'utf8');
 
-function setup({ bitmap = false, dataUrl = false, urlWorks = false, webpWorks = true } = {}) {
+function setup({ bitmap = false, dataUrl = false, urlWorks = false, webpWorks = true, encodeWorks = true, encodedBytes = 6000 } = {}) {
   let bitmapClosed = false;
   let urlRevoked = 0;
   let dataRead = 0;
@@ -28,7 +28,7 @@ function setup({ bitmap = false, dataUrl = false, urlWorks = false, webpWorks = 
     Image: FakeImage,
     FileReader: FakeReader,
     createImageBitmap: bitmap ? async () => ({ width: 1440, height: 600, close() { bitmapClosed = true; } }) : undefined,
-    document: { createElement() { return { width: 0, height: 0, getContext() { return { drawImage() {}, imageSmoothingEnabled: false, imageSmoothingQuality: '' }; }, toBlob(cb, type) { cb(webpWorks || type !== 'image/webp' ? new Blob([new Uint8Array(6000)], { type }) : null); } }; } }
+    document: { createElement() { return { width: 0, height: 0, getContext() { return { drawImage() {}, imageSmoothingEnabled: false, imageSmoothingQuality: '' }; }, toBlob(cb, type) { cb(encodeWorks && (webpWorks || type !== 'image/webp') ? new Blob([new Uint8Array(encodedBytes)], { type }) : null); } }; } }
   };
   vm.runInNewContext(code, scope);
   return { opt: scope.window.MMTradeImageOptimizer, get bitmapClosed() { return bitmapClosed; }, get urlRevoked() { return urlRevoked; }, get dataRead() { return dataRead; } };
@@ -76,4 +76,30 @@ test('accepts a blank MIME for a correctly named PNG image', async () => {
   const result = await env.opt.optimize(file);
   assert.equal(result.file.type, 'image/png');
   assert.equal(result.file.size, 1024);
+});
+
+
+test('an unsupported source is never returned when every encoder fails', async () => {
+  const env = setup({ bitmap: true, encodeWorks: false });
+  await assert.rejects(env.opt.optimize(large('image/heic', 'iphone.heic')), /JPG|PNG/);
+  assert.equal(env.bitmapClosed, true);
+});
+
+test('an encoder failure cannot bypass the requested image bounds', async () => {
+  const env = setup({ bitmap: true, encodeWorks: false });
+  await assert.rejects(env.opt.optimize(large(), { role: 'object', maxDimension: 128 }), /JPG|PNG/);
+});
+
+test('an oversized encoded result cannot fall back to an unresized source', async () => {
+  const env = setup({ bitmap: true, encodedBytes: 12 * 1024 * 1024 + 1 });
+  await assert.rejects(env.opt.optimize(large(), { role: 'object', maxDimension: 128 }), /۱۲/);
+});
+
+test('native fallback after encoding failure retains the inferred MIME', async () => {
+  const env = setup({ bitmap: true, encodeWorks: false });
+  const file = large('', 'poster.png');
+  const result = await env.opt.optimize(file);
+  assert.equal(result.file.type, 'image/png');
+  assert.equal(result.file.size, file.size);
+  assert.equal(result.width, 1440);
 });

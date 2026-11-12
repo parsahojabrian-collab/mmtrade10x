@@ -1,3 +1,4 @@
+/* MF_NAV_R1_MOUNTAIN_FIRST_STEP */
 /* P74_HOME_MATCH_R2: native Telegram Home + same-origin standalone preview. No WebGL, no remote code. */
 (function(){'use strict';
 if(window.__P74_HOME_LOADED__)return;window.__P74_HOME_LOADED__=true;
@@ -10,13 +11,13 @@ let modelPending=null,pendingRender=null;
 function ensureObjectModel(){
  if(window.MMTradeObjectModel)return Promise.resolve();
  if(!modelPending)modelPending=new Promise((resolve,reject)=>{
-  const script=document.createElement('script');script.src='/miniapp/p74/object-model.js?v=OBJECT_STUDIO_R1';
+  const script=document.createElement('script');script.src='/miniapp/p74/object-model.js?v=MMVS_P74_PREVIEW_LIBRARY_R4';
   script.onload=()=>window.MMTradeObjectModel?resolve():reject(Error('object-model missing'));
   script.onerror=()=>reject(Error('object-model unavailable'));document.head.append(script);
  });return modelPending;
 }
 
-const DEFAULT={version:74,enabled:true,brand:'MM trade challenge 10x',tagline:'چالش رشد ۱۰ برابری در معاملات',heroEyebrow:'ویدیوی معرفی چالش',heroTitle:'چالش MM',heroSubtitle:'رشد ۱۰ برابری',journeyTitle:'مسیر 10X تو از اینجا شروع می‌شود',journeySubtitle:'یک مسیر مرحله‌به‌مرحله برای رشد مهارت، اعتمادبه‌نفس و سرمایه',videoUrl:'https://dl.namahub.ir/parsahojabrian/W0OGUlGh',videoDuration:'07:46',videoPoster:'/miniapp/p74/assets/hero_poster.webp',videoFrameWidth:92.8,videoFrameHeight:17.1,videoFrameTop:16.5,progressTitle:'پیشرفت شما در چالش',ctaText:'مرحله بعدی چالش',ctaHref:'/miniapp/challenge.html',progressHref:'/miniapp/profile.html',stepCount:5,steps:[{title:'شروع چالش',href:'/miniapp/challenge.html',position:{top:64,right:47,width:51}},{title:'آموزش‌های کلیدی',href:'/miniapp/academy.html',position:{top:49,right:45,width:47}},{title:'تمرین و اجرا',href:'/miniapp/challenge.html',position:{top:34,right:36,width:45}},{title:'مدیریت ریسک',href:'/miniapp/copy-trading.html',position:{top:19,right:25,width:39}},{title:'رشد و مقیاس',href:'/miniapp/profile.html',position:{top:5,right:15,width:33,height:13}},{title:'ماموریت ششم',href:'/miniapp/challenge.html',position:{top:0,right:0,width:37,height:10}},{title:'ماموریت هفتم',href:'/miniapp/challenge.html',position:{top:0,right:0,width:36,height:10}},{title:'ماموریت هشتم',href:'/miniapp/challenge.html',position:{top:0,right:0,width:34,height:10}}],nav:[{title:'خانه',href:'/miniapp/index.html'},{title:'آکادمی',href:'/miniapp/academy.html'},{title:'پروفایل',href:'/miniapp/profile.html'}]};
+const DEFAULT={version:74,stepLinksVersion:1,enabled:true,brand:'MM trade challenge 10x',tagline:'چالش رشد ۱۰ برابری در معاملات',heroEyebrow:'ویدیوی معرفی چالش',heroTitle:'چالش MM',heroSubtitle:'رشد ۱۰ برابری',journeyTitle:'مسیر 10X تو از اینجا شروع می‌شود',journeySubtitle:'یک مسیر مرحله‌به‌مرحله برای رشد مهارت، اعتمادبه‌نفس و سرمایه',videoUrl:'https://dl.namahub.ir/parsahojabrian/W0OGUlGh',videoDuration:'07:46',videoPoster:'/miniapp/p74/assets/hero_poster.webp',videoFrameWidth:92.8,videoFrameHeight:17.1,videoFrameTop:16.5,progressTitle:'پیشرفت شما در چالش',ctaText:'مرحله بعدی چالش',ctaHref:'/miniapp/challenge.html',progressHref:'/miniapp/profile.html',stepCount:5,steps:[{title:'شروع چالش',href:'/miniapp/p74/learning/academy-home.html',position:{top:64,right:47,width:51}},{title:'آموزش‌های کلیدی',href:'/miniapp/p74/learning/stage2.html',position:{top:49,right:45,width:47}},{title:'تمرین و اجرا',href:'/miniapp/challenge.html',position:{top:34,right:36,width:45}},{title:'مدیریت ریسک',href:'/miniapp/copy-trading.html',position:{top:19,right:25,width:39}},{title:'رشد و مقیاس',href:'/miniapp/profile.html',position:{top:5,right:15,width:33,height:13}},{title:'ماموریت ششم',href:'/miniapp/challenge.html',position:{top:0,right:0,width:37,height:10}},{title:'ماموریت هفتم',href:'/miniapp/challenge.html',position:{top:0,right:0,width:36,height:10}},{title:'ماموریت هشتم',href:'/miniapp/challenge.html',position:{top:0,right:0,width:34,height:10}}],nav:[{title:'خانه',href:'/miniapp/index.html'},{title:'آکادمی',href:'/miniapp/academy.html'},{title:'پروفایل',href:'/miniapp/profile.html'}]};
 const copy=x=>JSON.parse(JSON.stringify(x));
 function safeText(s,max=120){return String(s==null?'':s).slice(0,max).replace(/[\u0000-\u001f]/g,'').trim()}
 function safeUrl(s){s=String(s||'').trim();if(s.startsWith('/')&&!s.startsWith('//')&&!/[\s<>'"]/.test(s))return s;try{const u=new URL(s);if(u.protocol==='https:'&&u.username===''&&u.password==='')return u.href}catch(e){}return''}
@@ -303,6 +304,7 @@ function normalized(raw){
  }
  for(let i=0;i<a.stepCount;i++)a.steps[i].position=safePosition(a.steps[i].position,auto[i]);
  a.steps=a.steps.slice(0,a.stepCount);
+ if(raw.stepLinksVersion!==1)for(let i=0;i<Math.min(2,a.steps.length);i++)a.steps[i].href=i===0?'/miniapp/p74/learning/academy-home.html':'/miniapp/p74/learning/stage2.html';
  if(Array.isArray(raw.nav)){for(let i=0;i<3;i++){if(!raw.nav[i])continue;const v=raw.nav[i];if(typeof v.title==='string')a.nav[i].title=safeText(v.title,25)||a.nav[i].title;if(typeof v.href==='string')a.nav[i].href=safeUrl(v.href)||a.nav[i].href}}
  a.enabled=raw.enabled!==false;
  a.objects=window.MMTradeObjectModel.normalizeObjects(raw.objects);
@@ -450,7 +452,7 @@ const title=elem('h2','p74-journey-title');title.textContent=cfg.journeyTitle;co
 const mountain=elem('section','p74-mountain-area');mountain.setAttribute('aria-label',`مسیر ${cfg.stepCount} مرحله‌ای چالش`);
 const completed=isPreview?new Set([1,2]):completedStages(payload,cfg.stepCount);let currentStep=1;while(currentStep<=cfg.stepCount&&completed.has(currentStep))currentStep++;
 const editorDrag=isPreview&&params.get('stepEdit')==='1';if(editorDrag)root.classList.add('p75-editing');else root.classList.remove('p75-editing');
-for(let i=cfg.stepCount-1;i>=0;i--){const step=cfg.steps[i];const link=makeLink('p74-step',i===0?'/miniapp/p74/learning/stage1.html':i===1?'/miniapp/p74/learning/stage2.html':step.href);const pos=safePosition(step.position,autoPositions(cfg.stepCount)[i]);
+for(let i=cfg.stepCount-1;i>=0;i--){const step=cfg.steps[i];const link=makeLink('p74-step',step.href);const pos=safePosition(step.position,autoPositions(cfg.stepCount)[i]);
 link.dataset.step=String(i+1);link.dataset.state=completed.has(i+1)?'completed':(i+1===currentStep?'current':'upcoming');
 link.setAttribute('aria-label','مرحله '+(i+1)+': '+step.title);link.style.top=pos.top+'%';link.style.right=pos.right+'%';link.style.width=pos.width+'%';link.style.height=pos.height+'%';
 link.append(elem('span','p74-step-number',String(i+1)),elem('span','p74-step-label',step.title),elem('span','p74-step-icon',i===0?'▷':i===1?'▤':i===2?'▥':i===3?'♢':'↗'));
@@ -458,7 +460,7 @@ if(editorDrag)wireStepDrag(link,mountain,i);mountain.append(link)}
 stage.append(mountain);renderObjects(stage,cfg,editorDrag);
 const progress=pctValue(payload);const progressCard=makeLink('p74-progress',cfg.progressHref);progressCard.setAttribute('aria-label','مشاهده پیشرفت چالش');const ring=elem('div','p74-ring');ring.style.setProperty('--pct',String(progress.pct??0));ring.append(elem('span','',progress.pct===null?'—':progress.pct+'%'));const pc=elem('div','p74-progress-content');pc.append(elem('strong','',cfg.progressTitle),elem('small','',progress.note));progressCard.append(elem('span','p74-progress-arrow','‹'),pc,ring);stage.append(progressCard);
 const cta=makeLink('p74-cta',cfg.ctaHref);cta.append(elem('span','p74-cta-chevron','❯'),elem('span','p74-cta-text',cfg.ctaText),elem('span','p74-cta-icon','🚀'));stage.append(cta);
-const nav=elem('nav','p74-nav');nav.setAttribute('aria-label','منوی اصلی Mini App');for(let i=0;i<3;i++){const n=cfg.nav[i];const a=makeLink('',n.href);if(i===0)a.setAttribute('aria-current','page');a.append(icon(['home','academy','profile'][i]),elem('span','',n.title));nav.append(a)}root.append(nav);
+if(isPreview){const nav=elem('nav','p74-nav');nav.setAttribute('aria-label','منوی اصلی Mini App');for(let i=0;i<3;i++){const n=cfg.nav[i];const a=makeLink('',n.href);if(i===0)a.setAttribute('aria-current','page');a.append(icon(['home','academy','profile'][i]),elem('span','',n.title));nav.append(a)}root.append(nav);}
 if(isPreview&&editorDrag)enablePageEditor(stage,cfg);
  if(isPreview)root.dataset.preview='1';return root}
 function receivePublished(e){if(isPreview)return;Promise.resolve(window.__MM_PAGE_GATE_READY__).then(()=>{if(window.__MM_PAGE_GATE_REDIRECT__||window.__MM_PAGE_ENGINE__!=='p74')return;const data=e?.detail||{};const meta=extract(data.blocks);if(!meta){document.getElementById('p74-app')?.remove();document.documentElement.classList.remove('p74-enabled');return}document.documentElement.classList.add('p74-enabled');render(meta,data)});}
@@ -497,7 +499,7 @@ window.addEventListener('tenx:data',receivePublished);
 /* MM_P74_ENTRY_R103_CLIENT_END */
 
 window.addEventListener('message',e=>{
- if(!isPreview||e.origin!==location.origin||e.source!==window.parent||!e.data)return;
+ if(!(isPreview||(params.get('visualPreview')==='1'&&params.get('adminPreview')==='1'&&window.parent!==window))||e.origin!==location.origin||e.source!==window.parent||!e.data)return;
  if(e.data.type==='P74_PAGE_ELEMENT_SELECT'){
   window.__P77_SELECTED_ELEMENT__=String(e.data.id||'');
   const layer=document.querySelector('.p77-page-editor-layer');

@@ -1,6 +1,76 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
+<!-- MM_P74_HOME_NO_FLASH_R1_BEGIN -->
+<style id="mm-p74-home-no-flash-style">
+/* Never paint the retired Home on the P74 entry URL. Other views are untouched. */
+html.mm-p74-home-only body {background:#041710 !important}
+html.mm-p74-home-only body > main.home-shell {display:none !important}
+html.mm-p74-home-only body::before {
+  content:""; position:fixed; inset:0; background:#041710;
+  z-index:2147482000; pointer-events:none;
+}
+html.mm-p74-home-only.mm-p74-home-ready body::before {display:none}
+html.mm-p74-home-only #mm-p74-startup-error {
+  box-sizing:border-box;position:fixed;inset:0;z-index:2147482500;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:30px;text-align:center;direction:rtl;color:#f4efe7;
+  background:#041710;font:16px/1.9 Tahoma,Arial,sans-serif;
+}
+html.mm-p74-home-only #mm-p74-startup-error button {
+  margin-top:20px;border:1px solid #5ccba2;border-radius:13px;
+  background:#134e39;color:#fff;padding:12px 23px;font:inherit;
+}
+</style>
+<script id="mm-p74-home-no-flash-script">
+(function () {
+  'use strict';
+  var path = location.pathname.replace(/\/+$/, '') || '/';
+  var p = new URLSearchParams(location.search);
+  var isHome = path === '/miniapp' || path === '/miniapp/index.html';
+  var isHomeView = !p.has('view') || p.get('view') === 'index';
+  var isPreview = ['visualPreview','p74Preview','p62preview','quizPreview',
+    'stagePreview','tenx_debug','editor','studio','adminPreview']
+    .some(function (name) { return p.has(name); });
+  if (!isHome || !isHomeView || isPreview) return;
+  var html = document.documentElement;
+  html.classList.add('mm-p74-home-only');
+
+  var observer;
+  function hasMountedP74() {
+    if (!document.querySelector('#p74-app .p74-page')) return false;
+    html.classList.add('mm-p74-home-ready');
+    if (observer) observer.disconnect();
+    var error = document.getElementById('mm-p74-startup-error');
+    if (error) error.remove();
+    return true;
+  }
+  function startup() {
+    if (hasMountedP74()) return;
+    observer = new MutationObserver(hasMountedP74);
+    observer.observe(document.body, {childList:true, subtree:true});
+    window.setTimeout(function () {
+      if (hasMountedP74() || document.getElementById('mm-p74-startup-error')) return;
+      var error = document.createElement('div');
+      error.id = 'mm-p74-startup-error';
+      error.setAttribute('role', 'alert');
+      var msg = document.createElement('div');
+      msg.textContent = 'صفحه اصلی P74 بارگذاری نشد. اتصال را بررسی و دوباره تلاش کنید.';
+      var retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = 'تلاش مجدد';
+      retry.addEventListener('click', function () { location.reload(); });
+      error.append(msg, retry);
+      document.body.append(error);
+    }, 12000);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startup, {once:true});
+  } else startup();
+})();
+</script>
+<!-- MM_P74_HOME_NO_FLASH_R1_END -->
+
   <script>
 (function () {
   'use strict';
@@ -1332,6 +1402,14 @@
 <link rel="stylesheet" href="/miniapp/p74/home.css?v=P76_HOME_FULLPAGE_R1">
 <!-- P74_HOME_MATCH_R1 HEAD END -->
 <script src="/miniapp/p74/studio/page-gate.js?v=R10" data-mm-page-r10="1"></script>
+
+<!-- MATIN_FUTURE_NAVIGATION_R1_CSS -->
+<link rel="stylesheet" href="/miniapp/p74/mf-navigation.css?v=MF_NAV_R1">
+
+<!-- MMU_BOTTOM_NAV_R4_BEGIN -->
+<link rel="stylesheet" href="/miniapp/shared/mm-bottom-nav.css?v=MMU_R6_SUPERADMIN_STUDIO">
+<script defer src="/miniapp/shared/mm-bottom-nav.js?v=MMU_R6_SUPERADMIN_STUDIO"></script>
+<!-- MMU_BOTTOM_NAV_R4_END -->
 </head>
 <body>
   <main class="home-shell">
@@ -1506,20 +1584,6 @@
     </section>
     <!-- END TENX_MMTRADE10X_DIRECT_V1 -->
 
-  <nav class="tenx-bottom-nav" aria-label="ناوبری اصلی 10X">
-    <a class="tenx-nav-item" href="/miniapp" data-nav="home" data-link-key="home.nav.home">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg>
-      <span>خانه</span>
-    </a>
-    <a class="tenx-nav-item" href="/academy" data-nav="academy" data-link-key="home.nav.academy">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 4.5v17M8 6h8M8 10h8"/></svg>
-      <span>آکادمی</span>
-    </a>
-    <a class="tenx-nav-item" href="/support" data-nav="support" data-link-key="home.nav.support">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"/><path d="M4 12H3a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2v-6zM20 12h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2v-6z"/><path d="M18 19a6 6 0 0 1-6 3h-2"/></svg>
-      <span>پشتیبانی</span>
-    </a>
-  </nav>
 
   </main>
 
@@ -3021,7 +3085,8 @@ var wf = user.eplanetWorkflow || {};
   </script>
   <script src="/miniapp/10x-onboarding.js?v=p01"></script>
 <script src="/miniapp/safe-html.js?v=TENX_SAFE_CUSTOM_HTML_R1"></script>
-<script src="/miniapp/blocks.js"></script>
+<script id="mmvs-fold-early-data-r1">window.addEventListener('tenx:data',function(e){if(e.detail&&Array.isArray(e.detail.blocks))window.__MMVS_FOLD_EARLY_BLOCKS__=e.detail.blocks;});</script>
+<script src="/miniapp/blocks.js?v=MMTRADE_MERGED_BLOCKS_20261111"></script>
 <!-- TENX_Q10_Q12_R8_START -->
 <script id="tenx-q10-q12-preview-loader">
 (function () {
@@ -3745,10 +3810,13 @@ var wf = user.eplanetWorkflow || {};
 
 
 <!-- P74_HOME_MATCH_R1 BODY START -->
-<script defer src="/miniapp/p74/home.js?v=MM_P74_ENTRY_R103_20261107"></script>
+<script defer src="/miniapp/p74/home.js?v=UNIFIED_HOME_AUDIT_R1"></script>
 <!-- P74_HOME_MATCH_R1 BODY END -->
-<script defer src="/miniapp/p74/studio/bridge.js?v=MMVS_R9" data-mmvs-bridge="R3"></script>
-<script defer src="/miniapp/p74/studio/spatial-bridge.js?v=MMVS_R91" data-mmvs-spatial="R4"></script>
+<script defer src="/miniapp/p74/studio/bridge.js?v=BOT_PREVIEW_FIX_20261111_R1" data-mmvs-bridge="R3"></script>
+<script defer src="/miniapp/p74/studio/spatial-bridge.js?v=MMVS_LAYER_V2_PILOT_20261110" data-mmvs-spatial="R4"></script>
 <script defer src="/miniapp/p74/studio/link-resolver.js?v=MMR6" data-mmtrade-route-r6="1"></script>
+
+<!-- MATIN_FUTURE_NAVIGATION_R1_JS -->
+<script defer src="/miniapp/p74/mf-navigation.js?v=MF_NAV_R1"></script>
 </body>
 </html>

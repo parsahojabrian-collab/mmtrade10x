@@ -3,6 +3,7 @@
 const box=document.getElementById('r10-content'),title=document.getElementById('r10-title');
 const nav=document.getElementById('r10-bottom');
 function navFromRegistry(data){
+ const r3Back=document.querySelector('.r10-back');if(r3Back)r3Back.href=data?.startPath||'/miniapp';
  if(!nav)return;
  const available=Array.isArray(data?.pages)?data.pages:[];
  const active=id=>available.find(p=>p.slug===id&&p.status==='PUBLISHED');

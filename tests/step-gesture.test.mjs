@@ -49,7 +49,7 @@ test('pinch movement also changes the position, with clipping prevention',()=>{
  assert.ok(p.top<old.top);assert.ok(p.right<old.right);assert.ok(within(p,b));
 });
 test('editing panel allows negative top and flexible dimensions',()=>{
- const html=readFileSync(new URL('../apps/api/public/admin.html',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../public/miniapp/p74/studio/home-object-editor.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('../public/miniapp/p74/home.css',import.meta.url),'utf8');
  assert.match(html,/top:\[-178\.57,171\.57\]/);
  assert.match(html,/width:\[18,95\]/);

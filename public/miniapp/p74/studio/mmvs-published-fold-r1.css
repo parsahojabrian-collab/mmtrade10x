@@ -1,0 +1,13 @@
+/* MMVS_PUBLISHED_FOLD_R1 · admin-only styles (does not alter public page styles). */
+#mmvs-pub-fold-panel{display:block!important;visibility:visible!important;margin:9px 0 14px;padding:13px;background:#0b251c;border:1px solid #7c6642;border-radius:13px;position:relative;color:#eaf3e8;max-width:100%;box-sizing:border-box;direction:rtl}
+#mmvs-pub-fold-panel h3{font-size:13px;margin:0 0 7px;color:#eed3a1}
+#mmvs-pub-fold-panel p{margin:8px 0;font-size:11px;line-height:1.9;color:#b2c9bc}
+#mmvs-pub-fold-panel .actions{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}
+#mmvs-pub-fold-panel .actions button{font-size:11px;flex:1 1 130px;padding:8px 7px;min-height:39px}
+#mmvs-pub-fold-panel label{margin:8px 0;font-size:11px;color:#d5e2d3}
+#mmvs-pub-fold-panel input{width:100%;min-height:40px;margin-top:4px}
+#mmvs-pub-fold-panel #mmvs-pub-fold-status{color:#72e8b4;font-weight:700;overflow-wrap:anywhere}
+#mmvs-pub-fold-panel #mmvs-pub-fold-status.bad{color:#ffa99c}
+#preview-holder #mmvs-pub-fold-line{position:absolute;z-index:100;border-top:3px dashed #ff8a70;height:0;box-sizing:border-box;pointer-events:none;text-align:left}
+#preview-holder #mmvs-pub-fold-line[hidden]{display:none!important}
+#preview-holder #mmvs-pub-fold-line span{position:absolute;right:0;top:-23px;color:#fff;background:#a33b2e;border:1px solid #e88e82;border-radius:7px 7px 0 0;padding:4px 8px;font:11px Tahoma,Arial,sans-serif;white-space:normal;pointer-events:auto;cursor:ns-resize;touch-action:none;max-width:95%;text-align:right}

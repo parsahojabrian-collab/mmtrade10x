@@ -1,0 +1,209 @@
+
+
+/* MMVS_P74_BG_LIBRARY_R3: shared media catalog for mountain backgrounds */
+#mmvs-p74-library{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:12px;direction:rtl}
+#mmvs-p74-library[hidden]{display:none!important}
+#mmvs-p74-library .mmvs-p74-lib-panel{width:min(1120px,100%);max-height:95dvh;display:flex;flex-direction:column;gap:10px;padding:16px;background:#0b241b;border:1px solid #a68a60;border-radius:17px;color:#f3eee5;box-shadow:0 20px 70px #000b;overflow:hidden}
+#mmvs-p74-library .mmvs-p74-lib-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#mmvs-p74-library .mmvs-p74-lib-head strong{font-size:17px;color:#ffdfae}
+#mmvs-p74-library button{cursor:pointer;padding:8px 12px;border:1px solid #7da58e;color:#fff;background:#173a2c;border-radius:9px;font:inherit}
+#mmvs-p74-library button:disabled{opacity:.4;cursor:not-allowed}
+#mmvs-p74-library .mmvs-p74-lib-controls{display:flex;gap:9px;flex-wrap:wrap}
+#mmvs-p74-library input,#mmvs-p74-library select{flex:1;min-width:160px;background:#061b12;border:1px solid #648a73;color:#fff;padding:9px;border-radius:9px;font:inherit}
+#mmvs-p74-library .mmvs-p74-lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;overflow:auto;min-height:130px;max-height:62dvh;padding:4px}
+#mmvs-p74-library .mmvs-p74-lib-item{min-width:0;display:flex;flex-direction:column;gap:5px;padding:8px;background:#092e21;border:1px solid #4e7561;border-radius:12px}
+#mmvs-p74-library .mmvs-p74-lib-item img{width:100%;height:118px;object-fit:contain;background:#051810;border-radius:7px}
+#mmvs-p74-library .mmvs-p74-lib-name{font-size:11px;overflow-wrap:anywhere;min-height:34px}
+#mmvs-p74-library .mmvs-p74-lib-status{font-size:12px;color:#a9d8c2;min-height:20px;line-height:1.6}
+#mmvs-p74-library .mmvs-p74-lib-footer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
+@media(max-width:700px){#mmvs-p74-library{padding:4px}#mmvs-p74-library .mmvs-p74-lib-panel{padding:8px;max-height:98dvh}#mmvs-p74-library .mmvs-p74-lib-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:62dvh}}
+/* MMVS_P74_BG_LIBRARY_R3 CSS END */
+
+
+/* MMVS_P74_PREVIEW_LIBRARY_R4 — desktop Object Studio preview only */
+.p74admin-page .p74admin-screen[data-preview-mode="wide"] .p74admin-preview{
+ width:100%!important;max-width:none!important;min-width:0!important;
+ margin:0!important;display:block!important;box-sizing:border-box!important;
+}
+.p74admin-page .p74admin-screen[data-preview-mode="wide"]{min-width:0!important;}
+/* MMVS_P74_PREVIEW_LIBRARY_R4 CSS END */
+
+/* P74_HOME_MATCH_R1 inline admin Studio UI */
+#p74-admin-launch{position:fixed;right:16px;bottom:80px;z-index:10000;border:1px solid #dfb17e;padding:11px 15px;border-radius:999px;color:#fff;background:linear-gradient(120deg,#03382b,#0f1714);font-weight:800;box-shadow:0 6px 20px #0007;cursor:pointer}
+.p74admin-backdrop{position:fixed;inset:0;background:#000b;z-index:100000;display:flex;align-items:center;justify-content:center;padding:9px;direction:rtl}
+.p74admin-panel{width:min(1250px,100%);height:min(94dvh,960px);display:flex;flex-direction:column;gap:9px;background:#091d19;color:#f3eee7;box-sizing:border-box;border:1px solid #b5986b;border-radius:22px;padding:15px;overflow:hidden;box-shadow:0 25px 90px #000}
+.p74admin-panel *{box-sizing:border-box}
+.p74admin-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:20px;font-weight:900}
+.p74admin-panel button{cursor:pointer;font:inherit;border:1px solid #aa946e;background:#12352d;color:#f6eee3;border-radius:11px;padding:9px 14px}
+.p74admin-panel button.p74admin-primary{background:linear-gradient(120deg,#edc38b,#ad784e);color:#071a14;font-weight:900}
+.p74admin-info,.p74admin-hint{font-size:12px;color:#abc1b4;line-height:1.7;margin:0}
+.p74admin-layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(280px,1.1fr);gap:12px;min-height:0;flex:1}
+.p74admin-form{overflow-y:auto;min-height:0;padding:0 8px 15px 2px}
+.p74admin-group{background:#112b24;border:1px solid #53786665;border-radius:13px;padding:10px;margin-bottom:8px}
+.p74admin-group h3{font-size:14px;color:#f3bc80;margin:0 0 5px}
+.p74admin-field{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#d9e1d8;margin:8px 0}
+.p74admin-field input{width:100%;border:1px solid #466a60;border-radius:9px;background:#071812;color:#fff;padding:10px;font:inherit;font-size:13px;direction:auto}
+.p74admin-switch{display:flex;align-items:center;gap:8px;background:#1b4535;padding:12px;margin-bottom:10px;border-radius:12px}
+.p74admin-screen{display:flex;flex-direction:column;align-items:center;gap:7px;min-height:0;background:#03120e;border-radius:17px;padding:10px}
+.p74admin-preview{display:block;width:min(100%,410px);height:100%;min-height:300px;border:1px solid #c39b66;border-radius:18px;background:#041710}
+.p74admin-actions{display:flex;gap:9px;flex-wrap:wrap}
+.p74admin-status{font-size:12px;color:#b7d9c9;margin:0;min-height:20px}
+.p74admin-status[data-state="warn"]{color:#f9b48e}.p74admin-status[data-state="ok"]{color:#8cfdc2}
+@media(max-width:690px){.p74admin-panel{height:96dvh;padding:9px;gap:5px}.p74admin-head{font-size:15px}.p74admin-layout{grid-template-columns:1fr;grid-template-rows:minmax(150px,38%) minmax(180px,1fr)}.p74admin-screen{grid-row:1}.p74admin-form{grid-row:2}.p74admin-preview{width:100%;height:100%}.p74admin-actions button{font-size:12px;padding:6px 9px}}
+
+/* P75 Studio drag-and-drop step positioning */
+.p75-step-help{font-size:12px;color:#c7b59a;line-height:1.8;margin:4px 0 8px}
+.p74admin-panel button.p75-step-reset{font-size:12px;padding:6px 10px;border-color:#5c8d78;background:#0c2c20;color:#c7ffe4}
+.p74admin-field input[type="number"]{direction:ltr;text-align:left;font-variant-numeric:tabular-nums}
+.p74admin-info{color:#d1e8d9}
+/* P76: dynamic stage configuration */
+.p76-count-controls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.p74admin-panel button.p76-danger{border-color:#b66f5e;color:#ffd4cc;background:#3a1d1c}
+.p76-stage-count{min-width:38px;text-align:center;color:#a2ffd0;font-size:24px}
+.p76-step-actions{display:flex;flex-wrap:wrap;gap:7px}
+.p76-step-zone .p74admin-group{border-color:#b58e6575}
+
+
+/* Home Object Studio: full page inside the Pages & Popups workspace, not a modal. */
+body.mm-object-fullpage #mf65-dock,body.mm-object-fullpage #mf65-pageentry{display:none!important}
+.p74admin-page{position:relative;width:100%;min-width:0;direction:rtl;color:#f3eee7;background:#071c16;border:1px solid #a98d69;border-radius:16px;padding:12px;box-sizing:border-box}
+.p74admin-page .p74admin-panel{width:100%;max-width:none;height:auto;min-height:calc(100dvh - 200px);overflow:visible;border:0;border-radius:0;padding:8px;box-shadow:none;background:transparent}
+.p74admin-page .p74admin-layout{grid-template-columns:minmax(300px,1fr) minmax(310px,1fr);min-height:680px;align-items:start}
+.p74admin-page .p74admin-form{overflow:visible;max-height:none;min-height:0}
+.p74admin-page .p74admin-screen{position:sticky;top:14px;height:min(80dvh,950px);min-height:450px}
+.p74admin-page .p74admin-preview{height:100%;min-height:350px}
+.p74admin-page .p74admin-actions{position:sticky;bottom:6px;background:#0d281fef;padding:8px;border:1px solid #8e7458;border-radius:12px;z-index:5}
+.p74admin-page .p74admin-field input{min-width:0}
+@media(max-width:820px){.p74admin-page{padding:6px}.p74admin-page .p74admin-panel{min-height:0;padding:5px}.p74admin-page .p74admin-layout{display:flex;flex-direction:column;gap:8px;min-height:0}.p74admin-page .p74admin-screen{order:0;position:relative;top:auto;width:100%;height:min(65dvh,650px);min-height:320px}.p74admin-page .p74admin-form{order:1;width:100%;overflow:visible}.p74admin-page .p74admin-actions{flex-wrap:wrap;justify-content:center}}
+/* Object Studio controls */
+.mm-object-studio{border-color:#6ec19c!important;background:#071c16!important}
+.mm-object-studio .mm-base-warning{color:#f6d0a4;border:1px solid #b8805677;background:#2d2117;padding:9px;border-radius:9px;font-size:12px;line-height:1.8}
+.mm-object-studio .mm-object-buttons{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0}
+.mm-object-studio .mm-object-buttons button{font-size:12px;padding:6px 9px}
+.mm-object-studio .mm-object-list{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto;margin-top:8px}
+.mm-object-studio .mm-object-row{display:flex;gap:4px;padding:4px;border:1px solid #2b6350;border-radius:9px}
+.mm-object-studio .mm-object-row.mm-selected{border-color:#f5c28e;background:#1e3b2f}
+.mm-object-studio .mm-object-row button{padding:4px 8px;font-size:11px}
+.mm-object-studio .mm-object-pick{flex:1;text-align:right;min-width:0}
+.mm-object-studio .mm-object-inspector{margin-top:12px;border-top:1px solid #618a70;padding-top:12px}
+.mm-object-studio .mm-object-inspector h3{font-size:14px}
+.mm-object-studio .mm-object-select{width:100%;border:1px solid #5d806c;color:#fff;background:#09251b;border-radius:7px;padding:8px}
+.mm-object-studio .mm-object-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.mm-object-studio .mm-object-stage{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px;background:#09231c;border-radius:8px;font-size:12px}
+.mm-object-studio .mm-object-stage label{display:flex;gap:3px;align-items:center;white-space:nowrap}
+.mm-object-studio .mm-object-background{border:1px dashed #997c57;padding:8px;border-radius:9px}
+.mm-object-studio input[type=color]{height:37px;padding:3px}
+
+/* Full-page Object Studio: high-contrast video poster controls. */
+.p74admin-page .mm-poster-group{background:#102d24!important;border:2px solid #cbad79!important;color:#f9f3e8!important;padding:16px!important;overflow:visible}
+.p74admin-page .mm-poster-group h3{color:#ffdda7!important;font-size:18px!important;font-weight:800!important;line-height:1.6!important}
+.p74admin-page .mm-poster-group .p74admin-info{color:#f2ede2!important;font-size:14px!important;line-height:1.9!important;margin:9px 0!important}
+body #view .p74admin-page .p74admin-panel button.mm-poster-upload{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:54px!important;margin:12px 0!important;padding:12px 16px!important;background:linear-gradient(135deg,#ffe0a3,#c78d4b)!important;border:2px solid #ffebbf!important;border-radius:13px!important;color:#12251d!important;font-size:16px!important;font-weight:900!important;line-height:1.55!important;text-align:center!important;white-space:normal!important;cursor:pointer!important;opacity:1!important}
+body #view .p74admin-page .p74admin-panel button.mm-poster-upload:hover{filter:brightness(1.08)}
+body #view .p74admin-page .p74admin-panel button.mm-poster-upload:focus-visible{outline:3px solid #58ffc4!important;outline-offset:3px}
+.p74admin-page .mm-poster-group .mm-poster-preview{display:block;width:100%;max-width:520px;aspect-ratio:12/5;object-fit:cover;background:#061710;border:1px solid #c8a16c;border-radius:12px;margin:10px auto}
+.p74admin-page .mm-poster-group .p74admin-field{color:#f8eddf!important;font-size:14px!important;font-weight:700!important;line-height:1.5!important}
+.p74admin-page .mm-poster-group .p74admin-field input{background:#071914!important;color:#fff!important;border:1px solid #8ac2a6!important;font-size:16px!important;min-height:44px!important}
+@media(max-width:820px){.p74admin-page .mm-poster-group{padding:12px!important}body #view .p74admin-page .p74admin-panel button.mm-poster-upload{font-size:16px!important;min-height:56px!important}}
+
+
+/* MM_OBJECT_ACCORDION_R1 */
+.p74admin-group{
+ display:block;
+ overflow:hidden;
+ transition:border-color .18s ease,background .18s ease;
+}
+.p74admin-group>summary.mm-object-accordion-title{
+ list-style:none;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ min-height:42px;
+ margin:-10px;
+ padding:10px;
+ cursor:pointer;
+ user-select:none;
+}
+.p74admin-group>summary.mm-object-accordion-title::-webkit-details-marker{
+ display:none;
+}
+.p74admin-group>summary.mm-object-accordion-title h3{
+ margin:0;
+ color:#f3bc80;
+ font-size:14px;
+ font-weight:850;
+}
+.p74admin-group>summary.mm-object-accordion-title::after{
+ content:'＋';
+ display:grid;
+ place-items:center;
+ width:25px;
+ height:25px;
+ flex:0 0 25px;
+ border:1px solid #668d72;
+ border-radius:8px;
+ color:#b9f2d0;
+ background:#09251b;
+}
+.p74admin-group[open]>summary.mm-object-accordion-title{
+ margin-bottom:8px;
+ border-bottom:1px solid #618a704d;
+}
+.p74admin-group[open]>summary.mm-object-accordion-title::after{
+ content:'−';
+}
+.p74admin-group>summary.mm-object-accordion-title:focus-visible{
+ outline:2px solid #58ffc4;
+ outline-offset:-2px;
+ border-radius:8px;
+}
+
+
+/* P77_PAGE_ELEMENT_EDITOR_R1 */
+.p74admin-page .mm-page-editor-list{display:flex;flex-direction:column;gap:5px}
+.mm-page-element-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;max-height:230px;overflow:auto;margin:9px 0}
+.mm-page-element-row{min-width:0}
+.mm-page-element-row button{width:100%;min-width:0;text-align:right;font-size:12px;padding:7px}
+.mm-page-element-inspector{border-top:1px solid #618a70;padding-top:10px;margin-top:10px}
+.mm-page-selected-title{display:block;color:#ffdda7;margin:5px 0 10px;font-size:14px}
+.mm-page-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.mm-page-editor .mm-object-select{width:100%}
+.mm-page-editor input[type=color]{height:38px;padding:3px}
+@media(max-width:520px){.mm-page-element-list{grid-template-columns:1fr}}
+
+/* MMVS_P74_DESKTOP_PREVIEW_R2 — Object Studio only, no public home CSS changes */
+.p74admin-page .p74admin-screen { min-width:0; box-sizing:border-box; }
+.p74admin-page .p74admin-preview { display:block; box-sizing:border-box; max-width:100%; }
+.p74admin-page .mmvs-p74-preview-modes { display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; width:100%; padding:2px 0 6px; }
+.p74admin-page .mmvs-p74-preview-modes button { padding:7px 12px; font-size:12px; }
+.p74admin-page .mmvs-p74-preview-modes button[aria-pressed="true"] { border-color:#64edb9; color:#d7ffec; background:#185641; }
+@media (min-width:821px) {
+ .p74admin-page .p74admin-layout { grid-template-columns:minmax(290px,.9fr) minmax(0,1.25fr); }
+ .p74admin-page .p74admin-screen { align-items:stretch; padding:8px; max-width:100%; overflow:hidden; }
+ .p74admin-page .p74admin-screen[data-preview-mode="wide"] .p74admin-preview { width:100%; max-width:none; margin:0; flex:1 1 auto; }
+ .p74admin-page .p74admin-screen[data-preview-mode="phone"] .p74admin-preview { width:min(100%,410px); max-width:410px; margin:0 auto; flex:1 1 auto; }
+}
+@media (min-width:821px) and (max-width:1299px) {
+ .p74admin-page .p74admin-layout { display:flex; flex-direction:column; min-height:0; gap:12px; }
+ .p74admin-page .p74admin-screen { position:relative; top:auto; width:100%; height:min(78dvh,850px); min-height:480px; order:0; }
+ .p74admin-page .p74admin-form { width:100%; order:1; }
+}
+@media (max-width:820px) {
+ .p74admin-page .p74admin-screen { align-items:stretch; min-width:0; }
+ .p74admin-page .p74admin-screen[data-preview-mode="wide"] .p74admin-preview { width:100%; max-width:none; margin:0; }
+ .p74admin-page .p74admin-screen[data-preview-mode="phone"] .p74admin-preview { width:min(100%,410px); margin:0 auto; }
+}
+
+
+#home-object-panel{margin:12px 0;padding:14px;border:1px solid #527964;border-radius:16px;background:#0b241b;color:#f3eee5}
+#home-object-panel[hidden]{display:none!important}
+#home-object-panel .p74admin-form{overflow:visible;max-height:none;padding:0}
+#home-object-panel .p74admin-field input,#home-object-panel select{width:100%;box-sizing:border-box;background:#061d16;color:#edf9f1;border:1px solid #47715b;border-radius:8px;padding:9px;min-height:42px}
+#home-object-panel button{min-height:40px;cursor:pointer;border:1px solid #608b71;background:#123b2c;color:#effff2;border-radius:9px;padding:8px 12px}
+#home-object-panel .mm-object-buttons{flex-wrap:wrap}
+#home-tools-toggle[aria-pressed=true]{border-color:#cdae6f;background:#204b37}
+#home-object-panel .p74admin-status[data-state=warn]{color:#ffce8e}
+
+.inspector.home-controls-open>:not(#home-object-panel){display:none!important}
+.inspector #home-object-panel{margin:0;padding:0;border:0}

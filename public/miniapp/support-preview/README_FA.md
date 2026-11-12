@@ -1,0 +1,1 @@
+MMTrade Support R3 - preview only. Extract contents into /srv/tenx-public/miniapp/support-preview/ . Fonts load from existing /miniapp/fonts/doran/ . Existing API routes unchanged. Backup before overwrite. No nginx change required.

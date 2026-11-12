@@ -3,14 +3,18 @@
 const $=id=>document.getElementById(id), $all=(s,r=document)=>[...r.querySelectorAll(s)];
 const PAGES=[
  ['index','خانه','/miniapp/index.html'],
- ['academy','آموزش مرحله اول R4','/miniapp/p74/learning/stage1.html'],
+ ['academy','آکادمی متین فیوچر','/miniapp/p74/learning/academy-home.html'],
+ ['stage2','آموزش مرحله دوم','/miniapp/p74/learning/stage2.html'],
  ['profile','پروفایل','/miniapp/p74/profile/profile.html'],
  ['support','پشتیبانی','/miniapp/p74/support/support.html'],
- ['mmtrade10x','صفحه چالش 10X','/miniapp/index.html?view=mmtrade10x'],
+ ['eplanet','مرکز فعال‌سازی ePlanet','/miniapp/p74/eplanet/index.html'],
+ ['mmtrade10x','صفحه چالش 10X','/miniapp/p74/mmtrade-r3-preview/index.html?view=mmtrade10x'],
  ['crypto','کریپتو','/miniapp/crypto.html'],
  ['copy-trading','کپی‌ترید','/miniapp/copy-trading.html'],
+  ['copytrade-academy','آموزش کپی‌ترید ۱۰ایکس','/miniapp/p74/copytrade-academy/index.html'],
  ['challenge','چالش قدیمی','/miniapp/challenge.html']
 ];
+const MMVS_MISSING_LEGACY_ROUTES=new Set(['crypto','copy-trading','challenge']);
 const props=[
  ['text','متن عنصر','textarea'],['href','لینک دکمه','url'],['src','آدرس عکس','url'],['alt','توضیح تصویر','text'],
  ['color','رنگ متن','color'],['background','رنگ پس‌زمینه','color'],['fontSize','اندازه فونت (px)','number'],
@@ -22,7 +26,9 @@ const props=[
 let token='',role='',page='academy',editor=null,blocks=[],initial='',title=null,selected='',chosenPopup=null,popups=[],tab='pages',ready=false,busy=false,noticeTimer=0,pendingPopup=null;
 let undoStack=[],redoStack=[],selectedBlockIndex=-1,pageRequestId=0,popupBusy=false;
 let reviewSnapshot=null,operationLabel='در حال ذخیره…';
-const requestedPage=new URLSearchParams(location.search).get('page');if(PAGES.some(p=>p[0]===requestedPage))page=requestedPage;
+let previewPublishedHome=false;
+let homeToolsOpen=new URLSearchParams(location.search).get('homeTools')==='1';
+const requestedPage=new URLSearchParams(location.search).get('page');if(PAGES.some(p=>p[0]===requestedPage)&&!MMVS_MISSING_LEGACY_ROUTES.has(requestedPage))page=requestedPage;
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function textEl(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=String(text);return e}
 function toast(t,error=false){const n=$('notice');n.textContent=t;n.className='show'+(error?' error':'');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>n.className='',6500)}
@@ -37,11 +43,71 @@ function syncDirty(){
 function canWrite(){return role==='SUPER_ADMIN'}
 function headers(){return {'authorization':'Bearer '+token,'content-type':'application/json'}}
 async function api(path,method='GET',body){if(!token)throw Error('نشست مدیریت در دسترس نیست');const r=await fetch('/admin'+path,{method,headers:headers(),cache:'no-store',body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401)showLogin();throw Error(data.message||data.error||('HTTP '+r.status))}return data}
-function showLogin(){token='';role='';sessionStorage.removeItem('tenx_admin_token');$('workspace').hidden=true;$('login').hidden=false;$('who').textContent='ورود لازم است'}
+function showLogin(){window.MMTradeHomeEditor?.unmount();token='';role='';sessionStorage.removeItem('tenx_admin_token');$('workspace').hidden=true;$('login').hidden=false;$('who').textContent='ورود لازم است'}
 async function authenticate(t){token=t;const me=await api('/auth/me');role=me.role||'';if(!canWrite())throw Error('استودیوی یکپارچه فقط برای SUPER_ADMIN فعال است؛ انتشار برای نقش‌های دیگر مجاز نیست.');$('who').textContent=me.email+' · '+role;$('login').hidden=true;$('workspace').hidden=false;sessionStorage.setItem('tenx_admin_token',token);await loadPage(page)}
 function chooseTab(t){tab=t;$all('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));for(const x of ['pages','popups','versions'])$(x+'-pane').hidden=x!==t;$('page-toolbar').hidden=t!=='pages';if(t==='popups')loadPopups().catch(e=>toast(e.message,true));if(t==='versions')loadVersions().catch(e=>toast(e.message,true))}
-function drawPageList(){const list=$('pages');list.replaceChildren();const query=String($('page-search')?.value||'').trim().toLowerCase();for(const [slug,label] of PAGES){if(query&&!String(label+' '+slug).toLowerCase().includes(query))continue;let b=textEl('button',page===slug?'active':'',label);b.onclick=()=>{if(busy||window.MMVS_Spatial?.isBusy())return toast('عملیات در حال انجام است',true);if((dirty()||window.MMVS_Spatial?.isDirty())&&!confirm('تغییرات ذخیره نشده‌اند. صفحه عوض شود؟'))return;loadPage(slug).catch(e=>toast(e.message,true))};list.append(b)} }
-function previewUrl(){const p=PAGES.find(p=>p[0]===page);const url=new URL(page==='profile'?'/miniapp/p74/profile/preview.html':p?.[2]||'/miniapp/index.html',location.origin);url.searchParams.set('visualPreview','1');url.searchParams.set('adminPreview','1');if(page==='index')url.searchParams.set('p74Preview','1');url.searchParams.set('vs',Date.now().toString());return url.pathname+url.search}
+function drawPageList(){const list=$('pages');list.replaceChildren();const query=String($('page-search')?.value||'').trim().toLowerCase();for(const [slug,label] of PAGES){if(query&&!String(label+' '+slug).toLowerCase().includes(query))continue;let b=textEl('button',page===slug?'active':'',label);if(MMVS_MISSING_LEGACY_ROUTES.has(slug)){b.disabled=true;b.title='مسیر عمومی این صفحه هنوز وجود ندارد؛ اطلاعات قبلی حذف نشده است';list.append(b);continue}b.onclick=()=>{if(busy||window.MMVS_Spatial?.isBusy())return toast('عملیات در حال انجام است',true);if((dirty()||window.MMVS_Spatial?.isDirty())&&!confirm('تغییرات ذخیره نشده‌اند. صفحه عوض شود؟'))return;loadPage(slug).catch(e=>toast(e.message,true))};list.append(b)} }
+/* MMVS_HOME_PREVIEW_PARITY_R2: published-vs-draft home preview switch */
+function isPublishedHomePreview(){return page==='index'&&!reviewSnapshot}
+function updatePreviewSourceToggle(){
+ const btn=$('preview-source-toggle'),tip=$('preview-source-tip');
+ if(!btn)return;
+ const home=page==='index',pub=isPublishedHomePreview();
+ btn.hidden=!home;
+ btn.textContent=pub?'ویرایش پیش‌نویس هوم':'نمایش هوم واقعی';
+ btn.setAttribute('aria-pressed',pub?'false':'true');
+ if(tip){tip.hidden=!home;tip.textContent=pub?'نمایش دقیق تنظیمات و چیدمان منتشرشده':'نمایش پیش‌نویس؛ تغییرات هنوز عمومی نیستند'}
+}
+function ensurePreviewSourceToggle(){return;
+ if($('preview-source-toggle'))return;
+ const refresh=$('refresh-preview');if(!refresh||!refresh.parentElement)return;
+ const btn=document.createElement('button');btn.type='button';btn.id='preview-source-toggle';btn.className='minor';
+ btn.title='جابجایی بین نسخه منتشرشده کاربران و پیش‌نویس قابل ویرایش';
+ btn.addEventListener('click',()=>{
+   if(page!=='index')return;
+   previewPublishedHome=!previewPublishedHome;
+   updatePreviewSourceToggle();reloadFrame();
+   toast(previewPublishedHome?'اکنون هوم منتشرشده کاربران نمایش داده می‌شود.':'اکنون پیش‌نویس قابل ویرایش نمایش داده می‌شود.');
+ });
+ refresh.parentElement.append(btn);
+ const tip=document.createElement('small');tip.id='preview-source-tip';
+ tip.style.cssText='display:block;max-width:100%;margin:5px 0;color:#9fd9bb;font-size:11px;line-height:1.8';
+ refresh.closest('.preview-toolbar')?.after(tip);
+ updatePreviewSourceToggle();
+}
+function layoutHomePanel(){
+ const panel=document.querySelector('.inspector');if(!panel)return;
+ if(page!=='index'||!homeToolsOpen){panel.style.removeProperty('top');return;}
+ const bottom=$('page-toolbar')?.getBoundingClientRect().bottom||0;
+ panel.style.setProperty('top',Math.min(Math.max(8,bottom+8),Math.max(8,window.innerHeight-140))+'px','important');
+}
+function mountHomeTools(){
+ const home=page==='index',panel=$('home-object-panel'),toggle=$('home-tools-toggle');
+ if(!panel||!toggle)return;
+ toggle.hidden=!home;panel.hidden=!home||!homeToolsOpen;
+ document.querySelector('.inspector')?.classList.toggle('home-controls-open',home&&homeToolsOpen);
+ document.querySelector('#pages-pane .designer')?.classList.toggle('mmvs9-inspector-open',home&&homeToolsOpen);toggle.setAttribute('aria-pressed',String(home&&homeToolsOpen));
+ window.MMTradeHomeEditor?.unmount();
+ layoutHomePanel();if(!home)return;
+ const marker=blocks.find(b=>b.type==='element'&&b.selector==='#p74-home-config');
+ let config=null;if(marker?.text){try{config=JSON.parse(marker.text)}catch{throw Error('تنظیمات هوم JSON معتبر نیست')}}
+ window.MMTradeHomeEditor?.mount({host:$('home-object-controls'),frame:$('frame'),config,
+  isBusy:()=>busy||!!window.MMVS_Spatial?.isBusy(),isReadOnly:()=>Boolean(reviewSnapshot),
+  onHide:()=>{document.querySelector('#pages-pane .designer')?.classList.remove('mmvs9-inspector-open');$('mmvs9-studio-inspector')?.setAttribute('aria-expanded','false')},
+  onChange:next=>{
+   if(page!=='index'||reviewSnapshot||busy)throw Error('ویرایش هوم اکنون مجاز نیست');
+   checkpoint();const marker=editBlock('#p74-home-config');marker.text=JSON.stringify(next);
+   syncDirty();drawEdits();updateHistoryButtons();
+  }
+ });
+}
+function toggleHomeTools(){
+ if(page!=='index'||busy||window.MMVS_Spatial?.isBusy()||reviewSnapshot)return;
+ homeToolsOpen=!homeToolsOpen;
+ if(homeToolsOpen&&$('spatial-mode')?.classList.contains('active'))$('spatial-mode').click();
+ $('home-object-panel').hidden=!homeToolsOpen;document.querySelector('.inspector')?.classList.toggle('home-controls-open',homeToolsOpen);document.querySelector('#pages-pane .designer')?.classList.toggle('mmvs9-inspector-open',homeToolsOpen);$('home-tools-toggle').setAttribute('aria-pressed',String(homeToolsOpen));layoutHomePanel();reloadFrame();
+}
+function previewUrl(){const p=PAGES.find(p=>p[0]===page);const url=new URL(page==='mmtrade10x'?'/miniapp/p74/mmtrade-r3-preview/index.html':page==='profile'?'/miniapp/p74/profile/preview.html':p?.[2]||'/miniapp/index.html',location.origin);if(page==='stage2')url.searchParams.set('view','stage2');if(page==='mmtrade10x')url.searchParams.set('view','mmtrade10x');url.searchParams.set('visualPreview','1');url.searchParams.set('adminPreview','1');if(page==='index'&&(!isPublishedHomePreview()||homeToolsOpen)){url.searchParams.set('p74Preview','1');if(homeToolsOpen&&!reviewSnapshot)url.searchParams.set('stepEdit','1');}url.searchParams.set('vs',Date.now().toString());return url.pathname+url.search}
 function postPreview(){if(!ready)return;try{
  const items=reviewSnapshot?.blocks||blocks,target=$('frame').contentWindow;
  for(const [selector,type] of [['#p74-home-config','P74_CONFIG_PREVIEW'],['#p77-profile-config','P77_CONFIG_PREVIEW']]){
@@ -51,10 +117,10 @@ function postPreview(){if(!ready)return;try{
  target.postMessage({type:'MMVS_PREVIEW',blocks:clone(items)},location.origin);
  }catch(e){toast('پیش‌نمایش تنظیمات باز نشد: '+e.message,true)}}
 function reloadFrame(){ready=false;$('frame').src=previewUrl();window.MMVS_Spatial?.refresh()}
-async function loadPage(slug){const request=++pageRequestId;const r=await api('/content/pages/'+encodeURIComponent(slug)+'/editor');if(request!==pageRequestId)return;if(reviewSnapshot)exitReleasePreview();page=slug;editor=r;blocks=clone(r.blocks||[]);title=r.title??null;initial=JSON.stringify({title,blocks});undoStack=[];redoStack=[];selectedBlockIndex=-1;drawPageList();$('current-title').textContent=PAGES.find(x=>x[0]===page)?.[1]||page;$('selected').textContent='روی یک عنصر پیش‌نمایش کلیک کن';selected='';$('props').replaceChildren();$('page-title').value=title??'';syncDirty();drawEdits();drawContentBlocks();reloadFrame();window.MMVS_Spatial?.loadPage(slug).catch(e=>toast('موتور چیدمان فعال نیست: '+e.message,true));if(r.hasDraft)toast('پیش‌نویس قبلی این صفحه بارگذاری شد');}
+async function loadPage(slug){const request=++pageRequestId;const r=await api('/content/pages/'+encodeURIComponent(slug)+'/editor');if(request!==pageRequestId)return;if(reviewSnapshot)exitReleasePreview();page=slug;previewPublishedHome=false;updatePreviewSourceToggle();editor=r;blocks=clone(r.blocks||[]);title=r.title??null;initial=JSON.stringify({title,blocks});undoStack=[];redoStack=[];selectedBlockIndex=-1;drawPageList();$('current-title').textContent=PAGES.find(x=>x[0]===page)?.[1]||page;$('selected').textContent='روی یک عنصر پیش‌نمایش کلیک کن';selected='';$('props').replaceChildren();$('page-title').value=title??'';syncDirty();drawEdits();drawContentBlocks();mountHomeTools();reloadFrame();window.MMVS_Spatial?.loadPage(slug).catch(e=>toast('موتور چیدمان فعال نیست: '+e.message,true));if(r.hasDraft)toast('پیش‌نویس قبلی این صفحه بارگذاری شد');}
 function elementBlock(s){return blocks.find(b=>b.type==='element'&&b.selector===s)}
 function editBlock(s){let found=elementBlock(s);if(!found){found={type:'element',selector:s};blocks.push(found)}return found}
-function drawEdits(){const list=$('edits');list.replaceChildren();const items=blocks.filter(b=>b.type==='element'&&!b.selector.startsWith('#p74-home-config')&&!b.selector.startsWith('#p77-profile-config'));for(const b of items){let btn=textEl('button','minor',b.selector+(b.deleted?' (حذف‌شده)':''));btn.onclick=()=>{selected=b.selector;showInspector()};list.append(btn)}if(!items.length)list.append(textEl('p','hint','تغییری ثبت نشده است'));}
+function drawEdits(){const list=$('edits');list.replaceChildren();const items=blocks.filter(b=>b.type==='element'&&!b.selector.startsWith('#p74-home-config')&&!b.selector.startsWith('#p77-profile-config')&&!b.selector.startsWith('#mmvs-published-fold-configuration'));for(const b of items){let btn=textEl('button','minor',b.selector+(b.deleted?' (حذف‌شده)':''));btn.onclick=()=>{selected=b.selector;showInspector()};list.append(btn)}if(!items.length)list.append(textEl('p','hint','تغییری ثبت نشده است'));}
 function chooseElement(info){if(!info||typeof info.selector!=='string'||info.selector.length>500)return;selected=info.selector;showInspector(info)}
 function rowField(parent,label,key,value,kind,callback){
  const lab=textEl('label','',label);let inp;
@@ -74,12 +140,12 @@ function showInspector(info){const b=elementBlock(selected)||{};$('selected').te
  const q=editBlock(selected);if(value===''){delete q[key];}else if(kind==='number'){const val=Number(value);if(!Number.isFinite(val))throw Error('عدد نامعتبر است');if(key==='opacity'&&(val<0||val>1))throw Error('شفافیت بین صفر و یک است');if(key==='fontSize'&&(val<8||val>96))throw Error('اندازه فونت بین ۸ و ۹۶ است');if(key==='width'||key==='maxWidth'||key==='minHeight'){if(val<0||val>1200)throw Error('عدد خارج از محدوده است')}q[key]=val;}else q[key]=value;
  drawEdits();syncDirty();postPreview();updateHistoryButtons();}catch(e){toast(e.message,true)} });}
  if(tag==='IMG'||typeof b.src==='string'){
-  const wrap=textEl('label','','آپلود مستقیم تصویر جایگزین');const input=document.createElement('input');input.type='file';input.accept='image/png,image/jpeg,image/webp';const status=textEl('small','mmvs-upload-status','');
+  const wrap=textEl('label','','آپلود مستقیم تصویر جایگزین');const input=document.createElement('input');input.type='file';input.accept='image/*,.heic,.heif,.avif,.bmp,.tif,.tiff,.gif';const status=textEl('small','mmvs-upload-status','');
   input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{const url=await uploadImage(file,msg=>status.textContent=msg);checkpoint();editBlock(selected).src=url;drawEdits();syncDirty();postPreview();toast('عکس عنصر ذخیره شد؛ برای نمایش کاربران انتشار لازم است')}catch(e){toast(e.message,true)}};
   wrap.append(input,status);box.append(wrap)
  }
 }
-function setOperation(value,label='در حال ذخیره…'){busy=value;operationLabel=label;for(const id of ['save','publish','reload'])$(id).disabled=value||(!!reviewSnapshot&&id!=='reload');document.querySelector('.toolbar')?.setAttribute('aria-busy',String(value));syncDirty()}
+function setOperation(value,label='در حال ذخیره…'){busy=value;window.MMTradeHomeEditor?.setReadOnly(value||!!reviewSnapshot);operationLabel=label;for(const id of ['save','publish','reload'])$(id).disabled=value||(!!reviewSnapshot&&id!=='reload');document.querySelector('.toolbar')?.setAttribute('aria-busy',String(value));syncDirty()}
 async function saveDraft(){
  if(reviewSnapshot)throw Error('ابتدا از پیش‌نمایش نسخه تاریخی خارج شوید');
  if(!canWrite())throw Error('مجوز انتشار نداری');
@@ -88,7 +154,7 @@ async function saveDraft(){
  setOperation(true);
  try{
   if(dirty()){
-   if(snapshot.blocks.length>40)throw Error('حداکثر ۴۰ بلوک در API فعلی پشتیبانی می‌شود');
+   if(snapshot.blocks.length>(page==='copytrade-academy'?220:40))throw Error('حداکثر ۴۰ بلوک در API فعلی پشتیبانی می‌شود');
    validateAllBlocks();
    const result=await api('/content/pages/'+slug+'/draft','PUT',{...snapshot,expectedRevision:editor.revision});
    if(!result.ok)throw Error('ذخیره محتوای صفحه ناموفق بود');
@@ -139,12 +205,12 @@ function showReleasePreview(snapshot){
  $('release-preview-title').textContent='پیش‌نمایش نسخه '+snapshot.version+' · فقط خواندنی';
  $('release-preview-detail').textContent=(contentChanged?'محتوا متفاوت است':'محتوا یکسان است')+' · '+(layoutChanged?'چیدمان متفاوت است':'چیدمان یکسان است')+' · پیش‌نویس فعلی حفظ شده است.';
  document.querySelector('.inspector').inert=true;document.querySelector('.mmvs-library').inert=true;$('spatial-panel').inert=true;
- window.MMVS_Spatial?.review(snapshot.layout);chooseTab('pages');reloadFrame();setOperation(false);
+ window.MMTradeHomeEditor?.setReadOnly(true);window.MMVS_Spatial?.review(snapshot.layout);chooseTab('pages');reloadFrame();setOperation(false);
 }
 function exitReleasePreview(){
  reviewSnapshot=null;$('release-preview').hidden=true;
  document.querySelector('.inspector').inert=false;document.querySelector('.mmvs-library').inert=false;$('spatial-panel').inert=false;
- window.MMVS_Spatial?.review(null);reloadFrame();setOperation(busy);
+ window.MMVS_Spatial?.review(null);window.MMTradeHomeEditor?.setReadOnly(busy);reloadFrame();setOperation(busy);
 }
 const releaseHistory=window.MMStudioReleaseHistory.create({api,
  context:()=>({page,session:pageRequestId,busy:busy||!!window.MMVS_Spatial?.isBusy(),dirty:dirty()||!!window.MMVS_Spatial?.isDirty(),revision:editor?.revision,spatialRevision:window.MMVS_Spatial?.getRevision()}),
@@ -160,14 +226,14 @@ const safeUrl=x=>/^(https:\/\/\S+|\/(?!\/)\S*)$/.test(String(x||''));
 function snapshot(){return JSON.stringify({title,blocks})}
 function checkpoint(){if(reviewSnapshot)throw Error('پیش‌نمایش نسخه تاریخی فقط خواندنی است');const v=snapshot();if(undoStack[undoStack.length-1]!==v)undoStack.push(v);if(undoStack.length>55)undoStack.shift();redoStack=[];updateHistoryButtons()}
 function updateHistoryButtons(){$('undo').disabled=!undoStack.length;$('redo').disabled=!redoStack.length}
-function restoreLocal(value){const d=JSON.parse(value);title=d.title??null;blocks=d.blocks;$('page-title').value=title??'';selectedBlockIndex=-1;selected='';$('props').replaceChildren();drawEdits();drawContentBlocks();syncDirty();reloadFrame();updateHistoryButtons()}
+function restoreLocal(value){const d=JSON.parse(value);title=d.title??null;blocks=d.blocks;$('page-title').value=title??'';selectedBlockIndex=-1;selected='';$('props').replaceChildren();drawEdits();drawContentBlocks();mountHomeTools();syncDirty();reloadFrame();updateHistoryButtons()}
 function undo(){if(reviewSnapshot)return;if(!undoStack.length)return;redoStack.push(snapshot());restoreLocal(undoStack.pop())}
 function redo(){if(reviewSnapshot)return;if(!redoStack.length)return;undoStack.push(snapshot());restoreLocal(redoStack.pop())}
 function isReserved(b){return b?.type==='element'&&RESERVED_SELECTOR.test(String(b.selector||''))}
 function contentIndices(){return blocks.map((b,i)=>({b,i})).filter(x=>Object.hasOwn(CONTENT_TYPES,x.b?.type)&&x.b.type!=='element')}
 function labelOf(b){return b.type==='heading'||b.type==='text'?String(b.text||'').slice(0,65):b.type==='image'?String(b.url||''):b.type==='button'?String(b.text||''):b.type==='banner'?String(b.title||''):b.type==='progress'?String(b.title||'پیشرفت'):b.type==='mm10_step'?String(b.title||'مرحله'):b.type==='divider'?'خط جداکننده':b.type}
 function drawContentBlocks(){
- const list=$('blocks-list');list.replaceChildren();const items=contentIndices();$('block-count').textContent=blocks.length+'/۴۰ (محتوا: '+items.length+')';
+ const list=$('blocks-list');list.replaceChildren();const items=contentIndices();$('block-count').textContent=blocks.length+'/'+(page==='copytrade-academy'?'۲۲۰':'۴۰')+' (محتوا: '+items.length+')';
  for(const {b,i} of items){const row=textEl('div','mmvs-block-item'+(i===selectedBlockIndex?' selected':''));
   const name=textEl('button','mmvs-block-label','');name.append(textEl('strong','',CONTENT_TYPES[b.type]||b.type),textEl('small','',labelOf(b)));name.onclick=()=>{selectedBlockIndex=i;drawContentBlocks();showBlockProperties()};
   const actions=textEl('div','mmvs-item-actions','');
@@ -188,9 +254,9 @@ function makeContent(type){
  }
 }
 function afterBlockEdit(rebuildProps=true){drawContentBlocks();if(rebuildProps)showBlockProperties();syncDirty();postPreview();updateHistoryButtons()}
-function addContent(){if(blocks.length>=40)return toast('ظرفیت ۴۰ بلوک پر شده است.',true);checkpoint();blocks.push(makeContent($('block-type').value));selectedBlockIndex=blocks.length-1;afterBlockEdit();toast('المان به پیش‌نویس اضافه شد')}
+function addContent(){if(blocks.length>=(page==='copytrade-academy'?220:40))return toast('ظرفیت ۴۰ بلوک پر شده است.',true);checkpoint();blocks.push(makeContent($('block-type').value));selectedBlockIndex=blocks.length-1;afterBlockEdit();toast('المان به پیش‌نویس اضافه شد')}
 function moveContent(index,step){const indices=contentIndices().map(x=>x.i);const cur=indices.indexOf(index),neighbor=indices[cur+step];if(cur<0||neighbor===undefined)return;checkpoint();const temp=blocks[index];blocks[index]=blocks[neighbor];blocks[neighbor]=temp;selectedBlockIndex=neighbor;afterBlockEdit()}
-function copyContent(index){if(blocks.length>=40)return toast('ظرفیت ۴۰ بلوک پر شده است.',true);const b=blocks[index];if(!b||!Object.hasOwn(CONTENT_TYPES,b.type))return;checkpoint();const duplicate=clone(b);if(duplicate.type==='mm10_step')duplicate.id='mmvs-'+Date.now();blocks.splice(index+1,0,duplicate);selectedBlockIndex=index+1;afterBlockEdit()}
+function copyContent(index){if(blocks.length>=(page==='copytrade-academy'?220:40))return toast('ظرفیت ۴۰ بلوک پر شده است.',true);const b=blocks[index];if(!b||!Object.hasOwn(CONTENT_TYPES,b.type))return;checkpoint();const duplicate=clone(b);if(duplicate.type==='mm10_step')duplicate.id='mmvs-'+Date.now();blocks.splice(index+1,0,duplicate);selectedBlockIndex=index+1;afterBlockEdit()}
 function deleteContent(index){if(!confirm('این المان از پیش‌نویس حذف شود؟'))return;checkpoint();blocks.splice(index,1);selectedBlockIndex=-1;afterBlockEdit()}
 const CONTENT_FIELDS={heading:[['text','عنوان','textarea']],text:[['text','متن','textarea']],image:[['url','آدرس تصویر','url'],['alt','متن جایگزین','text']],button:[['text','عنوان دکمه','text'],['url','لینک دکمه','url']],banner:[['title','عنوان بنر','text'],['text','متن بنر','textarea'],['url','لینک بنر','url']],progress:[['title','عنوان پیشرفت','text'],['kind','نوع پیشرفت','progress']],mm10_step:[['title','عنوان مرحله','text'],['body','توضیحات','textarea']],divider:[]};
 function showBlockProperties(){const host=$('block-properties');host.replaceChildren();const b=blocks[selectedBlockIndex];if(!b||!CONTENT_FIELDS[b.type])return host.append(textEl('p','hint','یک المان را انتخاب کن.'));
@@ -202,22 +268,27 @@ function showBlockProperties(){const host=$('block-properties');host.replaceChil
   else{field.type=kind==='url'?'url':'text';field.maxLength=key==='url'?500:key==='alt'?200:200}
   field.value=b[key]??'';field.onchange=()=>{const value=field.value.trim();if(kind==='url'&&value&&!safeUrl(value))return toast('لینک باید HTTPS یا مسیر داخلی باشد.',true);checkpoint();if(value===''){if(key==='url'&&['image','button'].includes(b.type))return toast('لینک این المان نمی‌تواند خالی باشد.',true);delete b[key]}else b[key]=value;afterBlockEdit(false)};wrap.append(field);host.append(wrap)
  }
- if(b.type==='image'){const wrapper=textEl('label','','آپلود مستقیم عکس');const inp=document.createElement('input');inp.type='file';inp.accept='image/png,image/jpeg,image/webp';const stat=textEl('small','mmvs-upload-status','');inp.onchange=async()=>{const file=inp.files?.[0];if(!file)return;try{const url=await uploadImage(file,msg=>stat.textContent=msg);checkpoint();b.url=url;afterBlockEdit();toast('تصویر آپلود شد، برای نمایش کاربران انتشار لازم است')}catch(e){toast(e.message,true)}};wrapper.append(inp,stat);host.append(wrapper)}
+ if(b.type==='image'){const wrapper=textEl('label','','آپلود مستقیم عکس');const inp=document.createElement('input');inp.type='file';inp.accept='image/*,.heic,.heif,.avif,.bmp,.tif,.tiff,.gif';const stat=textEl('small','mmvs-upload-status','');inp.onchange=async()=>{const file=inp.files?.[0];if(!file)return;try{const url=await uploadImage(file,msg=>stat.textContent=msg);checkpoint();b.url=url;afterBlockEdit();toast('تصویر آپلود شد، برای نمایش کاربران انتشار لازم است')}catch(e){toast(e.message,true)}};wrapper.append(inp,stat);host.append(wrapper)}
 }
-function validateAllBlocks(){for(const b of blocks){if(!b||typeof b!=='object')throw Error('بلوک نامعتبر است');if(b.type==='element'){if(!b.selector||b.selector.length>500)throw Error('شناسه عنصر نامعتبر است');continue}if(b.type==='heading'||b.type==='text'){if(!String(b.text||'').trim())throw Error('عنوان/متن خالی است')}if(b.type==='image'&&!safeUrl(b.url))throw Error('آدرس تصویر نامعتبر است');if(b.type==='button'&&(!String(b.text||'').trim()||!safeUrl(b.url)))throw Error('دکمه نامعتبر است');if(b.type==='banner'&&!String(b.title||'').trim())throw Error('عنوان بنر الزامی است')}}
+function validateAllBlocks(){if(page==='index'&&window.MMTradeHomeEditor?.hasMounted())window.MMTradeHomeEditor.validate();for(const b of blocks){if(!b||typeof b!=='object')throw Error('بلوک نامعتبر است');if(b.type==='element'){if(!b.selector||b.selector.length>500)throw Error('شناسه عنصر نامعتبر است');continue}if(b.type==='heading'||b.type==='text'){if(!String(b.text||'').trim())throw Error('عنوان/متن خالی است')}if(b.type==='image'&&!safeUrl(b.url))throw Error('آدرس تصویر نامعتبر است');if(b.type==='button'&&(!String(b.text||'').trim()||!safeUrl(b.url)))throw Error('دکمه نامعتبر است');if(b.type==='banner'&&!String(b.title||'').trim())throw Error('عنوان بنر الزامی است')}}
 async function uploadImage(file,status=()=>{}){
- if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('فقط PNG و JPG و WebP قابل آپلود است');
- if(file.size<1||file.size>12*1024*1024)throw Error('حجم عکس باید کمتر از ۱۲ مگابایت باشد');
+ // MMTRADE_IMAGE_OPT_R32: library shared optimize
+ if(!file)throw Error('تصویری انتخاب نشده');
+ if(!window.MMTradeImageOptimizer)throw Error('ماژول بهینه‌سازی تصویر در دسترس نیست؛ صفحه را دوباره باز کن');
+ const optimized=await window.MMTradeImageOptimizer.optimize(file,{role:'library',onProgress:status});
+ file=optimized.file;
+ status(optimized.summary);
+ if(file.size<1||file.size>12*1024*1024)throw Error('فایل بهینه‌شده از محدودیت ۱۲ مگابایت بیشتر است');
  const initial=await api('/home-studio/media/begin','POST',{name:file.name.slice(0,180),size:file.size,kind:'image',type:file.type});
  if(!initial.uploadId||!/^[a-f0-9]{32}$/.test(initial.uploadId))throw Error('شناسه آپلود نامعتبر است');
  const chunkSize=Math.min(192*1024,Number(initial.chunkSize)||192*1024);let index=0;
  for(let offset=0;offset<file.size;offset+=chunkSize){const bytes=await file.slice(offset,Math.min(offset+chunkSize,file.size)).arrayBuffer();const response=await fetch('/admin/home-studio/media/'+initial.uploadId+'/'+index,{method:'POST',cache:'no-store',headers:{authorization:'Bearer '+token,'content-type':'application/octet-stream'},body:bytes});if(!response.ok){const d=await response.json().catch(()=>({}));throw Error(d.error||'خطا در آپلود بخش '+(index+1))}index++;status('آپلود '+Math.round(100*Math.min(file.size,offset+chunkSize)/file.size)+'٪')}
- const finish=await api('/home-studio/media/'+initial.uploadId+'/finish','POST',{});if(!finish.url||!safeUrl(finish.url))throw Error('لینک فایل دریافت نشد');status('آپلود کامل');return finish.url;
+ const finish=await api('/home-studio/media/'+initial.uploadId+'/finish','POST',{});if(!finish.url||!safeUrl(finish.url))throw Error('لینک فایل دریافت نشد');status('آپلود کامل؛ '+optimized.summary);return finish.url;
 }
 function exportJson(){const body={schema:'MMVS_R3',slug:page,title,blocks:clone(blocks),exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(body,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mmtrade-'+page+'-draft.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
-async function importJson(file){if(!file)return;if(file.size>300000)throw Error('فایل JSON بیش از حد بزرگ است');const d=JSON.parse(await file.text());if(d.slug!==page||!Array.isArray(d.blocks)||d.blocks.length>40||!(d.title===null||d.title===undefined||typeof d.title==='string'))throw Error('فایل متعلق به این صفحه نیست یا ساختار اشتباه است');
+async function importJson(file){if(!file)return;if(file.size>300000)throw Error('فایل JSON بیش از حد بزرگ است');const d=JSON.parse(await file.text());if(d.slug!==page||!Array.isArray(d.blocks)||d.blocks.length>(page==='copytrade-academy'?220:40)||!(d.title===null||d.title===undefined||typeof d.title==='string'))throw Error('فایل متعلق به این صفحه نیست یا ساختار اشتباه است');
  const sensitive=blocks.filter(isReserved),incoming=d.blocks.filter(b=>!isReserved(b));
- if(incoming.length+sensitive.length>40)throw Error('تعداد المان‌ها بیش از حد مجاز است');
+ if(incoming.length+sensitive.length>(page==='copytrade-academy'?220:40))throw Error('تعداد المان‌ها بیش از حد مجاز است');
  if(!confirm('پیش‌نویس فعلی با فایل واردشده جایگزین شود؟ تنظیمات سیستمی داخلی صفحه حفظ می‌شوند.'))return;
  checkpoint();blocks=[...sensitive,...incoming];title=d.title??null;selectedBlockIndex=-1;$('page-title').value=title??'';drawEdits();drawContentBlocks();syncDirty();reloadFrame();toast('فایل وارد شد؛ هنوز منتشر نشده است')}
 function bindExtended(){
@@ -237,8 +308,44 @@ function bindExtended(){
  $('popup-disable').onclick=async()=>{const obj=popups.find(x=>x.id===chosenPopup);if(!obj||obj.status!=='PUBLISHED'||!confirm('این پاپ‌آپ فوراً غیرفعال شود؟'))return;try{await api('/content/popups/'+encodeURIComponent(obj.id),'PATCH',{status:'DRAFT'});await loadPopups();toast('پاپ‌آپ غیرفعال شد')}catch(e){toast(e.message,true)}};
 }
 
-function bind(){bindExtended();$('release-preview-exit').onclick=exitReleasePreview;$('release-checkpoint').onclick=()=>releaseHistory.checkpoint();$('release-refresh').onclick=loadVersions;window.addEventListener('mmvs:state',syncDirty);for(const b of $all('.tab'))b.onclick=()=>chooseTab(b.dataset.tab);$('reload').onclick=()=>{if(reviewSnapshot){exitReleasePreview();return}if((dirty()||window.MMVS_Spatial?.isDirty())&&!confirm('تغییرات محلی حذف شوند؟'))return;loadPage(page).catch(e=>toast(e.message,true))};$('refresh-preview').onclick=reloadFrame;$('save').onclick=()=>saveDraft().catch(e=>toast(e.message,true));$('publish').onclick=publish;$('view-mobile').onclick=()=>{$('preview-holder').classList.remove('desktop');$('view-mobile').classList.add('active');$('view-desktop').classList.remove('active')};$('view-desktop').onclick=()=>{$('preview-holder').classList.add('desktop');$('view-desktop').classList.add('active');$('view-mobile').classList.remove('active')};$('hide-element').onclick=()=>{if(!selected)return;checkpoint();const b=editBlock(selected);b.deleted=!b.deleted;drawEdits();syncDirty();postPreview();};$('remove-edit').onclick=()=>{if(!selected)return;checkpoint();blocks=blocks.filter(b=>!(b.type==='element'&&b.selector===selected));drawEdits();showInspector();syncDirty();reloadFrame()};$('popup-new').onclick=()=>{fillPopup(null);drawPopups()};$('popup-form').addEventListener('submit',savePopup);$('popup-delete').onclick=deletePopup;$('popup-preview').onclick=()=>{const pop=popupData();pendingPopup=pop;chooseTab('pages');if(pop.pageSlug!==page){loadPage(pop.pageSlug).then(()=>{if(ready){$('frame').contentWindow?.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pendingPopup},location.origin);pendingPopup=null}}).catch(e=>toast(e.message,true))}else if(ready){$('frame').contentWindow?.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pop},location.origin);pendingPopup=null}toast('پیش‌نمایش پاپ‌آپ آماده شد')};$('sign-in').onclick=async()=>{try{const data=await fetch('/admin/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});const r=await data.json();if(!data.ok)throw Error(r.message||r.error||'ورود ناموفق');$('password').value='';await authenticate(r.token)}catch(e){$('login-error').textContent=e.message}};
-window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('frame').contentWindow||!e.data||typeof e.data!=='object')return;if(e.data.type==='MMVS_READY'){ready=true;postPreview();if(pendingPopup){$('frame').contentWindow.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pendingPopup},location.origin);pendingPopup=null}}else if(e.data.type==='MMVS_SELECT'){chooseElement(e.data.element)}});window.MMVSWorkspace={isDirty:()=>dirty()||!!window.MMVS_Spatial?.isDirty(),isBusy:()=>busy||!!window.MMVS_Spatial?.isBusy(),publish};window.addEventListener('beforeunload',e=>{if(dirty()||window.MMVS_Spatial?.isDirty()||busy){e.preventDefault();e.returnValue=''}});
+/* MMVS_PUBLISHED_FOLD_R1 ADMIN API: existing content draft/publish only. */
+ const MMVS_FOLD_MARKER='#mmvs-published-fold-configuration';
+ window.MMVS_PublishedFold={
+  page:()=>page,
+  get:()=>{const b=blocks.find(x=>x?.type==='element'&&x.selector===MMVS_FOLD_MARKER);
+   if(!b)return {enabled:false,heightPx:852};
+   try{const v=JSON.parse(b.text||'null');if(v?.version===1&&v.enabled===true&&Number.isInteger(v.heightPx)&&v.heightPx>=200&&v.heightPx<=12000)return v}catch(_e){}
+   return {enabled:false,heightPx:852};
+  },
+  set:cfg=>{
+   if(!editor||reviewSnapshot||busy||!canWrite())return {ok:false,error:'ویرایش این صفحه فعلاً مجاز نیست'};
+   const valid=cfg?.enabled===false||(cfg?.enabled===true&&Number.isInteger(cfg.heightPx)&&cfg.heightPx>=200&&cfg.heightPx<=12000);
+   if(!valid)return {ok:false,error:'ارتفاع مرز نامعتبر است'};
+   const ix=blocks.findIndex(x=>x?.type==='element'&&x.selector===MMVS_FOLD_MARKER);
+   if(cfg.enabled){
+    if(ix<0&&blocks.length>=40)return {ok:false,error:'سقف ۴۰ بلوک پر شده؛ ابتدا یک بلوک اضافی را حذف کن'};
+    const item={type:'element',selector:MMVS_FOLD_MARKER,text:JSON.stringify({version:1,enabled:true,heightPx:cfg.heightPx})};
+    if(ix>=0&&JSON.stringify(blocks[ix])===JSON.stringify(item))return {ok:true};
+    checkpoint();if(ix>=0)blocks[ix]=item;else blocks.push(item);
+   }else{
+    if(ix<0)return {ok:true};checkpoint();blocks.splice(ix,1);
+   }
+   afterBlockEdit();drawEdits();
+   return {ok:true};
+  }
+ };
+
+async function previewPopup(){
+ if(busy||window.MMVS_Spatial?.isBusy())return toast('عملیات در حال انجام است',true);
+ const pop=popupData();
+ if(pop.pageSlug!==page&&(dirty()||window.MMVS_Spatial?.isDirty())&&!confirm('پیش‌نمایش پاپ‌آپ صفحه دیگری را باز می‌کند؛ تغییرات ذخیره‌نشده کنار گذاشته شوند؟'))return;
+ pendingPopup=pop;chooseTab('pages');
+ if(pop.pageSlug!==page){await loadPage(pop.pageSlug)}
+ else if(ready){$('frame').contentWindow?.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pop},location.origin);pendingPopup=null}
+ toast('پیش‌نمایش پاپ‌آپ آماده شد');
+}
+function bind(){bindExtended();$('home-tools-toggle').onclick=toggleHomeTools;window.addEventListener('resize',layoutHomePanel,{passive:true});window.addEventListener('scroll',layoutHomePanel,{passive:true,capture:true});if(window.ResizeObserver)new ResizeObserver(layoutHomePanel).observe($('page-toolbar'));ensurePreviewSourceToggle();$('release-preview-exit').onclick=exitReleasePreview;$('release-checkpoint').onclick=()=>releaseHistory.checkpoint();$('release-refresh').onclick=loadVersions;window.addEventListener('mmvs:state',syncDirty);for(const b of $all('.tab'))b.onclick=()=>chooseTab(b.dataset.tab);$('reload').onclick=()=>{if(reviewSnapshot){exitReleasePreview();return}if((dirty()||window.MMVS_Spatial?.isDirty())&&!confirm('تغییرات محلی حذف شوند؟'))return;loadPage(page).catch(e=>toast(e.message,true))};$('refresh-preview').onclick=reloadFrame;$('save').onclick=()=>saveDraft().catch(e=>toast(e.message,true));$('publish').onclick=publish;$('view-mobile').onclick=()=>{$('preview-holder').classList.remove('desktop');$('view-mobile').classList.add('active');$('view-desktop').classList.remove('active')};$('view-desktop').onclick=()=>{$('preview-holder').classList.add('desktop');$('view-desktop').classList.add('active');$('view-mobile').classList.remove('active')};$('hide-element').onclick=()=>{if(!selected)return;checkpoint();const b=editBlock(selected);b.deleted=!b.deleted;drawEdits();syncDirty();postPreview();};$('remove-edit').onclick=()=>{if(!selected)return;checkpoint();blocks=blocks.filter(b=>!(b.type==='element'&&b.selector===selected));drawEdits();showInspector();syncDirty();reloadFrame()};$('popup-new').onclick=()=>{fillPopup(null);drawPopups()};$('popup-form').addEventListener('submit',savePopup);$('popup-delete').onclick=deletePopup;$('popup-preview').onclick=()=>previewPopup().catch(e=>toast(e.message,true));$('sign-in').onclick=async()=>{try{const data=await fetch('/admin/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});const r=await data.json();if(!data.ok)throw Error(r.message||r.error||'ورود ناموفق');$('password').value='';await authenticate(r.token)}catch(e){$('login-error').textContent=e.message}};
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==$('frame').contentWindow||!e.data||typeof e.data!=='object')return;if(e.data.type==='MMVS_READY'){ready=true;postPreview();if(pendingPopup){$('frame').contentWindow.postMessage({type:'MMVS_POPUP_PREVIEW',popup:pendingPopup},location.origin);pendingPopup=null}}else if(e.data.type==='MMVS_SELECT'){chooseElement(e.data.element)}});window.MMVSWorkspace={isPublishedHomePreview,isDirty:()=>dirty()||!!window.MMVS_Spatial?.isDirty(),isBusy:()=>busy||!!window.MMVS_Spatial?.isBusy(),publish};window.addEventListener('beforeunload',e=>{if(dirty()||window.MMVS_Spatial?.isDirty()||busy){e.preventDefault();e.returnValue=''}});
 for(const [slug,name] of PAGES){const op=textEl('option','',name);op.value=slug;$('popup-page').append(op)}fillPopup(null);}
 bind();const saved=sessionStorage.getItem('tenx_admin_token');if(saved)authenticate(saved).catch(e=>{showLogin();toast(e.message,true)});else showLogin();
 })();

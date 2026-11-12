@@ -1,114 +1,37 @@
-/* P76 dynamic stage editor: 3..8 stage overlays, existing P74 Home draft/publish only. */
+/* P74_HOME_MATCH_R1 admin editor: independent editable controls + existing /admin/content/pages/index draft/publish. */
 (function(){'use strict';if(window.__P74_STUDIO__)return;window.__P74_STUDIO__=true;
-const MARK='#p74-home-config',TOKEN='tenx_admin_token';
-const SEED=[
- ['شروع چالش','/miniapp/challenge.html'],['آموزش‌های کلیدی','/miniapp/academy.html'],
- ['تمرین و اجرا','/miniapp/challenge.html'],['مدیریت ریسک','/miniapp/copy-trading.html'],
- ['رشد و مقیاس','/miniapp/profile.html'],['ماموریت ششم','/miniapp/challenge.html'],
- ['ماموریت هفتم','/miniapp/challenge.html'],['ماموریت هشتم','/miniapp/challenge.html']];
-const DEF={version:74,enabled:true,brand:'MM trade challenge 10x',tagline:'چالش رشد ۱۰ برابری در معاملات',
- heroEyebrow:'ویدیوی معرفی چالش',heroTitle:'چالش MM',heroSubtitle:'رشد ۱۰ برابری',
- journeyTitle:'مسیر 10X تو از اینجا شروع می‌شود',journeySubtitle:'یک مسیر مرحله‌به‌مرحله برای رشد مهارت، اعتمادبه‌نفس و سرمایه',
- videoUrl:'https://dl.namahub.ir/parsahojabrian/W0OGUlGh',videoDuration:'07:46',
- progressTitle:'پیشرفت شما در چالش',progressHref:'/miniapp/profile.html',ctaText:'مرحله بعدی چالش',ctaHref:'/miniapp/challenge.html',
- stepCount:5,steps:[],nav:[{title:'خانه',href:'/miniapp/index.html'},{title:'آکادمی',href:'/miniapp/academy.html'},{title:'پروفایل',href:'/miniapp/profile.html'}]};
-const el=(t,c='',txt)=>{let a=document.createElement(t);if(c)a.className=c;if(txt!==undefined)a.textContent=txt;return a};
-const clone=v=>JSON.parse(JSON.stringify(v));
-const clamp=(x,a,b)=>Math.min(b,Math.max(a,Number(x)||a));
-const count=v=>Math.min(8,Math.max(3,Math.trunc(Number(v)||5)));
-function layout(n){n=count(n);return Array.from({length:n},(_,i)=>{const rank=n-1-i,f=rank/(n-1),width=Math.round(35+13*f);
-return{top:+(3+rank*67/(n-1)).toFixed(2),right:Math.round(12+33*f),width,height:+Math.min(13,66/n).toFixed(2)}})}
-DEF.steps=SEED.map((v,i)=>({title:v[0],href:v[1],position:layout(8)[i]}));
-function urlValid(s){s=String(s||'').trim();if(s.startsWith('/')&&!s.startsWith('//')&&!/[\s<>'"]/.test(s))return s;
-try{const u=new URL(s);if(u.protocol==='https:'&&!u.username&&!u.password)return u.href}catch(e){}throw Error('لینک باید HTTPS یا با / شروع شود')}
-function token(){try{return sessionStorage.getItem(TOKEN)||''}catch(e){return''}}
-async function api(route,options={}){if(!token())throw Error('ابتدا وارد پنل شوید');const r=await fetch('/admin'+route,{...options,headers:{'content-type':'application/json',authorization:'Bearer '+token()}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||d.message||'HTTP '+r.status);return d}
-function decodeMarker(blocks){const m=(Array.isArray(blocks)?blocks:[]).filter(b=>b?.type==='element'&&b.selector===MARK);
-if(m.length>1)throw Error('تنظیمات تکراری Home');if(!m.length)return null;let v;try{v=JSON.parse(m[0].text)}catch(e){throw Error('تنظیمات ذخیره‌شده معتبر نیست')};if(v.version!==74)throw Error('نسخه تنظیمات ناسازگار');return v}
-function normalize(raw){const a=clone(DEF);if(!raw||typeof raw!=='object'){a.steps=a.steps.slice(0,5).map((s,i)=>({...s,position:layout(5)[i]}));return a}
- for(const key of ['enabled','brand','tagline','heroEyebrow','heroTitle','heroSubtitle','journeyTitle','journeySubtitle','videoUrl','videoDuration','progressTitle','progressHref','ctaText','ctaHref'])if(raw[key]!==undefined)a[key]=raw[key];
- a.stepCount=count(raw.stepCount??(Array.isArray(raw.steps)?raw.steps.length:5));
- const auto=layout(a.stepCount);
- a.steps=Array.from({length:a.stepCount},(_,i)=>{const seed=clone(DEF.steps[i]);const v=Array.isArray(raw.steps)?raw.steps[i]:null;return{...seed,...(v||{}),position:{...auto[i],...(v?.position||{})}}});
- if(Array.isArray(raw.nav))a.nav=a.nav.map((v,i)=>({...v,...(raw.nav[i]||{})}));return a}
-let modal=null,frame=null,dataLoaded=false,config=null,statusNode=null,form=null,stepZone=null,stageCounter=null;
-function status(t,kind=''){if(statusNode){statusNode.textContent=t;statusNode.dataset.state=kind}}
-function preview(){if(frame?.contentWindow&&config)frame.contentWindow.postMessage({type:'P74_CONFIG_PREVIEW',config:clone(config)},location.origin)}
-function heading(parent,title){const s=el('section','p74admin-group');s.append(el('h3','',title));parent.append(s);return s}
-function input(parent,title,obj,key,kind='text',meta={}){
- const lab=el('label','p74admin-field'),node=el('input');lab.append(el('span','',title));
- node.type=kind==='number'?'number':'text';node.value=obj[key]??'';node.autocomplete='off';
- if(kind==='number'){node.min='0';node.max='100';node.step='0.1';node.style.direction='ltr';node.style.textAlign='left'}
- if(kind==='url')node.placeholder='https:// یا /miniapp/...';
- node.addEventListener('input',()=>{obj[key]=kind==='number'?Number(node.value):node.value;preview()});
- if(meta.stepIndex!==undefined)node.dataset.p76key=meta.stepIndex+':'+key;
- lab.append(node);parent.append(lab);return node}
-function redrawSteps(){stepZone.replaceChildren();stageCounter.textContent=''+config.stepCount;
- for(let i=0;i<config.stepCount;i++){
- const item=config.steps[i],s=heading(stepZone,'مرحله '+(i+1));
- input(s,'عنوان',item,'title');input(s,'لینک مرحله',item,'href','url');
- const move=el('p','p75-step-help','روی پیش‌نمایش با انگشت بکشید یا عددهای زیر را تغییر دهید');s.append(move);
- for(const [name,label] of [['top','فاصله از بالا (%)'],['right','فاصله از راست (%)'],['width','عرض دکمه (%)'],['height','ارتفاع دکمه (%)']]){
- const field=input(s,label,item.position,name,'number',{stepIndex:i});
- field.addEventListener('change',()=>{item.position[name]=Math.round(clamp(item.position[name],0,100)*100)/100;preview()})
- }
- const actions=el('div','p76-step-actions');
- const reset=el('button','p75-step-reset','چیدمان خودکار');reset.type='button';reset.addEventListener('click',()=>{item.position=layout(config.stepCount)[i];redrawSteps();preview()});actions.append(reset);
- const remove=el('button','p76-danger','حذف این مرحله');remove.type='button';remove.disabled=config.stepCount<=3;
- remove.addEventListener('click',()=>{if(config.stepCount<=3)return;config.steps.splice(i,1);config.stepCount--;
- const positions=layout(config.stepCount);config.steps.forEach((x,j)=>x.position=positions[j]);redrawSteps();preview()});actions.append(remove);s.append(actions)
- }
+const TOKEN='tenx_admin_token', MARK='#p74-home-config';const DEF={version:74,enabled:true,brand:'MM trade challenge 10x',tagline:'چالش رشد ۱۰ برابری در معاملات',heroEyebrow:'ویدیوی معرفی چالش',heroTitle:'چالش MM',heroSubtitle:'رشد ۱۰ برابری',journeyTitle:'مسیر 10X تو از اینجا شروع می‌شود',journeySubtitle:'یک مسیر مرحله‌به‌مرحله برای رشد مهارت، اعتمادبه‌نفس و سرمایه',videoUrl:'https://dl.namahub.ir/parsahojabrian/W0OGUlGh',videoDuration:'07:46',progressTitle:'پیشرفت شما در چالش',ctaText:'مرحله بعدی چالش',ctaHref:'/miniapp/challenge.html',progressHref:'/miniapp/profile.html',steps:[{title:'شروع چالش',href:'/miniapp/challenge.html'},{title:'آموزش‌های کلیدی',href:'/miniapp/academy.html'},{title:'تمرین و اجرا',href:'/miniapp/challenge.html'},{title:'مدیریت ریسک',href:'/miniapp/copy-trading.html'},{title:'رشد و مقیاس',href:'/miniapp/profile.html'}],nav:[{title:'خانه',href:'/miniapp/index.html'},{title:'آکادمی',href:'/miniapp/academy.html'},{title:'پروفایل',href:'/miniapp/profile.html'}]};
+let dialog=null,frame=null,state=null,controls=[];
+const el=(tag,cl,text)=>{const e=document.createElement(tag);if(cl)e.className=cl;if(text!==undefined)e.textContent=text;return e};
+const token=()=>{try{return sessionStorage.getItem(TOKEN)||''}catch(e){return''}};
+async function api(path,opts={}){const t=token();if(!t)throw new Error('ابتدا وارد پنل مدیر شوید.');const r=await fetch('/admin'+path,{...opts,headers:{'content-type':'application/json','authorization':'Bearer '+t}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||d.error||'HTTP '+r.status);return d}
+function safeUrl(u){u=String(u||'').trim();if(u.startsWith('/')&&!u.startsWith('//')&&!/[\s<>'"]/.test(u))return u;try{const p=new URL(u);if(p.protocol==='https:'&&!p.username&&!p.password)return u}catch(e){}throw new Error('آدرس باید HTTPS یا مسیر داخلی با / باشد: '+u)}
+function copy(x){return JSON.parse(JSON.stringify(x))}
+function marker(blocks){const a=(Array.isArray(blocks)?blocks:[]).filter(b=>b&&b.type==='element'&&b.selector===MARK);if(a.length>1)throw new Error('دو تنظیم P74 پیدا شد؛ ویرایش را متوقف کنید.');if(!a.length)return null;let raw;try{raw=JSON.parse(a[0].text)}catch(e){throw new Error('تنظیمات P74 معتبر نیست')}if(raw?.version!==74)throw new Error('نسخه تنظیمات P74 نامعتبر است');return raw}
+function config(){const c=copy(DEF);c.enabled=document.getElementById('p74-enable').checked;for(const x of controls){const val=x.input.value.trim();if(x.kind==='href')safeUrl(val);if(x.path.length===1)c[x.path[0]]=val;else c[x.path[0]][x.path[1]][x.path[2]]=val}return c}
+function updatePreview(){try{const c=config();if(frame?.contentWindow)frame.contentWindow.postMessage({type:'P74_CONFIG_PREVIEW',config:c},location.origin)}catch(e){status(e.message,'warn')}}
+let statusNode=null;function status(msg,kind=''){if(statusNode){statusNode.textContent=msg;statusNode.dataset.state=kind}}
+function field(parent,label,path,kind='text'){const w=el('label','p74admin-field');w.append(el('span','',label));const i=el('input');i.type='text';i.autocomplete='off';i.dataset.kind=kind;i.placeholder=kind==='href'?'https:// یا /miniapp/...':'';i.addEventListener('input',updatePreview);w.append(i);parent.append(w);controls.push({path,kind,input:i})}
+function section(parent,title){const s=el('section','p74admin-group');s.append(el('h3','',title));parent.append(s);return s}
+function close(){dialog?.remove();dialog=null;frame=null;statusNode=null;controls=[];document.removeEventListener('keydown',escapeKey)}
+function escapeKey(e){if(e.key==='Escape')close()}
+async function open(){if(dialog)close();state=null;controls=[];dialog=el('div','p74admin-backdrop');dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label','P74 Home Studio');const box=el('section','p74admin-panel');dialog.append(box);document.body.append(dialog);dialog.addEventListener('click',e=>{if(e.target===dialog)close()});document.addEventListener('keydown',escapeKey);
+const top=el('header','p74admin-head');top.append(el('div','', 'P74 • طراحی هوم 10X'));const cross=el('button','p74admin-close','بستن ✕');cross.type='button';cross.addEventListener('click',close);top.append(cross);box.append(top);
+const intro=el('p','p74admin-info','پیش‌نمایش زنده است؛ بدون انتشار، صفحه کاربران تغییر نمی‌کند. متن‌ها، دکمه‌ها، لینک‌ها و ویدیو از همین‌جا قابل ویرایش‌اند.');box.append(intro);
+const layout=el('div','p74admin-layout'),aside=el('div','p74admin-form'),screen=el('div','p74admin-screen');layout.append(aside,screen);box.append(layout);
+const onoff=el('label','p74admin-switch');const enable=el('input');enable.type='checkbox';enable.id='p74-enable';enable.checked=true;enable.addEventListener('change',updatePreview);onoff.append(enable,el('span','','نمایش هوم P74 پس از انتشار'));aside.append(onoff);
+let s=section(aside,'هویت برند');field(s,'نام برند',['brand']);field(s,'زیرعنوان',['tagline']);s=section(aside,'کارت ویدیویی');field(s,'برچسب ویدیو',['heroEyebrow']);field(s,'عنوان ویدیو',['heroTitle']);field(s,'توضیح برجسته',['heroSubtitle']);field(s,'آدرس ویدیوی MP4 / لینک کوتاه ناماهاب',['videoUrl'],'href');field(s,'زمان نمایشی ویدیو',['videoDuration']);s=section(aside,'مسیر 10X');field(s,'عنوان بخش',['journeyTitle']);field(s,'توضیح مسیر',['journeySubtitle']);for(let i=0;i<5;i++){s=section(aside,'مرحله '+(i+1));field(s,'متن مرحله',['steps',i,'title']);field(s,'آدرس مقصد',['steps',i,'href'],'href')}s=section(aside,'پیشرفت و دکمه اصلی');field(s,'عنوان پیشرفت',['progressTitle']);field(s,'لینک کارت پیشرفت',['progressHref'],'href');field(s,'متن دکمه مرحله بعدی',['ctaText']);field(s,'لینک دکمه مرحله بعدی',['ctaHref'],'href');s=section(aside,'نوار پایین');for(let i=0;i<3;i++){field(s,'متن '+(i+1),['nav',i,'title']);field(s,'لینک '+(i+1),['nav',i,'href'],'href')}
+frame=el('iframe','p74admin-preview');frame.title='پیش‌نمایش زنده P74';frame.src='/miniapp/p74/preview.html?p74Preview=1';frame.addEventListener('load',updatePreview);screen.append(frame);const desc=el('div','p74admin-hint','این پیش‌نمایش داده پیشرفت نمونه نشان می‌دهد؛ برای کاربران فقط داده واقعی نمایش داده می‌شود.');screen.append(desc);
+const actions=el('div','p74admin-actions');const save=el('button','','ذخیره پیش‌نویس');const publish=el('button','p74admin-primary','انتشار برای کاربران');const reload=el('button','','بازخوانی');actions.append(save,publish,reload);box.append(actions);statusNode=el('p','p74admin-status','در حال بارگذاری پیش‌نویس…');box.append(statusNode);
+function apply(c){const z={...copy(DEF),...c};if(!Array.isArray(z.steps)||z.steps.length!==5)z.steps=copy(DEF.steps);if(!Array.isArray(z.nav)||z.nav.length!==3)z.nav=copy(DEF.nav);enable.checked=z.enabled!==false;for(const a of controls){let v=z;for(const key of a.path)v=v?.[key];a.input.value=v==null?'':String(v)}updatePreview()}
+async function load(){const r=await api('/content/pages/index/editor');state=r;apply(marker(r.blocks)||DEF);status('نسخه فعلی بارگذاری شد؛ برای اعمال روی کاربران انتشار لازم است.');return r}
+async function saveDraft(){if(!state)throw Error('ابتدا باید پیش‌نویس خوانده شود.');const fresh=await api('/content/pages/index/editor');const original=Array.isArray(fresh.blocks)?fresh.blocks:[];marker(original);const blocks=original.filter(b=>!(b?.type==='element'&&b.selector===MARK));if(blocks.length>=40)throw Error('ظرفیت صفحه پر شده؛ امکان اضافه‌کردن تنظیم P74 وجود ندارد.');const c=config();blocks.push({type:'element',selector:MARK,text:JSON.stringify(c)});await api('/content/pages/index/draft',{method:'PUT',body:JSON.stringify({title:fresh.title||null,blocks})});state={...fresh,blocks};return c}
+function busy(v){save.disabled=publish.disabled=reload.disabled=v}
+save.addEventListener('click',async()=>{busy(true);try{await saveDraft();status('پیش‌نویس ذخیره شد. صفحه کاربران تغییر نکرد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}});
+publish.addEventListener('click',async()=>{if(!confirm('هوم P74 و پیش‌نویس صفحه اصلی برای کاربران منتشر شود؟'))return;busy(true);try{await saveDraft();await api('/content/pages/index/publish',{method:'POST',body:'{}'});status('انتشار با موفقیت انجام شد. Mini App را دوباره باز کنید.','ok')}catch(e){status('خطای انتشار: '+e.message,'warn')}finally{busy(false)}});
+reload.addEventListener('click',async()=>{busy(true);try{await load()}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}});
+try{await load()}catch(e){status('خطا در خواندن نسخه: '+e.message,'warn')}
 }
-function setCount(v){const next=count(v);if(next===config.stepCount)return;
- if(next>config.stepCount)for(let i=config.stepCount;i<next;i++)config.steps.push(clone(DEF.steps[i]));
- else config.steps.splice(next);
- config.stepCount=next;config.steps.forEach((s,i)=>s.position=layout(next)[i]);redrawSteps();preview();status('تعداد پله‌ها تغییر کرد؛ برای نمایش در نسخه زنده انتشار لازم است.','ok')}
-function rebuild(){form.replaceChildren();const toggle=el('label','p74admin-switch');const check=el('input');check.type='checkbox';check.checked=config.enabled!==false;check.addEventListener('change',()=>{config.enabled=check.checked;preview()});toggle.append(check,el('span','','نمایش Home جدید پس از انتشار'));form.append(toggle);
- let s=heading(form,'برند');input(s,'نام برند',config,'brand');input(s,'زیرعنوان',config,'tagline');
- s=heading(form,'ویدیو');for(const [k,l] of [['heroEyebrow','برچسب ویدیو'],['heroTitle','عنوان ویدیو'],['heroSubtitle','توضیح ویدیو'],['videoUrl','لینک ویدیوی ناماهاب / MP4'],['videoDuration','زمان نمایشی']])input(s,l,config,k,k==='videoUrl'?'url':'text');
- s=heading(form,'مسیر چالش');input(s,'تیتر مسیر',config,'journeyTitle');input(s,'زیرتیتر',config,'journeySubtitle');
- s=heading(form,'تعداد پله‌ها و دکمه‌ها');const tools=el('div','p76-count-controls');
- const less=el('button','','− حذف مرحله آخر');less.type='button';less.addEventListener('click',()=>setCount(config.stepCount-1));
- stageCounter=el('strong','p76-stage-count',String(config.stepCount));const add=el('button','','+ افزودن مرحله');add.type='button';add.addEventListener('click',()=>setCount(config.stepCount+1));
- const auto=el('button','p76-layout-btn','چیدمان خودکار همه');auto.type='button';auto.addEventListener('click',()=>{config.steps.forEach((x,i)=>x.position=layout(config.stepCount)[i]);redrawSteps();preview()});
- tools.append(less,stageCounter,add,auto);s.append(tools);stepZone=el('div','p76-step-zone');form.append(stepZone);redrawSteps();
- s=heading(form,'پیشرفت و CTA');for(const [k,l] of [['progressTitle','عنوان پیشرفت'],['progressHref','لینک پیشرفت'],['ctaText','متن CTA'],['ctaHref','لینک CTA']])input(s,l,config,k,k.toLowerCase().includes('href')?'url':'text');
- s=heading(form,'منوی پایین');for(let i=0;i<3;i++){input(s,'عنوان '+(i+1),config.nav[i],'title');input(s,'لینک '+(i+1),config.nav[i],'href','url')}
-}
-function receive(e){if(!modal||!frame||e.origin!==location.origin||e.source!==frame.contentWindow||e.data?.type!=='P75_STEP_POSITION')return;
- const i=Number(e.data.step),p=e.data.position;if(!Number.isInteger(i)||i<0||i>=config.stepCount||!p)return;
- config.steps[i].position={...config.steps[i].position,...p};
- for(const k of ['top','right','width','height']){
- const f=form.querySelector(`[data-p76key="${i}:${k}"]`);if(f&&p[k]!==undefined)f.value=String(p[k])
- }
- status('موقعیت دکمه '+(i+1)+' تغییر کرد؛ ذخیره و انتشار را انجام دهید.','ok')
-}
-function close(){modal?.remove();modal=null;frame=null;dataLoaded=false;config=null;window.removeEventListener('message',receive);document.removeEventListener('keydown',keyesc)}
-function keyesc(e){if(e.key==='Escape')close()}
-function validate(){if(!config||config.steps.length!==config.stepCount)throw Error('تعداد دکمه‌ها با پله‌ها برابر نیست');
- for(const s of config.steps){if(!String(s.title||'').trim())throw Error('عنوان مرحله خالی است');urlValid(s.href);
- const p=s.position;if(!p)throw Error('موقعیت مرحله تعریف نشده');for(const k of ['top','right','width','height'])if(!Number.isFinite(Number(p[k])))throw Error('موقعیت دکمه نامعتبر است');
- if(p.width<22||p.width>85||p.height<7||p.height>18||p.top<0||p.right<0||p.top+p.height>100||p.right+p.width>100)throw Error('یک دکمه خارج از محدوده تصویر است')}
- for(const s of config.nav)urlValid(s.href);urlValid(config.ctaHref);urlValid(config.progressHref);urlValid(config.videoUrl);return clone(config)}
-async function saveDraft(){if(!dataLoaded)throw Error('اطلاعات صفحه هنوز بارگذاری نشده');const d=await api('/content/pages/index/editor');const arr=Array.isArray(d.blocks)?d.blocks:[];decodeMarker(arr);const other=arr.filter(b=>!(b?.type==='element'&&b.selector===MARK));if(other.length>=40)throw Error('ظرفیت بلاک‌های صفحه پر شده');
- const final=validate();final.version=74;other.push({type:'element',selector:MARK,text:JSON.stringify(final)});
- await api('/content/pages/index/draft',{method:'PUT',body:JSON.stringify({title:d.title||null,blocks:other})});return final}
-async function open(){if(modal)close();config=normalize(null);modal=el('div','p74admin-backdrop');modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
- const box=el('section','p74admin-panel'),head=el('header','p74admin-head');head.append(el('strong','','P76 • ویرایش کوه و دکمه‌ها'));const x=el('button','p74admin-close','بستن ✕');x.onclick=close;head.append(x);box.append(head);
- box.append(el('p','p74admin-info','۳ تا ۸ مرحله؛ با افزودن/حذف دکمه، پس‌زمینه متناسب خودکار عوض می‌شود. ارتفاع و جای هر دکمه قابل ویرایش است.'));
- const panel=el('div','p74admin-layout'),aside=el('div','p74admin-form'),screen=el('div','p74admin-screen');panel.append(aside,screen);box.append(panel);form=aside;
- frame=el('iframe','p74admin-preview');frame.src='/miniapp/p74/preview.html?p74Preview=1&stepEdit=1';frame.title='پیش‌نمایش زنده ۳ تا ۸ پله';frame.addEventListener('load',preview);screen.append(frame);
- screen.append(el('div','p74admin-hint','بکشید و رها کنید؛ موقعیت‌ها به نسبت تصویر ثبت می‌شوند.'));rebuild();
- const acts=el('div','p74admin-actions'),save=el('button','','ذخیره پیش‌نویس'),publish=el('button','p74admin-primary','انتشار برای کاربران'),reload=el('button','','بارگذاری دوباره');acts.append(save,publish,reload);box.append(acts);statusNode=el('p','p74admin-status','در حال دریافت تنظیمات…');box.append(statusNode);
- modal.append(box);document.body.append(modal);modal.addEventListener('click',e=>{if(e.target===modal)close()});document.addEventListener('keydown',keyesc);window.addEventListener('message',receive);
- const busy=v=>{save.disabled=publish.disabled=reload.disabled=v};
- const load=async()=>{const d=await api('/content/pages/index/editor');config=normalize(decodeMarker(d.blocks));dataLoaded=true;rebuild();preview();status('تنظیمات Home بارگذاری شد؛ تا انتشار روی کاربران اعمال نمی‌شود.','ok')};
- save.onclick=async()=>{busy(true);try{await saveDraft();status('پیش‌نویس ذخیره شد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
- publish.onclick=async()=>{if(!confirm('پیش‌نویس Home برای کاربران منتشر شود؟'))return;busy(true);try{await saveDraft();await api('/content/pages/index/publish',{method:'POST',body:'{}'});status('نسخه جدید منتشر شد.','ok')}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
- reload.onclick=async()=>{busy(true);try{await load()}catch(e){status('خطا: '+e.message,'warn')}finally{busy(false)}};
- try{await load()}catch(e){status('خطا در بارگذاری: '+e.message,'warn')}
-}
-function watch(){const authorized=Boolean(token())&&Boolean(document.getElementById('nav')||document.getElementById('view'));
- const old=document.getElementById('p74-admin-launch');if(authorized&&!old){const b=el('button','','✦ طراحی هوم P76');b.id='p74-admin-launch';b.type='button';b.onclick=open;document.body.append(b)}else if(!authorized&&old)old.remove()}
+function watch(){const active=Boolean(token())&&Boolean(document.getElementById('nav')||document.getElementById('view'));const old=document.getElementById('p74-admin-launch');if(active&&!old){const b=el('button','', '✦ طراحی هوم P74');b.id='p74-admin-launch';b.type='button';b.addEventListener('click',open);document.body.append(b)}else if(!active&&old)old.remove()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{watch();setInterval(watch,1200)});else{watch();setInterval(watch,1200)}
 })();

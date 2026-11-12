@@ -116,7 +116,7 @@ try {
 
     app.get(path, async (_request, reply) => {
       if (slug === 'academy') {
-        return reply.redirect('/miniapp/index.html?view=academy');
+        return reply.redirect('/miniapp/p74/learning/academy-home.html');
       }
       return reply.sendFile(customPageFiles[slug]);
     });
@@ -130,7 +130,7 @@ try {
 
   if (!usedPaths.has('/academy')) {
     app.get('/academy', async (_request, reply) => {
-      return reply.redirect('/miniapp/index.html?view=academy');
+      return reply.redirect('/miniapp/p74/learning/academy-home.html');
     });
   }
 } catch (error) {
@@ -831,6 +831,10 @@ async function p37SuperSession(
 // TENX_P37_SUPER_APPROVAL
 
 // TENX_P37_SHARED_WORKFLOW_TX
+async function p37LockWorkflow(tx:Prisma.TransactionClient,userId:string){
+ const key='EPLANET_WORKFLOW_LOCK_'+userId;
+ await tx.systemSetting.upsert({where:{key},create:{key,value:{locked:true}},update:{value:{locked:true}}});
+}
 async function p37ChangeWorkflow(
  userId: string,
  d: {
@@ -840,7 +844,8 @@ async function p37ChangeWorkflow(
   accountId?: string;
   note?: string;
  },
- actor: { adminUserId?: string; telegramAdminId?: string }
+ actor: { adminUserId?: string; telegramAdminId?: string },
+ transaction?: Prisma.TransactionClient
 ) {
  const fields = [
   'accountCreated','depositCompleted',
@@ -849,7 +854,8 @@ async function p37ChangeWorkflow(
  const index = teamSteps.indexOf(d.step);
  const field = fields[index];
 
- return prisma.$transaction(async tx => {
+ const work=async (tx:Prisma.TransactionClient) => {
+  await p37LockWorkflow(tx,userId);
   const user = await tx.user.findUnique({
    where:{id:userId},select:{id:true}
   });
@@ -917,7 +923,8 @@ async function p37ChangeWorkflow(
    where:{userId}
   });
   return {ok:true,workflow};
- });
+ };
+ return transaction?work(transaction):prisma.$transaction(work,{isolationLevel:'ReadCommitted'});
 }
 // END TENX_P37_SHARED_WORKFLOW_TX
 
@@ -2125,7 +2132,7 @@ const growthUserSelect={
   registrationStatus:true,registrationStage:true,registrationSource:true,
   registeredAt:true,createdAt:true,lastActivityAt:true,
   eplanetWorkflow:{select:{accountId:true,accountCreated:true,depositCompleted:true,copyConnected:true,challengeParticipant:true,note:true,updatedAt:true}},
-  telegramAccount:{select:{chatId:true}}
+  telegramAccount:{select:{chatId:true,telegramId:true}}
 } as const;
 function growthSafeUser(u:any,inactiveIds:string[]){
   return {...u,manualInactive:inactiveIds.includes(u.id),
@@ -2463,7 +2470,7 @@ app.post('/admin/growth/messages/direct',async(request,reply)=>{
   if(!u)return reply.code(404).send({error:'user_not_found'});
   if(!u.telegramAccount)return reply.code(409).send({error:'user_no_telegram_chat'});
   try{
-    const messageId=await growthSendTelegram(u.telegramAccount.chatId,b.data.text);
+    const messageId=await growthSendTelegram(u.telegramAccount.telegramId,b.data.text);
     await prisma.notification.create({data:{userId:u.id,channel:'TELEGRAM',title:'پیام مدیریت 10X',body:b.data.text,status:'SENT',sentAt:new Date()}});
     await growthLog(request,'GROWTH_DIRECT_MESSAGE',u.id,{telegramMessageId:messageId});
     return {ok:true};
@@ -2476,13 +2483,13 @@ app.post('/admin/growth/messages/bulk',async(request,reply)=>{
     source:z.string().regex(/^[a-z0-9_-]{3,32}$/).optional(),purpose:z.literal('SERVICE'),confirmed:z.literal(true),limit:z.number().int().min(1).max(100).default(30)}).strict().safeParse(request.body);
   if(!b.success)return reply.code(400).send({error:'invalid_request'});
   const where=growthUserWhere(b.data,await growthInactiveIds());
-  const recipients=await prisma.user.findMany({where,select:{id:true,telegramAccount:{select:{chatId:true}}},
+  const recipients=await prisma.user.findMany({where,select:{id:true,telegramAccount:{select:{chatId:true,telegramId:true}}},
     orderBy:{createdAt:'desc'},take:b.data.limit});
   let sent=0,failed=0,skipped=0;
   for(const u of recipients){
     if(!u.telegramAccount?.chatId){skipped++;continue;}
     try{
-      await growthSendTelegram(u.telegramAccount.chatId,b.data.text);
+      await growthSendTelegram(u.telegramAccount.telegramId,b.data.text);
       await prisma.notification.create({data:{userId:u.id,channel:'TELEGRAM',title:'پیام گروهی مدیریت 10X',body:b.data.text,status:'SENT',sentAt:new Date()}});
       sent++;
     }catch{failed++;}
@@ -2690,6 +2697,78 @@ app.put('/admin/bottom-nav', async (request, reply) => {
   return { ok: true, ...config };
 });
 
+
+// MMU_R6_APPEARANCE_API_BEGIN — independent of BOTTOM_NAV_V1 item configuration.
+const mmuR6AppearanceKey = 'BOTTOM_NAV_APPEARANCE_V1';
+const mmuR6AppearanceDefaults = {
+  preset: 'light' as const,
+  tintOpacity: 14,
+  activeOpacity: 16,
+  blur: 25,
+  glow: 18,
+  rim: 82,
+  autoHide: true,
+  scrollThreshold: 14,
+  idleRevealMs: 950,
+  animationMs: 310
+};
+const mmuR6AppearanceSchema = z.object({
+  preset: z.enum(['light', 'reference', 'crystal', 'minimal', 'solid']),
+  tintOpacity: z.number().int().min(0).max(90),
+  activeOpacity: z.number().int().min(0).max(90),
+  blur: z.number().int().min(0).max(55),
+  glow: z.number().int().min(0).max(100),
+  rim: z.number().int().min(0).max(100),
+  autoHide: z.boolean(),
+  scrollThreshold: z.number().int().min(6).max(90),
+  idleRevealMs: z.number().int().min(350).max(3000),
+  animationMs: z.number().int().min(150).max(700)
+}).strict();
+function mmuR6NormalizeAppearance(value: unknown) {
+  const parsed = mmuR6AppearanceSchema.safeParse(value);
+  return parsed.success ? parsed.data : { ...mmuR6AppearanceDefaults };
+}
+app.get('/public/bottom-nav-appearance', async (_request, reply) => {
+  const row = await prisma.systemSetting.findUnique({
+    where: { key: mmuR6AppearanceKey }, select: { value: true }
+  });
+  reply.header('Cache-Control', 'no-store');
+  return { version: 1, ...mmuR6NormalizeAppearance(row?.value) };
+});
+app.get('/admin/bottom-nav-appearance', async (request, reply) => {
+  if (!(await adminGuard(request, reply))) return;
+  const row = await prisma.systemSetting.findUnique({
+    where: { key: mmuR6AppearanceKey }, select: { value: true }
+  });
+  reply.header('Cache-Control', 'no-store');
+  return { version: 1, ...mmuR6NormalizeAppearance(row?.value) };
+});
+app.put('/admin/bottom-nav-appearance', async (request, reply) => {
+  if (!(await adminGuard(request, reply))) return;
+  const parsed = mmuR6AppearanceSchema.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({
+    error: 'invalid_bottom_nav_appearance', details: parsed.error.flatten()
+  });
+  const next = parsed.data;
+  await prisma.$transaction(async tx => {
+    await tx.systemSetting.upsert({
+      where: { key: mmuR6AppearanceKey },
+      create: { key: mmuR6AppearanceKey, value: next },
+      update: { value: next }
+    });
+    await tx.auditLog.create({
+      data: {
+        adminUserId: adminIdOf(request),
+        action: 'BOTTOM_NAV_APPEARANCE_UPDATED',
+        entityType: 'SystemSetting',
+        metadata: { preset: next.preset, autoHide: next.autoHide,
+                    tintOpacity: next.tintOpacity, animationMs: next.animationMs }
+      }
+    });
+  });
+  return { ok: true, version: 1, ...next };
+});
+// MMU_R6_APPEARANCE_API_END
 
 // Operational settings are stored in the database; secrets remain in the server environment.
 const pagePathSettingKeys = [
@@ -4134,6 +4213,257 @@ app.post('/academy/lessons/:id/progress', async (request, reply) => {
   };
 });
 
+// MMTRADE_ACADEMY_HOME_V2_API_BEGIN
+// Dedicated seven-stage Academy home CMS. Uses the existing SystemSetting,
+// adminGuard/SUPER_ADMIN authorization, AuditLog and LessonProgress tables.
+const MM10_ACADEMY_HOME_KEY = 'MM10_ACADEMY_HOME_V2';
+const MM10_ACADEMY_STAGE_IDS = ['welcome','gold','copy','account','risk','connection','start'] as const;
+const mm10AcademySafeUrl = z.string().trim().max(1000).refine((value) =>
+  value === '' ||
+  (/^\/(?!\/)[a-zA-Z0-9_./?=&%#-]*$/.test(value) && !value.includes('..') && !value.includes('\\')) ||
+  /^https:\/\/\S+$/i.test(value), 'invalid_academy_url');
+const mm10AcademySectionSchema = z.object({
+  heading: z.string().trim().max(120).optional(),
+  body: z.string().trim().max(3000).optional(),
+  bullets: z.array(z.string().trim().max(250)).max(20).optional()
+}).strict();
+const mm10AcademyStageSchema = z.object({
+  id: z.enum(MM10_ACADEMY_STAGE_IDS),
+  title: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(300).optional(),
+  icon: mm10AcademySafeUrl,
+  enabled: z.boolean(),
+  locked: z.boolean(),
+  lesson: z.object({
+    title: z.string().trim().max(120).optional(),
+    intro: z.string().trim().max(4000),
+    sections: z.array(mm10AcademySectionSchema).max(12),
+    note: z.string().trim().max(1200).optional(),
+    imageUrl: mm10AcademySafeUrl.optional(),
+    videoUrl: mm10AcademySafeUrl.optional(),
+    ctaText: z.string().trim().max(80).optional(),
+    ctaUrl: mm10AcademySafeUrl.optional()
+  }).strict()
+}).strict();
+const mm10AcademyConfigSchema = z.object({
+  schemaVersion: z.literal(1),
+  enabled: z.boolean(),
+  title: z.string().trim().min(1).max(120),
+  subtitle: z.string().trim().max(240),
+  logo: mm10AcademySafeUrl,
+  background: mm10AcademySafeUrl,
+  footerBackground: mm10AcademySafeUrl,
+  cta: z.object({
+    enabled: z.boolean(),
+    text: z.string().trim().min(1).max(80),
+    href: mm10AcademySafeUrl,
+    icon: z.string().trim().max(12)
+  }).strict(),
+  footerText: z.string().trim().max(180),
+  riskText: z.string().trim().max(400),
+  layout: z.object({
+    backgroundScroll: z.boolean().default(false),
+    backgroundCoverage: z.number().int().min(50).max(100).default(100)
+  }).strict().default({ backgroundScroll: false, backgroundCoverage: 100 }),
+  stages: z.array(mm10AcademyStageSchema).length(7)
+}).strict().superRefine((value, context) => {
+  const ids = value.stages.map(stage => stage.id);
+  if (new Set(ids).size !== 7 || !MM10_ACADEMY_STAGE_IDS.every(id => ids.includes(id))) {
+    context.addIssue({ code: 'custom', message: 'academy_must_contain_exactly_seven_unique_stage_ids' });
+  }
+});
+function mm10AcademyDefaultConfig(): any {
+  const a = '/miniapp/p74/learning/academy-assets/';
+  return {
+    schemaVersion: 1,
+    enabled: true,
+    title: 'آکادمی متین فیوچر',
+    subtitle: 'مسیر آموزشی ۷ مرحله‌ای برای شروع کپی‌ترید',
+    logo: '/miniapp/p74/learning/academy-assets/matin-future-logo.png',
+    background: a + 'academy-bg-portrait.webp',
+    footerBackground: a + 'academy-footer-mountains.webp',
+    cta: { enabled: true, text: 'شروع ثبت‌نام', href: '/profile', icon: '➜' },
+    footerText: 'آماده ورود به مرحله بعدی هستید؟',
+    riskText: 'معاملات بازارهای مالی با ریسک همراه‌اند؛ سود تضمین‌شده نیست.',
+    layout: { backgroundScroll: false, backgroundCoverage: 100 },
+    stages: [
+      { id: 'welcome', title: 'خوش آمدید', description: 'آشنایی سریع با مسیر پروژه و نحوه شروع', icon: a+'stage-01-rocket.webp', enabled: true, locked: false, lesson: { intro: 'به MATIN FUTURE خوش آمدید. این مسیر برای آشنایی با بازار طلا، سازوکار کپی‌ترید، افتتاح حساب و اتصال حساب معاملاتی طراحی شده است. قبل از شروع، این هفت مرحله را به ترتیب مرور کنید.', sections: [{heading:'در این مسیر چه یاد می‌گیرید؟',body:'از شناخت بازار طلا تا آماده‌سازی حساب و پایش معاملات، قدم‌به‌قدم با فرآیند آشنا می‌شوید.',bullets:['شناخت نماد XAUUSD و ویژگی‌های بازار طلا','درک سازوکار کپی‌ترید و نحوه اجرای معاملات','افتتاح حساب، تعیین ریسک و اتصال به MMTrade','شروع و بررسی عملکرد حساب معاملاتی']},{heading:'چطور از آکادمی استفاده کنید؟',body:'هر مرحله را باز کنید، محتوای آن را بخوانید و پس از یادگیری، مطالعه را تأیید کنید تا پیشرفت شما ثبت شود.'}], note:'این آکادمی محتوای آموزشی است و هیچ سود یا بازدهی را تضمین نمی‌کند.' } },
+      { id: 'gold', title: 'بازار طلا', description: 'شناخت XAUUSD و دلیل تمرکز ما روی طلا', icon: a+'stage-02-gold.webp', enabled: true, locked: false, lesson: { intro: 'XAUUSD نماد رایج قیمت هر اونس طلا در برابر دلار آمریکاست. در این نماد، معامله‌گر با پیش‌بینی حرکت قیمت می‌تواند موقعیت خرید یا فروش باز کند.', sections: [{heading:'خرید و فروش یعنی چه؟',body:'در موقعیت BUY انتظار دارید قیمت افزایش پیدا کند؛ در موقعیت SELL انتظار دارید قیمت کاهش پیدا کند. در هر دو حالت، حرکت خلاف پیش‌بینی می‌تواند زیان ایجاد کند.'},{heading:'چه عواملی روی طلا اثر می‌گذارند؟',body:'قدرت دلار، نرخ بهره، داده‌های تورمی و اشتغال، تصمیم‌های بانک‌های مرکزی و رویدادهای ژئوپلیتیکی می‌توانند نوسان طلا را افزایش دهند.'},{heading:'چرا تمرکز این پروژه روی طلاست؟',body:'طلا بازاری شناخته‌شده و پرمعامله است؛ با این حال نقدشوندگی و فرصت معاملاتی به معنی کم‌ریسک بودن آن نیست.'}], note:'هنگام انتشار اخبار مهم، نوسان و لغزش قیمت می‌تواند بیشتر شود. از ریسک معامله آگاه باشید.' } },
+      { id: 'copy', title: 'کپی ترید', description: 'درک نحوه کپی شدن معاملات در حساب شما', icon: a+'stage-03-copy.webp', enabled: true, locked: false, lesson: { intro: 'کپی‌ترید به شما اجازه می‌دهد اجرای معاملات یک استراتژی را طبق تنظیمات اتصال، در حساب معاملاتی خود دنبال کنید.', sections: [{heading:'فرآیند چگونه انجام می‌شود؟',body:'با باز یا بسته شدن معامله در حساب مبدأ، دستور متناظر طبق تنظیمات و محدودیت‌های اتصال برای حساب شما ارسال می‌شود.'},{heading:'حساب معاملاتی متعلق به چه کسی است؟',body:'معاملات در حساب معاملاتی خودتان اجرا می‌شوند. موجودی، معاملات باز و سود و زیان را از پنل بروکر بررسی می‌کنید.'},{heading:'چه چیزی را باید کنترل کنید؟',body:'میزان سرمایه درگیر، ضریب یا حجم کپی، حد ریسک، وضعیت اتصال و اختلاف احتمالی قیمت اجرا را بررسی کنید.'}], note:'کپی‌ترید سود را تضمین نمی‌کند؛ نتیجه حساب شما ممکن است با حساب مبدأ متفاوت باشد.' } },
+      { id: 'account', title: 'افتتاح حساب', description: 'ثبت‌نام و ساخت حساب معاملاتی در ePlanet', icon: a+'stage-04-account.webp', enabled: true, locked: false, lesson: { intro: 'برای اتصال به سیستم، ابتدا باید حساب معاملاتی موردنیاز را در بروکر ePlanet ایجاد و مراحل تأیید آن را تکمیل کنید.', sections: [{heading:'مراحل افتتاح حساب',body:'از لینک رسمی ثبت‌نامی که توسط تیم پروژه ارائه شده استفاده کنید و اطلاعات را دقیقاً مطابق مدارک خود وارد کنید.',bullets:['ورود به لینک اختصاصی ثبت‌نام ePlanet','تکمیل اطلاعات شخصی و اطلاعات تماس','انجام مراحل احراز هویت در سامانه رسمی بروکر','ساخت حساب معاملاتی و نگهداری شناسه حساب']},{heading:'قبل از ادامه',body:'نوع حساب، شرایط معاملاتی، هزینه‌ها، اهرم و قوانین برداشت را در اسناد رسمی بروکر بررسی کنید.'}], note:'رمز عبور، کد یک‌بارمصرف یا اطلاعات محرمانه ورود را برای هیچ شخصی ارسال نکنید.', ctaText:'رفتن به مسیر ثبت‌نام', ctaUrl:'/profile' } },
+      { id: 'risk', title: 'سرمایه و ریسک', description: 'انتخاب سرمایه و تنظیم ریسک متناسب با شرایط شما', icon: a+'stage-05-risk.webp', enabled: true, locked: false, lesson: { intro: 'پیش از اتصال حساب، مشخص کنید چه مقدار از سرمایه را آگاهانه در معرض ریسک معاملات قرار می‌دهید. مبلغ انتخابی باید با شرایط مالی و توان تحمل زیان شما متناسب باشد.', sections: [{heading:'قبل از شروع بررسی کنید',body:'میزان سرمایه قابل‌ریسک، حجم معاملات، اهرم، افت سرمایه قابل‌تحمل و شرایط توقف کپی را بشناسید.',bullets:['با پول موردنیاز زندگی یا بدهی وارد معامله نشوید','ریسک هر معامله و مجموع معاملات باز را در نظر بگیرید','حداکثر زیان قابل‌تحمل خود را از قبل مشخص کنید','عملکرد حساب را به‌صورت منظم بررسی کنید']},{heading:'انتظار واقع‌بینانه داشته باشید',body:'دوره‌های زیان، نوسان و افت سرمایه بخشی از معاملات هستند. عملکرد گذشته تضمین‌کننده نتایج آینده نیست.'}], note:'ممکن است بخشی یا تمام سرمایه‌ای که در معاملات درگیر می‌کنید از دست برود.' } },
+      { id: 'connection', title: 'اتصال به MMTrade', description: 'اتصال حساب معاملاتی به سیستم کپی‌ترید', icon: a+'stage-06-connection.webp', enabled: true, locked: false, lesson: { intro: 'پس از آماده شدن حساب معاملاتی، باید آن را از مسیر رسمی و امن به زیرساخت MMTrade متصل کنید.', sections: [{heading:'اطلاعات موردنیاز',body:'شناسه حساب و اطلاعاتی را که در فرآیند رسمی اتصال درخواست می‌شود، آماده داشته باشید. فقط از روش‌های تأییدشده پروژه استفاده کنید.'},{heading:'پس از اتصال',body:'وضعیت اتصال را بررسی کنید، تنظیمات کپی و میزان سرمایه درگیر را تأیید کنید و مطمئن شوید حساب صحیح انتخاب شده است.'},{heading:'امنیت حساب',body:'رمز اصلی بروکر، کد تأیید دومرحله‌ای و اطلاعات حساس را در پیام یا فرم غیررسمی وارد نکنید.'}], note:'اتصال موفق به‌تنهایی به معنی فعال شدن معاملات یا تضمین نتیجه نیست.', ctaText:'ورود به پنل کاربری', ctaUrl:'/profile' } },
+      { id: 'start', title: 'شروع معاملات', description: 'فعال‌سازی سیستم و پایش عملکرد حساب', icon: a+'stage-07-growth.webp', enabled: true, locked: false, lesson: { intro: 'پیش از فعال‌سازی، اتصال حساب و تنظیمات ریسک را دوباره بررسی کنید. پس از شروع، وضعیت معاملات را در حساب شخصی خود پایش کنید.', sections: [{heading:'چک‌لیست شروع',body:'این موارد را پیش از فعال‌سازی مرور کنید.',bullets:['شناسه حساب متصل‌شده صحیح است','میزان سرمایه و تنظیمات کپی را بررسی کرده‌اید','ریسک و افت سرمایه قابل‌تحمل را می‌شناسید','روش توقف یا قطع اتصال را می‌دانید']},{heading:'پس از فعال‌سازی',body:'وضعیت اتصال، معاملات باز، موجودی و سود و زیان را به‌صورت منظم بررسی کنید. در صورت تغییر شرایط بازار یا وضعیت حساب، تنظیمات را دوباره ارزیابی کنید.'}], note:'عنوان 10X وعده ده‌برابر شدن سرمایه نیست. معامله‌گری و کپی‌ترید همواره با احتمال زیان همراه‌اند.', ctaText:'ورود به پنل کاربری', ctaUrl:'/profile' } }
+    ]
+  };
+}
+function mm10AcademyLegacyPublishedConfig(fallback: any): any {
+  const next = JSON.parse(JSON.stringify(fallback));
+  next.title = 'آکادمی MMTrade Challenge 10X';
+  next.logo = '/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg';
+  const welcome = Array.isArray(next.stages) ? next.stages.find((stage: any) => stage?.id === 'welcome') : null;
+  if (typeof welcome?.lesson?.intro === 'string') {
+    welcome.lesson.intro = welcome.lesson.intro.replace('به MATIN FUTURE خوش آمدید.', 'به MMTrade Challenge 10X خوش آمدید.');
+  }
+  return next;
+}
+function mm10AcademyBrandConfig(value: any, fallback: any): any {
+  const next = JSON.parse(JSON.stringify(value));
+  if (next.title === 'آکادمی MMTrade Challenge 10X') next.title = fallback.title;
+  if (next.logo === '/miniapp/assets/academy-mmtrade-challenge10x-logo-p42.jpg') next.logo = fallback.logo;
+  const welcome = Array.isArray(next.stages) ? next.stages.find((stage: any) => stage?.id === 'welcome') : null;
+  if (typeof welcome?.lesson?.intro === 'string') {
+    welcome.lesson.intro = welcome.lesson.intro.replace('به MMTrade Challenge 10X خوش آمدید.', 'به MATIN FUTURE خوش آمدید.');
+  }
+  return next;
+}
+async function mm10AcademyReadState(): Promise<any> {
+  const row = await prisma.systemSetting.findUnique({ where: { key: MM10_ACADEMY_HOME_KEY }, select: { value: true } });
+  const fallback = mm10AcademyDefaultConfig();
+  const raw = row?.value && typeof row.value === 'object' && !Array.isArray(row.value) ? row.value as any : {};
+  const parsedDraft = mm10AcademyConfigSchema.safeParse(raw.draft);
+  const parsedPublished = mm10AcademyConfigSchema.safeParse(raw.published);
+  const draftBase = parsedDraft.success ? parsedDraft.data : (parsedPublished.success ? parsedPublished.data : fallback);
+  const publishedBase = parsedPublished.success ? parsedPublished.data : mm10AcademyLegacyPublishedConfig(fallback);
+  return {
+    schemaVersion: 1,
+    revision: Number.isInteger(Number(raw.revision)) ? Number(raw.revision) : 0,
+    publishedAt: typeof raw.publishedAt === 'string' ? raw.publishedAt : null,
+    draft: mm10AcademyBrandConfig(draftBase, fallback),
+    published: publishedBase,
+    history: Array.isArray(raw.history) ? raw.history.filter((item: any) => item && Number.isInteger(Number(item.revision)) && mm10AcademyConfigSchema.safeParse(item.config).success).slice(-20) : []
+  };
+}
+async function mm10AcademySaveState(state: any, request: FastifyRequest, action: string, metadata: any = {}) {
+  await prisma.$transaction(async (tx) => {
+    await tx.systemSetting.upsert({
+      where: { key: MM10_ACADEMY_HOME_KEY },
+      create: { key: MM10_ACADEMY_HOME_KEY, value: state as Prisma.InputJsonValue },
+      update: { value: state as Prisma.InputJsonValue }
+    });
+    await tx.auditLog.create({
+      data: {
+        adminUserId: adminIdOf(request), action, entityType: 'AcademyHome', entityId: MM10_ACADEMY_HOME_KEY,
+        metadata: metadata as Prisma.InputJsonValue
+      }
+    });
+  });
+}
+app.get('/public/academy-home', async (_request, reply) => {
+  reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+  const state = await mm10AcademyReadState();
+  return { config: state.published, revision: state.revision, publishedAt: state.publishedAt };
+});
+app.get('/admin/academy-home', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  reply.header('Cache-Control', 'no-store');
+  return await mm10AcademyReadState();
+});
+app.put('/admin/academy-home/draft', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const body = z.object({ config: mm10AcademyConfigSchema }).strict().safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_academy_config', details: body.error.flatten() });
+  const state = await mm10AcademyReadState();
+  state.draft = body.data.config;
+  await mm10AcademySaveState(state, request, 'ACADEMY_HOME_DRAFT_SAVED', { stageCount: body.data.config.stages.length });
+  return { ok: true, state };
+});
+app.post('/admin/academy-home/publish', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const state = await mm10AcademyReadState();
+  const draft = mm10AcademyConfigSchema.safeParse(state.draft);
+  if (!draft.success) return reply.code(409).send({ error: 'academy_draft_invalid' });
+  const now = new Date().toISOString();
+  const actor = (request as any).admin;
+  state.revision += 1;
+  state.published = JSON.parse(JSON.stringify(draft.data));
+  state.draft = JSON.parse(JSON.stringify(draft.data));
+  state.publishedAt = now;
+  state.history = (Array.isArray(state.history) ? state.history : []).concat([{
+    revision: state.revision, publishedAt: now, createdBy: actor?.email || 'SUPER_ADMIN', config: state.published
+  }]).slice(-20);
+  await mm10AcademySaveState(state, request, 'ACADEMY_HOME_PUBLISHED', { revision: state.revision });
+  return { ok: true, revision: state.revision, state };
+});
+app.post('/admin/academy-home/restore', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const body = z.object({ revision: z.number().int().positive() }).strict().safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_revision' });
+  const state = await mm10AcademyReadState();
+  const snapshot = state.history.find((item: any) => Number(item.revision) === body.data.revision);
+  if (!snapshot) return reply.code(404).send({ error: 'academy_version_not_found' });
+  const restored = mm10AcademyConfigSchema.safeParse(snapshot.config);
+  if (!restored.success) return reply.code(409).send({ error: 'academy_version_invalid' });
+  const now = new Date().toISOString();
+  const actor = (request as any).admin;
+  state.revision += 1;
+  state.published = JSON.parse(JSON.stringify(restored.data));
+  state.draft = JSON.parse(JSON.stringify(restored.data));
+  state.publishedAt = now;
+  state.history = state.history.concat([{
+    revision: state.revision, publishedAt: now, createdBy: actor?.email || 'SUPER_ADMIN',
+    restoredFrom: body.data.revision, config: state.published
+  }]).slice(-20);
+  await mm10AcademySaveState(state, request, 'ACADEMY_HOME_RESTORED', { sourceRevision: body.data.revision, revision: state.revision });
+  return { ok: true, revision: state.revision, state };
+});
+app.get('/admin/academy-home/analytics', async (request, reply) => {
+  if (!(await p60OwnerOnly(request, reply))) return;
+  const rows = await prisma.lessonProgress.findMany({
+    where: { lessonId: { startsWith: 'MM10_ACADEMY_HOME_V2:' }, completedAt: { not: null } },
+    select: { userId: true, lessonId: true }
+  });
+  const uniqueUsers = new Set(rows.map(row => row.userId));
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const id = row.lessonId.slice('MM10_ACADEMY_HOME_V2:'.length);
+    counts.set(id, (counts.get(id) || 0) + 1);
+  }
+  const config = (await mm10AcademyReadState()).published;
+  const stages = config.stages.map((stage: any) => ({ id: stage.id, title: stage.title, completed: counts.get(stage.id) || 0 }));
+  const ctaClicks = await prisma.auditLog.count({ where: { entityType: 'AcademyHome', action: 'ACADEMY_HOME_CTA_CLICK' } });
+  return { trackedUsers: uniqueUsers.size, completedStages: rows.length, ctaClicks, stages };
+});
+const mm10AcademyProgressBody = z.object({ initData: z.string().min(1).max(10000) }).strict();
+async function mm10AcademyProgressState(userId: string) {
+  const rows = await prisma.lessonProgress.findMany({
+    where: { userId, lessonId: { in: MM10_ACADEMY_STAGE_IDS.map(id => `MM10_ACADEMY_HOME_V2:${id}`) }, completedAt: { not: null } },
+    select: { lessonId: true }
+  });
+  const completed = new Set(rows.map(row => row.lessonId.slice('MM10_ACADEMY_HOME_V2:'.length)));
+  return { tracked: true, read: MM10_ACADEMY_STAGE_IDS.filter(id => completed.has(id)), completed: completed.size, total: MM10_ACADEMY_STAGE_IDS.length };
+}
+app.post('/academy-home/progress/status', async (request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+  const body = mm10AcademyProgressBody.safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_request' });
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return { tracked: false, read: [], reason: who.error };
+  return mm10AcademyProgressState(who.id);
+});
+app.post('/academy-home/progress/complete', { config: { rateLimit: { max: 25, timeWindow: '1 minute' } } }, async (request, reply) => {
+  reply.header('Cache-Control', 'no-store');
+  const body = mm10AcademyProgressBody.extend({ stageId: z.enum(MM10_ACADEMY_STAGE_IDS) }).strict().safeParse(request.body);
+  if (!body.success) return reply.code(400).send({ error: 'invalid_stage' });
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return reply.code(who.code).send({ error: who.error });
+  await prisma.lessonProgress.upsert({
+    where: { userId_lessonId: { userId: who.id, lessonId: `MM10_ACADEMY_HOME_V2:${body.data.stageId}` } },
+    create: { userId: who.id, lessonId: `MM10_ACADEMY_HOME_V2:${body.data.stageId}`, completedAt: new Date(), progressPct: 100, contentProgressPct: 100, videoProgressPct: 100 },
+    update: { completedAt: new Date(), progressPct: 100, contentProgressPct: 100, videoProgressPct: 100 }
+  });
+  return mm10AcademyProgressState(who.id);
+});
+app.post('/academy-home/cta-click', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (request, reply) => {
+  const body = z.object({ initData: z.string().min(1).max(10000).optional() }).strict().safeParse(request.body);
+  if (!body.success || !body.data.initData) return { ok: true, tracked: false };
+  const who = await miniUser(body.data.initData, false);
+  if ('code' in who) return { ok: true, tracked: false };
+  await prisma.auditLog.create({ data: { userId: who.id, action: 'ACADEMY_HOME_CTA_CLICK', entityType: 'AcademyHome', entityId: 'registration-cta' } });
+  return { ok: true, tracked: true };
+});
+// MMTRADE_ACADEMY_HOME_V2_API_END
+
 // MMTrade Stage 1 education: authenticated, persistent completion and stage-two gate.
 const MM_STAGE1_KEYS = ['challenge','forex','gold','crypto','broker','scam','risk'] as const;
 const MM_STAGE1_IDS = MM_STAGE1_KEYS.map(k => `MM10_STAGE1_V1_${k}`);
@@ -4170,6 +4500,19 @@ app.post('/challenge/learning/stage1/complete', {
   });
   return mmStage1State(who.id);
 });
+const mmStage2PreviewContent = () => ({ unlocked: true, title: 'آموزش عضویت در چالش 10X', steps: [
+    { title: 'ورود به لینک ثبت‌نام', detail: 'لینک رسمی ثبت‌نام بروکر ePlanet را از پنل چالش باز کنید.' },
+    { title: 'ثبت اطلاعات صحیح', detail: 'نام، شماره تماس و ایمیل را دقیق و مطابق مدارک وارد کنید.' },
+    { title: 'تأیید حساب', detail: 'ایمیل یا شماره تماس را طبق دستورالعمل رسمی تأیید کنید.' },
+    { title: 'احراز هویت', detail: 'در صورت نیاز، مدارک را فقط در سامانه رسمی بروکر بارگذاری کنید.' },
+    { title: 'افتتاح حساب', detail: 'بعد از تأیید، حساب معاملاتی بسازید و شماره حساب را در MMTrade ثبت کنید.' }
+  ] });
+app.get('/admin/challenge/learning/stage2/preview', async (request, reply) => {
+  if (!(await adminGuard(request, reply))) return;
+  if ((request as any).admin?.role !== 'SUPER_ADMIN') return reply.code(403).send({error:'super_admin_required'});
+  reply.header('Cache-Control', 'no-store');
+  return mmStage2PreviewContent();
+});
 app.post('/challenge/learning/stage2/content', async (request, reply) => {
   reply.header('Cache-Control', 'no-store');
   const body = mmStage1Body.safeParse(request.body);
@@ -4178,13 +4521,7 @@ app.post('/challenge/learning/stage2/content', async (request, reply) => {
   if ('code' in who) return reply.code(who.code).send({ error: who.error });
   const state = await mmStage1State(who.id);
   if (!state.unlocked) return reply.code(403).send({ error: 'stage1_incomplete', done: state.done, total: state.total });
-  return { unlocked: true, title: 'آموزش عضویت در چالش 10X', steps: [
-    { title: 'ورود به لینک ثبت‌نام', detail: 'لینک رسمی ثبت‌نام بروکر ePlanet را از پنل چالش باز کنید.' },
-    { title: 'ثبت اطلاعات صحیح', detail: 'نام، شماره تماس و ایمیل را دقیق و مطابق مدارک وارد کنید.' },
-    { title: 'تأیید حساب', detail: 'ایمیل یا شماره تماس را طبق دستورالعمل رسمی تأیید کنید.' },
-    { title: 'احراز هویت', detail: 'در صورت نیاز، مدارک را فقط در سامانه رسمی بروکر بارگذاری کنید.' },
-    { title: 'افتتاح حساب', detail: 'بعد از تأیید، حساب معاملاتی بسازید و شماره حساب را در MMTrade ثبت کنید.' }
-  ] };
+  return mmStage2PreviewContent();
 });
 // Stage 1 Object Studio: only authenticated admins may change the scene.
 const mmSceneKey = 'MM10_STAGE1_SCENE_V1';
@@ -4404,7 +4741,7 @@ app.post('/admin/challenge/results/:userId/sync',async(request,reply)=>{
 // MMTrade Stage 1 routes end.
 
 // ---- Page builder + popups ----
-const PAGE_SLUGS = ['index', 'academy', 'crypto', 'copy-trading', 'challenge', 'support', 'profile', 'mmtrade10x'] as const;
+const PAGE_SLUGS = ['index', 'academy', 'stage2', 'crypto', 'copy-trading', 'challenge', 'support', 'profile', 'mmtrade10x', 'eplanet', 'copytrade-academy'] as const;
 
 // TENX_CUSTOM_PAGES_V1: custom pages use existing ContentPage*, SystemSetting and ContentPageVersion tables.
 // Public path is always /p/:publicSlug; built-in physical pages and their routes are not mutated.
@@ -4862,7 +5199,7 @@ app.get('/admin/page-lifecycle/:slug/draft',async(request,reply)=>{
 app.put('/admin/page-lifecycle/:slug/draft',async(request,reply)=>{
  if(!(await r10Owner(request,reply)))return;
  const slug=String((request.params as any).slug||'');
- const v=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(),title:z.string().trim().min(1).max(120),blocks:z.array(blockSchema).max(40)}).strict().safeParse(request.body);
+ const v=z.object({expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(),title:z.string().trim().min(1).max(120),blocks:z.array(blockSchema).max(220)}).strict().safeParse(request.body);
  if(!v.success)return reply.code(400).send({error:'invalid_blocks',details:v.error.flatten()});
  const state=await r10Read();if(!state.custom.some(x=>x.slug===slug))return reply.code(404).send({error:'custom_page_not_found'});
  const saved=await withContentLock(prisma,slug,async tx=>{
@@ -4885,7 +5222,7 @@ app.post('/admin/page-lifecycle/:slug/publish',async(request,reply)=>{
   if(!page)return {error:'custom_page_not_found'};
   const draft=await tx.contentPageDraft.findUnique({where:{slug}});
   assertContentRevision(draft,body.data.expectedRevision);
-  const validated=draft&&z.array(blockSchema).max(40).safeParse(draft.blocks);
+  const validated=draft&&z.array(blockSchema).max(220).safeParse(draft.blocks);
   if(!draft||!validated||!validated.success)return {error:'draft_invalid_or_missing'};
   await tx.contentPage.upsert({where:{slug},create:{slug,title:draft.title,blocks:toInputJson(validated.data as unknown as Prisma.JsonValue),status:'PUBLISHED'},update:{title:draft.title,blocks:toInputJson(validated.data as unknown as Prisma.JsonValue),status:'PUBLISHED'}});
   const latest=await tx.contentPageVersion.aggregate({where:{pageSlug:slug},_max:{version:true}});
@@ -4908,6 +5245,309 @@ app.get('/public/page-lifecycle/content/:slug',async(request,reply)=>{
 // R10.2: public page handled by early onRequest hook above.
 // MMTRADE_PAGE_LIFECYCLE_R10_API_END
 
+// EPLANET_OFFICIAL_R2_BEGIN
+// ePlanet onboarding uses existing SystemSetting, User and EplanetUserWorkflow records.
+// All onboarding mutations share a database lock and a transaction, including workflow decisions.
+const eplanetStoreKey = 'EPLANET_ONBOARDING_V1';
+const eplanetStepKeys = ['registration','deposit','connect','activation'] as const;
+const eplanetTeamSteps = ['ACCOUNT_CREATED','DEPOSIT_COMPLETED','COPY_CONNECTED','CHALLENGE_PARTICIPANT'] as const;
+const eplanetWorkflowFields = ['accountCreated','depositCompleted','copyConnected','challengeParticipant'] as const;
+const eplanetDefaults:any = {
+ title:'مسیر اتصال به ePlanet',
+ subtitle:'از افتتاح حساب تا فعال‌سازی سیستم کپی‌ترید',
+ registerUrl:'',
+ heroImage:'assets/icon-eplanet.webp',
+ steps:[
+  {key:'registration',title:'Registration',fa:'ثبت‌نام و افتتاح حساب ePlanet',description:'حساب ePlanet را ایجاد کنید و شناسه حساب معاملاتی را ثبت کنید.',externalUrl:'',imageUrl:'assets/icon-registration.webp'},
+  {key:'deposit',title:'Deposit',fa:'واریز و شارژ حساب معاملاتی',description:'واریز وجه را انجام دهید و درخواست بررسی را ارسال کنید.',externalUrl:'',imageUrl:'assets/icon-deposit.webp'},
+  {key:'connect',title:'Connect to MMTrade',fa:'اتصال حساب به سیستم معاملاتی',description:'اطلاعات حساب را طبق راهنمای اتصال ثبت کنید.',externalUrl:'',imageUrl:'assets/icon-connect.webp'},
+  {key:'activation',title:'Activate Copy Trading',fa:'فعال‌سازی کپی‌ترید',description:'کپی‌ترید را فعال کنید و درخواست تأیید نهایی را ارسال کنید.',externalUrl:'',imageUrl:'assets/icon-activate.webp'}
+ ]
+};
+
+async function eplanetSerialize<T>(work:(tx:Prisma.TransactionClient)=>Promise<T>):Promise<T>{
+ return prisma.$transaction(async tx=>{
+  const key='EPLANET_ONBOARDING_WRITE_LOCK';
+  await tx.systemSetting.upsert({where:{key},create:{key,value:{locked:true}},update:{value:{locked:true}}});
+  return work(tx);
+ },{isolationLevel:'ReadCommitted'});
+}
+function eplanetRevision(config:unknown){return mmChallengeHash('sha256').update(JSON.stringify(config)).digest('hex');}
+function eplanetPrune(requests:any[]){
+ const pending=requests.filter(item=>item.status==='pending');
+ const history=requests.filter(item=>item.status!=='pending').slice(-Math.max(0,1500-pending.length));
+ return [...(pending.length>=1500?[]:history),...pending];
+}
+
+function eplanetUrl(value:unknown):string{
+ if(typeof value!=='string'||!value.trim())return '';
+ try{
+  const url=new URL(value);
+  return url.protocol==='https:'&&!url.username&&!url.password?url.toString():'';
+ }catch{return ''}
+}
+function eplanetImage(value:unknown,fallback:string):string{
+ if(typeof value!=='string'||!value.trim())return fallback;
+ const image=value.trim();
+ if(/^(?:assets\/|\/(?:miniapp|uploads|assets)\/)[A-Za-z0-9._/-]+\.(?:png|jpe?g|webp|gif|avif|svg)$/i.test(image)&&!image.includes('..')&&!image.includes('//'))return image;
+ return eplanetUrl(image)||fallback;
+}
+function eplanetConfig(raw:any){
+ const value=raw&&typeof raw==='object'?raw:{};
+ const sourceSteps=Array.isArray(value.steps)?value.steps:[];
+ return {
+  title:typeof value.title==='string'?value.title.slice(0,120):eplanetDefaults.title,
+  subtitle:typeof value.subtitle==='string'?value.subtitle.slice(0,240):eplanetDefaults.subtitle,
+  registerUrl:eplanetUrl(value.registerUrl),
+  heroImage:eplanetImage(value.heroImage,eplanetDefaults.heroImage),
+  steps:eplanetStepKeys.map((key,index)=>{
+   const step=sourceSteps.find((item:any)=>item?.key===key)||eplanetDefaults.steps[index];
+   return {
+    key,
+    title:typeof step.title==='string'?step.title.slice(0,100):eplanetDefaults.steps[index].title,
+    fa:typeof step.fa==='string'?step.fa.slice(0,160):eplanetDefaults.steps[index].fa,
+    description:typeof step.description==='string'?step.description.slice(0,700):eplanetDefaults.steps[index].description,
+    externalUrl:eplanetUrl(step.externalUrl),
+    imageUrl:eplanetImage(step.imageUrl,eplanetDefaults.steps[index].imageUrl)
+   };
+  })
+ };
+}
+async function eplanetRead(db:any=prisma):Promise<any>{
+ const row=await db.systemSetting.findUnique({
+  where:{key:eplanetStoreKey},select:{value:true}
+ });
+ const stored:any=row?.value||{};
+ return {
+  config:eplanetConfig(stored.config),
+  requests:Array.isArray(stored.requests)
+   ?eplanetPrune(stored.requests.filter((item:any)=>item&&typeof item.id==='string'))
+   :[]
+ };
+}
+async function eplanetWrite(db:any,value:any){
+ await db.systemSetting.upsert({
+  where:{key:eplanetStoreKey},
+  create:{key:eplanetStoreKey,value:value as unknown as Prisma.InputJsonValue},
+  update:{value:value as unknown as Prisma.InputJsonValue}
+ });
+}
+function eplanetStatuses(workflow:any,requests:any[]){
+ const completed=eplanetWorkflowFields.map(field=>workflow?.[field]===true);
+ let blocked=false;
+ return Object.fromEntries(eplanetStepKeys.map((key,index)=>{
+  let status=completed[index]?'completed':'locked';
+  if(!blocked&&!completed[index]){
+   const request=[...requests].reverse().find((item:any)=>item.step===key&&item.status==='pending');
+   const rejected=[...requests].reverse().find((item:any)=>item.step===key&&item.status==='rejected');
+   status=request?'pending':rejected?'rejected':'available';
+  }
+  if(!completed[index])blocked=true;
+  const latest=[...requests].reverse().find((item:any)=>item.step===key&&item.status==='rejected');
+  return [key,{status,...(status==='rejected'&&latest?.note?{note:String(latest.note).slice(0,500)}:{})}];
+ }));
+}
+
+app.get('/miniapp/eplanet/config',async(_request,reply)=>{
+ reply.header('Cache-Control','no-store');
+ const state=await eplanetRead();
+ return {ok:true,config:state.config,revision:eplanetRevision(state.config)};
+});
+
+app.post('/miniapp/eplanet/status',async(request,reply)=>{
+ reply.header('Cache-Control','no-store');
+ const parsed=z.object({initData:z.string().min(1).max(10000)}).strict().safeParse(request.body);
+ if(!parsed.success)return reply.code(400).send({error:'invalid_request'});
+ const user=await miniUser(parsed.data.initData,false);
+ if('code'in user)return reply.code(user.code).send({error:user.error});
+ const [record,state]=await Promise.all([
+  prisma.user.findUnique({where:{id:user.id},select:{id:true,eplanetWorkflow:true}}),
+  eplanetRead()
+ ]);
+ if(!record)return reply.code(404).send({error:'user_not_found'});
+ return {
+  ok:true,
+  steps:eplanetStatuses(
+   record.eplanetWorkflow,
+   state.requests.filter((item:any)=>item.userId===user.id)
+  ),
+  version:record.eplanetWorkflow?.version??0,
+  accountId:record.eplanetWorkflow?.accountId||[...state.requests].reverse().find((item:any)=>item.userId===user.id&&item.step==='registration')?.accountId||''
+ };
+});
+
+app.post('/miniapp/eplanet/submit',async(request,reply)=>{
+ const parsed=z.object({
+  initData:z.string().min(1).max(10000),
+  step:z.enum(eplanetStepKeys),
+  accountId:z.string().trim().max(100).optional()
+ }).strict().safeParse(request.body);
+ if(!parsed.success)return reply.code(400).send({error:'invalid_request'});
+ const user=await miniUser(parsed.data.initData,false);
+ if('code'in user)return reply.code(user.code).send({error:user.error});
+ const index=eplanetStepKeys.indexOf(parsed.data.step);
+ return eplanetSerialize(async tx=>{
+ await p37LockWorkflow(tx,user.id);
+ const record=await tx.user.findUnique({
+  where:{id:user.id},select:{id:true,eplanetWorkflow:true}
+ });
+ if(!record)return reply.code(404).send({error:'user_not_found'});
+ const completed=eplanetWorkflowFields.map(field=>record.eplanetWorkflow?.[field]===true);
+ if(completed.slice(0,index).some(value=>!value)||completed[index])
+  return reply.code(409).send({error:'step_not_available'});
+ if(index===0&&!parsed.data.accountId?.trim())
+  return reply.code(400).send({error:'account_id_required'});
+
+  const state=await eplanetRead(tx);
+  if(state.requests.some((item:any)=>
+   item.userId===user.id&&item.step===parsed.data.step&&item.status==='pending'
+  ))return reply.code(409).send({error:'request_already_pending'});
+  if(state.requests.filter((item:any)=>item.status==='pending').length>=1500)return reply.code(503).send({error:'queue_full'});
+  const requestId=customPageRandomUUID();
+  state.requests.push({
+   id:requestId,userId:user.id,step:parsed.data.step,
+   accountId:parsed.data.accountId?.trim()||'',
+   status:'pending',createdAt:new Date().toISOString()
+  });
+  state.requests=eplanetPrune(state.requests);
+  await eplanetWrite(tx,state);
+  return reply.code(201).send({ok:true,status:'pending',requestId});
+ });
+});
+
+app.get('/miniapp/eplanet/admin/requests',async(request,reply)=>{
+ reply.header('Cache-Control','no-store');
+ const actor=await p37SuperSession(request,reply);
+ if(!actor)return;
+ const state=await eplanetRead();
+ const pending=state.requests.filter((item:any)=>item.status==='pending');
+ const ids=[...new Set<string>(pending.map((item:any)=>String(item.userId)))];
+ const users=ids.length?await prisma.user.findMany({
+  where:{id:{in:ids}},
+  select:{id:true,telegramId:true,username:true,firstName:true,lastName:true}
+ }):[];
+ const usersById=new Map(users.map((user:any)=>[user.id,user]));
+ return {
+  ok:true,
+  items:pending.map((item:any)=>({...item,user:usersById.get(item.userId)||null})).reverse()
+ };
+});
+
+app.put('/miniapp/eplanet/admin/config',async(request,reply)=>{
+ const actor=await p37SuperSession(request,reply);
+ if(!actor)return;
+ const stepSchema=z.object({
+  key:z.enum(eplanetStepKeys),
+  title:z.string().trim().min(1).max(100),
+  fa:z.string().trim().min(1).max(160),
+  description:z.string().max(700),
+  externalUrl:z.string().max(1000).optional().default(''),
+  imageUrl:z.string().max(1000).optional().default('')
+ }).strict();
+ const parsed=z.object({
+  expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(),
+  title:z.string().trim().min(1).max(120),
+  subtitle:z.string().max(240),
+  registerUrl:z.string().max(1000).optional().default(''),
+  heroImage:z.string().max(1000).optional().default(''),
+  steps:z.array(stepSchema).length(4)
+ }).strict().safeParse(request.body);
+ if(!parsed.success)return reply.code(400).send({error:'invalid_config'});
+ const value=parsed.data;
+ if(
+  (value.registerUrl&&!eplanetUrl(value.registerUrl))||
+  (value.heroImage&&!eplanetImage(value.heroImage,''))||
+  value.steps.some(step=>
+   (step.externalUrl&&!eplanetUrl(step.externalUrl))||
+   (step.imageUrl&&!eplanetImage(step.imageUrl,''))
+  )
+ )return reply.code(400).send({error:'invalid_url'});
+ if(new Set(value.steps.map(step=>step.key)).size!==4)
+  return reply.code(400).send({error:'duplicate_step_key'});
+
+ return eplanetSerialize(async tx=>{
+  const state=await eplanetRead(tx);
+  if(value.expectedRevision&&value.expectedRevision!==eplanetRevision(state.config))return reply.code(409).send({error:'config_revision_conflict'});
+  state.config=eplanetConfig(value);
+   await eplanetWrite(tx,state);
+   await tx.auditLog.create({
+    data:{
+     adminUserId:actor.id,
+     action:'EPLANET_CONTENT_UPDATED',
+     entityType:'SystemSetting',
+     entityId:eplanetStoreKey,
+     metadata:{steps:4}
+    }
+   });
+  return {ok:true,config:state.config,revision:eplanetRevision(state.config)};
+ });
+});
+
+app.post('/miniapp/eplanet/admin/requests/:id/decision',async(request,reply)=>{
+ const actor=await p37SuperSession(request,reply);
+ if(!actor)return;
+ const params=z.object({id:z.string().min(1).max(100)}).safeParse(request.params);
+ const parsed=z.object({
+  approved:z.boolean(),
+  note:z.string().trim().max(500).optional()
+ }).strict().safeParse(request.body);
+ if(!params.success||!parsed.success)
+  return reply.code(400).send({error:'invalid_request'});
+
+ return eplanetSerialize(async tx=>{
+  const state=await eplanetRead(tx);
+  const item=state.requests.find((entry:any)=>entry.id===params.data.id);
+  if(!item||item.status!=='pending')
+   return reply.code(404).send({error:'pending_request_not_found'});
+
+  const stepIndex=eplanetStepKeys.indexOf(item.step);
+  if(stepIndex<0)return reply.code(409).send({error:'invalid_stored_request_step'});
+  await p37LockWorkflow(tx,item.userId);
+  const current=await tx.eplanetUserWorkflow.findUnique({
+    where:{userId:item.userId},
+    select:{
+     version:true,accountId:true,accountCreated:true,depositCompleted:true,
+     copyConnected:true,challengeParticipant:true
+    }
+   });
+   const workflowField=eplanetWorkflowFields[stepIndex];
+  if(!parsed.data.approved&&current?.[workflowField]===true)return reply.code(409).send({error:'step_already_completed'});
+  if(parsed.data.approved){
+   if(item.step==='registration'&&current?.accountCreated===true&&current.accountId!==item.accountId)return reply.code(409).send({error:'account_id_conflict'});
+   // Idempotent recovery: if workflow committed but queue write failed, finish the queue decision.
+   if(current?.[workflowField]!==true){
+    const result=await p37ChangeWorkflow(item.userId,{
+     step:eplanetTeamSteps[stepIndex],
+     approved:true,
+     version:current?.version??0,
+     ...(item.step==='registration'&&item.accountId?{accountId:item.accountId}:{}),
+     ...(parsed.data.note!==undefined?{note:parsed.data.note}:{})
+    },{adminUserId:actor.id},tx);
+    if('error'in result)
+     return reply.code(result.status??409).send({error:result.error});
+   }
+   item.status='approved';
+  }else{
+   item.status='rejected';
+   item.note=parsed.data.note||'نیازمند اصلاح';
+  }
+  item.decidedAt=new Date().toISOString();
+  item.decidedBy=actor.id;
+   await eplanetWrite(tx,state);
+   await tx.auditLog.create({
+    data:{
+     adminUserId:actor.id,
+     action:'EPLANET_REQUEST_DECIDED',
+     entityType:'EplanetOnboardingRequest',
+     entityId:item.id,
+     metadata:{step:item.step,approved:parsed.data.approved}
+    }
+   });
+  return {ok:true,status:item.status};
+ });
+});
+// EPLANET_OFFICIAL_R2_END
+
 
 // MMVS_SPATIAL_R4_API_BEGIN
 // MMVS R7: optional lock, reversible hide, z-index and opacity. Existing R4 layouts remain valid.
@@ -4921,6 +5561,36 @@ const mmvsSpatialAnimation = z.object({
   delayMs: z.number().int().min(0).max(10000),
   loop: z.boolean()
 }).strict();
+// MMVS_R99_BACKGROUND_STUDIO: backward-compatible layered section backgrounds.
+const mmvsBgUrl = z.string().min(1).max(2048).refine(v => !v.startsWith('//') && /\.(?:png|jpe?g|webp|gif|svg|avif)(?:[?#]|$)/i.test(v) && (v.startsWith('/') || /^https:\/\//i.test(v) || /^http:\/\//i.test(v)), 'invalid_background_url');
+const mmvsBgColor = z.string().regex(/^#[0-9a-f]{6}$/i);
+const mmvsBgStop = z.object({color:mmvsBgColor,at:z.number().finite().min(0).max(100),alpha:z.number().finite().min(0).max(1).optional()}).strict();
+const mmvsBgLayerBase = {
+  id:z.string().regex(/^bg-[A-Za-z0-9_-]{1,80}$/),
+  enabled:z.boolean(),
+  opacity:z.number().finite().min(0).max(1),
+  blur:z.number().finite().min(0).max(30),
+  blend:z.enum(['normal','screen','multiply','overlay','soft-light'])
+};
+const mmvsBgLayer = z.discriminatedUnion('type',[
+  z.object({...mmvsBgLayerBase,type:z.literal('solid'),color:mmvsBgColor}).strict(),
+  z.object({...mmvsBgLayerBase,type:z.literal('linear'),angle:z.number().finite().min(0).max(360),stops:z.array(mmvsBgStop).min(2).max(5)}).strict(),
+  z.object({...mmvsBgLayerBase,type:z.literal('radial'),centerX:z.number().finite().min(0).max(100),centerY:z.number().finite().min(0).max(100),shape:z.enum(['circle','ellipse']).optional(),stops:z.array(mmvsBgStop).min(2).max(5)}).strict(),
+  z.object({...mmvsBgLayerBase,type:z.literal('image'),url:mmvsBgUrl,fit:z.enum(['cover','contain','fill']),positionX:z.number().finite().min(0).max(100),positionY:z.number().finite().min(0).max(100)}).strict()
+]);
+const mmvsSectionBackground = z.object({
+  url: mmvsBgUrl.optional(),
+  fit: z.enum(['cover','contain']).optional(),
+  position: z.enum(['center','top','bottom']).optional(),
+  dim: z.number().finite().min(0).max(0.8).optional(),
+  sourceSelector: z.string().min(1).max(500).optional(),
+  layers: z.array(mmvsBgLayer).min(1).max(8).optional()
+}).strict().refine(bg => {
+  const legacy = bg.url!==undefined && bg.fit!==undefined && bg.position!==undefined && bg.dim!==undefined;
+  const layered = Array.isArray(bg.layers) && bg.layers.length>=1;
+  return legacy || layered;
+}, 'invalid_section_background');
+
 const mmvsSpatialItem = z.object({
   selector: z.string().min(1).max(500).refine(v => !v.startsWith('#p74-home-config') && !v.startsWith('#p77-profile-config') && !v.startsWith('#mmvs-spatial-'), 'reserved_selector'),
   x: z.number().finite().min(-4000).max(4000),
@@ -4930,10 +5600,24 @@ const mmvsSpatialItem = z.object({
   hidden: z.boolean().optional(),
   zIndex: z.number().int().min(-1000).max(20000).optional(),
   opacity: z.number().finite().min(0.05).max(1).optional(),
-  animation: mmvsSpatialAnimation.optional()
+  widthPx: z.number().int().min(24).max(1600).optional(),
+  heightPx: z.number().int().min(16).max(1600).optional(),
+  // MMVS_V2_LAYER_METADATA: optional, backward-compatible; legacy zIndex untouched.
+  layerId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/).optional(),
+  groupId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/).optional(),
+  rank: z.number().int().min(1).max(500).optional(),
+  renderPlane: z.enum(['native','free']).optional(),
+  animation: mmvsSpatialAnimation.optional(),
+  sectionBackground: mmvsSectionBackground.optional()
 }).strict();
 const mmvsSpatialLayout = z.object({
-  items: z.array(mmvsSpatialItem).max(250)
+  items: z.array(mmvsSpatialItem).max(500),
+  // MMVS_DOM_ORDER_R85_SCHEMA - persisted DOM sibling/parent operations.
+  domMoves: z.array(z.object({
+    selector: z.string().min(1).max(500),
+    reference: z.string().min(1).max(500),
+    placement: z.enum(['before','after','inside'])
+  }).strict()).max(80).optional()
 }).strict().superRefine((value, ctx) => {
   const unique = new Set<string>();
   for(const [i, item] of value.items.entries()) {
@@ -5208,7 +5892,7 @@ app.get('/admin/custom-pages/:slug/editor', async (request, reply) => {
 app.put('/admin/custom-pages/:slug/draft', async (request, reply) => {
   if (!(await tenxCustomPageWriter(request, reply))) return;
   const p = z.object({ slug: tenxCustomSlugSchema }).safeParse(request.params);
-  const b = z.object({ expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(), title: z.string().trim().max(200).nullable().optional(), blocks: z.array(blockSchema).max(40) }).strict().safeParse(request.body);
+  const b = z.object({ expectedRevision:z.string().regex(/^[a-f0-9]{64}$/).optional(), title: z.string().trim().max(200).nullable().optional(), blocks: z.array(blockSchema).max(220) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request', details: b.success ? undefined : b.error.flatten() });
   if (!(await tenxCustomPagesRead()).some(x => x.slug === p.data.slug)) return reply.code(404).send({ error: 'page_not_found' });
   const blocks = JSON.parse(JSON.stringify(b.data.blocks));
@@ -5735,7 +6419,7 @@ app.delete('/admin/page-files-trash/:id', async (request, reply) => {
 // Canonical paired history: old content-only versions remain visible but cannot be restored as a pair.
 const studioSnapshotSchema=z.object({
   format:z.literal(1),slug:mmvsSpatialSlug,contentVersionId:z.string(),version:z.number().int().positive(),
-  title:z.string().nullable(),blocks:z.array(blockSchema).max(40),layout:mmvsSpatialLayout,capturedAt:z.string()
+  title:z.string().nullable(),blocks:z.array(blockSchema).max(220),layout:mmvsSpatialLayout,capturedAt:z.string()
 });
 const studioReleaseParams=z.object({slug:mmvsSpatialSlug,id:z.string().min(1).max(64)});
 async function readStudioSnapshot(tx:Prisma.TransactionClient|PrismaClient,slug:string,id:string){
@@ -5802,6 +6486,133 @@ app.post('/admin/mmvs/releases/:slug/:id/restore',async(request,reply)=>{
   });
 });
 
+// MMVS_MEDIA_LIBRARY_R1_API_BEGIN
+// Reusable, read-only inventory of public website assets. Only SUPER_ADMIN may enumerate.
+// Files are served by existing public static routes. No destructive operations are exposed.
+type MmvsMediaLibraryAssetR1 = {url:string;name:string;group:'uploads'|'academy'|'site'};
+let mmvsMediaLibraryCacheR1: {at:number;items:MmvsMediaLibraryAssetR1[];truncated:boolean}|null=null;
+async function mmvsMediaLibraryScanR1(){
+  const fsp=await import('node:fs/promises');
+  const pathLib=await import('node:path');
+  const inventory:MmvsMediaLibraryAssetR1[]=[];
+  const maximum=45000;
+  let truncated=false;
+  const roots=[
+    {folder:pathLib.join(process.cwd(),'public','miniapp'),prefix:'/miniapp'},
+    {folder:pathLib.join(process.cwd(),'public','uploads'),prefix:'/uploads'}
+  ];
+  for(const root of roots){
+    const stack:[string,string[],number][]=[[root.folder,[],0]];
+    while(stack.length){
+      if(inventory.length>=maximum){truncated=true;break;}
+      const [folder,components,depth]=stack.pop()!;
+      if(depth>13)continue;
+      let entries:import('node:fs').Dirent[];
+      try{entries=await fsp.readdir(folder,{withFileTypes:true})}catch{continue}
+      for(const entry of entries){
+        if(inventory.length>=maximum){truncated=true;break}
+        if(entry.name.startsWith('.')||entry.isSymbolicLink())continue;
+        const parts=[...components,entry.name];
+        if(entry.isDirectory()){
+          if(depth<13&&!['node_modules','backups','__pycache__'].includes(entry.name))stack.push([pathLib.join(folder,entry.name),parts,depth+1]);
+          continue;
+        }
+        if(!entry.isFile()||! /\.(?:png|jpe?g|webp|gif|avif|svg)$/i.test(entry.name))continue;
+        const url=root.prefix+'/'+parts.map(encodeURIComponent).join('/');
+        inventory.push({url,name:entry.name,group:root.prefix==='/uploads'?'uploads':parts[0]==='p74'&&parts[1]==='copytrade-academy'?'academy':'site'});
+      }
+    }
+  }
+  inventory.sort((a,b)=>{
+    const pa=a.group==='uploads'?0:a.group==='academy'?1:2;
+    const pb=b.group==='uploads'?0:b.group==='academy'?1:2;
+    return pa-pb||a.url.localeCompare(b.url);
+  });
+  return {at:Date.now(),items:inventory,truncated};
+}
+app.get('/admin/mmvs/media-library',async(request,reply)=>{
+  if(!(await adminGuard(request,reply)))return;
+  if((request as any).admin?.role!=='SUPER_ADMIN')return reply.code(403).send({error:'super_admin_required'});
+  const parsed=z.object({
+    page:z.coerce.number().int().min(1).max(3000).optional(),
+    limit:z.coerce.number().int().min(8).max(100).optional(),
+    search:z.string().trim().max(120).optional(),
+    group:z.enum(['all','uploads','academy','site']).optional(),
+    refresh:z.enum(['1']).optional()
+  }).strict().safeParse(request.query||{});
+  if(!parsed.success)return reply.code(400).send({error:'invalid_media_query'});
+  const q=parsed.data;
+  if(!mmvsMediaLibraryCacheR1||q.refresh==='1'||Date.now()-mmvsMediaLibraryCacheR1.at>45000){
+    mmvsMediaLibraryCacheR1=await mmvsMediaLibraryScanR1();
+  }
+  const f=mmvsMediaLibraryCacheR1;
+  let all=f.items;
+  if(q.group&&q.group!=='all')all=all.filter(x=>x.group===q.group);
+  if(q.search){const needle=q.search.toLocaleLowerCase();all=all.filter(x=>(x.name+' '+x.url).toLocaleLowerCase().includes(needle))}
+  const page=q.page||1,limit=q.limit||32;
+  const selection=all.slice((page-1)*limit,page*limit);
+  const paths=[
+    {prefix:'/miniapp/',folder:join(process.cwd(),'public','miniapp')},
+    {prefix:'/uploads/',folder:join(process.cwd(),'public','uploads')}
+  ];
+  const fs=await import('node:fs/promises');
+  const result=await Promise.all(selection.map(async x=>{
+    let bytes=0;
+    const mapping=paths.find(m=>x.url.startsWith(m.prefix));
+    if(mapping){
+      // URLs were generated from trusted directory entries; prevent path traversal on decoding.
+      const rel=x.url.slice(mapping.prefix.length).split('/').map(decodeURIComponent);
+      if(rel.every(p=>p!=='.'&&p!=='..'&&!p.includes('/')&&!p.includes('\\'))){
+        try{const st=await fs.stat(join(mapping.folder,...rel));if(st.isFile())bytes=st.size}catch{}
+      }
+    }
+    return {...x,bytes};
+  }));
+  reply.header('cache-control','no-store');
+  return {ok:true,items:result,total:all.length,truncated:f.truncated,page,limit};
+});
+// MMVS_R98_PERMANENT_MEDIA_DELETE: restrict deletion to generated P62 uploads only.
+// System/bundled assets and files referenced by current page data are never deleted.
+app.delete('/admin/mmvs/media-library/delete-permanent',async(request,reply)=>{
+ if(!(await p62Owner(request,reply)))return;
+ const b=z.object({
+   url:z.string().max(220).regex(/^\/uploads\/home-studio\/p62-[a-f0-9]{32}\.(?:png|jpg|webp)$/),
+   confirmation:z.literal('DELETE')
+ }).strict().safeParse(request.body??{});
+ if(!b.success)return reply.code(400).send({error:'invalid_or_unmanaged_media'});
+ const url=b.data.url;
+ const name=url.split('/').pop()!;
+ const fsp=await import('node:fs/promises');
+ const target=p62path.join(p62MediaDir,name);
+ let stat:import('node:fs').Stats;
+ try{stat=await fsp.lstat(target)}catch(e:any){return reply.code(e?.code==='ENOENT'?404:500).send({error:'media_not_found_or_unreadable'})}
+ if(!stat.isFile()||stat.isSymbolicLink())return reply.code(400).send({error:'non_regular_media_refused'});
+ // Reject deleting a file in current published pages, drafts or system settings.
+ // This includes spatial layout backgrounds and shared site configuration.
+ const [published,drafts,settings]=await Promise.all([
+   prisma.contentPage.findMany({select:{slug:true,blocks:true}}),
+   prisma.contentPageDraft.findMany({select:{slug:true,blocks:true}}),
+   prisma.systemSetting.findMany({select:{key:true,value:true}})
+ ]);
+ const mentions=(v:unknown)=>JSON.stringify(v??'').includes(url);
+ const used=[
+   ...published.filter(x=>mentions(x.blocks)).map(x=>'published:'+x.slug),
+   ...drafts.filter(x=>mentions(x.blocks)).map(x=>'draft:'+x.slug),
+   ...settings.filter(x=>mentions(x.value)).map(x=>'setting:'+x.key)
+ ].slice(0,20);
+ if(used.length)return reply.code(409).send({error:'media_still_referenced',usedBy:used});
+ // Audit authorization and deletion intent before the irreversible operation.
+ await prisma.auditLog.create({data:{adminUserId:adminIdOf(request),action:'MMVS_MEDIA_PERMANENT_DELETE_REQUESTED',entityType:'HomeStudioMedia',entityId:name,metadata:{url,bytes:stat.size}}});
+ try{await fsp.unlink(target)}catch{return reply.code(500).send({error:'physical_delete_failed'})}
+ mmvsMediaLibraryCacheR1=null;
+ await prisma.auditLog.create({data:{adminUserId:adminIdOf(request),action:'MMVS_MEDIA_PERMANENTLY_DELETED',entityType:'HomeStudioMedia',entityId:name,metadata:{url,bytes:stat.size}}}).catch(()=>undefined);
+ reply.header('cache-control','no-store');
+ return {ok:true,deleted:true,url};
+});
+
+// MMVS_R98_SECTION_AND_PERMANENT_DELETE
+// MMVS_MEDIA_LIBRARY_R1_API_END
+
 app.get('/admin/content/pages', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
   const rows = await prisma.contentPage.findMany();
@@ -5847,7 +6658,7 @@ app.put('/admin/content/pages/:slug/draft', async (request, reply) => {
   const b = z.object({
     expectedRevision: z.string().regex(/^[a-f0-9]{64}$/).optional(),
     title: z.string().trim().max(200).nullable().optional(),
-    blocks: z.array(blockSchema).max(40)
+    blocks: z.array(blockSchema).max(220)
   }).strict().safeParse(request.body);
 
   if (!p.success || !b.success) {
@@ -5917,8 +6728,17 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
     const draft = await tx.contentPageDraft.findUnique({where:{slug:p.data.slug}})
       ?? (body.data.spatialExpectedRevision!==undefined?await tx.contentPage.findUnique({where:{slug:p.data.slug}}):null);
 
-    if (!draft) return null;
-    assertContentRevision(draft,body.data.expectedRevision);
+    // R12: permit first publication of a spatial-only page.
+    // Preserve the normal content revision and SUPER_ADMIN checks.
+    const initialSpatial = !draft && body.data.spatialExpectedRevision !== undefined
+      ? await mmvsSpatialRead(p.data.slug,tx) : null;
+    if (!draft && (!initialSpatial?.draft || initialSpatial.draft.items.length===0)) return null;
+    if (!draft) {
+      assertContentRevision(null,body.data.expectedRevision);
+    } else {
+      assertContentRevision(draft,body.data.expectedRevision);
+    }
+    const publishContent = draft ?? {title:null,blocks:[]};
     let spatialRevision:number|undefined;
     // Content and spatial publication share this transaction: either both commit or neither does.
     if(body.data.spatialExpectedRevision!==undefined){
@@ -5937,13 +6757,13 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
       where: { slug: p.data.slug },
       create: {
         slug: p.data.slug,
-        title: draft.title,
-        blocks: toInputJson(draft.blocks),
+        title: publishContent.title,
+        blocks: toInputJson(publishContent.blocks),
         status: 'PUBLISHED'
       },
       update: {
-        title: draft.title,
-        blocks: toInputJson(draft.blocks),
+        title: publishContent.title,
+        blocks: toInputJson(publishContent.blocks),
         status: 'PUBLISHED'
       }
     });
@@ -5990,7 +6810,7 @@ app.post('/admin/content/pages/:slug/publish', async (request, reply) => {
 app.put('/admin/content/pages/:slug', async (request, reply) => {
   if (!(await adminGuard(request, reply))) return;
   const p = z.object({ slug: z.enum(PAGE_SLUGS) }).safeParse(request.params);
-  const b = z.object({ title: z.string().trim().max(200).nullable().optional(), status: z.enum(['DRAFT', 'PUBLISHED']), blocks: z.array(blockSchema).max(40) }).strict().safeParse(request.body);
+  const b = z.object({ title: z.string().trim().max(200).nullable().optional(), status: z.enum(['DRAFT', 'PUBLISHED']), blocks: z.array(blockSchema).max(220) }).strict().safeParse(request.body);
   if (!p.success || !b.success) return reply.code(400).send({ error: 'invalid_request', details: b.success ? undefined : b.error.flatten() });
   const blocks = JSON.parse(JSON.stringify(b.data.blocks));
   const saved = await withContentLock(prisma,p.data.slug,async (tx) => {
@@ -6472,7 +7292,10 @@ app.post('/admin/challenge-organizers/upload', async (request, reply) => {
 
 
 app.post('/content/page', async (request, reply) => {
-  const b = z.object({ initData: z.string().min(1).max(10000), slug: tenxCustomPublicSlugSchema }).safeParse(request.body);
+  const b = z.object({
+    initData: z.string().min(1).max(10000),
+    slug: z.union([z.enum(PAGE_SLUGS), tenxCustomPublicSlugSchema])
+  }).safeParse(request.body);
   if (!b.success) return reply.code(400).send({ error: 'invalid_request' });
   let contentSlug = b.data.slug;
   if (!(PAGE_SLUGS as readonly string[]).includes(contentSlug)) {
@@ -6484,6 +7307,11 @@ app.post('/content/page', async (request, reply) => {
   }
   const who = await miniUser(b.data.initData, false);
   if ('code' in who) return reply.code(who.code).send({ error: who.error });
+  // MMTRADE_STAGE2_ROUTE_FIX_R2: mirror the real stage-2 lesson access policy.
+  if (contentSlug === 'stage2') {
+    const access = await mmStage1State(who.id);
+    if (!access.unlocked) return reply.code(403).send({ error: 'stage1_incomplete', done: access.done, total: access.total });
+  }
   const [user, page, lessons, popups] = await Promise.all([
     prisma.user.findUnique({ where: { id: who.id }, select: { registrationStage: true } }),
     prisma.contentPage.findUnique({ where: { slug: contentSlug } }),

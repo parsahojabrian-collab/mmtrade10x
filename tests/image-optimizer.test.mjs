@@ -26,14 +26,14 @@ test('invalid image types cannot enter uploader', async () => {
   await assert.rejects(opt.optimize(f, { role: 'object' }), /PNG/);
 });
 
-test('images larger than 35 MiB are rejected before decoding', async () => {
-  const f = new File([new Uint8Array(35 * 1024 * 1024 + 1)], 'huge.png', { type: 'image/png' });
-  await assert.rejects(opt.optimize(f, { role: 'background' }), /۳۵/);
+test('images larger than 80 MiB are rejected before decoding', async () => {
+  const f = new File([new Uint8Array(80 * 1024 * 1024 + 1)], 'huge.png', { type: 'image/png' });
+  await assert.rejects(opt.optimize(f, { role: 'background' }), /۸۰/);
 });
 
 test('editor uses optimizer for both backgrounds and image objects', () => {
-  const html = readFileSync(new URL('../apps/api/public/admin.html', import.meta.url), 'utf8');
-  assert.match(html, /image-optimizer\.js\?v=OBJECT_STUDIO_OPTIMIZE_R2/);
+  const html = readFileSync(new URL('../apps/api/public/admin.html', import.meta.url), 'utf8')+readFileSync(new URL('../public/miniapp/p74/studio/home-object-editor.js', import.meta.url), 'utf8');
+  assert.match(html, /image-optimizer\.js\?v=MMTRADE_IMAGE_OPT_R33/);
   assert.match(html, /MMTradeImageOptimizer\.optimize\(file,\{role/);
   assert.match(html, /uploadObjectMedia\(f,'background'\)/);
   assert.match(html, /uploadObjectMedia\(f,'object'\)/);
