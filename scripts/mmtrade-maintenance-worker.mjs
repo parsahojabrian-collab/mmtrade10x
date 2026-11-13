@@ -1,5 +1,5 @@
 /** MMTrade10X maintenance worker: all transformations happen in a disposable Git worktree. */
-import { readFile, writeFile, mkdir, rm, symlink, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, symlink, stat, readdir } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { join, resolve } from 'node:path';
 
@@ -23,7 +23,7 @@ function run(cmd, args, cwd = root, timeoutMs = 120_000, maxChars = 20_000) {
   return new Promise(resolveJob => {
     const child = spawn(cmd, args, { cwd, env: {
       PATH: process.env.PATH || '/usr/bin:/bin', HOME: process.env.HOME || '/tmp',
-      LANG: 'C.UTF-8', CI: '1', npm_config_audit: 'false', npm_config_fund: 'false'
+      LANG: 'C.UTF-8', CI: '1', NODE_OPTIONS: '--max-old-space-size=640', npm_config_audit: 'false', npm_config_fund: 'false'
     }, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
     let truncated = false;
@@ -133,7 +133,9 @@ async function main() {
   if (hasDeps) {
     await symlink(join(root, 'node_modules'), join(workspace, 'node_modules'), 'dir');
     build = await run('npm', ['run', 'build'], workspace, 180_000);
-    tests = await run('npm', ['test'], workspace, 180_000);
+    // Serial test execution avoids 17+ parallel Node workers on the small production VPS.
+    const testFiles = (await readdir(join(workspace, 'tests'))).filter(x => x.endsWith('.test.mjs')).sort().map(x => join('tests', x));
+    tests = testFiles.length ? await run(process.execPath, ['--experimental-strip-types', '--test', '--test-concurrency=1', ...testFiles], workspace, 180_000) : { ok: false, skipped: true, reason: 'no_tests' };
   } else notes.push('وابستگی‌های Node نصب نیستند؛ build و test اجرا نشدند.');
   const diffCheck = await run('git', ['diff', '--check'], workspace);
   const files = await run('git', ['diff', '--name-only'], workspace);
