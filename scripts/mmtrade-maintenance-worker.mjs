@@ -24,7 +24,7 @@ function run(cmd, args, cwd = root, timeoutMs = 120_000, maxChars = 20_000) {
     const child = spawn(cmd, args, { cwd, env: {
       PATH: process.env.PATH || '/usr/bin:/bin', HOME: process.env.HOME || '/tmp',
       LANG: 'C.UTF-8', CI: '1', npm_config_audit: 'false', npm_config_fund: 'false'
-    }, stdio: ['ignore', 'pipe', 'pipe'] });
+    }, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
     let truncated = false;
     const append = chunk => {
@@ -36,7 +36,11 @@ function run(cmd, args, cwd = root, timeoutMs = 120_000, maxChars = 20_000) {
     child.stdout.on('data', append);
     child.stderr.on('data', append);
     let timedOut = false;
-    const timer = setTimeout(() => { timedOut = true; child.kill('SIGTERM'); }, timeoutMs);
+    const timer = setTimeout(() => {
+      timedOut = true;
+      try { if (process.platform !== 'win32' && child.pid) process.kill(-child.pid, 'SIGTERM'); else child.kill('SIGTERM'); }
+      catch { child.kill('SIGTERM'); }
+    }, timeoutMs);
     child.on('error', err => append(err.message));
     child.on('close', code => {
       clearTimeout(timer);
