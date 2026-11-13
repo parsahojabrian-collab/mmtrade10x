@@ -856,7 +856,7 @@ const TENX_P51_GROUPS = [
   {id:'people',name:'کاربران و ارتباطات',symbol:'♙',keys:['users','tickets','outreach','notifications','followups','growth','campaigns','tracking']},
   {id:'academy',name:'آموزش و چالش',symbol:'◇',keys:['academy','academyDesign','progress','challenges','challenge','organizers','eplanetWorkflow']},
   {id:'content',name:'محتوا و طراحی',symbol:'▤',keys:['pageManager','visualStudio','objectStudio','pages','routeManager','pageFiles','homeLinks','bottomNav','editor','media','popups']},
-  {id:'robot',name:'سیستم و دسترسی‌ها',symbol:'⌘',keys:['bot','settings','integrations','admins','audit','roles','permissions','sectionPermissions','telegramTeam']}
+  {id:'robot',name:'سیستم و دسترسی‌ها',symbol:'⌘',keys:['bot','codeMaintenance','settings','integrations','admins','audit','roles','permissions','sectionPermissions','telegramTeam']}
 ];
 function TENX_P51_RENDER_MENU(entries, navigate, adminIdentity) {
   const nav=$('#nav');
@@ -949,7 +949,7 @@ try {
 try {const g=TENX_P51_GROUPS.find(x=>x&&x.id==='content');
   if(g&&!g.keys.includes('pageManager'))g.keys.push('pageManager');}catch(_r10ignore){}
 
-const MENU=[['pageManager','مدیریت صفحات و صفحه شروع',['SUPER_ADMIN']],['routeManager','مدیریت لینک و آدرس صفحه',['SUPER_ADMIN']],['visualStudio','استودیوی بصری صفحات و پاپ‌آپ‌ها',['SUPER_ADMIN']],['overview','نمای کلی',null],['growthAnalytics','تحلیل پیشرفته Imperial Reserve',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['growth','داشبورد کاربران و کمپین‌ها',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['bot','مدیریت ربات',['SUPER_ADMIN']],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['academyDesign','طراحی و مدیریت آکادمی',['SUPER_ADMIN']],['progress','مسیر پیشرفت',['SUPER_ADMIN']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['objectStudio','Object Studio هوم',['SUPER_ADMIN']],['organizers','برگزارکنندگان چالش',['CONTENT_MANAGER']],['homeLinks','لینک‌های صفحه اصلی',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['sectionPermissions','مدیران سه‌بخشی',['SUPER_ADMIN']],['admins','مدیران و نقش‌ها',[]],['telegramTeam','مدیران تلگرام',['SUPER_ADMIN']],['eplanetWorkflow','تأیید ePlanet',['SUPER_ADMIN']],['bottomNav','نوار پایین Mini App',['SUPER_ADMIN','CONTENT_MANAGER']],['settings','تنظیمات',[]]];
+const MENU=[['pageManager','مدیریت صفحات و صفحه شروع',['SUPER_ADMIN']],['routeManager','مدیریت لینک و آدرس صفحه',['SUPER_ADMIN']],['visualStudio','استودیوی بصری صفحات و پاپ‌آپ‌ها',['SUPER_ADMIN']],['overview','نمای کلی',null],['growthAnalytics','تحلیل پیشرفته Imperial Reserve',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['growth','داشبورد کاربران و کمپین‌ها',['SUPER_ADMIN','USER_MANAGER','ANALYST','MARKETING_MANAGER']],['bot','مدیریت ربات',['SUPER_ADMIN']],['codeMaintenance','یکپارچه‌سازی و بهینه‌سازی',['SUPER_ADMIN']],['users','کاربران',['USER_MANAGER','SUPPORT','ANALYST','MARKETING_MANAGER']],['tickets','پشتیبانی',['SUPPORT','USER_MANAGER']],['outreach','پیگیری و اعلان',['MARKETING_MANAGER','USER_MANAGER']],['academy','آکادمی',['ACADEMY_MANAGER','ANALYST']],['academyDesign','طراحی و مدیریت آکادمی',['SUPER_ADMIN']],['progress','مسیر پیشرفت',['SUPER_ADMIN']],['pages','صفحه‌ها و پاپ‌آپ',['CONTENT_MANAGER','ANALYST']],['objectStudio','Object Studio هوم',['SUPER_ADMIN']],['organizers','برگزارکنندگان چالش',['CONTENT_MANAGER']],['homeLinks','لینک‌های صفحه اصلی',['CONTENT_MANAGER','ANALYST']],['audit','گزارش فعالیت',[]],['sectionPermissions','مدیران سه‌بخشی',['SUPER_ADMIN']],['admins','مدیران و نقش‌ها',[]],['telegramTeam','مدیران تلگرام',['SUPER_ADMIN']],['eplanetWorkflow','تأیید ePlanet',['SUPER_ADMIN']],['bottomNav','نوار پایین Mini App',['SUPER_ADMIN','CONTENT_MANAGER']],['settings','تنظیمات',[]]];
 const P60_MENU_SCOPES={users:'users',tickets:'users',outreach:'users',
  growth:'marketing',growthAnalytics:'marketing',academy:'academy',progress:'academy'};
 const ok=m=>{
@@ -1036,6 +1036,94 @@ async function show(id,leaveApproved=false){
 }
 const STAGES={};
 const VIEWS={
+  // MMTRADE_SUPERADMIN_MAINTENANCE_R1
+  async codeMaintenance(){
+    if(me?.role!=='SUPER_ADMIN')return h('div',{class:'card'},'این بخش فقط برای سوپرادمین است.');
+    const root=h('section',{style:'display:grid;gap:14px;min-width:0'});
+    const hero=h('div',{class:'card'},
+      h('h2',{style:'margin:0 0 6px'},'مرکز یکپارچه‌سازی و بهینه‌سازی سورس'),
+      h('p',{class:'mut',style:'margin:0'},'اجرای خودکار در Git Worktree موقت. هیچ عملیاتی مستقیماً کد فعال ربات را تغییر یا منتشر نمی‌کند. خروجی تغییرات پس از پاس‌شدن تست‌ها برای بازبینی ارائه می‌شود.'));
+    const actions=h('div',{class:'grid'});
+    const status=h('div',{class:'card'});
+    const history=h('div',{style:'display:grid;gap:10px'});
+    root.append(hero,actions,status,history);
+    let polling=false,starting=false;
+    const labels={audit:'بررسی سلامت و پچ‌ها',integrate:'یکپارچه‌سازی ایمن',optimize:'بهینه‌سازی ایمن'};
+    const detail=(job)=>{
+      const el=h('div',{class:'card',style:'display:grid;gap:6px'},
+        h('div',{class:'row'},h('strong',{},labels[job.mode]||job.mode||'کار'),h('span',{class:'tag'},job.state||'نامشخص')),
+        h('small',{class:'mut'},'شناسه: '+(job.id||'—')+' · '+(job.createdAt?fa(job.createdAt):'—')));
+      if(Array.isArray(job.notes))job.notes.slice(-4).forEach(x=>el.append(h('div',{class:'mut'},x)));
+      if(job.report){
+        const r=job.report;
+        el.append(h('div',{},'مارکرهای پچ: '+(r.markerCount??'—')+' | فایل‌های تغییرکرده: '+(job.changedFiles?.length??0)));
+        if(r.safeTransformations)el.append(h('div',{},'Import تکراری حذف‌شده: '+r.safeTransformations.exactDuplicateImportsRemoved));
+      }
+      if(job.validation){
+        const v=job.validation;
+        el.append(h('div',{},'Build: '+(v.build?.ok?'PASS':'FAIL/SKIP')+' · Test: '+(v.tests?.ok?'PASS':'FAIL/SKIP')+' · Diff: '+(v.diffCheck?.ok?'PASS':'FAIL')));
+        for(const k of ['build','tests']){
+          if(v[k]&&!v[k].ok&&v[k].output)el.append(h('pre',{style:'max-height:130px;overflow:auto;direction:ltr;text-align:left;white-space:pre-wrap;font-size:11px;'},v[k].output.slice(-1400)));
+        }
+      }
+      if(job.error)el.append(h('div',{style:'color:var(--bad)'},job.error));
+      if(job.patchAvailable){
+        const dl=h('button',{class:'sec',type:'button'},'دریافت پچ بررسی‌شده');
+        dl.onclick=async()=>{
+          try{
+            const r=await fetch('/admin/maintenance/jobs/'+encodeURIComponent(job.id)+'/patch',{headers:{authorization:'Bearer '+token}});
+            if(!r.ok)throw Error('HTTP '+r.status);
+            const url=URL.createObjectURL(await r.blob());
+            const a=h('a',{href:url,download:'mmtrade-'+job.id+'.patch'});
+            document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+          }catch(e){toast('خطا در دریافت پچ: '+e.message)}
+        };
+        el.append(dl);
+      }
+      return el;
+    };
+    const buttons=[];
+    for(const [mode,label,description] of [
+      ['audit','بررسی سلامت','شناسایی مارکرهای پچ و اجرای Build/Test'],
+      ['integrate','یکپارچه‌سازی','تولید فهرست مرکزی پچ‌ها و حذف Importهای دقیقاً تکراری'],
+      ['optimize','بهینه‌سازی','اعمال بازنویسی‌های محدود و ایمن با تست خودکار']
+    ]){
+      const button=h('button',{type:'button'},'اجرای '+label);
+      const card=h('div',{class:'card',style:'display:grid;gap:8px'},
+        h('strong',{},label),h('p',{class:'mut',style:'margin:0'},description),button);
+      button.onclick=async()=>{
+        if(starting)return;
+        starting=true;buttons.forEach(x=>x.disabled=true);
+        try{await api('/maintenance/jobs',{method:'POST',body:JSON.stringify({mode})});toast('عملیات آغاز شد');await refresh()}
+        catch(e){toast('اجرای عملیات ناموفق بود: '+e.message)}
+        finally{starting=false;await refresh()}
+      };
+      buttons.push(button);actions.append(card);
+    }
+    async function refresh(){
+      if(polling)return;
+      polling=true;
+      try{
+        const data=await api('/maintenance/status');
+        const active=data.active;
+        buttons.forEach(b=>b.disabled=starting||!!active);
+        status.replaceChildren(
+          h('strong',{},'وضعیت پردازشگر'),
+          h('p',{class:'mut',style:'margin:6px 0 0'},active?'در حال اجرا: '+(labels[active.mode]||active.mode||active.id)+' · '+(active.state||'queued'):'عملیات فعالی وجود ندارد'));
+        history.replaceChildren(h('h3',{style:'margin:6px 0'},'سوابق و خروجی‌ها'));
+        if(!data.jobs?.length)history.append(h('p',{class:'mut'},'هنوز عملیاتی ثبت نشده است.'));
+        else data.jobs.slice(0,10).forEach(j=>history.append(detail(j)));
+      }catch(e){
+        status.replaceChildren(h('p',{style:'color:var(--bad)'},'دریافت وضعیت ناموفق بود: '+e.message));
+      }finally{polling=false}
+    }
+    await refresh();
+    const timer=setInterval(()=>{
+      if(!root.isConnected){clearInterval(timer);return}
+      refresh();
+    },5000);
+    return root;
+  },
 async pageManager(){
  await adminModulesReady;
  if(!me||me.role!=='SUPER_ADMIN')return h('div',{class:'card'},'دسترسی به سوپرادمین لازم است.');
