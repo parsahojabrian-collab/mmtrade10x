@@ -63,7 +63,8 @@ def main(path):
                         plans.append((name, json.loads(data)))
                     except (UnicodeDecodeError, ValueError):
                         result["warnings"].append("invalid_plan_json")
-            elif name_lower.endswith(SOURCE):
+            elif not name_lower.endswith((".py", ".sh", ".env", ".pem", ".key")):
+                # Historical STAGED payloads may have no file extension.
                 digest = hashlib.sha256(data).hexdigest()
                 digest_map.setdefault(digest, (name, data))
         for plan_name, plan in plans:
