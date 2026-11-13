@@ -1,3 +1,4 @@
+import { registerMaintenanceRoutes } from './maintenance-routes.js';
 import { withSystemLock } from './transaction-lock.js';
 import { botMenuConflict } from '../../../packages/shared/src/bot-menu-validation.js';
 import { recordStudioRelease, studioReleaseKey } from './studio-releases.js';
@@ -311,6 +312,8 @@ const p60OwnerOnly=async(request:FastifyRequest,reply:FastifyReply)=>{
   }
   return true;
 };
+// MMTRADE_SUPERADMIN_MAINTENANCE_R1
+registerMaintenanceRoutes(app, p60OwnerOnly);
 app.get('/admin/p60/section-admins',async(request,reply)=>{
   if(!(await p60OwnerOnly(request,reply)))return;
   const accounts=await prisma.adminUser.findMany({orderBy:{createdAt:'asc'},select:{id:true,email:true,role:true,isActive:true,createdAt:true}});
