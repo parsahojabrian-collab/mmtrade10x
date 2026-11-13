@@ -2,11 +2,12 @@
 import { readFile, writeFile, mkdir, rm, symlink, stat, readdir } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { join, resolve } from 'node:path';
+import { reconcileLegacyPatches } from './mmtrade-legacy-patches.mjs';
 
 const root = process.cwd();
 const base = resolve(process.env.MM_MAINTENANCE_DIR || join(root, '.mmtrade-maintenance'));
 const [mode, id] = process.argv.slice(2);
-const allowed = new Set(['audit', 'integrate', 'optimize']);
+const allowed = new Set(['audit', 'integrate', 'optimize', 'legacy']);
 if (!allowed.has(mode) || !/^[0-9a-f-]{36}$/.test(id || '')) process.exit(64);
 const jobDir = join(base, 'jobs', id);
 const statusFile = join(jobDir, 'status.json');
@@ -114,6 +115,14 @@ async function main() {
   const report = await inspect();
   report.baselineCommit = baseline.output.trim();
   report.productionHasUncommittedTrackedChanges = productionDirty;
+  // Old installers are never run. Reconciliation happens only in the detached worktree.
+  if (mode === 'audit' || mode === 'integrate' || mode === 'legacy') {
+    report.legacy = await reconcileLegacyPatches({ root, store: base, workspace, apply: mode !== 'audit' });
+    if (report.legacy.truncated) notes.push('فهرست آرشیوهای قدیمی به سقف ایمنی رسید و بخشی از فایل‌ها بررسی نشدند.');
+    if (report.legacy.conflicts || report.legacy.requiresReview || report.legacy.unsupported) {
+      notes.push('برخی پچ‌های قدیمی به بررسی انسانی نیاز دارند؛ اجرای نصب‌کننده‌ها مجاز نیست.');
+    }
+  }
 
   if (mode !== 'audit') {
     report.safeTransformations = await dedupExactImports();
@@ -147,6 +156,9 @@ async function main() {
     patchAvailable = true;
   }
   if (!validationPassed) notes.push('تا پیش از پاس شدن build و test، خروجی قابل اعمال تولید نمی‌شود.');
+  if (mode === 'legacy' && report.legacy && report.legacy.candidateCount === 0) {
+    notes.push('پچ قدیمیِ قابل تبدیل یافت نشد؛ فایل‌ها را در پوشه legacy-input قرار بده یا آرشیوهای سرور را بررسی کن.');
+  }
   await save({
     state: validationPassed ? (patchAvailable ? 'needs_review' : 'passed') : 'validation_failed',
     finishedAt: now(), report,
