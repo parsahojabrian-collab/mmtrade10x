@@ -9,7 +9,8 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir, lstat, realpath, writeFile, stat } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
-import { basename, isAbsolute, join, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const MAX_SOURCE_FILES = 80;
 const MAX_TOTAL_SOURCE_BYTES = 90 * 1024 * 1024;
@@ -69,7 +70,7 @@ function execute(command, args, cwd, timeout = 20000, limit = 9 * 1024 * 1024) {
   });
 }
 function resultLine(source, kind, state, detail = '', paths = []) {
-  return { source: String(source).slice(0, 150), kind, state, detail: String(detail).slice(0, 190), paths: paths.slice(0, 12) };
+  return { source: String(source).slice(0, 150), kind, state, detail: String(detail).slice(0, 190), paths: paths.slice(0, 4).map(path => path.slice(0, 120)) };
 }
 
 async function collectSources(root, store) {
@@ -106,7 +107,7 @@ async function collectSources(root, store) {
 }
 
 async function readArchive(root, source) {
-  const scanner = join(root, 'scripts', 'mmtrade-legacy-zip-scan.py');
+  const scanner = join(dirname(fileURLToPath(import.meta.url)), 'mmtrade-legacy-zip-scan.py');
   const read = await execute('python3', ['-I', scanner, source.full], root, 18000);
   if (!read.ok) return { error: ('zip_scanner_failed: ' + read.stderr).slice(0, 130) };
   try { return JSON.parse(read.stdout); }
@@ -252,6 +253,6 @@ export async function reconcileLegacyPatches(config) {
     alreadyIntegrated: count('already_integrated'), conflicts: count('conflict'),
     requiresReview: count('requires_review'), unsupported: count('unsupported'),
     // Summaries only: never send original patch contents to the web frontend.
-    entries: results.slice(0, 150)
+    entries: results.slice(0, 100)
   };
 }
