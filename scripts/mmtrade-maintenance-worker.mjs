@@ -104,13 +104,30 @@ async function main() {
   if (!dirty.ok) throw Error('Unable to verify repository status.');
   const productionDirty = dirty.output.trim().length > 0;
   if (productionDirty) notes.push('تغییرات ثبت‌نشده روی سرور شناسایی شد؛ این تغییرات داخل HEAD نیستند.');
-  if (productionDirty && mode !== 'audit') {
-    await save({ state: 'blocked', finishedAt: now(), report: { reason: 'dirty_production_tree' } });
-    return;
-  }
   const added = await run('git', ['worktree', 'add', '--detach', workspace, 'HEAD'], root, 90_000);
   if (!added.ok) throw Error('Could not create isolated worktree: ' + added.output.slice(-800));
   createdWorktree = true;
+  if (productionDirty) {
+    // Reconstruct a byte-for-byte snapshot of *tracked* live modifications in the
+    // disposable worktree. No add, commit, checkout or reset touches production.
+    const localDiff = await run('git', ['diff', 'HEAD', '--binary', '--', '.'], root, 45_000, 8 * 1024 * 1024);
+    if (!localDiff.ok || localDiff.truncated) {
+      throw Error('tracked_live_changes_too_large_or_unreadable; refuse to guess a source baseline');
+    }
+    if (!localDiff.output.trim()) throw Error('local_source_diff_missing');
+    const overlayPath = join(jobDir, 'tracked-source-overlay.patch');
+    await writeFile(overlayPath, localDiff.output, { mode: 0o600 });
+    const overlay = await run('git', ['apply', '--index', '--binary', '--', overlayPath], workspace, 45_000);
+    if (!overlay.ok) throw Error('cannot_snapshot_tracked_live_changes: ' + overlay.output.slice(-600));
+    const snapshot = await run('git', [
+      '-c', 'user.name=MMTrade Maintenance', '-c', 'user.email=maintenance@localhost',
+      '-c', 'core.hooksPath=/dev/null', '-c', 'commit.gpgsign=false',
+      'commit', '--quiet', '-m', 'private temporary live-source snapshot'
+    ], workspace, 45_000);
+    if (!snapshot.ok) throw Error('cannot_commit_private_source_snapshot: ' + snapshot.output.slice(-600));
+    notes.push('تغییرات ثبت‌نشده tracked در نسخه موقت گنجانده شدند؛ فایل‌های untracked به‌صورت خودکار کپی نمی‌شوند.');
+    await rm(overlayPath, { force: true });
+  }
   const baseline = await run('git', ['rev-parse', 'HEAD'], workspace);
   const report = await inspect();
   report.baselineCommit = baseline.output.trim();
