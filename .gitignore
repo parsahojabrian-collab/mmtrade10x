@@ -90,3 +90,6 @@ __pycache__/
 .DS_Store
 nowSeconds
 =
+
+# Isolated superadmin maintenance jobs, worktrees, reports and patches
+.mmtrade-maintenance/
