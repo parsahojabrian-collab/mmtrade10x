@@ -1048,7 +1048,7 @@ const VIEWS={
     const history=h('div',{style:'display:grid;gap:10px'});
     root.append(hero,actions,status,history);
     let polling=false,starting=false;
-    const labels={audit:'بررسی سلامت و پچ‌ها',integrate:'یکپارچه‌سازی ایمن',optimize:'بهینه‌سازی ایمن'};
+    const labels={audit:'بررسی سلامت و پچ‌ها',integrate:'یکپارچه‌سازی ایمن',legacy:'تبدیل پچ‌های قدیمی',optimize:'بهینه‌سازی ایمن'};
     const detail=(job)=>{
       const el=h('div',{class:'card',style:'display:grid;gap:6px'},
         h('div',{class:'row'},h('strong',{},labels[job.mode]||job.mode||'کار'),h('span',{class:'tag'},job.state||'نامشخص')),
@@ -1058,6 +1058,18 @@ const VIEWS={
         const r=job.report;
         el.append(h('div',{},'مارکرهای پچ: '+(r.markerCount??'—')+' | فایل‌های تغییرکرده: '+(job.changedFiles?.length??0)));
         if(r.safeTransformations)el.append(h('div',{},'Import تکراری حذف‌شده: '+r.safeTransformations.exactDuplicateImportsRemoved));
+        if(r.legacy){
+          const l=r.legacy;
+          el.append(h('div',{},'آرشیوهای قدیمی بررسی‌شده: '+l.scannedSources+' | تبدیل‌شده: '+l.converted+' | قبلاً اعمال‌شده: '+l.alreadyIntegrated+' | قابل تبدیل: '+l.convertible+' | تداخل: '+l.conflicts+' | نیاز به بررسی: '+l.requiresReview+' | پشتیبانی‌نشده: '+l.unsupported));
+          const list=(l.entries||[]).slice(0,24);
+          if(list.length){
+            const exp=h('details',{},h('summary',{style:'cursor:pointer'},'جزئیات شناسایی و تبدیل پچ‌های قدیمی ('+l.entries.length+')'));
+            const statuses={converted:'تبدیل شد',already_integrated:'قبلاً اعمال شده',convertible:'قابل تبدیل',conflict:'تداخل',requires_review:'نیازمند بررسی',unsupported:'پشتیبانی‌نشده'};
+            list.forEach(item=>exp.append(h('div',{class:'mut',style:'border-bottom:1px solid var(--line);padding:5px 0;overflow-wrap:anywhere'},
+              (statuses[item.state]||item.state)+' · '+item.source+(item.detail?' · '+item.detail:''))));
+            el.append(exp);
+          }
+        }
       }
       if(job.validation){
         const v=job.validation;
@@ -1085,7 +1097,8 @@ const VIEWS={
     const buttons=[];
     for(const [mode,label,description] of [
       ['audit','بررسی سلامت','شناسایی مارکرهای پچ و اجرای Build/Test'],
-      ['integrate','یکپارچه‌سازی','تولید فهرست مرکزی پچ‌ها و حذف Importهای دقیقاً تکراری'],
+      ['integrate','یکپارچه‌سازی','بررسی و اعمال سازگارِ پچ‌های قدیمی + ایجاد فهرست مرکزی و حذف Importهای تکراری'],
+      ['legacy','تبدیل پچ‌های قدیمی','خواندن ZIP، Diff و Snapshotهای دارای هش؛ اعمال نسخه‌های سازگار در محیط ایزوله و گزارش تداخل‌ها'],
       ['optimize','بهینه‌سازی','اعمال بازنویسی‌های محدود و ایمن با تست خودکار']
     ]){
       const button=h('button',{type:'button'},'اجرای '+label);
