@@ -1,7 +1,7 @@
 /** MMTrade10X maintenance worker: all transformations happen in a disposable Git worktree. */
-import { readFile, writeFile, mkdir, rm, symlink, stat, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, symlink, stat, readdir, copyFile, lstat, realpath } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname, sep } from 'node:path';
 import { reconcileLegacyPatches } from './mmtrade-legacy-patches.mjs';
 
 const root = process.cwd();
@@ -107,27 +107,75 @@ async function main() {
   const added = await run('git', ['worktree', 'add', '--detach', workspace, 'HEAD'], root, 90_000);
   if (!added.ok) throw Error('Could not create isolated worktree: ' + added.output.slice(-800));
   createdWorktree = true;
-  if (productionDirty) {
-    // Reconstruct a byte-for-byte snapshot of *tracked* live modifications in the
-    // disposable worktree. No add, commit, checkout or reset touches production.
-    const localDiff = await run('git', ['diff', 'HEAD', '--binary', '--', '.'], root, 45_000, 8 * 1024 * 1024);
-    if (!localDiff.ok || localDiff.truncated) {
-      throw Error('tracked_live_changes_too_large_or_unreadable; refuse to guess a source baseline');
+
+  // Preserve live edits byte-for-byte. git apply --index can reject dirty patches
+  // under aggressive whitespace rules, even if the production sources are valid.
+  // Only tracked changes and named maintenance companions enter the worktree.
+  const changes = await run('git', ['diff', 'HEAD', '--name-only', '-z', '--', '.'], root, 45_000, 2 * 1024 * 1024);
+  if (!changes.ok || changes.truncated) throw Error('cannot_enumerate_tracked_live_changes');
+  const changedPaths = changes.output.split(String.fromCharCode(0)).filter(Boolean);
+  if (changedPaths.length > 2000) throw Error('too_many_tracked_live_changes');
+  const companions = [
+    'apps/api/src/maintenance-routes.ts',
+    'scripts/mmtrade-maintenance-worker.mjs',
+    'scripts/mmtrade-legacy-patches.mjs',
+    'scripts/mmtrade-legacy-zip-scan.py',
+    'tests/maintenance-safety.test.mjs',
+    'tests/maintenance-legacy.test.mjs'
+  ];
+  let importedBytes = 0;
+  async function mirrorLivePath(path, optional = false) {
+    if (!path || path.startsWith('/') || path.includes('\\') ||
+        path.split('/').some(x => !x || x === '..' || x === '.' || x === '.git') ||
+        path === 'node_modules' || path.startsWith('node_modules/') ||
+        path === '.mmtrade-maintenance' || path.startsWith('.mmtrade-maintenance/')) {
+      throw Error('unsafe_live_source_path');
     }
-    if (!localDiff.output.trim()) throw Error('local_source_diff_missing');
-    const overlayPath = join(jobDir, 'tracked-source-overlay.patch');
-    await writeFile(overlayPath, localDiff.output, { mode: 0o600 });
-    const overlay = await run('git', ['apply', '--index', '--binary', '--', overlayPath], workspace, 45_000);
-    if (!overlay.ok) throw Error('cannot_snapshot_tracked_live_changes: ' + overlay.output.slice(-600));
+    const source = join(root, path), destination = join(workspace, path);
+    let info;
+    try { info = await lstat(source); }
+    catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
+      if (!optional) await rm(destination, { force: true });
+      return false;
+    }
+    if (!info.isFile()) throw Error('nonregular_live_source: ' + path);
+    importedBytes += info.size;
+    if (importedBytes > 90 * 1024 * 1024) throw Error('live_source_snapshot_too_large');
+    const resolvedSource = await realpath(source);
+    if (!resolvedSource.startsWith(root + sep)) throw Error('source_outside_repository: ' + path);
+    await mkdir(dirname(destination), { recursive: true });
+    const resolvedDir = await realpath(dirname(destination));
+    if (resolvedDir !== workspace && !resolvedDir.startsWith(workspace + sep)) {
+      throw Error('destination_outside_worktree: ' + path);
+    }
+    await copyFile(source, destination);
+    return true;
+  }
+  for (const path of changedPaths) await mirrorLivePath(path);
+  const stagedCompanions = [];
+  for (const path of companions) {
+    if (await mirrorLivePath(path, true)) stagedCompanions.push(path);
+  }
+  const stageTracked = await run('git', ['add', '-u'], workspace, 45_000);
+  if (!stageTracked.ok) throw Error('cannot_stage_tracked_snapshot: ' + stageTracked.output.slice(-400));
+  if (stagedCompanions.length) {
+    const stageCompanions = await run('git', ['add', '--', ...stagedCompanions], workspace, 45_000);
+    if (!stageCompanions.ok) throw Error('cannot_stage_companion_snapshot: ' + stageCompanions.output.slice(-400));
+  }
+  const staged = await run('git', ['diff', '--cached', '--quiet'], workspace, 45_000);
+  if (staged.exitCode === 1) {
     const snapshot = await run('git', [
       '-c', 'user.name=MMTrade Maintenance', '-c', 'user.email=maintenance@localhost',
       '-c', 'core.hooksPath=/dev/null', '-c', 'commit.gpgsign=false',
       'commit', '--quiet', '-m', 'private temporary live-source snapshot'
     ], workspace, 45_000);
     if (!snapshot.ok) throw Error('cannot_commit_private_source_snapshot: ' + snapshot.output.slice(-600));
-    notes.push('تغییرات ثبت‌نشده tracked در نسخه موقت گنجانده شدند؛ فایل‌های untracked به‌صورت خودکار کپی نمی‌شوند.');
-    await rm(overlayPath, { force: true });
+  } else if (!staged.ok) {
+    throw Error('cannot_check_private_snapshot');
   }
+  notes.push('اسنپ‌شات ایمن: ' + changedPaths.length + ' مسیر tracked و ' + stagedCompanions.length + ' فایل مجاز در Worktree موقت ثبت شد.');
+  if (productionDirty) notes.push('تغییرات عملیاتی سرور دست‌نخورده باقی ماندند؛ سایر فایل‌های untracked کپی نمی‌شوند.');
   const baseline = await run('git', ['rev-parse', 'HEAD'], workspace);
   const report = await inspect();
   report.baselineCommit = baseline.output.trim();
