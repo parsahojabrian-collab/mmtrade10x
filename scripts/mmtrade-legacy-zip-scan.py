@@ -45,7 +45,8 @@ def main(path):
             name_lower = name.lower()
             if name_lower.endswith((".py", ".sh")) and len(result["scripts"]) < 100:
                 result["scripts"].append(name)
-            if not (name_lower.endswith(SOURCE + DIFF) or name_lower.endswith("/plan.json") or name_lower == "plan.json"):
+            # Hash all bounded, non-executable archive members, including STAGED/BOT without extensions.
+            if name_lower.endswith((".py", ".sh", ".env", ".pem", ".key", ".p12")):
                 continue
             data = archive.read(info)
             if len(data) != info.file_size:
