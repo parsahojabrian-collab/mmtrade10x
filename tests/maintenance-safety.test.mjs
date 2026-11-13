@@ -62,3 +62,26 @@ test('integration snapshots uncommitted tracked code without modifying productio
     assert.equal(existsSync(join(f.store, 'worktrees', id)), false);
   } finally { rmSync(f.root, { recursive: true, force: true }); }
 });
+
+
+test('dirty trailing whitespace and a new maintenance module survive private snapshot', () => {
+  const f = fixture();
+  try {
+    f.write('apps/api/src/index.ts', "const trailingWhitespace = true;  \n");
+    f.write('apps/api/src/maintenance-routes.ts', "export const maintenanceReady = true;\n");
+    const original = readFileSync(join(f.root, 'apps/api/src/index.ts'), 'utf8');
+    const state = invoke(f, 'audit');
+    assert.equal(state.state, 'validation_failed'); // Fixture has no dependencies.
+    assert.equal(state.report.productionHasUncommittedTrackedChanges, true);
+    assert.match(state.notes.join('\n'), /Worktree/);
+    const snap = state.report.baselineCommit;
+    assert.equal(execFileSync('git', ['show', snap + ':apps/api/src/index.ts'], {
+      cwd: f.root, encoding: 'utf8'
+    }), original);
+    assert.equal(execFileSync('git', ['show', snap + ':apps/api/src/maintenance-routes.ts'], {
+      cwd: f.root, encoding: 'utf8'
+    }), "export const maintenanceReady = true;\n");
+    assert.equal(readFileSync(join(f.root, 'apps/api/src/index.ts'), 'utf8'), original);
+    assert.equal(existsSync(join(f.store, 'worktrees', id)), false);
+  } finally { rmSync(f.root, { recursive: true, force: true }); }
+});
