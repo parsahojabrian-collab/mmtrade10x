@@ -47,14 +47,18 @@ test('isolated audit inventories patches without changing source', () => {
   } finally { rmSync(f.root, { recursive: true, force: true }); }
 });
 
-test('integration refuses to ignore locally modified tracked code', () => {
+test('integration snapshots uncommitted tracked code without modifying production', () => {
   const f = fixture();
   try {
     f.write('apps/api/src/index.ts', '// uncommitted change\n');
+    const beforeHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: f.root, encoding: 'utf8' }).trim();
     const result = invoke(f, 'integrate');
-    assert.equal(result.state, 'blocked');
-    assert.equal(result.report.reason, 'dirty_production_tree');
+    assert.equal(result.state, 'validation_failed'); // No dependencies installed in fixture.
+    assert.equal(result.report.productionHasUncommittedTrackedChanges, true);
+    assert.notEqual(result.report.baselineCommit, beforeHead);
     assert.equal(result.patchAvailable, false);
     assert.equal(readFileSync(join(f.root, 'apps/api/src/index.ts'), 'utf8'), '// uncommitted change\n');
+    assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: f.root, encoding: 'utf8' }).trim(), beforeHead);
+    assert.equal(existsSync(join(f.store, 'worktrees', id)), false);
   } finally { rmSync(f.root, { recursive: true, force: true }); }
 });
