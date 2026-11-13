@@ -5,9 +5,9 @@ import { join } from 'node:path';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 type OwnerGuard = (request: FastifyRequest, reply: FastifyReply) => Promise<boolean>;
-type JobMode = 'audit' | 'integrate' | 'optimize';
+type JobMode = 'audit' | 'integrate' | 'optimize' | 'legacy';
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MODES = new Set<JobMode>(['audit', 'integrate', 'optimize']);
+const MODES = new Set<JobMode>(['audit', 'integrate', 'optimize', 'legacy']);
 const root = process.cwd();
 const store = join(root, '.mmtrade-maintenance');
 const jobsDir = join(store, 'jobs');
