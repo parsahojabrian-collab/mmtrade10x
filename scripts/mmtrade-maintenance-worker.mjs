@@ -201,6 +201,25 @@ async function main() {
     if (mode === 'optimize') notes.push('تنها حذف importهای دقیقاً یکسان انجام می‌شود؛ بهینه‌سازی رفتاری بدون تست مجاز نیست.');
   }
   delete report.markerInventory;
+  // Audit is a reporting-only operation. Do not run tsc, npm build, tests or
+  // package scripts on the production VPS; failures in unrelated legacy tests
+  // must not obscure a valid read-only inventory.
+  if (mode === 'audit') {
+    notes.push('بررسی سلامت فقط فهرست فایل‌ها و آرشیوهای قدیمی را گزارش کرد؛ Build و Test عمداً اجرا نشدند.');
+    await save({
+      state: 'passed',
+      finishedAt: now(),
+      report,
+      validation: {
+        build: { ok: false, skipped: true, reason: 'audit_read_only' },
+        tests: { ok: false, skipped: true, reason: 'audit_read_only' },
+        diffCheck: { ok: true, skipped: true, reason: 'audit_no_changes' }
+      },
+      changedFiles: [],
+      patchAvailable: false
+    });
+    return;
+  }
   const hasDeps = await stat(join(root, 'node_modules')).then(s => s.isDirectory(), () => false);
   let build = { ok: false, skipped: true, reason: 'node_modules_missing' };
   let tests = { ok: false, skipped: true, reason: 'node_modules_missing' };
