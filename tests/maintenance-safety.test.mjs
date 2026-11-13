@@ -39,7 +39,10 @@ test('isolated audit inventories patches without changing source', () => {
   try {
     const before = readFileSync(join(f.root, 'apps/api/src/index.ts'), 'utf8');
     const result = invoke(f, 'audit');
-    assert.equal(result.state, 'validation_failed'); // No dependencies installed in fixture.
+    assert.equal(result.state, 'passed'); // Audit skips build/tests by design.
+    assert.equal(result.validation.build.reason, 'audit_read_only');
+    assert.equal(result.validation.tests.reason, 'audit_read_only');
+    assert.equal(result.patchAvailable, false);
     assert.equal(result.report.markerCount, 1);
     assert.equal(result.patchAvailable, false);
     assert.equal(readFileSync(join(f.root, 'apps/api/src/index.ts'), 'utf8'), before);
@@ -71,7 +74,8 @@ test('dirty trailing whitespace and a new maintenance module survive private sna
     f.write('apps/api/src/maintenance-routes.ts', "export const maintenanceReady = true;\n");
     const original = readFileSync(join(f.root, 'apps/api/src/index.ts'), 'utf8');
     const state = invoke(f, 'audit');
-    assert.equal(state.state, 'validation_failed'); // Fixture has no dependencies.
+    assert.equal(state.state, 'passed');
+    assert.equal(state.validation.build.reason, 'audit_read_only');
     assert.equal(state.report.productionHasUncommittedTrackedChanges, true);
     assert.match(state.notes.join('\n'), /Worktree/);
     const snap = state.report.baselineCommit;
