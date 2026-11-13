@@ -13,6 +13,7 @@ import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const MAX_SOURCE_FILES = 80;
+const MAX_CANDIDATES = 120;
 const MAX_TOTAL_SOURCE_BYTES = 90 * 1024 * 1024;
 const MAX_ARCHIVE = 24 * 1024 * 1024;
 const MAX_PATCH = 2 * 1024 * 1024;
@@ -37,8 +38,15 @@ function normalizePath(value) {
 function affectedPaths(patch) {
   if (typeof patch !== 'string' || !patch || Buffer.byteLength(patch) > MAX_PATCH) return null;
   if (/\b(?:GIT binary patch|Binary files .* differ)\b/.test(patch)) return null;
+  if (/^(?:new file mode|deleted file mode|old mode|new mode)\s+(?:120000|160000)\b/m.test(patch)) return null;
+  if (/^(?:rename from|rename to|copy from|copy to)\s/m.test(patch) || patch.includes('\u0000')) return null;
   const matches = [...patch.matchAll(/^diff --git a\/([^\r\n]+) b\/([^\r\n]+)\s*$/gm)];
   if (!matches.length || matches.length > 80) return null;
+  // A second unified-diff section without a matching diff --git header must not bypass path validation.
+  const headers = patch.match(/^diff --git /gm) || [];
+  const oldFiles = patch.match(/^--- (?:a\/|\/dev\/null)/gm) || [];
+  const newFiles = patch.match(/^\+\+\+ (?:b\/|\/dev\/null)/gm) || [];
+  if (headers.length !== matches.length || oldFiles.length !== matches.length || newFiles.length !== matches.length) return null;
   const paths = [];
   for (const match of matches) {
     const from = normalizePath(match[1]), to = normalizePath(match[2]);
@@ -117,6 +125,7 @@ async function prepareCandidates(root, store) {
   const selection = await collectSources(root, store);
   const candidates = [], metadata = [], fingerprints = new Set();
   for (const source of selection.sources) {
+    if (candidates.length >= MAX_CANDIDATES) { selection.truncated = true; break; }
     const ext = source.name.split('.').pop().toLowerCase();
     if (ext === 'sh' || ext === 'py') {
       metadata.push(resultLine(source.name, 'installer', 'requires_review', 'اسکریپت نصب فقط شناسایی شد و اجرا نمی‌شود.'));
