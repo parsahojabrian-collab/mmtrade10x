@@ -1,0 +1,44 @@
+{
+  "domain": "gsap",
+  "query": "subtle hover modal drawer reduced motion",
+  "file": "motion.csv",
+  "count": 3,
+  "results": [
+    {
+      "Category": "Carousel / Auto-Rotation",
+      "Intensity Tier": "Standard",
+      "Trigger": "timer / focus / hover / visibility",
+      "Duration": "user-controlled or stopped",
+      "Easing": "none",
+      "GSAP Snippet": "const reduced = matchMedia('(prefers-reduced-motion: reduce)'); let timer; let onscreen = true; const stop = () => { clearInterval(timer); timer = undefined; }; const start = () => { stop(); if (!reduced.matches && !document.hidden && onscreen) timer = setInterval(nextSlide, 5000); }; const sync = () => reduced.matches ? (stop(), showSlide(activeIndex)) : start(); const observer = new IntersectionObserver(([entry]) => { onscreen = entry.isIntersecting; onscreen ? sync() : stop(); }); const onVisibility = () => document.hidden ? stop() : sync(); observer.observe(root); root.addEventListener('focusin', stop); root.addEventListener('pointerenter', stop); document.addEventListener('visibilitychange', onVisibility); reduced.addEventListener('change', sync); sync(); return () => { stop(); observer.disconnect(); root.removeEventListener('focusin', stop); root.removeEventListener('pointerenter', stop); document.removeEventListener('visibilitychange', onVisibility); reduced.removeEventListener('change', sync); };",
+      "Framework Notes": "Use one cancellable timer; pause on focus, hover, offscreen, or hidden visibility; remove every listener and clear the timer on unmount; reduced motion stops rotation and renders the active slide as the final state",
+      "Do": "Provide previous/next and play/pause controls; announce the current slide without moving focus",
+      "Don't": "Don't auto-advance without a visible stop control or continue while focus is inside",
+      "Performance Notes": "IntersectionObserver stops animation offscreen; visibilitychange stops hidden-tab work; cleanup disconnects the observer and clears the timer and listeners"
+    },
+    {
+      "Category": "Loading / Skeleton",
+      "Intensity Tier": "Subtle",
+      "Trigger": "on mount / async wait",
+      "Duration": "1200-1600ms loop",
+      "Easing": "sine.inOut",
+      "GSAP Snippet": "const tween = gsap.to('.skeleton', { backgroundPosition: '200% 0', duration: 1.4, ease: 'sine.inOut', repeat: -1 }); return () => tween.kill();",
+      "Framework Notes": "Kill the tween when content mounts or the component unmounts; pause it when its IntersectionObserver reports offscreen or document.visibilityState is hidden; when '(prefers-reduced-motion: reduce)' matches kill the tween and set the final static skeleton state",
+      "Do": "Use a CSS gradient background-position sweep rather than opacity pulsing; reads as 'loading' more clearly",
+      "Don't": "Don't run more than one shimmer loop per skeleton group; sync them under one timeline so the wave reads as a single unit",
+      "Performance Notes": "repeat: -1 tweens are cheap but must be explicitly killed on unmount or they leak in SPA route changes"
+    },
+    {
+      "Category": "Hover Micro-interaction",
+      "Intensity Tier": "Subtle",
+      "Trigger": "hover",
+      "Duration": "150-200ms",
+      "Easing": "power1.out",
+      "GSAP Snippet": "gsap.to(el, { y: -1, opacity: 0.9, duration: 0.15, ease: 'power1.out' });",
+      "Framework Notes": "Bind on mouseenter/mouseleave; in React wrap in a ref + useEffect (or onMouseEnter/onMouseLeave props directly calling gsap.to); Use matchMedia('(prefers-reduced-motion: reduce)') to skip non-essential motion and render the final state immediately",
+      "Do": "Keep displacement under 2px so it reads as feedback not motion",
+      "Don't": "Don't animate layout-affecting props (width/height/margin) on hover",
+      "Performance Notes": "Runs on transform/opacity only so it stays on the compositor thread"
+    }
+  ]
+}

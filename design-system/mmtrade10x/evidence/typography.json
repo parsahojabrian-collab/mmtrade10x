@@ -1,0 +1,44 @@
+{
+  "domain": "typography",
+  "query": "enterprise finance readable admin dashboard",
+  "file": "typography.csv",
+  "count": 3,
+  "results": [
+    {
+      "Font Pairing Name": "Dashboard Data",
+      "Category": "Mono + Sans",
+      "Heading Font": "Fira Code",
+      "Body Font": "Fira Sans",
+      "Mood/Style Keywords": "dashboard, data, analytics, code, technical, precise",
+      "Best For": "Dashboards, analytics, data visualization, admin panels",
+      "Google Fonts URL": "https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap",
+      "CSS Import": "@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');",
+      "Tailwind Config": "fontFamily: { mono: ['Fira Code', 'monospace'], sans: ['Fira Sans', 'sans-serif'] }",
+      "Notes": "Fira family cohesion. Code for data, Sans for labels."
+    },
+    {
+      "Font Pairing Name": "Enterprise SaaS Mobile (Plus Jakarta Sans)",
+      "Category": "Geometric Sans (Single Family)",
+      "Heading Font": "Plus Jakarta Sans",
+      "Body Font": "Plus Jakarta Sans",
+      "Mood/Style Keywords": "enterprise, saas, b2b, professional, indigo, modern, approachable, legible, ios dynamic type, android scaling",
+      "Best For": "B2B SaaS apps, productivity tools, government and finance mobile apps, admin dashboards, enterprise onboarding",
+      "Google Fonts URL": "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400",
+      "CSS Import": "@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');",
+      "Tailwind Config": "fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }",
+      "Notes": "Single-family system: Plus Jakarta Sans balances professional authority with mobile approachability. Weight scale: ExtraBold 800 for screen titles/hero (line height 1.1–1.2). Bold 700 for section headers. SemiBold 600 for card titles and buttons. Regular 400 for body text (line height 1.4–1.5). Must support iOS Dynamic Type and Android font scaling — never hardcode pixel sizes without respecting system font scale. Button text: uppercase, letterSpacing 0.5. Caption: 12px Regular. Muted: Slate 500 #64748B."
+    },
+    {
+      "Font Pairing Name": "Corporate Trust",
+      "Category": "Sans + Sans",
+      "Heading Font": "Lexend",
+      "Body Font": "Source Sans 3",
+      "Mood/Style Keywords": "corporate, trustworthy, accessible, readable, professional, clean",
+      "Best For": "Enterprise, government, healthcare, finance, accessibility-focused",
+      "Google Fonts URL": "https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap",
+      "CSS Import": "@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');",
+      "Tailwind Config": "fontFamily: { heading: ['Lexend', 'sans-serif'], body: ['Source Sans 3', 'sans-serif'] }",
+      "Notes": "Lexend designed for readability. Excellent accessibility."
+    }
+  ]
+}

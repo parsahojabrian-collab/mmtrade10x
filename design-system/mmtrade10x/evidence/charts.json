@@ -1,0 +1,56 @@
+{
+  "domain": "chart",
+  "query": "financial trading OHLC trend comparison",
+  "file": "charts.csv",
+  "count": 3,
+  "results": [
+    {
+      "Data Type": "Stock / Trading OHLC",
+      "Keywords": "stock, trading, ohlc, candlestick, finance, price, volume, accessible chart, keyboard accessible chart",
+      "Best Chart Type": "Candlestick Chart",
+      "Secondary Options": "OHLC Bar, Heikin-Ashi",
+      "When to Use": "Financial time-series with Open/High/Low/Close data; trading or investment product context only",
+      "When NOT to Use": "Non-financial audience; no OHLC data available (use line chart); accessibility-first context",
+      "Data Volume Threshold": "Real-time: Canvas required. Historical: paginate by time range. Max 500 candles visible at once",
+      "Color Guidance": "Bullish: #26A69A. Bearish: #EF5350. Volume bars: 40% opacity below. Body fill vs hollow for OHLC style",
+      "Accessibility Grade": "deprecated: use Accessibility Risk",
+      "Accessibility Risk": "risk:conditional",
+      "Accessibility Notes": "Use filled versus hollow candles and OHLC text values; bullish/bearish meaning cannot depend on color. Do not rely on color alone.",
+      "A11y Fallback": "Sortable OHLC table plus daily-change summary. Keyboard: focus reveals candle values; +/- buttons zoom; Reset restores range; live updates do not steal focus.",
+      "Library Recommendation": "Lightweight Charts (TradingView), ApexCharts",
+      "Interactive Level": "Real-time + Hover + Zoom"
+    },
+    {
+      "Data Type": "Trend Over Time",
+      "Keywords": "trend, time-series, line, growth, timeline, progress, accessible chart, keyboard accessible chart",
+      "Best Chart Type": "Line Chart",
+      "Secondary Options": "Area Chart, Smooth Area",
+      "When to Use": "Data has a time axis; user needs to observe rise/fall trends or rate of change over a continuous period",
+      "When NOT to Use": "Fewer than 4 data points (use stat card); more than 6 series (visual noise); no time dimension exists",
+      "Data Volume Threshold": "<1000 pts: SVG; ≥1000 pts: Canvas + downsampling; >10000: aggregate to intervals",
+      "Color Guidance": "Primary: #0080FF. Multiple series: distinct colors + distinct line styles. Fill: 20% opacity",
+      "Accessibility Grade": "deprecated: use Accessibility Risk",
+      "Accessibility Risk": "risk:low",
+      "Accessibility Notes": "Use solid, dashed, and dotted line styles plus direct series labels; never distinguish series by hue alone.",
+      "A11y Fallback": "Visible data table plus concise trend summary. Keyboard: focus reveals hover values; +/- buttons zoom; Reset restores the full range.",
+      "Library Recommendation": "Chart.js, Recharts, ApexCharts",
+      "Interactive Level": "Hover + Zoom"
+    },
+    {
+      "Data Type": "Multi-Variable Comparison",
+      "Keywords": "radar, spider, multi-variable, attributes, dimensions, comparison, accessible chart, keyboard accessible chart",
+      "Best Chart Type": "Radar / Spider Chart",
+      "Secondary Options": "Parallel Coordinates, Grouped Bar",
+      "When to Use": "Comparing multiple entities across the same fixed set of attributes (e.g., product feature comparison)",
+      "When NOT to Use": "Axes > 8 (unreadable); values need precise comparison (use grouped bar); audience unfamiliar with radar charts",
+      "Data Volume Threshold": "2–3 datasets maximum per chart; 5–8 axes; beyond 8 axes switch to parallel coordinates",
+      "Color Guidance": "Single dataset: #0080FF at 20% fill. Multiple: distinct hues with 30% fill. Border: full opacity",
+      "Accessibility Grade": "deprecated: use Accessibility Risk",
+      "Accessibility Risk": "risk:conditional",
+      "Accessibility Notes": "Use line styles, point shapes, and direct series labels in addition to color. Do not rely on color alone.",
+      "A11y Fallback": "Raw data table and grouped-bar alternative plus comparison summary. Keyboard: focus reveals values; buttons toggle series.",
+      "Library Recommendation": "Chart.js, Recharts, ApexCharts",
+      "Interactive Level": "Hover + Toggle"
+    }
+  ]
+}
