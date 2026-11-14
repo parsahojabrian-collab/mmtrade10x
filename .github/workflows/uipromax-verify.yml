@@ -1,0 +1,29 @@
+name: Verify UI UX Pro Max implementation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/api/public/admin.html'
+      - 'apps/api/public/team.html'
+      - 'public/miniapp/p74/studio/uipromax-*'
+      - 'design-system/mmtrade10x/**'
+      - 'tests/uipromax-admin.test.mjs'
+      - '.github/workflows/uipromax-verify.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax
+        run: node --check public/miniapp/p74/studio/uipromax-admin.js
+      - name: Pro Max UI regression tests
+        run: node --test tests/uipromax-admin.test.mjs
