@@ -51,6 +51,36 @@ test('official generated design system and Persian project overrides are retaine
   assert.ok(pages.length >= 12, `expected at least 12 page overrides, got ${pages.length}`);
 });
 
+test('Mini App primary journeys load page-scoped Pro Max styles', () => {
+  const pages = [
+    ['public/miniapp/index.html','uipromax-home'],
+    ['public/miniapp/p74/learning/academy-home.html','uipromax-academy'],
+    ['public/miniapp/p74/eplanet/index.html','uipromax-eplanet'],
+    ['public/miniapp/p74/support/support.html','uipromax-support'],
+    ['public/miniapp/p74/copytrade-academy/index.html','uipromax-copytrade'],
+    ['public/miniapp/p74/profile/profile.html','uipromax-profile']
+  ];
+  for (const [path, bodyClass] of pages) {
+    const html = readFileSync(path, 'utf8');
+    assert.match(html, new RegExp(bodyClass));
+    assert.match(html, /uipromax-miniapp\\.css\\?v=UIPROMAX_REAL_R1/);
+  }
+  const miniCss = readFileSync('public/miniapp/p74/studio/uipromax-miniapp.css','utf8');
+  for (const token of ['.home-hero','.academy-modal-panel','.step-card','.glass-card','.notice-card','#p77-app']) {
+    assert.ok(miniCss.includes(token), `missing Mini App page rule ${token}`);
+  }
+});
+
+test('Visual Studio loads its dedicated workbench stylesheet', () => {
+  const html = readFileSync('public/miniapp/p74/studio/index.html','utf8');
+  const studioCss = readFileSync('public/miniapp/p74/studio/uipromax-studio.css','utf8');
+  assert.match(html,/class="uipromax-studio"/);
+  assert.match(html,/uipromax-studio\\.css\\?v=UIPROMAX_REAL_R1/);
+  assert.match(studioCss,/\.workspace/);
+  assert.match(studioCss,/\.spatial-panel/);
+  assert.match(studioCss,/prefers-reduced-motion/);
+});
+
 test('new CSS files have balanced block delimiters', () => {
   for (const [name, css] of [['admin',adminCss],['team',teamCss]]) {
     const opens = (css.match(/\{/g)||[]).length;
