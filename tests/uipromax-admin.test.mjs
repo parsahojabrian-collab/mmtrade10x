@@ -63,7 +63,7 @@ test('Mini App primary journeys load page-scoped Pro Max styles', () => {
   for (const [path, bodyClass] of pages) {
     const html = readFileSync(path, 'utf8');
     assert.match(html, new RegExp(bodyClass));
-    assert.match(html, /uipromax-miniapp\\.css\\?v=UIPROMAX_REAL_R1/);
+    assert.ok(html.includes('uipromax-miniapp.css?v=UIPROMAX_REAL_R1'));
   }
   const miniCss = readFileSync('public/miniapp/p74/studio/uipromax-miniapp.css','utf8');
   for (const token of ['.home-hero','.academy-modal-panel','.step-card','.glass-card','.notice-card','#p77-app']) {
@@ -75,7 +75,7 @@ test('Visual Studio loads its dedicated workbench stylesheet', () => {
   const html = readFileSync('public/miniapp/p74/studio/index.html','utf8');
   const studioCss = readFileSync('public/miniapp/p74/studio/uipromax-studio.css','utf8');
   assert.match(html,/class="uipromax-studio"/);
-  assert.match(html,/uipromax-studio\\.css\\?v=UIPROMAX_REAL_R1/);
+  assert.ok(html.includes('uipromax-studio.css?v=UIPROMAX_REAL_R1'));
   assert.match(studioCss,/\.workspace/);
   assert.match(studioCss,/\.spatial-panel/);
   assert.match(studioCss,/prefers-reduced-motion/);
