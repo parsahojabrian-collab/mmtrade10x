@@ -34,7 +34,7 @@ class DeployHashTests(unittest.TestCase):
     def test_new_files_are_ready_but_unexpected_existing_files_block(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "new.css"
-            new = hashlib.sha1(b"blob 3\nnew").hexdigest()
+            new = hashlib.sha1(b"blob 3\0new").hexdigest()
             row = {"before": None, "after": new}
             self.assertEqual(DEPLOY.state(path, row), "READY_NEW_FILE")
             path.write_bytes(b"bad")
