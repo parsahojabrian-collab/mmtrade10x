@@ -5581,54 +5581,173 @@ VIEWS.pageFiles = async function(){
 
 if(token)boot();
 </script>
-<section id="tenx-real-bot-manager" class="hide" style="padding:20px;margin:20px 0;border:1px solid #8885;border-radius:14px">
-<h2>مدیریت ربات تلگرام</h2>
-<div id="tenx-bot-status">در حال دریافت وضعیت...</div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0">
-<button type="button" onclick="tenxBotAction('start')">روشن کردن</button>
-<button type="button" onclick="tenxBotAction('stop')">خاموش کردن</button>
-<button type="button" onclick="tenxBotAction('restart')">ری‌استارت</button>
-<button type="button" onclick="tenxBotStatus()">به‌روزرسانی وضعیت</button>
-<button type="button" onclick="tenxBotLogs()">نمایش لاگ‌ها</button>
-</div>
 
+<style id="mmtrade-bot-uipro-max">
+/* Scoped design tokens: never modify shared admin or Mini App components. */
+#tenx-real-bot-manager.bpm-manager{
+ --bpm-bg:#081522;--bpm-surface:#101f2e;--bpm-raised:#15283a;--bpm-line:#294254;
+ --bpm-text:#edf7fb;--bpm-muted:#9db1c1;--bpm-accent:#46e2b3;--bpm-blue:#62b5ff;
+ background:radial-gradient(ellipse at 100% 0%,#123b46 0%,transparent 34%),var(--bpm-bg);
+ color:var(--bpm-text);border:1px solid #2a4355;border-radius:24px;
+ padding:clamp(14px,2.5vw,30px);margin:18px 0 32px;min-width:0;
+ font-family:Vazirmatn,Tahoma,sans-serif;line-height:1.75;overflow:hidden;
+}
+#tenx-real-bot-manager *{box-sizing:border-box}
+#tenx-real-bot-manager .bpm-hero{padding:clamp(14px,2vw,22px) clamp(10px,2vw,22px) 28px}
+#tenx-real-bot-manager .bpm-kicker{font:700 12px/1.5 inherit;letter-spacing:1.6px;color:var(--bpm-accent);direction:ltr;text-align:right}
+#tenx-real-bot-manager .bpm-spark{font-size:22px;vertical-align:middle}
+#tenx-real-bot-manager .bpm-hero-divider{color:#728a9a;margin:0 6px}
+#tenx-real-bot-manager .bpm-hero-inner{display:flex;align-items:center;justify-content:space-between;gap:20px}
+#tenx-real-bot-manager .bpm-hero h2{margin:10px 0;font-size:clamp(23px,3vw,35px);font-weight:800;line-height:1.45;letter-spacing:-.5px}
+#tenx-real-bot-manager .bpm-hero p{color:var(--bpm-muted);font-size:14px;margin:0;max-width:690px}
+#tenx-real-bot-manager .bpm-hero-mark{font:900 clamp(36px,6vw,74px)/1 Arial,sans-serif;letter-spacing:-5px;white-space:nowrap;color:#e8f9ff;opacity:.85;direction:ltr}
+#tenx-real-bot-manager .bpm-hero-mark span{color:var(--bpm-accent)}
+#tenx-real-bot-manager .bpm-panel{background:linear-gradient(145deg,var(--bpm-surface),#0d1b28);border:1px solid var(--bpm-line);border-radius:18px;padding:clamp(16px,2.5vw,26px);margin-bottom:16px;min-width:0;box-shadow:0 8px 28px #0002}
+#tenx-real-bot-manager .bpm-heading{display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+#tenx-real-bot-manager .bpm-heading h3{margin:4px 0 0;font-size:clamp(17px,2vw,21px);font-weight:750}
+#tenx-real-bot-manager .bpm-heading p{margin:5px 0 0;color:var(--bpm-muted);font-size:13px}
+#tenx-real-bot-manager .bpm-step{font-size:11px;color:var(--bpm-accent);font-weight:700;letter-spacing:.3px}
+#tenx-real-bot-manager .bpm-label{font:600 11px/1.3 Arial,sans-serif;direction:ltr;background:#173443;color:#a8f3da;border:1px solid #2b675c;padding:8px 10px;border-radius:99px;white-space:nowrap}
+#tenx-real-bot-manager .bpm-service-state{background:#0b2630;border:1px solid #316a68;border-radius:12px;padding:14px 16px;color:#c7ffeb;min-height:50px;font-weight:600;margin-bottom:18px;overflow-wrap:anywhere}
+#tenx-real-bot-manager .bpm-service-state::before{content:"●";color:var(--bpm-accent);margin-left:9px;font-size:11px}
+#tenx-real-bot-manager .bpm-action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+#tenx-real-bot-manager .bpm-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 15px;background:var(--bpm-raised);color:var(--bpm-text);border:1px solid #39566a;border-radius:11px;font-weight:700;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
+#tenx-real-bot-manager .bpm-btn:hover{background:#234155;border-color:#6b95ad;transform:translateY(-1px)}
+#tenx-real-bot-manager .bpm-btn:focus-visible,#tenx-real-bot-manager input:focus-visible,#tenx-real-bot-manager textarea:focus-visible,#tenx-real-bot-manager select:focus-visible{outline:3px solid var(--bpm-accent);outline-offset:2px}
+#tenx-real-bot-manager .bpm-btn-primary{background:linear-gradient(125deg,#25bb92,#40dbb2);border-color:#4bdbb5;color:#05241d}
+#tenx-real-bot-manager .bpm-btn-primary:hover{background:#7ef3d0;border-color:#9ef8df}
+#tenx-real-bot-manager .bpm-btn-danger{background:#3a222d;color:#ffbec5;border-color:#84414f}
+#tenx-real-bot-manager .bpm-btn-danger:hover{background:#61313f}
+#tenx-real-bot-manager .bpm-btn-add{margin-top:14px;width:100%;border:1px dashed #4a9e95;color:var(--bpm-accent);background:#15343b}
+#tenx-real-bot-manager .bpm-feedback{margin-top:10px;min-height:22px;color:#c6e6fd;overflow-wrap:anywhere}
+#tenx-real-bot-manager .bpm-switch-row{display:flex;align-items:start;gap:14px;background:#122b37;border:1px solid #2d5a5c;border-radius:12px;padding:15px;margin:14px 0;cursor:pointer}
+#tenx-real-bot-manager .bpm-switch-row input{flex:0 0 20px;width:20px;height:20px;margin:3px 0;accent-color:var(--bpm-accent)}
+#tenx-real-bot-manager .bpm-switch-row strong{display:block;font-size:14px}
+#tenx-real-bot-manager .bpm-switch-row small{display:block;color:var(--bpm-muted);margin-top:3px;font-size:12px}
+#tenx-real-bot-manager .bpm-help{border-right:3px solid #46e2b3;background:#102b35;padding:12px;color:#bbd6dd;border-radius:8px;font-size:12px;margin:10px 0 20px}
+#tenx-real-bot-manager .bpm-field{display:block;margin-top:20px}
+#tenx-real-bot-manager .bpm-field span{font-weight:700;display:block}
+#tenx-real-bot-manager .bpm-field small{color:var(--bpm-muted);display:block;margin:4px 0 10px}
+#tenx-real-bot-manager .bpm-field code{background:#1d414c;padding:2px 6px;border-radius:5px;color:#9fffe0}
+#tenx-real-bot-manager input:not([type=checkbox]),#tenx-real-bot-manager select,#tenx-real-bot-manager textarea{background:#0b1926;color:var(--bpm-text);border:1px solid #365369;border-radius:10px;min-height:42px;padding:9px 12px;max-width:100%;width:100%}
+#tenx-real-bot-manager textarea{min-height:100px;resize:vertical;line-height:1.8}
+#tenx-real-bot-manager input::placeholder,#tenx-real-bot-manager textarea::placeholder{color:#7393a6}
+#tenx-real-bot-manager .bpm-list{display:grid;gap:12px}
+#tenx-real-bot-manager .bpm-list>.card,#tenx-real-bot-manager #tbc-advanced-config{background:#132839;border:1px solid #315064;border-radius:14px;box-shadow:none;color:var(--bpm-text);min-width:0}
+#tenx-real-bot-manager .bpm-list>.card>b{display:block;padding-bottom:8px;color:#b3f1dd;overflow-wrap:anywhere}
+#tenx-real-bot-manager .bpm-list .card label,#tenx-real-bot-manager .bpm-list .card label span{color:var(--bpm-text)}
+#tenx-real-bot-manager .bpm-list .card label span{color:#b7ccd6;font-weight:600}
+#tenx-real-bot-manager .bpm-list .card button.bad{background:#542e3a;color:#ffe1e5;border:1px solid #814555;min-height:40px;border-radius:10px}
+#tenx-real-bot-manager #tbc-advanced-config{margin:0 0 16px!important;padding:22px!important}
+#tenx-real-bot-manager #tbc-advanced-config h3{margin-top:0;color:var(--bpm-accent)}
+#tenx-real-bot-manager .bpm-save-bar{position:sticky;bottom:0;z-index:4;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;background:#122d37f4;backdrop-filter:blur(14px);border:1px solid #3b746f;border-radius:15px;padding:14px;margin-bottom:18px;box-shadow:0 12px 36px #0005}
+#tenx-real-bot-manager .bpm-save-bar strong,#tenx-real-bot-manager .bpm-save-bar small{display:block}
+#tenx-real-bot-manager .bpm-save-bar small{color:var(--bpm-muted);font-size:11px}
+#tenx-real-bot-manager .bpm-save-actions{display:flex;gap:8px;flex-wrap:wrap}
+#tenx-real-bot-manager #tbc-message{flex-basis:100%;font-size:12px;color:#a8f3da;overflow-wrap:anywhere}
+#tenx-real-bot-manager .bpm-log-panel pre{direction:ltr;text-align:left;background:#07121d;color:#aed9db;border:1px solid #29485a;border-radius:12px;padding:16px;max-height:400px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;margin:0}
+#tenx-real-bot-manager .bpm-log-panel pre:empty::before{content:"برای نمایش گزارش‌های اخیر، روی «مشاهده لاگ‌ها» بزن.";color:#7393a6}
+@media(max-width:620px){
+ #tenx-real-bot-manager.bpm-manager{border-radius:15px;margin:10px 0 24px}
+ #tenx-real-bot-manager .bpm-hero-mark{display:none}
+ #tenx-real-bot-manager .bpm-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #tenx-real-bot-manager .bpm-save-actions,#tenx-real-bot-manager .bpm-save-actions .bpm-btn{width:100%}
+ #tenx-real-bot-manager .bpm-save-bar{position:static}
+}
+@media(max-width:380px){#tenx-real-bot-manager .bpm-action-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#tenx-real-bot-manager .bpm-btn{transition:none}#tenx-real-bot-manager .bpm-btn:hover{transform:none}}
+</style>
 
-<div id="tenx-bot-config" class="hide" style="margin-top:22px;padding-top:18px;border-top:1px solid #8885">
-<h3>تنظیمات ربات تلگرام</h3>
-<div style="margin:12px 0;padding:14px;border:1px solid #4a8;border-radius:12px">
-<label><input id="tbc-miniapp-only" type="checkbox"> حالت فقط مینی‌اپ — خاموش‌کردن تمام کیبورد ربات</label>
-<p style="margin:8px 0 0">با فعال‌کردن این گزینه، دکمه‌های ثبت‌نام، آکادمی، پشتیبانی و منوی سفارشی در ربات اجرا نمی‌شوند و فقط دکمه ورود به مینی‌اپ نمایش داده می‌شود. گزینه‌های منو برای استفاده دوباره حفظ می‌شوند.</p>
-<p class="mut">ابتدا لینک HTTPS مینی‌اپ را در تنظیمات اصلی ثبت کنید. تغییر حداکثر ظرف ۱۰ ثانیه به ربات می‌رسد و کیبورد قبلی پس از پیام بعدی کاربر جمع می‌شود. ثبت‌نام تلفنی برای بخش‌های نیازمند آن همچنان لازم است؛ کاربران جدید در این حالت از کیبورد ربات ثبت‌نام نمی‌کنند.</p>
-</div>
-<label><input id="tbc-enabled" type="checkbox" checked> فعال بودن تنظیمات پیام و منو</label>
-<div style="margin:12px 0">
-<label>پیام خوشامدگویی (متغیر {name} قابل استفاده است)</label>
-<textarea id="tbc-welcome" rows="4" style="width:100%;display:block"></textarea>
-</div>
-<hr>
-<h3>دکمه‌های داخلی</h3>
-<p>شناسه دکمه‌ها ثابت است؛ عنوان، ترتیب و فعال بودن قابل تغییر است.</p>
-<div id="tbc-buttons-list"></div>
-<hr>
-<h3>پاسخ‌های خودکار</h3>
-<p>با دریافت کلمه کلیدی، پاسخ مربوط ارسال می‌شود.</p>
-<div id="tbc-replies-list"></div>
-<button type="button" class="sec" onclick="tenxBotAddReply()">+ افزودن پاسخ خودکار</button>
-<hr>
-<h3>منوی سفارشی</h3>
-<p>برای هر عنوان، متن پاسخ دلخواه تعریف کن.</p>
-<div id="tbc-menu-list"></div>
-<button type="button" class="sec" onclick="tenxBotAddMenu()">+ افزودن گزینه منو</button>
-<hr>
-<div class="row" style="margin-top:18px">
-<button type="button" onclick="tenxBotSaveConfig()">ذخیره همه تنظیمات</button>
-<button type="button" class="sec" onclick="tenxBotLoadConfig()">بارگذاری مجدد</button>
-<span id="tbc-message" role="status"></span>
-</div>
-</div>
+<section id="tenx-real-bot-manager" class="hide bpm-manager" aria-labelledby="bpm-title">
+  <div class="bpm-hero">
+    <div class="bpm-kicker"><span class="bpm-spark">✦</span> MMTRADE 10X <span class="bpm-hero-divider">/</span> BOT CONTROL</div>
+    <div class="bpm-hero-inner">
+      <div>
+        <h2 id="bpm-title">مرکز مدیریت ربات تلگرام</h2>
+        <p>کنترل سرویس، طراحی منوها، پاسخ‌های هوشمند و محتوای ربات از یک فضای یکپارچه.</p>
+      </div>
+      <div class="bpm-hero-mark" aria-hidden="true">10<span>X</span></div>
+    </div>
+  </div>
 
-<pre id="tenx-bot-logs" style="white-space:pre-wrap;direction:ltr;text-align:left;max-height:400px;overflow:auto"></pre>
-<div id="tenx-bot-message" role="status"></div>
+  <div class="bpm-panel bpm-service">
+    <div class="bpm-heading">
+      <div><span class="bpm-step">01 / وضعیت سرویس</span><h3>کنترل عملیاتی ربات</h3></div>
+      <span class="bpm-label">Telegram Bot</span>
+    </div>
+    <div id="tenx-bot-status" class="bpm-service-state" role="status" aria-live="polite">در حال دریافت وضعیت...</div>
+    <div class="bpm-action-grid">
+      <button type="button" class="bpm-btn bpm-btn-primary" onclick="tenxBotAction('start')">▶ روشن کردن</button>
+      <button type="button" class="bpm-btn bpm-btn-danger" onclick="tenxBotAction('stop')">■ خاموش کردن</button>
+      <button type="button" class="bpm-btn" onclick="tenxBotAction('restart')">↻ راه‌اندازی مجدد</button>
+      <button type="button" class="bpm-btn" onclick="tenxBotStatus()">⟳ بروزرسانی وضعیت</button>
+      <button type="button" class="bpm-btn" onclick="tenxBotLogs()">≡ مشاهده لاگ‌ها</button>
+    </div>
+    <div id="tenx-bot-message" class="bpm-feedback" role="status" aria-live="polite"></div>
+  </div>
+
+  <div id="tenx-bot-config" class="hide bpm-config">
+    <div class="bpm-panel">
+      <div class="bpm-heading">
+        <div><span class="bpm-step">02 / حالت اجرا</span><h3>رفتار و نمایش ربات</h3></div>
+        <span class="bpm-label">Configuration</span>
+      </div>
+      <label class="bpm-switch-row">
+        <input id="tbc-miniapp-only" type="checkbox">
+        <span><strong>حالت فقط مینی‌اپ</strong><small>تمام کیبوردهای ربات غیرفعال و ورود از طریق مینی‌اپ انجام می‌شود.</small></span>
+      </label>
+      <p class="bpm-help">قبل از فعال‌سازی، لینک HTTPS مینی‌اپ را در تنظیمات اصلی ثبت کن. تنظیمات حداکثر ظرف ۱۰ ثانیه در ربات اعمال می‌شوند. کاربران جدید در این حالت ثبت‌نام تلفنی را از طریق منوی ربات انجام نمی‌دهند.</p>
+      <label class="bpm-switch-row">
+        <input id="tbc-enabled" type="checkbox" checked>
+        <span><strong>فعال بودن پیام‌ها و منوی سفارشی</strong><small>پاسخ‌های خودکار و گزینه‌های اختصاصی مدیریت‌شده را فعال نگه دار.</small></span>
+      </label>
+      <label class="bpm-field"><span>متن خوشامدگویی</span>
+        <small>با نوشتن <code>{name}</code>، نام کاربر در متن جایگزین می‌شود.</small>
+        <textarea id="tbc-welcome" rows="4" placeholder="پیام خوشامدگویی MMTrade10X را بنویس..."></textarea>
+      </label>
+    </div>
+
+    <div class="bpm-panel">
+      <div class="bpm-heading">
+        <div><span class="bpm-step">03 / ناوبری</span><h3>دکمه‌های داخلی ربات</h3><p>عنوان، ترتیب و فعال بودن هر دکمه را مدیریت کن. شناسه‌های فنی ثابت می‌مانند.</p></div>
+        <span class="bpm-label">۹ دکمه</span>
+      </div>
+      <div id="tbc-buttons-list" class="bpm-list"></div>
+    </div>
+
+    <div class="bpm-panel">
+      <div class="bpm-heading">
+        <div><span class="bpm-step">04 / اتوماسیون</span><h3>پاسخ‌های خودکار</h3><p>برای کلمه‌های کلیدی، پاسخ متنی اختصاصی تعریف کن.</p></div>
+        <span class="bpm-label">Auto Replies</span>
+      </div>
+      <div id="tbc-replies-list" class="bpm-list"></div>
+      <button type="button" class="bpm-btn bpm-btn-add" onclick="tenxBotAddReply()">＋ افزودن پاسخ خودکار</button>
+    </div>
+
+    <div class="bpm-panel">
+      <div class="bpm-heading">
+        <div><span class="bpm-step">05 / محتوا</span><h3>منوهای سفارشی</h3><p>متن، تصویر، ویدئو، لینک خارجی یا مقصد آکادمی برای هر گزینه تعیین کن.</p></div>
+        <span class="bpm-label">Custom Menu</span>
+      </div>
+      <div id="tbc-menu-list" class="bpm-list"></div>
+      <button type="button" class="bpm-btn bpm-btn-add" onclick="tenxBotAddMenu()">＋ افزودن گزینه منو</button>
+    </div>
+
+    <div id="tbc-challenge-slot" class="bpm-challenge-slot"></div>
+    <div class="bpm-save-bar">
+      <div><strong>تغییرات آماده ذخیره</strong><small>بعد از ویرایش، تنظیمات را ذخیره کن تا در ربات اعمال شوند.</small></div>
+      <div class="bpm-save-actions">
+        <button type="button" class="bpm-btn bpm-btn-primary" onclick="tenxBotSaveConfig()">✓ ذخیره همه تنظیمات</button>
+        <button type="button" class="bpm-btn" onclick="tenxBotLoadConfig()">بارگذاری مجدد</button>
+      </div>
+      <span id="tbc-message" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <div class="bpm-panel bpm-log-panel">
+    <div class="bpm-heading"><div><span class="bpm-step">06 / گزارش</span><h3>رویدادها و لاگ سرویس</h3></div><span class="bpm-label">Read Only</span></div>
+    <pre id="tenx-bot-logs" aria-label="آخرین لاگ‌های ربات"></pre>
+  </div>
 </section>
 <script>
 (function(){
@@ -5746,7 +5865,7 @@ if(token)boot();
    tenxConfig.challengeLessonId=v||null;
   });
   card.appendChild(row);
-  host.appendChild(card);
+  (document.getElementById('tbc-challenge-slot') || host).appendChild(card);
  }
  function tbcRenderBlocks(parent,item){
   const section=tbcElement('div',{style:'margin-top:12px;padding:10px;border:1px solid var(--border,#8885);border-radius:10px'});
