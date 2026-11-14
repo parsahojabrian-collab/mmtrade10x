@@ -1,0 +1,50 @@
+/* MMTrade10X UI/UX Pro Max · Visual Studio workbench */
+html:has(body.uipromax-studio){color-scheme:dark;background:#020617}
+body.uipromax-studio{
+  --uix-bg:#020617;--uix-surface:#0E1223;--uix-surface-2:#111827;--uix-surface-3:#1E293B;
+  --uix-text:#F8FAFC;--uix-muted:#94A3B8;--uix-border:#334155;--uix-accent:#22C55E;--uix-info:#3B82F6;
+  margin:0!important;background:var(--uix-bg)!important;color:var(--uix-text)!important;
+  font-family:"DoranFaNum","Doran","Fira Sans",Tahoma,Arial,sans-serif!important;overflow-x:clip!important;
+}
+body.uipromax-studio *{box-sizing:border-box}
+body.uipromax-studio .header{
+  background:#0E1223!important;border-bottom:1px solid #334155!important;
+  box-shadow:0 8px 22px #0005!important;
+}
+body.uipromax-studio .brand,body.uipromax-studio .who,
+body.uipromax-studio .minor,body.uipromax-studio .labelwrap{color:#E2E8F0!important}
+body.uipromax-studio .workspace{background:#020617!important;gap:12px!important}
+body.uipromax-studio .side,body.uipromax-studio .pane,
+body.uipromax-studio .spatial-panel,body.uipromax-studio .spatial-boundary-panel,
+body.uipromax-studio .spatial-animation-panel,body.uipromax-studio .spatial-overlap-panel{
+  background:#0E1223!important;color:#F8FAFC!important;
+  border:1px solid #334155!important;border-radius:14px!important;
+  box-shadow:0 1px 2px #0005!important;
+}
+body.uipromax-studio .work,body.uipromax-studio .designer,
+body.uipromax-studio .preview-area{background:#080D19!important;color:#F8FAFC!important}
+body.uipromax-studio .toolbar,body.uipromax-studio .preview-toolbar{
+  background:#111827!important;border:1px solid #334155!important;border-radius:10px!important;
+}
+body.uipromax-studio .page-list,body.uipromax-studio .mmvs-visual-stack,
+body.uipromax-studio .mmvs-dom-explorer{background:#0B1220!important;border-color:#334155!important}
+body.uipromax-studio button{
+  min-height:40px!important;background:#172033!important;color:#E2E8F0!important;
+  border:1px solid #475569!important;border-radius:9px!important;box-shadow:none!important;
+}
+body.uipromax-studio button.primary,body.uipromax-studio button#save,
+body.uipromax-studio button#publish{
+  background:#22C55E!important;color:#052E16!important;border-color:#4ADE80!important;
+}
+body.uipromax-studio input,body.uipromax-studio textarea,body.uipromax-studio select{
+  min-height:42px!important;background:#0B1220!important;color:#F8FAFC!important;
+  border:1px solid #475569!important;border-radius:8px!important;font:inherit!important;
+}
+body.uipromax-studio :focus-visible{outline:3px solid #86B7FF!important;outline-offset:2px!important}
+@media(max-width:800px){
+  body.uipromax-studio .workspace{grid-template-columns:minmax(0,1fr)!important}
+  body.uipromax-studio .toolbar{flex-wrap:wrap!important}
+  body.uipromax-studio .side,body.uipromax-studio .pane{max-width:100%!important;min-width:0!important}
+  body.uipromax-studio input,body.uipromax-studio textarea,body.uipromax-studio select{font-size:16px!important}
+}
+@media(prefers-reduced-motion:reduce){body.uipromax-studio *{animation:none!important;transition:none!important}}
