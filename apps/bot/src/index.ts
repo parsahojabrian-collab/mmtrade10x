@@ -691,7 +691,7 @@ async function sendDynamicMenuItem(ctx: any, item: DynamicBotConfig['customMenu'
 
   for (const block of blocks) {
     if (block.type === 'separator') {
-      await uiReply(ctx,'━━━━━━━━━━━━');
+      await ctx.reply('━━━━━━━━━━━━');
     } else if (block.type === 'text') {
       if (block.text?.trim()) await uiReply(ctx,block.text.slice(0, 2000));
     } else if (block.type === 'image' || block.type === 'video') {
@@ -832,7 +832,7 @@ async function processDueAutomations() {
         continue;
       }
       try {
-        const text = item.title ? `<b>${escapeHtml(item.title)}</b>\n\n${escapeHtml(item.body)}` : escapeHtml(item.body);
+        const text = renderBotScreen({title:item.title?.trim() || 'اعلان جدید',description:item.body});
         await bot.api.sendMessage(item.user.telegramAccount.telegramId, text, {parse_mode:'HTML'});
         await prisma.$transaction(async tx => {
           await tx.notification.update({where:{id:item.id},data:{status:'SENT',sentAt:new Date()}});
@@ -851,8 +851,6 @@ async function processDueAutomations() {
   } catch (error) { console.error('automation worker failed', error); }
   finally { automationBusy = false;resolveAutomationDone(); }
 }
-function escapeHtml(value: string) { return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'); }
-
 async function main() {
   const mode=process.env.TELEGRAM_MODE||'polling';
   if(mode!=='polling')throw Error('This build supports polling only. Keep TELEGRAM_MODE=polling.');
