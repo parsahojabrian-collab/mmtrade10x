@@ -40,7 +40,6 @@
     const search = drawer && drawer.querySelector('.p53-search');
     if (drawer) {
       drawer.setAttribute('tabindex', '-1');
-      drawer.setAttribute('aria-modal', 'true');
     }
     if (search) {
       search.setAttribute('autocomplete', 'off');
