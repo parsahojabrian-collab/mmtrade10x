@@ -82,7 +82,9 @@ test('Visual Studio loads its dedicated workbench stylesheet', () => {
 });
 
 test('new CSS files have balanced block delimiters', () => {
-  for (const [name, css] of [['admin',adminCss],['team',teamCss]]) {
+  const miniCss = readFileSync('public/miniapp/p74/studio/uipromax-miniapp.css','utf8');
+  const studioCss = readFileSync('public/miniapp/p74/studio/uipromax-studio.css','utf8');
+  for (const [name, css] of [['admin',adminCss],['team',teamCss],['miniapp',miniCss],['studio',studioCss]]) {
     const opens = (css.match(/\{/g)||[]).length;
     const closes = (css.match(/\}/g)||[]).length;
     assert.equal(opens, closes, `${name} CSS brace mismatch ${opens} != ${closes}`);
