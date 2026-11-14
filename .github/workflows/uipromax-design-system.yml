@@ -1,0 +1,108 @@
+name: Generate real UI UX Pro Max design system
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/uipromax-design-system.yml'
+      - 'design-system/**'
+  push:
+    branches:
+      - feat/uipromax-real-design-system-20261114
+    paths:
+      - '.github/workflows/uipromax-design-system.yml'
+      - 'design-system/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: uipromax-design-system
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout MMTrade10X
+        uses: actions/checkout@v4
+        with:
+          ref: feat/uipromax-real-design-system-20261114
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout UI UX Pro Max (pinned source)
+        uses: actions/checkout@v4
+        with:
+          repository: nextlevelbuilder/ui-ux-pro-max-skill
+          ref: 6ae86f61f520d6ca229d2f40e070410638c908c5
+          path: .tools/ui-ux-pro-max
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate master design system with the official Pro Max generator
+        run: |
+          python3 .tools/ui-ux-pro-max/src/ui-ux-pro-max/scripts/search.py \
+            "financial dashboard trading fintech crypto admin dashboard" \
+            --design-system --project-name "MMTrade10X" --format markdown \
+            --persist --output-dir . --variance 5 --motion 3 --density 8
+
+      - name: Generate page-specific overrides
+        run: |
+          set -e
+          TOOL=".tools/ui-ux-pro-max/src/ui-ux-pro-max/scripts/search.py"
+          python3 "$TOOL" "financial dashboard PnL trading analytics" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "admin-dashboard" --variance 5 --motion 3 --density 8
+          python3 "$TOOL" "enterprise user management roles permissions sortable data table" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "admin-users" --variance 5 --motion 2 --density 8
+          python3 "$TOOL" "content management media library editor workflow" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "admin-content" --variance 5 --motion 3 --density 7
+          python3 "$TOOL" "automation bot control messaging operations dashboard" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "admin-bot" --variance 5 --motion 2 --density 8
+          python3 "$TOOL" "visual design editor canvas layers component inspector" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "admin-studio" --variance 6 --motion 3 --density 7
+          python3 "$TOOL" "B2B team operations members roles support dashboard" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "team-console" --variance 4 --motion 2 --density 7
+          python3 "$TOOL" "fintech mobile dashboard account portfolio overview" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "miniapp-home" --variance 5 --motion 3 --density 5
+          python3 "$TOOL" "education learning course progress mobile app" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "academy" --variance 5 --motion 3 --density 5
+          python3 "$TOOL" "fintech onboarding account verification multi-step form" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "eplanet" --variance 4 --motion 2 --density 5
+          python3 "$TOOL" "customer support helpdesk ticket inbox conversation" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "support" --variance 4 --motion 2 --density 6
+          python3 "$TOOL" "copy trading portfolio performance financial mobile dashboard" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "copy-trading" --variance 5 --motion 2 --density 6
+          python3 "$TOOL" "enterprise admin security preferences settings" --design-system --project-name "MMTrade10X" --format markdown --persist --output-dir . --page "admin-settings" --variance 4 --motion 2 --density 7
+
+      - name: Search and persist evidence for RTL, accessibility, charts, icons and motion
+        run: |
+          set -e
+          TOOL=".tools/ui-ux-pro-max/src/ui-ux-pro-max/scripts/search.py"
+          OUT="design-system/mmtrade10x/evidence"
+          mkdir -p "$OUT"
+          python3 "$TOOL" "fintech crypto financial dashboard" --domain product --rtl=partial --json --full > "$OUT/product-rtl.json"
+          python3 "$TOOL" "dark dashboard data dense accessible" --domain style --rtl=partial --json --full > "$OUT/style-rtl.json"
+          python3 "$TOOL" "Financial Dashboard dark emerald trust blue" --domain color --json --full > "$OUT/financial-colors.json"
+          python3 "$TOOL" "enterprise finance readable admin dashboard" --domain typography --json --full > "$OUT/typography.json"
+          python3 "$TOOL" "mobile touch target modal focus table keyboard validation" --domain ux --json --full > "$OUT/ux-guidelines.json"
+          python3 "$TOOL" "financial trading OHLC trend comparison" --domain chart --json --full > "$OUT/charts.json"
+          python3 "$TOOL" "admin navigation search settings users support" --domain icons --json --full > "$OUT/icons.json"
+          python3 "$TOOL" "subtle hover modal drawer reduced motion" --domain gsap --json --full > "$OUT/motion.json"
+          python3 "$TOOL" "vanilla web admin dashboard responsive accessibility" --domain web --json --full > "$OUT/web-stack.json"
+
+      - name: Validate generated design system
+        run: |
+          set -e
+          test -s design-system/mmtrade10x/MASTER.md
+          test -d design-system/mmtrade10x/pages
+          test "$(find design-system/mmtrade10x/pages -maxdepth 1 -type f -name '*.md' | wc -l)" -ge 10
+          test "$(find design-system/mmtrade10x/evidence -maxdepth 1 -type f -name '*.json' | wc -l)" -eq 9
+          echo "PROMAX_GENERATOR=PASS"
+          echo "PAGE_OVERRIDES=$(find design-system/mmtrade10x/pages -maxdepth 1 -type f -name '*.md' | wc -l)"
+          echo "SEARCH_EVIDENCE=$(find design-system/mmtrade10x/evidence -maxdepth 1 -type f -name '*.json' | wc -l)"
+
+      - name: Commit generated design system
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add design-system/mmtrade10x
+          if git diff --cached --quiet; then
+            echo "NO_GENERATED_CHANGES=YES"
+          else
+            git commit -m "design(mmtrade10x): generate UI UX Pro Max master and page systems"
+            git push origin HEAD:feat/uipromax-real-design-system-20261114
+          fi

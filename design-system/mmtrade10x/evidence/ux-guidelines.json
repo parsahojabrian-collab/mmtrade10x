@@ -1,0 +1,41 @@
+{
+  "domain": "ux",
+  "query": "mobile touch target modal focus table keyboard validation",
+  "file": "ux-guidelines.csv",
+  "count": 3,
+  "results": [
+    {
+      "Category": "Touch",
+      "Issue": "Touch Target Size",
+      "Platform": "Mobile",
+      "Description": "Touch target guidance depends on platform and web context",
+      "Do": "Use 44pt on iOS and 48dp on Android; for web use the separate WCAG Target Size rule",
+      "Don't": "Treat one unit or minimum as universal across platforms",
+      "Code Example Good": "iOS 44pt; Android 48dp; Web 24 CSS px plus WCAG exceptions",
+      "Code Example Bad": "w-6 h-6 buttons",
+      "Severity": "High"
+    },
+    {
+      "Category": "Interaction",
+      "Issue": "Focus States",
+      "Platform": "All",
+      "Description": "Keyboard focus, including controls inside a modal, needs a visible indicator",
+      "Do": "Use a visible focus ring on every interactive control, including modal controls",
+      "Don't": "Remove focus outline without replacement",
+      "Code Example Good": "focus:ring-2 focus:ring-blue-500",
+      "Code Example Bad": "outline-none without alternative",
+      "Severity": "High"
+    },
+    {
+      "Category": "Responsive",
+      "Issue": "Table Handling",
+      "Platform": "Web",
+      "Description": "Tables can overflow on mobile",
+      "Do": "Use horizontal scroll or card layout",
+      "Don't": "Wide tables breaking layout",
+      "Code Example Good": "overflow-x-auto wrapper",
+      "Code Example Bad": "Table overflows viewport",
+      "Severity": "Medium"
+    }
+  ]
+}

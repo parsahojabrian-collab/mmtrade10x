@@ -1,0 +1,38 @@
+{
+  "domain": "product",
+  "query": "fintech crypto financial dashboard",
+  "file": "products.csv",
+  "count": 3,
+  "results": [
+    {
+      "Product Type": "Fintech/Crypto",
+      "Keywords": "banking, blockchain, crypto, defi, finance, fintech, money, nft, payment, web3",
+      "Primary Style Recommendation": "Glassmorphism + Dark Mode (OLED)",
+      "Secondary Styles": "Retro-Futurism , Motion-Driven",
+      "Landing Page Pattern": "Conversion-Optimized",
+      "Dashboard Style (if applicable)": "Real-Time Monitoring + Predictive",
+      "Color Palette Focus": "Dark tech colors + trust + vibrant accents",
+      "rtl_level": "partial"
+    },
+    {
+      "Product Type": "Financial Dashboard",
+      "Keywords": "portfolio, trading, pnl, budget, revenue, expense, cashflow, balance-sheet, investment, bank, accounting, fintech",
+      "Primary Style Recommendation": "Dark Mode (OLED) + Data-Dense Dashboard",
+      "Secondary Styles": "Minimalism & Swiss Style , Accessible & Ethical",
+      "Landing Page Pattern": "N/A - Dashboard focused",
+      "Dashboard Style (if applicable)": "Financial Dashboard",
+      "Color Palette Focus": "Dark bg + red/green alerts + trust blue",
+      "rtl_level": "partial"
+    },
+    {
+      "Product Type": "Analytics Dashboard",
+      "Keywords": "kpi, metric, funnel, conversion, cohort, retention, segment, attribution, ab-test, dashboard-data, business-intelligence",
+      "Primary Style Recommendation": "Data-Dense Dashboard + Heat Map & Heatmap Style",
+      "Secondary Styles": "Minimalism & Swiss Style , Dark Mode (OLED)",
+      "Landing Page Pattern": "N/A - Analytics focused",
+      "Dashboard Style (if applicable)": "Drill-Down Analytics + Comparative",
+      "Color Palette Focus": "Cool→Hot gradients + neutral grey",
+      "rtl_level": "partial"
+    }
+  ]
+}

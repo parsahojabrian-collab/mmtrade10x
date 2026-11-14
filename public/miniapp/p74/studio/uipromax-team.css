@@ -1,0 +1,72 @@
+/* MMTrade10X UI/UX Pro Max · Team Console */
+html body.mm-uipromax-team{
+  --uix-bg:#020617;--uix-surface:#0E1223;--uix-surface-2:#111827;--uix-text:#F8FAFC;
+  --uix-muted:#94A3B8;--uix-border:#334155;--uix-accent:#22C55E;--uix-info:#3B82F6;
+  margin:0!important;min-height:100dvh;background:var(--uix-bg)!important;color:var(--uix-text)!important;
+  font:14px/1.65 "DoranFaNum","Doran","Fira Sans",Tahoma,Arial,sans-serif!important;overflow-x:clip!important;
+}
+html body.mm-uipromax-team main{
+  width:min(1440px,100%)!important;max-width:1440px!important;margin:0 auto!important;
+  padding:clamp(14px,2.4vw,32px)!important;
+}
+html body.mm-uipromax-team main>h1{
+  margin:0 0 18px!important;padding:18px 20px!important;
+  background:linear-gradient(120deg,#111827,#0E1223)!important;
+  color:#F8FAFC!important;border:1px solid #334155!important;border-radius:16px!important;
+  font-size:clamp(20px,2.5vw,28px)!important;line-height:1.5!important;
+}
+html body.mm-uipromax-team .card{
+  margin:0 0 14px!important;padding:18px!important;
+  background:#0E1223!important;color:#F8FAFC!important;
+  border:1px solid #334155!important;border-radius:14px!important;
+  box-shadow:0 1px 2px #0005!important;
+}
+html body.mm-uipromax-team .card h2,
+html body.mm-uipromax-team .card h3{color:#E2E8F0!important;font-weight:750!important}
+html body.mm-uipromax-team .muted{color:#94A3B8!important}
+html body.mm-uipromax-team input:not([type=checkbox]):not([type=radio]),
+html body.mm-uipromax-team textarea,
+html body.mm-uipromax-team select{
+  min-height:44px!important;min-width:0!important;max-width:100%!important;
+  background:#0B1220!important;color:#F8FAFC!important;border:1px solid #475569!important;
+  border-radius:8px!important;padding:10px 12px!important;font:inherit!important;
+}
+html body.mm-uipromax-team input:focus-visible,
+html body.mm-uipromax-team textarea:focus-visible,
+html body.mm-uipromax-team select:focus-visible{
+  outline:3px solid #86B7FF!important;outline-offset:2px!important;
+}
+html body.mm-uipromax-team button{
+  min-height:42px!important;padding:9px 14px!important;border-radius:9px!important;
+  background:#22C55E!important;color:#052E16!important;border:1px solid #4ADE80!important;
+  font:inherit!important;font-weight:700!important;cursor:pointer!important;box-shadow:none!important;
+  transition:background 150ms,opacity 150ms!important;
+}
+html body.mm-uipromax-team button:hover:not(:disabled){background:#4ADE80!important;transform:none!important}
+html body.mm-uipromax-team button:disabled{opacity:.45!important;cursor:not-allowed!important}
+html body.mm-uipromax-team button.sec{background:#172033!important;color:#E2E8F0!important;border-color:#475569!important}
+html body.mm-uipromax-team .row{gap:10px!important;align-items:center}
+html body.mm-uipromax-team .wrap{
+  max-width:100%!important;overflow:auto!important;border:1px solid #334155!important;
+  border-radius:12px!important;-webkit-overflow-scrolling:touch;
+}
+html body.mm-uipromax-team table{width:100%;min-width:700px;border-collapse:separate!important;border-spacing:0!important}
+html body.mm-uipromax-team th{
+  position:sticky;top:0;background:#172033!important;color:#CBD5E1!important;
+  border-bottom:1px solid #475569!important;
+}
+html body.mm-uipromax-team th,html body.mm-uipromax-team td{
+  padding:12px!important;text-align:right!important;border-bottom:1px solid #334155!important;
+}
+html body.mm-uipromax-team tbody tr:hover{background:rgba(59,130,246,.08)!important}
+html body.mm-uipromax-team .ok{color:#86EFAC!important}
+html body.mm-uipromax-team .bad{color:#FCA5A5!important}
+@media(max-width:700px){
+  html body.mm-uipromax-team main{padding:12px!important}
+  html body.mm-uipromax-team .card{padding:14px!important}
+  html body.mm-uipromax-team .row{align-items:stretch!important}
+  html body.mm-uipromax-team .row>*{width:100%;min-width:0!important}
+  html body.mm-uipromax-team input:not([type=checkbox]):not([type=radio]),
+  html body.mm-uipromax-team select{font-size:16px!important}
+}
+@media(prefers-reduced-motion:reduce){html body.mm-uipromax-team *{transition:none!important;animation:none!important}}

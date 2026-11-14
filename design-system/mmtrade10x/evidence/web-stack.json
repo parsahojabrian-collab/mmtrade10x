@@ -1,0 +1,41 @@
+{
+  "domain": "web",
+  "query": "vanilla web admin dashboard responsive accessibility",
+  "file": "app-interface.csv",
+  "count": 3,
+  "results": [
+    {
+      "Category": "Touch",
+      "Issue": "Touch Target Size",
+      "Platform": "iOS/Android/React Native",
+      "Description": "Native targets use 44pt on iOS and 48dp on Android; web WCAG 2.2 has a separate 24 by 24 CSS px minimum with exceptions",
+      "Do": "Select 44pt for iOS and 48dp for Android at runtime; evaluate web targets separately against WCAG 2.5.8 and its exceptions",
+      "Don't": "Collapse iOS 44pt, Android 48dp, and web 24 CSS px into one cross-platform number",
+      "Code Example Good": "Platform.select({ ios: 44, android: 48 }); // web: evaluate 24 CSS px + WCAG exceptions",
+      "Code Example Bad": "<Pressable><Icon size={16} /></Pressable>",
+      "Severity": "Critical"
+    },
+    {
+      "Category": "Accessibility",
+      "Issue": "Dragging Alternatives",
+      "Platform": "iOS/Android/React Native",
+      "Description": "React Native drag and reorder operations need a non-drag path selected for the active native runtime",
+      "Do": "Provide named Move up/down buttons or a position menu beside drag handles; route iOS and Android behavior through the runtime platform adapter",
+      "Don't": "Make drag, swipe, or a web-only pointer handler the only way to reorder native content",
+      "Code Example Good": "<Button title=\"Move up\" onPress={() => moveItem(index, index - 1)} />",
+      "Code Example Bad": "<DragHandle /> only",
+      "Severity": "High"
+    },
+    {
+      "Category": "Animation",
+      "Issue": "Respect Reduced Motion",
+      "Platform": "iOS/Android/React Native",
+      "Description": "Respect OS reduced-motion accessibility setting",
+      "Do": "Check reduceMotionEnabled and simplify animations",
+      "Don't": "Ignore user motion preferences",
+      "Code Example Good": "if (reduceMotionEnabled) skipAnimation()",
+      "Code Example Bad": "Always run complex parallax animations",
+      "Severity": "Critical"
+    }
+  ]
+}
