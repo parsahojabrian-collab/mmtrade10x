@@ -187,6 +187,6 @@ test('a missing or unsafe Mini App URL removes the old keyboard and sends setup 
   const h=botHarness();h.settings.set('MINI_APP_URL',url);h.settings.set('BOT_CONTROL_CONFIG',{miniAppOnly:true});h.ctx.message={text:'/menu'};
   await h.middleware[1](h.ctx,()=>assert.fail('must not expose normal menu'));
   assert.equal(h.replies[0][1].reply_markup.remove_keyboard,true);assert.match(h.replies.at(-1)[0],/تنظیم/);
-  assert.equal(h.replies.at(-1)[1],undefined);
+  assert.equal(h.replies.at(-1)[1]?.reply_markup,undefined);assert.equal(h.replies.at(-1)[1]?.parse_mode,'HTML');
  }
 });
