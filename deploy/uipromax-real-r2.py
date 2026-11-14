@@ -115,7 +115,7 @@ def install() -> bool:
             if row["live"]:
                 live=LIVE/row["live"];live.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(staged,live)
         print("INSTALL=PASS FILES=14 SERVICES_RESTARTED=NO API_BOT_DB=UNTOUCHED")
-        print("ROLLBACK_COMMAND=python3 /root/mmtrade10x/deploy/uipromax-real-r2.py rollback --backup "+str(target))
+        print("ROLLBACK_COMMAND=python3 /root/MMTRADE_UIUX_PROMAX_REAL_R2.py rollback --backup "+str(target))
         return True
     except Exception:
         restore(target);print("INSTALL=FAIL AUTO_ROLLBACK=PASS BACKUP="+str(target));raise
