@@ -10,6 +10,8 @@ on:
       - 'design-system/mmtrade10x/**'
       - 'tests/uipromax-admin.test.mjs'
       - 'deploy/uipromax-real-r1.py'
+      - 'deploy/uipromax-real-r2.py'
+      - 'public/miniapp/**/*.html'
       - '.github/workflows/uipromax-verify.yml'
 
 permissions:
@@ -29,4 +31,4 @@ jobs:
       - name: Pro Max UI regression tests
         run: node --test tests/uipromax-admin.test.mjs
       - name: Installer syntax
-        run: python3 -m py_compile deploy/uipromax-real-r1.py
+        run: python3 -m py_compile deploy/uipromax-real-r1.py deploy/uipromax-real-r2.py
