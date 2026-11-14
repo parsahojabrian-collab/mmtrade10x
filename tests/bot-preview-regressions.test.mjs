@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as retry from '../apps/bot/src/notification-retry.ts';
 import * as accountState from '../apps/bot/src/account-state.ts';
+import * as botUi from '../apps/bot/src/bot-ui.ts';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const botSource=read('apps/bot/src/index.ts');
 function botHarness({complete=false,users=[],notifications=[],send=async()=>{},failSupportMessage=false}={}){
@@ -33,7 +34,7 @@ function botHarness({complete=false,users=[],notifications=[],send=async()=>{},f
  class Keys{constructor(){this.labels=[]}text(x){this.labels.push(x);return this}row(){return this}resized(){return this}oneTime(){return this}requestContact(x){return this.text(x)}webApp(label,url){this.webAppUrl=url;return this.text(label)}}
  class Bot{constructor(){this.api={sendMessage:async(...args)=>{sent.push(args);return send(...args)}}}use(fn){middleware.push(fn)}on(filter,fn){handlers.push({filter,fn})}command(name,fn){commands.set(name,fn)}isRunning(){return false}async stop(){}callbackQuery(name,fn){callbacks.set(name,fn)}catch(){}}
  const DateMock=class extends Date{constructor(...args){super(...(args.length?args:[clock]))}static now(){return clock}};
- const context=vm.createContext({require:name=>name==='grammy'?{Bot,Keyboard:Keys,InlineKeyboard:Keys}:name==='@prisma/client'?{PrismaClient:class{constructor(){return prisma}}}:name==='./notification-retry.js'?retry:name==='./account-state.js'?accountState:{},exports:{},process:{env:{TELEGRAM_BOT_TOKEN:'test'},once(){}},console:{log(){},error(){}},URL,Date:DateMock,Set,setInterval,clearInterval});
+ const context=vm.createContext({require:name=>name==='grammy'?{Bot,Keyboard:Keys,InlineKeyboard:Keys}:name==='@prisma/client'?{PrismaClient:class{constructor(){return prisma}}}:name==='./notification-retry.js'?retry:name==='./account-state.js'?accountState:name==='./bot-ui.js'?botUi:{},exports:{},process:{env:{TELEGRAM_BOT_TOKEN:'test'},once(){}},console:{log(){},error(){}},URL,Date:DateMock,Set,setInterval,clearInterval});
  const code=botSource.replace('main().catch(async error =>','if(false)main().catch(async error =>');
  vm.runInContext(ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,context);
  const run=code=>vm.runInContext(code,context);
@@ -186,6 +187,6 @@ test('a missing or unsafe Mini App URL removes the old keyboard and sends setup 
   const h=botHarness();h.settings.set('MINI_APP_URL',url);h.settings.set('BOT_CONTROL_CONFIG',{miniAppOnly:true});h.ctx.message={text:'/menu'};
   await h.middleware[1](h.ctx,()=>assert.fail('must not expose normal menu'));
   assert.equal(h.replies[0][1].reply_markup.remove_keyboard,true);assert.match(h.replies.at(-1)[0],/تنظیم/);
-  assert.equal(h.replies.at(-1)[1],undefined);
+  assert.equal(h.replies.at(-1)[1]?.reply_markup,undefined);assert.equal(h.replies.at(-1)[1]?.parse_mode,'HTML');
  }
 });

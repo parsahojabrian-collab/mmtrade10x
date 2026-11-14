@@ -3,6 +3,7 @@ import { NOTIFICATION_RETRY_PREFIX, notificationRetry, readNotificationRetry } f
 import 'dotenv/config';
 import { Bot, InlineKeyboard, Keyboard } from 'grammy';
 import { PrismaClient } from '@prisma/client';
+import { botProgress, menuRowPlan, renderBotScreen, renderBotText, type BotScreen } from './bot-ui.js';
 import { canonicalPhone, phoneVariants } from '../../../packages/shared/src/phone.js';
 
 type RegistrationStage = 'STARTED' | 'CHANNELS_PENDING' | 'CONSENT_PENDING' | 'PHONE_PENDING' | 'REGISTERED' | 'MINI_APP_PENDING' | 'COMPLETE';
@@ -20,6 +21,18 @@ bot.use(async (ctx, next) => {
   return next();
 });
 const prisma = new PrismaClient();
+
+// Visual presentation only: retain Telegram handlers and existing business workflows.
+function uiReply(ctx: any, text: string, options: any = {}) {
+  return ctx.reply(renderBotText(String(text)), {
+    ...options, parse_mode: 'HTML', link_preview_options: { is_disabled: true }
+  });
+}
+function uiScreen(ctx: any, screen: BotScreen, options: any = {}) {
+  return ctx.reply(renderBotScreen(screen), {
+    ...options, parse_mode: 'HTML', link_preview_options: { is_disabled: true }
+  });
+}
 // TENX_DYNAMIC_BOT_MENU_V1
 // TENX_BUILTIN_BUTTONS_V1
 type BuiltInButton = {
@@ -77,7 +90,7 @@ function hearsBuiltin(id: string, handler: (ctx: any) => Promise<unknown>) {
     const label=ctx.message.text.trim();
     const button=BUILTIN_BUTTON_CACHE.find(x=>x.id===id);
     if(label===builtinLabel(id)||label===DEFAULT_BUILTIN_BUTTONS.find(x=>x.id===id)?.label){
-      if(button?.enabled===false){await ctx.reply('این گزینه توسط مدیر غیرفعال شده است؛ /menu را بزن.');return;}
+      if(button?.enabled===false){await uiReply(ctx,'این گزینه توسط مدیر غیرفعال شده است؛ /menu را بزن.');return;}
       return handler(ctx);
     }
     return next();
@@ -269,22 +282,22 @@ async function sendConsentPrompt(ctx: any, userId: string) {
     .text(builtinLabel('consent_yes')).row()
     .text(builtinLabel('consent_no'))
     .resized();
-  await ctx.reply('برای ادامه ثبت‌نام، لازم است با پردازش اطلاعاتی که در این مسیر ارسال می‌کنی موافقت کنی. شماره تلفن فقط پس از اقدام خودت و با دکمه رسمی تلگرام دریافت می‌شود. متن سیاست حریم خصوصی باید پیش از استقرار نهایی در وب‌سایت منتشر شود.', { reply_markup: keyboard });
+  await uiScreen(ctx, { title: 'حریم خصوصی و رضایت', tone: 'warning', description: 'برای ادامه ثبت‌نام، لازم است با پردازش اطلاعاتی که در این مسیر ارسال می‌کنی موافقت کنی. شماره تلفن فقط پس از اقدام خودت و با دکمه رسمی تلگرام دریافت می‌شود. متن سیاست حریم خصوصی باید پیش از استقرار نهایی در وب‌سایت منتشر شود.', progress: botProgress('CONSENT_PENDING'), hint: 'یکی از دو گزینه پایین را انتخاب کن.' }, { reply_markup: keyboard });
 }
 /** Removing a reply keyboard and sending an inline Web App button require
  * separate Telegram messages: a message has only one reply_markup field.
  */
 async function showMiniAppOnly(ctx: any, settings: BotSettings) {
-  await ctx.reply('برای ادامه، مینی‌اپ را باز کن.', {reply_markup:{remove_keyboard:true}});
+  await uiScreen(ctx, {title:'تجربه یکپارچه 10X',description:'از این بخش، مسیر آموزشی و امکانات مجموعه را در مینی‌اپ ادامه بده.',hint:'برای ورود از دکمه زیر استفاده کن.'},{reply_markup:{remove_keyboard:true}});
   let url: URL;
   try {
     url = new URL(settings.miniAppUrl);
     if (url.protocol !== 'https:' || url.username || url.password) throw new Error('invalid mini app URL');
   } catch {
-    await ctx.reply('لینک مینی‌اپ هنوز به‌درستی تنظیم نشده است. لطفاً به پشتیبانی اطلاع بده.');
+    await uiReply(ctx,'لینک مینی‌اپ هنوز به‌درستی تنظیم نشده است. لطفاً به پشتیبانی اطلاع بده.');
     return;
   }
-  await ctx.reply('ورود به مینی‌اپ:', {
+  await uiScreen(ctx, {title:'ورود به مینی‌اپ',description:'همه بخش‌های فعال MMTRADE 10X از طریق مینی‌اپ در دسترس هستند.'}, {
     reply_markup: new InlineKeyboard().webApp('🚀 ورود به مینی‌اپ', url.toString())
   });
 }
@@ -292,15 +305,10 @@ async function showMiniAppOnly(ctx: any, settings: BotSettings) {
 async function showMainMenu(ctx: any, user: any) {
   const settings = await getBotSettings();
   if (settings.dynamicConfig.miniAppOnly) return showMiniAppOnly(ctx, settings);
-  const keyboard = new Keyboard();
   const menuButtons = settings.dynamicConfig.builtInButtons
     .filter(item => item.enabled && ['registration_status', 'academy', 'challenge', 'support', 'miniapp'].includes(item.id))
     .filter(item => item.id !== 'miniapp' || !!settings.miniAppUrl)
     .sort((x, y) => x.order - y.order);
-
-  for (const item of menuButtons) {
-    keyboard.text(item.label).row();
-  }
 
   const reserved = new Set([
     ...settings.dynamicConfig.builtInButtons.map(x => x.label),
@@ -310,7 +318,7 @@ async function showMainMenu(ctx: any, user: any) {
     '🚀 ورود به 10X Mini App', '📱 اشتراک‌گذاری شماره تلفن'
   ]);
 
-
+  const customLabels: string[] = [];
   if (settings.dynamicConfig.enabled) {
     const seen = new Set<string>();
     for (const item of settings.dynamicConfig.customMenu) {
@@ -318,12 +326,26 @@ async function showMainMenu(ctx: any, user: any) {
       if (!item.enabled || !label || reserved.has(label) ||
           seen.has(label) || label.length > 60 || label.includes('\n')) continue;
       seen.add(label);
-      keyboard.row().text(label);
+      customLabels.push(label);
     }
   }
-  await ctx.reply(`وضعیت فعلی ثبت‌نام: ${stageLabel(user.registrationStage)}\n\nاز کیبورد پایین ادامه بده.`, {
-    reply_markup: keyboard.resized()
-  });
+
+  // Native Telegram keyboards cannot be themed with CSS. Keep short actions in
+  // paired rows, and long labels as full-width touch targets.
+  const keyboard = new Keyboard();
+  const groups = [menuRowPlan(menuButtons.map(item => item.label)), menuRowPlan(customLabels)];
+  for (const group of groups) {
+    for (const row of group) {
+      for (const label of row) keyboard.text(label);
+      keyboard.row();
+    }
+  }
+  await uiScreen(ctx, {
+    title: 'منوی اصلی ربات',
+    description: `وضعیت فعلی ثبت‌نام: ${stageLabel(user.registrationStage)}\n\nبخش موردنظر خودت را از دکمه‌های پایین انتخاب کن.`,
+    progress: botProgress(user.registrationStage),
+    hint: 'برای نمایش دوباره این منو، /menu را بزن.'
+  }, { reply_markup: keyboard.resized() });
 }
 
 // === TENX_P50_BOT_ATTRIBUTION_V1_START ===
@@ -371,18 +393,20 @@ bot.use(async (ctx, next) => {
 
 bot.command('start', async ctx => {
   if (!ctx.from) return;
-  if (ctx.chat?.type !== 'private') { await ctx.reply('برای ثبت‌نام و اشتراک‌گذاری امن شماره تلفن، لطفاً ربات را در گفتگوی خصوصی باز کن و /start را بزن.'); return; }  
+  if (ctx.chat?.type !== 'private') { await uiReply(ctx,'برای ثبت‌نام و اشتراک‌گذاری امن شماره تلفن، لطفاً ربات را در گفتگوی خصوصی باز کن و /start را بزن.'); return; }  
   try {
     const user = await upsertTelegramUser(ctx);
     await growthAttributeStart(ctx,user.id).catch(e=>console.error('growth_attribution_failed',e));
     const settings = await getBotSettings();
     const defaultWelcome = `به 10X خوش آمدی، ${ctx.from.first_name || 'دوست عزیز'}!\n\n10X یک مسیر آموزشی برای یادگیری بازار رمزارز، مدیریت ریسک و تمرین مسئولانه است. هیچ سودی تضمین نمی‌شود و معامله‌گری می‌تواند به از دست رفتن سرمایه منجر شود.`;
     const welcome = settings.dynamicConfig.welcomeMessage;
-    await ctx.reply(
-      settings.dynamicConfig.enabled && welcome
+    await uiScreen(ctx, {
+      title: 'به MMTRADE 10X خوش آمدی',
+      description: settings.dynamicConfig.enabled && welcome
         ? welcome.replace(/\{name\}/g, ctx.from.first_name || 'دوست عزیز')
-        : defaultWelcome
-    );
+        : defaultWelcome,
+      hint: 'برای شروع، مرحله‌های ثبت‌نام را دنبال کن.'
+    });
     if (user.registrationStatus === RegistrationStatus.REGISTERED || user.registrationStatus === RegistrationStatus.COMPLETE) {
       await showMainMenu(ctx, user); return;
     }
@@ -390,12 +414,12 @@ bot.command('start', async ctx => {
     if (membership.setupMissing) {
       if (!settings.allowNoChannels) {
         await setStage(user.id, RegistrationStage.CHANNELS_PENDING, { reason: 'required_channels_not_configured' });
-        await ctx.reply('ثبت‌نام هنوز آماده ادامه نیست؛ کانال‌های الزامی در تنظیمات ربات مشخص نشده‌اند. مدیر پروژه باید REQUIRED_CHANNELS را تنظیم کند.');
+        await uiReply(ctx,'ثبت‌نام هنوز آماده ادامه نیست؛ کانال‌های الزامی در تنظیمات ربات مشخص نشده‌اند. مدیر پروژه باید REQUIRED_CHANNELS را تنظیم کند.');
         return;
       }
     } else if (!membership.ok) {
       await setStage(user.id, RegistrationStage.CHANNELS_PENDING, { missingChannels: membership.missing });
-      await ctx.reply('برای ادامه، ابتدا در کانال‌های الزامی عضو شو و سپس روی «بررسی مجدد عضویت» بزن.', { reply_markup: await channelKeyboard() });
+      await uiReply(ctx,'برای ادامه، ابتدا در کانال‌های الزامی عضو شو و سپس روی «بررسی مجدد عضویت» بزن.', { reply_markup: await channelKeyboard() });
       return;
     }
     if (user.phone && (await latestTelegramConsent(user.id))?.granted) {
@@ -404,7 +428,7 @@ bot.command('start', async ctx => {
       await showMainMenu(ctx, ready); return;
     }
     await sendConsentPrompt(ctx, user.id);
-  } catch (error) { console.error('start handler failed', error); await ctx.reply('در اجرای درخواست خطایی رخ داد. چند لحظه دیگر دوباره /start را بزن.'); }
+  } catch (error) { console.error('start handler failed', error); await uiReply(ctx,'در اجرای درخواست خطایی رخ داد. چند لحظه دیگر دوباره /start را بزن.'); }
 });
 
 bot.callbackQuery('noop', async ctx => { await ctx.answerCallbackQuery({ text: 'این لینک هنوز توسط مدیر تنظیم نشده است.' }); });
@@ -415,17 +439,17 @@ hearsBuiltin('membership_check', async (ctx: any) => {
     if (!ctx.from) return;
       const result = await checkMembership(ctx, user.id, ctx.from.id);
     if (result.setupMissing && !settings.allowNoChannels) {
-      await ctx.reply('کانال‌های الزامی هنوز در تنظیمات ربات تعریف نشده‌اند.');
+      await uiReply(ctx,'کانال‌های الزامی هنوز در تنظیمات ربات تعریف نشده‌اند.');
       return;
     }
     if (!result.ok) {
-      await ctx.reply(`هنوز عضویت همه کانال‌ها تأیید نشده است. موارد نیازمند بررسی: ${result.missing.join(', ')}`, { reply_markup: await channelKeyboard() });
+      await uiReply(ctx,`هنوز عضویت همه کانال‌ها تأیید نشده است. موارد نیازمند بررسی: ${result.missing.join(', ')}`, { reply_markup: await channelKeyboard() });
       return;
     }
     await sendConsentPrompt(ctx, user.id);
   } catch (error) {
     console.error('membership check failed', error);
-    await ctx.reply('بررسی عضویت انجام نشد. لطفاً بعداً تلاش کن.');
+    await uiReply(ctx,'بررسی عضویت انجام نشد. لطفاً بعداً تلاش کن.');
   }
 });
 
@@ -435,10 +459,10 @@ bot.callbackQuery('check_membership', async ctx => {
     const user = await upsertTelegramUser(ctx);
     const settings = await getBotSettings();
     const result = await checkMembership(ctx, user.id, ctx.from.id);
-    if (result.setupMissing && !settings.allowNoChannels) { await ctx.reply('کانال‌های الزامی هنوز در تنظیمات ربات تعریف نشده‌اند.'); return; }
-    if (!result.ok) { await ctx.reply(`هنوز عضویت همه کانال‌ها تأیید نشده است. موارد نیازمند بررسی: ${result.missing.join(', ')}`, { reply_markup: await channelKeyboard() }); return; }
+    if (result.setupMissing && !settings.allowNoChannels) { await uiReply(ctx,'کانال‌های الزامی هنوز در تنظیمات ربات تعریف نشده‌اند.'); return; }
+    if (!result.ok) { await uiReply(ctx,`هنوز عضویت همه کانال‌ها تأیید نشده است. موارد نیازمند بررسی: ${result.missing.join(', ')}`, { reply_markup: await channelKeyboard() }); return; }
     await sendConsentPrompt(ctx, user.id);
-  } catch (error) { console.error('membership check failed', error); await ctx.reply('بررسی عضویت انجام نشد. لطفاً بعداً تلاش کن.'); }
+  } catch (error) { console.error('membership check failed', error); await uiReply(ctx,'بررسی عضویت انجام نشد. لطفاً بعداً تلاش کن.'); }
 });
 
 hearsBuiltin('consent_yes', async (ctx: any) => {
@@ -450,7 +474,7 @@ hearsBuiltin('consent_no', async (ctx: any) => {
     if (registrationComplete(user)) { await showMainMenu(ctx, user); return; }
     await recordTelegramConsent(user.id,false);
     await setStage(user.id, RegistrationStage.CONSENT_PENDING, { consentDeclined: true });
-    await ctx.reply('بدون رضایت، شماره تلفن دریافت نمی‌شود. هر زمان آماده بودی با /start می‌توانی ادامه بدهی.',{reply_markup:{remove_keyboard:true}});
+    await uiReply(ctx,'بدون رضایت، شماره تلفن دریافت نمی‌شود. هر زمان آماده بودی با /start می‌توانی ادامه بدهی.',{reply_markup:{remove_keyboard:true}});
   } catch (error) { console.error('consent decline failed', error); }
 });
 
@@ -463,14 +487,14 @@ async function handleConsentYes(ctx: any) {
     const settings = await getBotSettings();
     if ((membership.setupMissing && !settings.allowNoChannels) || !membership.ok) {
       await setStage(user.id, RegistrationStage.CHANNELS_PENDING, { reason: 'membership_required_before_consent' });
-      await ctx.reply('قبل از ادامه ثبت‌نام، عضویت کانال‌های الزامی باید تأیید شود.', { reply_markup: await channelKeyboard() });
+      await uiReply(ctx,'قبل از ادامه ثبت‌نام، عضویت کانال‌های الزامی باید تأیید شود.', { reply_markup: await channelKeyboard() });
       return;
     }
     await recordTelegramConsent(user.id,true);
     await setStage(user.id, RegistrationStage.PHONE_PENDING);
     const keyboard = new Keyboard().requestContact(builtinLabel('share_phone')).resized().oneTime();
-    await ctx.reply('برای ثبت‌نام، دکمه زیر را بزن تا شماره تلفنت را مستقیماً از طریق قابلیت رسمی تلگرام ارسال کنی. شماره تایپ‌شده یا شماره شخص دیگر پذیرفته نمی‌شود.', { reply_markup: keyboard });
-  } catch (error) { console.error('consent handling failed', error); await ctx.reply('ثبت رضایت انجام نشد. لطفاً دوباره تلاش کن.'); }
+    await uiScreen(ctx,{title:'تأیید شماره تلفن',description:'برای ثبت‌نام، دکمه زیر را بزن تا شماره تلفنت را مستقیماً از طریق قابلیت رسمی تلگرام ارسال کنی. شماره تایپ‌شده یا شماره شخص دیگر پذیرفته نمی‌شود.',progress:botProgress('PHONE_PENDING'),hint:'شماره فقط با دکمه رسمی تلگرام دریافت می‌شود.'},{reply_markup:keyboard});
+  } catch (error) { console.error('consent handling failed', error); await uiReply(ctx,'ثبت رضایت انجام نشد. لطفاً دوباره تلاش کن.'); }
 }
 bot.callbackQuery('consent_yes', async ctx => {
   await ctx.answerCallbackQuery();
@@ -483,27 +507,27 @@ bot.callbackQuery('consent_no', async ctx => {
     if (registrationComplete(user)) { await showMainMenu(ctx, user); return; }
     await recordTelegramConsent(user.id,false);
     await setStage(user.id, RegistrationStage.CONSENT_PENDING, { consentDeclined: true });
-    await ctx.reply('بدون رضایت، شماره تلفن دریافت نمی‌شود. هر زمان آماده بودی با /start می‌توانی ادامه بدهی.',{reply_markup:{remove_keyboard:true}});
+    await uiReply(ctx,'بدون رضایت، شماره تلفن دریافت نمی‌شود. هر زمان آماده بودی با /start می‌توانی ادامه بدهی.',{reply_markup:{remove_keyboard:true}});
   } catch (error) { console.error('consent decline failed', error); }
 });
 
 bot.on('message:contact', async ctx => {
   try {
     const contact = ctx.message.contact;
-    if (!contact.user_id || contact.user_id !== ctx.from.id) { await ctx.reply('لطفاً فقط با دکمه رسمی تلگرام شماره متعلق به حساب خودت را به اشتراک بگذار.'); return; }
+    if (!contact.user_id || contact.user_id !== ctx.from.id) { await uiReply(ctx,'لطفاً فقط با دکمه رسمی تلگرام شماره متعلق به حساب خودت را به اشتراک بگذار.'); return; }
     const user = await upsertTelegramUser(ctx);
     const consent = await latestTelegramConsent(user.id);
-    if (!consent?.granted) { await ctx.reply('ابتدا باید با پردازش اطلاعات موافقت کنی. دستور /start را بزن.'); return; }
+    if (!consent?.granted) { await uiReply(ctx,'ابتدا باید با پردازش اطلاعات موافقت کنی. دستور /start را بزن.'); return; }
     const membership = await checkMembership(ctx, user.id, ctx.from.id);
     const settings = await getBotSettings();
-    if ((membership.setupMissing && !settings.allowNoChannels) || !membership.ok) { await setStage(user.id, RegistrationStage.CHANNELS_PENDING, { reason: 'membership_missing_at_contact' }); await ctx.reply('برای تکمیل ثبت‌نام، عضویت کانال‌های الزامی باید تأیید شود.', { reply_markup: await channelKeyboard() }); return; }
+    if ((membership.setupMissing && !settings.allowNoChannels) || !membership.ok) { await setStage(user.id, RegistrationStage.CHANNELS_PENDING, { reason: 'membership_missing_at_contact' }); await uiReply(ctx,'برای تکمیل ثبت‌نام، عضویت کانال‌های الزامی باید تأیید شود.', { reply_markup: await channelKeyboard() }); return; }
     if (user.phone && (user.registrationStatus === RegistrationStatus.REGISTERED || user.registrationStatus === RegistrationStatus.COMPLETE)) {
-      await ctx.reply('ثبت‌نام شما قبلاً انجام شده است. اطلاعات جدیدی ایجاد نشد.');
+      await uiReply(ctx,'ثبت‌نام شما قبلاً انجام شده است. اطلاعات جدیدی ایجاد نشد.');
       await showMainMenu(ctx, user);
       return;
     }
     const phone = canonicalPhone(contact.phone_number);
-    if (!/^\+?[0-9]{7,15}$/.test(phone)) { await ctx.reply('شماره تلفن معتبر به نظر نمی‌رسد. دوباره از دکمه اشتراک‌گذاری استفاده کن.'); return; }
+    if (!/^\+?[0-9]{7,15}$/.test(phone)) { await uiReply(ctx,'شماره تلفن معتبر به نظر نمی‌رسد. دوباره از دکمه اشتراک‌گذاری استفاده کن.'); return; }
     const updated = await withBotUserLock(prisma,user.id,async tx => {
       const current=await tx.user.findUnique({where:{id:user.id}});
       if(current&&registrationComplete(current))return current;
@@ -519,22 +543,22 @@ bot.on('message:contact', async ctx => {
       await tx.auditLog.create({ data: { userId: user.id, action: 'TELEGRAM_REGISTRATION_COMPLETED', entityType: 'User', entityId: user.id, metadata: { contactShared: true } } });
       return saved;
     });
-    await ctx.reply('✅ ثبت‌نام اولیه با موفقیت ثبت شد. شماره تلفن ذخیره شد و مرحله فعلی حساب به‌روزرسانی شد.', { reply_markup: { remove_keyboard: true } });
+    await uiScreen(ctx,{title:'ثبت‌نام با موفقیت انجام شد',tone:'success',description:'ثبت‌نام اولیه با موفقیت ثبت شد. شماره تلفن ذخیره شد و مرحله فعلی حساب به‌روزرسانی شد.',progress:botProgress('REGISTERED'),hint:'حالا از منوی اصلی وارد بخش موردنظر شو.'},{reply_markup:{remove_keyboard:true}});
     await showMainMenu(ctx, updated);
-  } catch (error) { console.error('contact handling failed', error); await ctx.reply('ذخیره ثبت‌نام با خطا مواجه شد. لطفاً دوباره تلاش کن یا با پشتیبانی تماس بگیر.'); }
+  } catch (error) { console.error('contact handling failed', error); await uiReply(ctx,'ذخیره ثبت‌نام با خطا مواجه شد. لطفاً دوباره تلاش کن یا با پشتیبانی تماس بگیر.'); }
 });
 
 hearsBuiltin('registration_status', async (ctx: any) => {
   try {
     const user = await upsertTelegramUser(ctx);
-    await ctx.reply(`وضعیت ثبت‌نام: ${stageLabel(user.registrationStage)}\nشناسه داخلی: ${user.id}\nآخرین فعالیت: ${user.lastActivityAt.toISOString()}`);
-  } catch (error) { console.error('registration status failed', error); await ctx.reply('دریافت وضعیت انجام نشد. لطفاً دوباره تلاش کن.'); }
+    await uiScreen(ctx,{title:'وضعیت ثبت‌نام',description:`وضعیت ثبت‌نام: ${stageLabel(user.registrationStage)}\nشناسه داخلی: ${user.id}\nآخرین فعالیت: ${user.lastActivityAt.toISOString()}`,progress:botProgress(user.registrationStage),hint:'برای مشاهده سایر خدمات، /menu را بزن.'});
+  } catch (error) { console.error('registration status failed', error); await uiReply(ctx,'دریافت وضعیت انجام نشد. لطفاً دوباره تلاش کن.'); }
 });
 hearsBuiltin('academy', async (ctx: any) => {
   const settings = await getBotSettings();
-  if (!settings.miniAppUrl) { await ctx.reply('آکادمی داخل Mini App باز می‌شود، ولی لینک Mini App هنوز توسط مدیر تنظیم نشده است.'); return; }
+  if (!settings.miniAppUrl) { await uiReply(ctx,'آکادمی داخل Mini App باز می‌شود، ولی لینک Mini App هنوز توسط مدیر تنظیم نشده است.'); return; }
   const base = settings.miniAppUrl.endsWith('/') ? settings.miniAppUrl : settings.miniAppUrl + '/';
-  await ctx.reply('آکادمی 10X داخل Mini App باز می‌شود. محتوا آموزشی است و هیچ سودی تضمین نمی‌شود.', {
+  await uiScreen(ctx,{title:'آکادمی MMTRADE 10X',description:'محتوای آموزشی آکادمی از طریق مینی‌اپ در دسترس است. هیچ سودی تضمین نمی‌شود.',hint:'برای مشاهده درس‌ها روی دکمه زیر بزن.'}, {
     reply_markup: new InlineKeyboard().webApp('🎓 ورود به آکادمی', new URL(settings.academyPath || '/academy', base).toString())
   });
 });
@@ -542,13 +566,13 @@ hearsBuiltin('challenge', async (ctx: any) => {
     const settings = await getBotSettings();
     const lessonId = settings.dynamicConfig.challengeLessonId;
     if (!settings.miniAppUrl) {
-      await ctx.reply('لینک Mini App هنوز توسط مدیر تنظیم نشده است.');
+      await uiReply(ctx,'لینک Mini App هنوز توسط مدیر تنظیم نشده است.');
       return;
     }
     const base = settings.miniAppUrl.endsWith('/') ? settings.miniAppUrl : settings.miniAppUrl + '/';
     if (!lessonId) {
       const academyUrl = new URL(settings.academyPath || '/academy', base).toString();
-      await ctx.reply('برای مشاهده محتوای چالش 10X وارد آکادمی شو. فعالیت در بازارهای مالی با ریسک همراه است و هیچ سودی تضمین نمی‌شود.', {
+      await uiScreen(ctx,{title:'چالش 10X',description:'برای مشاهده محتوای چالش 10X وارد آکادمی شو. فعالیت در بازارهای مالی با ریسک همراه است و هیچ سودی تضمین نمی‌شود.',hint:'مسیر آموزش چالش را در مینی‌اپ دنبال کن.'}, {
         reply_markup: new InlineKeyboard().webApp('🏆 ورود به آکادمی', academyUrl)
       });
       return;
@@ -556,7 +580,7 @@ hearsBuiltin('challenge', async (ctx: any) => {
     const lessonUrl = new URL('/miniapp/index.html', base);
     lessonUrl.searchParams.set('view', 'academy');
     lessonUrl.searchParams.set('lessonId', lessonId);
-    await ctx.reply('درس معرفی چالش 10X را مشاهده کن. این محتوا تضمین‌کننده سود نیست و فعالیت در بازارهای مالی با ریسک همراه است.', {
+    await uiScreen(ctx,{title:'درس معرفی چالش 10X',description:'درس معرفی چالش 10X را مشاهده کن. این محتوا تضمین‌کننده سود نیست و فعالیت در بازارهای مالی با ریسک همراه است.',hint:'برای باز کردن درس روی دکمه زیر بزن.'}, {
       reply_markup: new InlineKeyboard().webApp('🏆 مشاهده درس چالش', lessonUrl.toString())
     });
   });
@@ -570,11 +594,11 @@ hearsBuiltin('support', async (ctx: any) => {
       await tx.supportMessage.create({data:{ticketId:ticket.id,senderType:'SYSTEM',body:'گفتگوی پشتیبانی ایجاد شد.'}});
       return true;
     });
-    if(!created){await ctx.reply('یک گفتگوی پشتیبانی باز داری. پیام خودت را همین‌جا بفرست. برای بستن گفتگو از /closesupport استفاده کن.');return;}
-    await ctx.reply('گفتگوی پشتیبانی ایجاد شد. پیام خودت را همین‌جا بفرست. برای بستن گفتگو از /closesupport استفاده کن.');
+    if(!created){await uiScreen(ctx,{title:'گفتگوی پشتیبانی فعال',tone:'warning',description:'یک گفتگوی پشتیبانی باز داری. پیام خودت را همین‌جا بفرست.',hint:'برای بستن گفتگو از /closesupport استفاده کن.'});return;}
+    await uiScreen(ctx,{title:'گفتگوی پشتیبانی ایجاد شد',tone:'success',description:'درخواست پشتیبانی ایجاد شد. پیام خودت را همین‌جا بفرست.',hint:'برای بستن گفتگو از /closesupport استفاده کن.'});
   } catch (error) {
     console.error('support ticket create failed', error);
-    await ctx.reply('ایجاد درخواست پشتیبانی انجام نشد. لطفاً دوباره تلاش کن.');
+    await uiReply(ctx,'ایجاد درخواست پشتیبانی انجام نشد. لطفاً دوباره تلاش کن.');
   }
 });
 
@@ -587,18 +611,18 @@ bot.command('closesupport',async ctx=>{
    await tx.supportTicket.update({where:{id:ticket.id},data:{status:'CLOSED'}});
    await tx.supportMessage.create({data:{ticketId:ticket.id,senderType:'SYSTEM',body:'کاربر گفتگو را بست.'}});return true;
   });
-  await ctx.reply(closed?'گفتگوی پشتیبانی بسته شد. هر زمان لازم بود دوباره از منوی پشتیبانی اقدام کن.':'گفتگوی بازی پیدا نشد.');
- }catch(error){console.error('support ticket close failed',error);await ctx.reply('بستن گفتگو انجام نشد.');}
+  await uiScreen(ctx,closed?{title:'گفتگو بسته شد',tone:'success',description:'گفتگوی پشتیبانی بسته شد. هر زمان لازم بود دوباره از منوی پشتیبانی اقدام کن.'}:{title:'گفتگوی بازی پیدا نشد',tone:'warning',description:'در حال حاضر گفتگوی بازی برای بستن وجود ندارد.'});
+ }catch(error){console.error('support ticket close failed',error);await uiReply(ctx,'بستن گفتگو انجام نشد.');}
 });
 
 hearsBuiltin('miniapp', async (ctx: any) => {
   const settings = await getBotSettings();
   if (settings.miniAppUrl) {
-    await ctx.reply('برای ورود به مینی‌اپ از این لینک استفاده کن:', {
+    await uiScreen(ctx,{title:'ورود به 10X Mini App',description:'برای ورود به مینی‌اپ از دکمه زیر استفاده کن.',hint:'محتوا و خدمات فعال مجموعه در مینی‌اپ قرار دارند.'}, {
       reply_markup: new InlineKeyboard().webApp('🚀 ورود به 10X Mini App', settings.miniAppUrl)
     });
   } else {
-    await ctx.reply('لینک Mini App هنوز توسط مدیر تنظیم نشده است.');
+    await uiReply(ctx,'لینک Mini App هنوز توسط مدیر تنظیم نشده است.');
   }
 });
 bot.on('message:text', async (ctx, next) => {
@@ -610,7 +634,7 @@ bot.on('message:text', async (ctx, next) => {
   } catch { /* ignore */ }
   try {
     const user=await upsertTelegramUser(ctx);
-    if(body.length>3500){await ctx.reply('پیام پشتیبانی حداکثر ۳۵۰۰ نویسه است.');return;}
+    if(body.length>3500){await uiReply(ctx,'پیام پشتیبانی حداکثر ۳۵۰۰ نویسه است.');return;}
     const saved=await withBotUserLock(prisma,user.id,async tx=>{
       const ticket=await tx.supportTicket.findFirst({where:{userId:user.id,status:{in:['OPEN','IN_PROGRESS','WAITING_USER']}},orderBy:{createdAt:'desc'}});
       if(!ticket)return false;
@@ -618,8 +642,8 @@ bot.on('message:text', async (ctx, next) => {
       await tx.supportMessage.create({data:{ticketId:ticket.id,senderType:'USER',body}});return true;
     });
     if(!saved)return next();
-    await ctx.reply('پیامت در درخواست پشتیبانی ثبت شد.');
-  }catch(error){console.error('support message save failed',error);await ctx.reply('ذخیره پیام پشتیبانی انجام نشد.');}
+    await uiReply(ctx,'پیامت در درخواست پشتیبانی ثبت شد.');
+  }catch(error){console.error('support message save failed',error);await uiReply(ctx,'ذخیره پیام پشتیبانی انجام نشد.');}
 });
 async function sendDynamicMenuItem(ctx: any, item: DynamicBotConfig['customMenu'][number], settings: BotSettings) {
   const action = item.action || 'reply';
@@ -627,15 +651,15 @@ async function sendDynamicMenuItem(ctx: any, item: DynamicBotConfig['customMenu'
   if (action === 'url' || action === 'web_app') {
     const target = item.url?.trim();
     if (!target || !/^https:\/\//i.test(target)) {
-      await ctx.reply('لینک این گزینه معتبر یا تنظیم نشده است.');
+      await uiReply(ctx,'لینک این گزینه معتبر یا تنظیم نشده است.');
       return;
     }
     if (action === 'web_app') {
-      await ctx.reply('برای ادامه روی دکمه زیر بزن.', {
+      await uiScreen(ctx,{title:item.label||'دسترسی اختصاصی',description:'برای ادامه از دکمه زیر استفاده کن.'}, {
         reply_markup: new InlineKeyboard().webApp(item.label || 'ورود', target)
       });
     } else {
-      await ctx.reply(target, {
+      await uiReply(ctx,target, {
         reply_markup: new InlineKeyboard().url(item.label || 'مشاهده لینک', target)
       });
     }
@@ -645,14 +669,14 @@ async function sendDynamicMenuItem(ctx: any, item: DynamicBotConfig['customMenu'
   if (action === 'academy_lesson') {
     const lessonId = item.lessonId?.trim();
     if (!lessonId || !settings.miniAppUrl) {
-      await ctx.reply('درس آکادمی برای این گزینه تنظیم نشده است.');
+      await uiReply(ctx,'درس آکادمی برای این گزینه تنظیم نشده است.');
       return;
     }
     const base = settings.miniAppUrl.endsWith('/') ? settings.miniAppUrl : settings.miniAppUrl + '/';
     const target = new URL('/miniapp/index.html', base);
     target.searchParams.set('view', 'academy');
     target.searchParams.set('lessonId', lessonId);
-    await ctx.reply('برای مشاهده درس روی دکمه زیر بزن.', {
+    await uiScreen(ctx,{title:item.label||'درس آکادمی',description:'برای مشاهده درس آکادمی روی دکمه زیر بزن.'}, {
       reply_markup: new InlineKeyboard().webApp('🎓 مشاهده درس', target.toString())
     });
     return;
@@ -660,8 +684,8 @@ async function sendDynamicMenuItem(ctx: any, item: DynamicBotConfig['customMenu'
 
   const blocks = item.blocks || [];
   if (!blocks.length) {
-    if (item.response?.trim()) await ctx.reply(item.response.slice(0, 2000));
-    else await ctx.reply('محتوایی برای این گزینه ثبت نشده است.');
+    if (item.response?.trim()) await uiScreen(ctx,{title:item.label||'محتوای سفارشی',description:item.response.slice(0,2000)});
+    else await uiReply(ctx,'محتوایی برای این گزینه ثبت نشده است.');
     return;
   }
 
@@ -669,7 +693,7 @@ async function sendDynamicMenuItem(ctx: any, item: DynamicBotConfig['customMenu'
     if (block.type === 'separator') {
       await ctx.reply('━━━━━━━━━━━━');
     } else if (block.type === 'text') {
-      if (block.text?.trim()) await ctx.reply(block.text.slice(0, 2000));
+      if (block.text?.trim()) await uiReply(ctx,block.text.slice(0, 2000));
     } else if (block.type === 'image' || block.type === 'video') {
       const url = block.url?.trim();
       if (!url || !/^https:\/\//i.test(url)) continue;
@@ -681,7 +705,7 @@ async function sendDynamicMenuItem(ctx: any, item: DynamicBotConfig['customMenu'
     } else if (block.type === 'link') {
       const url = block.url?.trim();
       if (url && /^https:\/\//i.test(url)) {
-        await ctx.reply(block.text?.slice(0, 500) || 'لینک:', {
+        await uiReply(ctx,block.text?.slice(0, 500) || 'لینک:', {
           reply_markup: new InlineKeyboard().url('باز کردن لینک', url)
         });
       }
@@ -717,7 +741,7 @@ bot.on('message:text', async (ctx, next) => {
     );
 
     if (autoReply) {
-      await ctx.reply(autoReply.response);
+      await uiReply(ctx,autoReply.response);
       return;
     }
 
@@ -732,11 +756,11 @@ bot.command('menu', async ctx => {
   try {
     const user = await upsertTelegramUser(ctx);
     await showMainMenu(ctx, user);
-  } catch (error) { console.error('menu failed', error); await ctx.reply('نمایش منو انجام نشد. لطفاً دوباره تلاش کن.'); }
+  } catch (error) { console.error('menu failed', error); await uiReply(ctx,'نمایش منو انجام نشد. لطفاً دوباره تلاش کن.'); }
 });
 bot.on('message',async ctx=>{
- if(ctx.message.text){await ctx.reply('برای دیدن گزینه‌های ربات /menu را بزن.');return;}
- await ctx.reply('در این نسخه، پیام پشتیبانی باید به‌صورت متن ارسال شود؛ فایل یا صدا ثبت نشده است.');
+ if(ctx.message.text){await uiReply(ctx,'برای دیدن گزینه‌های ربات /menu را بزن.');return;}
+ await uiReply(ctx,'در این نسخه، پیام پشتیبانی باید به‌صورت متن ارسال شود؛ فایل یا صدا ثبت نشده است.');
 });
 bot.catch(error => { console.error('unhandled Telegram update error', error); });
 
@@ -778,7 +802,7 @@ async function processDueAutomations() {
         continue;
       }
       try {
-        await bot.api.sendMessage(job.user.telegramAccount.telegramId, 'یادآوری 10X: ثبت‌نامت هنوز کامل نشده است. برای ادامه، ربات را باز کن و /start را بزن. هیچ سودی تضمین نمی‌شود و مدیریت ریسک ضروری است.');
+        await bot.api.sendMessage(job.user.telegramAccount.telegramId, renderBotScreen({title:'یادآوری تکمیل ثبت‌نام',tone:'warning',description:'ثبت‌نامت هنوز کامل نشده است. برای ادامه، ربات را باز کن و /start را بزن. هیچ سودی تضمین نمی‌شود و مدیریت ریسک ضروری است.'}), {parse_mode:'HTML'});
         await prisma.followUpJob.update({ where: { id: job.id }, data: { status: 'SENT', lastError: null } });
         await prisma.auditLog.create({ data: { userId: job.userId, action: 'REGISTRATION_FOLLOWUP_SENT', entityType: 'FollowUpJob', entityId: job.id } });
       } catch (error) {
@@ -808,7 +832,7 @@ async function processDueAutomations() {
         continue;
       }
       try {
-        const text = item.title ? `<b>${escapeHtml(item.title)}</b>\n\n${escapeHtml(item.body)}` : escapeHtml(item.body);
+        const text = renderBotScreen({title:item.title?.trim() || 'اعلان جدید',description:item.body});
         await bot.api.sendMessage(item.user.telegramAccount.telegramId, text, {parse_mode:'HTML'});
         await prisma.$transaction(async tx => {
           await tx.notification.update({where:{id:item.id},data:{status:'SENT',sentAt:new Date()}});
@@ -827,8 +851,6 @@ async function processDueAutomations() {
   } catch (error) { console.error('automation worker failed', error); }
   finally { automationBusy = false;resolveAutomationDone(); }
 }
-function escapeHtml(value: string) { return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'); }
-
 async function main() {
   const mode=process.env.TELEGRAM_MODE||'polling';
   if(mode!=='polling')throw Error('This build supports polling only. Keep TELEGRAM_MODE=polling.');
