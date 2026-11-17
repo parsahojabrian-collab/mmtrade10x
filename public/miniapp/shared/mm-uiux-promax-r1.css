@@ -266,3 +266,109 @@ html.mmu-nav-ready :is(.p77-shell,.p78-shell,.academy-shell,.app-shell,.mm-app) 
     transition-duration:.01ms!important;
   }
 }
+
+/* R1 detail pass — mobile-first component geometry without moving the scenic canvas. */
+#p77-app :is(.p77-identity,.p77-metric,.p77-mini-card,.p77-actions,.p77-awards) {
+  position:relative;
+}
+#p77-app :is(.p77-metric-title,.p77-metric-caption,.p77-section-heading) {
+  line-height:1.65;
+}
+#p77-app :is(.p77-menu a,.p77-menu button,.p77-cta) {
+  min-block-size:46px;
+  -webkit-tap-highlight-color:transparent;
+}
+#p77-app .p77-cta {
+  border:1px solid rgba(229,195,140,.59);
+  box-shadow:0 9px 24px rgba(0,12,8,.18),inset 0 1px rgba(255,255,255,.14);
+}
+#p77-app .p77-mini-copy { overflow-wrap:anywhere;line-height:1.8; }
+#p78-app :is(.new-ticket,.glass-card,.quick-help) {
+  background-image:linear-gradient(155deg,rgba(17,57,43,.20),rgba(3,17,13,.04));
+  background-blend-mode:soft-light;
+}
+#p78-app .action-copy { line-height:1.7; }
+#p78-app .chips { gap:8px; }
+#p78-app .chips button { min-block-size:40px; }
+#p78-app .sheet :is(input,textarea,select) {
+  font-size:16px;
+  border-radius:var(--mmx-r-sm);
+}
+#p78-app .sheet :is(button,.primary) { min-block-size:44px; }
+#p78-app .message { line-height:1.85;overflow-wrap:anywhere; }
+
+/* Learning: ensure the visual art remains image-backed while text has readable rhythm. */
+.academy-shell .stage-copy { min-inline-size:0; }
+.academy-shell .stage-description {
+  color:var(--mmx-muted);
+  line-height:1.75;
+  overflow-wrap:anywhere;
+}
+.academy-shell .stage-number {
+  font-variant-numeric:tabular-nums;
+}
+.academy-shell .academy-modal-actions :is(button,a) { min-block-size:44px; }
+.academy-shell .academy-modal-panel { outline:none; }
+.stage :is(.lesson-title,.lesson-heading,.progress-info) { line-height:1.7; }
+.stage :is(.lesson-head,.next,.tool-btn,.back) { min-block-size:44px; }
+.stage .answer p { overflow-wrap:anywhere; }
+#course-index .row.glass {
+  min-block-size:66px;
+  background-blend-mode:normal;
+}
+#course-index .row.glass .t {
+  min-inline-size:0;
+  line-height:1.7;
+  overflow-wrap:break-word;
+}
+#D :is(.lesson-panel-heading,.lesson-top,.lesson-footer) { line-height:1.65; }
+#D :is(.connect-cta,.nav-btn,.next-btn) { min-block-size:44px; }
+#D .note { border-inline-start:3px solid var(--mmx-gold); }
+.app-shell .topbar .back { min-inline-size:44px;min-block-size:44px; }
+.app-shell .steps .step-card {
+  background-image:linear-gradient(132deg,rgba(25,65,50,.14),rgba(7,29,22,.08));
+  background-blend-mode:soft-light;
+}
+.app-shell .steps :is(.step-content,.step-meta,.step-state) {
+  min-inline-size:0;
+  overflow-wrap:break-word;
+}
+.app-shell .step-card .step-action { min-block-size:40px; }
+.app-shell .step-dialog :is(button,input,select,textarea) { min-block-size:44px; }
+.app-shell .completion { border-color:var(--mmx-border); }
+
+/* Studio & dashboards: stricter content hierarchy, safe scroll, and controls. */
+.studio-shell .studio-panel :is(h1,h2,h3),
+#workspace :is(.inspector h3,.panel h3),
+#mmtrade10x-view :is(h1,h2,h3) { text-wrap:balance; }
+.studio-shell .studio-panel :is(.field,.editor-field,.section-bullets) {
+  min-inline-size:0;
+}
+.studio-shell :is(.studio-tabs,.inline-actions,.preview-switch) {
+  scroll-padding-inline:12px;
+}
+.studio-shell .studio-panel :is(button,.btn,.mini-btn) { min-block-size:40px; }
+#workspace :is(.toolbar,.preview-toolbar,.spatial-head) {
+  box-shadow:0 7px 22px rgba(0,12,8,.14);
+}
+#workspace .inspector :is(label,input,select,textarea) { min-inline-size:0; }
+#workspace .side .tab { min-block-size:44px; }
+#workspace .mmvs-block-item.selected { border-color:var(--mmx-gold); }
+#workspace .mmvs-library-head { gap:12px; }
+#workspace .page-list { scroll-padding-block:12px; }
+#workspace .mmvs-upload-status { overflow-wrap:anywhere; }
+.mm-app .mm-stage { box-shadow:0 11px 28px rgba(0,10,7,.20); }
+.mm-app .mm-stage__title { line-height:1.65; }
+.mm-app .mm-stage__toggle { min-inline-size:44px;min-block-size:44px; }
+#mmtrade10x-view .mm10-hero p { line-height:1.85; }
+#mmtrade10x-view .mm10-progress-card {
+  box-shadow:0 9px 25px rgba(0,10,7,.22);
+}
+#mmtrade10x-view #mm10-lessons details { scroll-margin-block:18px; }
+@media(max-width:650px){
+  :is(.studio-shell,#workspace,.app-shell) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+    font-size:max(16px,1em);
+  }
+  #workspace :is(.toolbar,.preview-toolbar,.mmvs9-controls),
+  .studio-shell .studio-tabs { -webkit-overflow-scrolling:touch; }
+}
