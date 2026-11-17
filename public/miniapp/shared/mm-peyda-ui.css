@@ -1,0 +1,54 @@
+/* MMTRADE_PEYDA_R1: font-only design token layer; preserving layouts, color, imagery and brand display typography. */
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-Thin.woff2') format('woff2');font-style:normal;font-weight:100;font-display:swap;}
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-ExtraLight.woff2') format('woff2');font-style:normal;font-weight:200;font-display:swap;}
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-Light.woff2') format('woff2');font-style:normal;font-weight:300;font-display:swap;}
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-Regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap;}
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-Medium.woff2') format('woff2');font-style:normal;font-weight:500;font-display:swap;}
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-SemiBold.woff2') format('woff2');font-style:normal;font-weight:600;font-display:swap;}
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-Bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap;}
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-ExtraBold.woff2') format('woff2');font-style:normal;font-weight:800;font-display:swap;}
+@font-face{font-family:'MM Peyda UI';src:url('/miniapp/fonts/peyda/standard/PeydaWeb-Black.woff2') format('woff2');font-style:normal;font-weight:900;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-Thin.woff2') format('woff2');font-style:normal;font-weight:100;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-ExtraLight.woff2') format('woff2');font-style:normal;font-weight:200;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-Light.woff2') format('woff2');font-style:normal;font-weight:300;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-Regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-Medium.woff2') format('woff2');font-style:normal;font-weight:500;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-SemiBold.woff2') format('woff2');font-style:normal;font-weight:600;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-Bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-ExtraBold.woff2') format('woff2');font-style:normal;font-weight:800;font-display:swap;}
+@font-face{font-family:'MM Peyda FaNum';src:url('/miniapp/fonts/peyda/fanum/PeydaWebFaNum-Black.woff2') format('woff2');font-style:normal;font-weight:900;font-display:swap;}
+
+:root {
+  --mm-font-ui: 'MM Peyda UI','Peyda',Vazirmatn,Tahoma,Arial,sans-serif;
+  --mm-font-fanum: 'MM Peyda FaNum','MM Peyda UI',Tahoma,sans-serif;
+  --mm-font-display: 'DoranFaNum','Doran','MM Peyda UI',Tahoma,sans-serif;
+  --font-fa: var(--mm-font-ui);
+}
+/* UI font applies to all Persian reading and interaction surfaces. No spacing or dimensions are modified. */
+html[lang="fa"] body, html[dir="rtl"] body { font-family:var(--mm-font-ui)!important; }
+html body :is(button,input,textarea,select,option,label,p,li,small,summary,blockquote,figcaption,td,th,h1,h2,h3,h4,h5,h6) {
+  font-family:var(--mm-font-ui)!important;
+}
+html body :is(.mm-fa-num,[data-mm-fanum="true"]) {font-family:var(--mm-font-fanum)!important;}
+/* Standalone page roots and dynamic component shells */
+#p74-app, #p74-app :is(button,a,input,textarea,select),
+#p77-app, #p78-app, #workspace, #workspace :is(button,input,textarea,select,label),
+.app-shell, .academy-shell, .studio-shell, .tenx-custom-page, .mmct-root,
+#mmu-bottom-nav, #mmu-bottom-nav .mmu-tab,
+#page-toolbar .mmvs9-control, #page-toolbar .mmvs99-control,
+#mmtrade10x-view, #mmtrade10x-view :is(button,input,textarea,select) {
+  font-family:var(--mm-font-ui)!important;
+}
+/* Brand display faces retained where the existing MMTRADE artwork uses a display style. */
+#p74-app :is(.p74-brand-name,.p74-journey-title,.p74-hero-title),
+html body :is(.mm-display,.hero-title,.brand-title),
+html body :is([data-mm-display="true"]) {
+  font-family:var(--mm-font-display)!important;
+}
+/* Explicit Latin wordmarks and English/Latin financial identifiers keep their intended Latin treatment. */
+html body :is([lang="en"],[dir="ltr"].mm-latin,.mm-latin,.mm-english),
+#p77-app .p77-brand h1,
+#mmtrade10x-view .mm10-hero h1 {
+  font-family:var(--mm-font-latin,Arial,sans-serif)!important;
+}
+/* Avoid imposing Persian numeric glyphs on account IDs, URLs, transactions, or Latin content. */
