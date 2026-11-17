@@ -1,3 +1,7 @@
+> **به‌روزرسانی 2026-11-17 — برای شاخه بازطراحی UI/UX Pro Max R1:** روش نصب قدیمیِ زیر که به تمام HTMLها یک لینک جداگانه فونت اضافه می‌کند، در این شاخه جایگزین شده است. در نسخه جدید `mm-uiux-promax-r1.css` به‌صورت مرکزی، `mm-peyda-ui.css` را import می‌کند. برای جلوگیری از تکرار لینک‌ها، از بسته کد-تنها `MMTRADE_UIUX_PROMAX_R1_INSTALLER_ONLY.zip` همراه با آرشیو اصلی `68 peyda.zip` استفاده کنید؛ این بسته هیچ فایل فونتی را بازتوزیع نمی‌کند و فقط فایل‌های WOFF2 را در staging نصب می‌کند. راهنمای فعلی: `docs/MMTRADE_UIUX_PROMAX_R1_FA.md`.
+
+---
+
 # MMTRADE — Peyda UI Font R1 (review-only)
 
 ## Approved scope
