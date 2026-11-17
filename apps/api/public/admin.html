@@ -819,6 +819,38 @@ body.mmvs9-admin-open #mmvs9-admin-backdrop{display:block}
 @media(prefers-reduced-motion:reduce){#app>aside{transition:none!important}}
 
 </style>
+
+<!-- MMTRADE_UIUX_PROMAX_R1: reversible visual enhancement -->
+<link rel="stylesheet" href="/miniapp/shared/mm-uiux-promax-r1.css?v=UIUX_PROMAX_R1">
+<style id="mm-uupm-admin-r1">
+/* UI/UX Pro Max R1 — admin shell visual layer: no markup, state or API changes. */
+body.mm-admin-shell {
+  --mmx-border:rgba(140,223,180,.32);--mmx-mint:#86e5b7;--mmx-gold:#e4bf83;
+  --bg:#071610;--card:#10251c;--ink:#f0f7f1;--mut:#b4cabb;
+  --line:#355541;--pri:#25835e;--ok:#86e5b7;
+  --mm-font-ui:'MM Peyda UI',Peyda,Doran,Vazirmatn,Tahoma,sans-serif;
+  color-scheme:dark;font-family:var(--mm-font-ui)!important;
+}
+body.mm-admin-shell :is(button,input,textarea,select,label,td,th,nav,header,aside) {
+  font-family:var(--mm-font-ui)!important;
+}
+body.mm-admin-shell #app>aside {border-inline-end:1px solid var(--mmx-border);box-shadow:7px 0 25px #0002}
+body.mm-admin-shell #app>main>header {border-color:var(--mmx-border);box-shadow:0 9px 24px #0002}
+body.mm-admin-shell :is(.card,.panel,#view .card) {
+  border-color:var(--mmx-border)!important;
+  box-shadow:inset 0 1px #ffffff0a,0 7px 24px #0002;
+}
+body.mm-admin-shell #nav a {transition:background-color .16s ease,border-color .16s ease}
+body.mm-admin-shell #nav a:is(:hover,:focus-visible){color:#f3fff8;border-color:var(--mmx-border)}
+body.mm-admin-shell :is(button,a,input,textarea,select,[role="button"]):focus-visible {
+  outline:3px solid #ffe0a0!important;outline-offset:2px;
+}
+body.mm-admin-shell :is(button,a,[role="button"]) {touch-action:manipulation}
+body.mm-admin-shell :is(input,textarea,select):focus-visible {border-color:var(--mmx-mint)!important}
+body.mm-admin-shell :is(#toast,.error,.message) {overflow-wrap:anywhere}
+@media(max-width:800px){body.mm-admin-shell #app>main{min-inline-size:0}}
+@media(prefers-reduced-motion:reduce){body.mm-admin-shell :is(button,a){transition:none!important}}
+</style>
 </head><body class="mm-admin-shell">
 <div id="login" class="center"><div class="card" style="width:min(380px,100%)"><h2 style="margin-top:0">ورود به پنل 10X</h2>
 <form id="login-form" class="row" style="flex-direction:column;align-items:stretch"><input id="em" aria-label="ایمیل مدیر" required type="email" placeholder="ایمیل" autocomplete="username"><input id="pw" aria-label="رمز عبور" required type="password" placeholder="رمز عبور" autocomplete="current-password"><button id="go" type="submit">ورود</button></form>
