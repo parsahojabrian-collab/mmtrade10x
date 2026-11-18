@@ -55,6 +55,11 @@ test('the latest media search is requested after an in-flight request and stale 
  execute(code(read('mmvs-media-library-r1.js'),['load']),s);const task=s.load();s.search.value='new';await s.load();finish({items:[{name:'old result'}],total:1});await task;
  assert.deepEqual(requests,['old','new']);assert.deepEqual(rendered,[['new result']]);
 });
+test('Studio entrypoint cache-busts both published-baseline runtime modules',()=>{
+ const html=read('index.html');
+ assert.match(html,/studio\\.js\\?v=PUBLISHED_HOME_PARITY_R1/);
+ assert.match(html,/spatial\\.js\\?v=PUBLISHED_HOME_PARITY_R1/);
+});
 test('published baseline action is shown only after a published P74 Home marker is loaded',()=>{
  const controls={
   'preview-source-toggle':{hidden:true,textContent:'',setAttribute(){}},
