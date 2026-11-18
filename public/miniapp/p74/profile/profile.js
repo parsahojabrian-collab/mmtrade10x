@@ -80,7 +80,7 @@ function template(){
   <div class="p77-person"><div class="p77-avatar" id="p77-avatar"><span class="p77-avatar-fallback">${I('user')}</span></div><div class="p77-person-meta"><h2 id="p77-name"></h2><span class="p77-username" id="p77-username"></span><div class="p77-status-row"><span class="p77-pill active" id="p77-active">${I('check')} <span></span></span><span class="p77-pill vip" id="p77-vip">${I('crown')} VIP</span></div></div></div>
   <div class="p77-hero-bottom"><div class="p77-level">${I('layers')}<div><strong id="p77-level">—</strong><small id="p77-level-en">Level —</small></div></div><div class="p77-path-caption">〃 <b data-text="pathCaption"></b> 〃</div></div>
  </section>
- <section class="p77-metrics-primary" aria-label="پیشرفت چالش">
+ <div class="p77-overview-grid" aria-label="نمای کلی حساب"><section class="p77-metrics-primary" aria-label="پیشرفت چالش">
   <button type="button" data-action="stage" class="p77-metric p77-glass" aria-label="مرحله فعلی"> <div><div class="p77-metric-title">${I('rocket')} <span data-text="stageTitle"></span></div><strong class="p77-metric-value" id="p77-stage">—</strong></div></button>
   <button type="button" data-action="progress" class="p77-metric p77-glass" aria-label="پیشرفت کل"><div><div class="p77-metric-title" data-text="progressTitle"></div><span class="p77-metric-caption" data-text="progressSubtitle"></span></div><div class="p77-ring" id="p77-ring"><span id="p77-percent">—</span></div></button>
  </section>
@@ -92,7 +92,7 @@ function template(){
  <section class="p77-mini-rows">
   <button type="button" data-action="account" class="p77-mini-card p77-glass">${I('user','p77-action-icon')}<div class="p77-mini-copy"><strong data-text="accountTitle"></strong><small id="p77-account-detail"></small></div>${I('chevron','p77-chevron')}</button>
   <button type="button" data-action="plan" class="p77-mini-card p77-glass">${I('bolt','p77-action-icon')}<div class="p77-mini-copy"><strong data-text="planTitle"></strong><small id="p77-plan-detail"></small></div>${I('chevron','p77-chevron')}</button>
- </section>
+ </section></div>
  <section class="p77-awards p77-glass" id="p77-awards"><h2 class="p77-section-heading">${I('trophy')}<span data-text="awardsTitle"></span></h2><div class="p77-awards-row">
   <button class="p77-badge" type="button" data-award="member"><img src="./assets/badge_10x.webp" alt="" loading="lazy"/><span></span></button>
   <button class="p77-badge" type="button" data-award="pioneer"><img src="./assets/badge_rocket.webp" alt="" loading="lazy"/><span></span></button>
