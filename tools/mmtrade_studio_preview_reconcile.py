@@ -108,7 +108,7 @@ def save_atomic(path: Path, data: bytes, previous_stat) -> None:
 
 def check_http(host: str, live: Path, rel: str) -> None:
     url = f'https://{host}/miniapp/{rel}?parity_verify={int(time.time())}'
-    p = run(['curl', '--fail', '--silent', '--show-error', '--max-time', '12',
+    p = run(['curl', '--noproxy', '*', '--fail', '--silent', '--show-error', '--max-time', '12',
              '--resolve', f'{host}:443:127.0.0.1', url])
     actual = p.stdout
     expected = (live / rel).read_bytes()
