@@ -99,8 +99,8 @@ test('published spatial layout becomes the editable working copy while the publi
   renderProps(){calls.push('props')},renderBoundary(){calls.push('boundary')},preview(){calls.push('preview')},toast(m){calls.push(m)}
  };
  execute(code(spatial,['usePublishedAsWorkingCopy']),s);assert.equal(s.usePublishedAsWorkingCopy(),true);
- assert.deepEqual(s.doc,published);assert.deepEqual(s.published,published);assert.equal(s.dirty,true);
- assert.equal(s.selected,'');assert.equal(s.groupMode,false);assert.deepEqual(s.groupSelection,[]);
+ assert.equal(JSON.stringify(s.doc),JSON.stringify(published));assert.deepEqual(s.published,published);assert.equal(s.dirty,true);
+ assert.equal(s.selected,'');assert.equal(s.groupMode,false);assert.equal(JSON.stringify(s.groupSelection),'[]');
  assert.ok(calls.includes('preview'));
 });
 test('published spatial promotion refuses to change a read-only or busy workspace',()=>{
