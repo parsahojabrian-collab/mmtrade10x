@@ -962,6 +962,17 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
       toast('یک عنصر را انتخاب کن؛ روی خودش قفل، مخفی‌کردن و جلو/عقب بردن لایه را داری.');return true;
     }catch(error){if(id===session){loading=false;loadFailed=true;state();toast('چیدمان دریافت نشد؛ بارگذاری دوباره لازم است.',true)}throw error}
   }
+  function usePublishedAsWorkingCopy(){
+    if(loading||loadFailed||publishing||externalBusy||reviewLayout)return false;
+    const source=clone(published||{items:[]});
+    if(!Array.isArray(source.items))return false;
+    const next={items:source.items,domMoves:Array.isArray(source.domMoves)?source.domMoves:[]};
+    doc=next;
+    selected='';groupSelection=[];groupMode=false;overlapItems=[];layerItems=[];touchedSelection=null;
+    mmvsVisualPinned.clear();groupSync();state();renderProps();renderBoundary();preview();
+    toast('چیدمان منتشرشده به محیط ویرایش منتقل شد؛ هنوز برای کاربران تغییر نکرده است.');
+    return true;
+  }
   async function save(){
     if(loading||loadFailed||publishing||!!reviewLayout)return false;if(!dirty)return true;loading=true;state();
     try{
@@ -1140,7 +1151,7 @@ function put(p,sendSet=true){if(mmvsR11RootSelector(p?.selector))return;
     historySuspended=true;try{doc=clone(layout);state();renderProps();renderBoundary();preview();return true}finally{historySuspended=false}
   }
   function start(){lastHistoryDoc=JSON.stringify(doc);bind();groupSync();if(window.matchMedia('(max-width:650px)').matches)$('spatial-tools').open=false;state();renderProps();renderBoundary();$('frame')?.addEventListener('load',()=>{ready=true;preview();mmvsDomSchedule()})}
-  window.MMVS_Spatial={setEditingBlocked:value=>{externalBusy=Boolean(value);preview()},restoreLocal,review:layout=>{reviewLayout=layout?clone(layout):null;preview();state();renderProps()},getDraftLayout:()=>clone(doc),getSelected:()=>selected,
+  window.MMVS_Spatial={setEditingBlocked:value=>{externalBusy=Boolean(value);preview()},restoreLocal,review:layout=>{reviewLayout=layout?clone(layout):null;preview();state();renderProps()},usePublishedAsWorkingCopy,getDraftLayout:()=>clone(doc),getSelected:()=>selected,
     getSectionBackground:s=>clone(doc.items.find(x=>x.selector===s)?.sectionBackground||null),
     setSectionBackground:(s,bg)=>mmvsBgChange(s,bg),
     clearSectionBackground:s=>mmvsBgChange(s,null),loadPage:load,saveIfDirty:save,publishIfPending:publish,
