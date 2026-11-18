@@ -143,13 +143,57 @@ function drawPageList(){
 /* MMVS_HOME_PREVIEW_PARITY_R2: published-vs-draft home preview switch */
 function isPublishedHomePreview(){return page==='index'&&!reviewSnapshot&&previewPublishedHome}
 function updatePreviewSourceToggle(){
- const btn=$('preview-source-toggle'),tip=$('preview-source-tip');
+ const btn=$('preview-source-toggle'),tip=$('preview-source-tip'),edit=$('edit-published-home');
  if(!btn)return;
  const home=page==='index',pub=isPublishedHomePreview();
  btn.hidden=!home;
  btn.textContent=pub?'ویرایش پیش‌نویس هوم':'نمایش هوم واقعی';
  btn.setAttribute('aria-pressed',pub?'false':'true');
- if(tip){tip.hidden=!home;tip.textContent=pub?'نمایش دقیق تنظیمات و چیدمان منتشرشده':'نمایش پیش‌نویس؛ تغییرات هنوز عمومی نیستند'}
+ const published=editor?.published;
+ const hasPublishedHome=published?.status==='PUBLISHED'&&Array.isArray(published?.blocks)&&published.blocks.some(b=>b?.type==='element'&&b.selector==='#p74-home-config'&&typeof b.text==='string');
+ if(edit){
+  edit.hidden=!home||!hasPublishedHome;
+  edit.disabled=busy||pageLoading||!!reviewSnapshot||uploadPending>0;
+ }
+ if(tip){tip.hidden=!home;tip.textContent=pub?'نمایش دقیق تنظیمات و چیدمان منتشرشده':'پیش‌نمایش پیش‌نویس؛ برای شروع ویرایش از وضعیت فعلی کاربران، «شروع ویرایش از نسخه زنده» را بزن.'}
+}
+function startEditingFromPublishedHome(){
+ if(page!=='index'||workspaceBusy()||reviewSnapshot)return;
+ const published=editor?.published;
+ const nextBlocks=Array.isArray(published?.blocks)?clone(published.blocks):null;
+ if(!nextBlocks||!nextBlocks.some(b=>b?.type==='element'&&b.selector==='#p74-home-config'&&typeof b.text==='string')){
+  toast('نسخه منتشرشده شامل تنظیمات Home P74 نیست؛ همسان‌سازی انجام نشد.',true);return;
+ }
+ const spatial=window.MMVS_Spatial;
+ if(typeof spatial?.usePublishedAsWorkingCopy!=='function'){
+  toast('ماژول چیدمان فضایی آماده نیست؛ ابتدا استودیو را دوباره بارگذاری کن.',true);return;
+ }
+ if(!confirm('محتوای هوم و چیدمان منتشرشده به محیط ویرایش منتقل می‌شوند. نسخه عمومی تغییر نمی‌کند؛ فقط با ذخیره پیش‌نویس و سپس انتشار اعمال خواهد شد. اگر پیش‌نویس قبلی داری، ذخیره این نسخه آن را جایگزین می‌کند. ادامه می‌دهی؟'))return;
+ const previousPublishedPreview=previewPublishedHome;
+ previewPublishedHome=false;
+ updatePreviewSourceToggle();
+ setOperation(false);
+ checkpoint();
+ if(!spatial.usePublishedAsWorkingCopy()){
+  previewPublishedHome=previousPublishedPreview;
+  updatePreviewSourceToggle();setOperation(false);
+  toast('انتقال چیدمان منتشرشده ممکن نشد؛ پیش‌نمایش قبلی حفظ شد.',true);return;
+ }
+ // Keep editor.revision unchanged: it is the current CAS revision (draft if one exists,
+ // otherwise published). The server draft is not replaced until the user explicitly saves.
+ blocks=nextBlocks;title=published.title??null;homeToolsOpen=true;
+ selectedBlockIndex=-1;selected='';
+ $('page-title').value=title??'';
+ $('selected').textContent='روی یک عنصر پیش‌نمایش کلیک کن';
+ $('props').replaceChildren();
+ mountHomeTools();
+ document.querySelector('.inspector')?.classList.add('home-controls-open');
+ document.querySelector('#pages-pane .designer')?.classList.add('mmvs9-inspector-open');
+ $('home-object-panel').hidden=false;
+ $('home-tools-toggle').setAttribute('aria-pressed','true');
+ layoutHomePanel();
+ drawEdits();drawContentBlocks();syncDirty();updateHistoryButtons();reloadFrame();
+ toast('نسخه منتشرشده به محیط ویرایش منتقل شد. اکنون پله‌ها، متن‌ها و آبجکت‌ها قابل ویرایش‌اند؛ برای ثبت، ذخیره پیش‌نویس و سپس انتشار را بزن.');
 }
 function ensurePreviewSourceToggle(){
  if($('preview-source-toggle'))return;
@@ -163,6 +207,11 @@ function ensurePreviewSourceToggle(){
    toast(previewPublishedHome?'اکنون هوم منتشرشده کاربران نمایش داده می‌شود.':'اکنون پیش‌نویس قابل ویرایش نمایش داده می‌شود.');
  });
  refresh.parentElement.append(btn);
+ const edit=document.createElement('button');edit.type='button';edit.id='edit-published-home';edit.className='minor';
+ edit.title='نسخه منتشرشده هوم و چیدمان آن را به محیط ویرایش قابل تغییر منتقل کن؛ انتشار عمومی انجام نمی‌شود.';
+ edit.textContent='شروع ویرایش از نسخه زنده';
+ edit.addEventListener('click',startEditingFromPublishedHome);
+ refresh.parentElement.append(edit);
  const tip=document.createElement('small');tip.id='preview-source-tip';
  tip.style.cssText='display:block;max-width:100%;margin:5px 0;color:#9fd9bb;font-size:11px;line-height:1.8';
  refresh.closest('.preview-toolbar')?.after(tip);
@@ -260,7 +309,7 @@ function showInspector(info){const b=elementBlock(selected)||{};$('selected').te
  }
 }
 function setOperation(value,label='در حال ذخیره…'){
- busy=value;const blocked=value||pageLoading,readOnly=blocked||pageLoadError||!!reviewSnapshot||isPublishedHomePreview();
+ busy=value;updatePreviewSourceToggle();const blocked=value||pageLoading,readOnly=blocked||pageLoadError||!!reviewSnapshot||isPublishedHomePreview();
  window.MMTradeHomeEditor?.setReadOnly(readOnly);window.MMVS_Spatial?.setEditingBlocked?.(readOnly);operationLabel=label;
  for(const id of ['save','publish','reload'])$(id).disabled=blocked||((!!reviewSnapshot||pageLoadError)&&id!=='reload')||uploadPending>0;
  for(const selector of ['.inspector','.mmvs-library','#spatial-panel','#pages']){const node=document.querySelector(selector);if(node)node.inert=readOnly;}
