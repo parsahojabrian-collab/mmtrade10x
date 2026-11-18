@@ -1,0 +1,42 @@
+name: MMTRADE UIUX R5 validation (off VPS)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uupm-r5-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout review code
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Syntax check Home and Profile
+        run: |
+          node --check public/miniapp/p74/home.js
+          node --check public/miniapp/p74/profile/profile.js
+      - name: Test R5 source contracts
+        run: node --test tests/uiux-promax-r5-source.test.mjs
+      - name: Compile read-only R5 reconciliation script
+        run: python3 -m py_compile tools/mmtrade_uupm_r5_reconcile.py tools/mmtrade_uupm_r5_stage.py
+      - name: Run complete repository test suite
+        run: npm test
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: TypeScript build
+        run: npm run build

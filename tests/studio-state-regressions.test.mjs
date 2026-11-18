@@ -55,6 +55,79 @@ test('the latest media search is requested after an in-flight request and stale 
  execute(code(read('mmvs-media-library-r1.js'),['load']),s);const task=s.load();s.search.value='new';await s.load();finish({items:[{name:'old result'}],total:1});await task;
  assert.deepEqual(requests,['old','new']);assert.deepEqual(rendered,[['new result']]);
 });
+test('Studio entrypoint cache-busts both published-baseline runtime modules',()=>{
+ const html=read('index.html');
+ assert.match(html,/studio\.js\?v=PUBLISHED_HOME_PARITY_R1/);
+ assert.match(html,/spatial\.js\?v=PUBLISHED_HOME_PARITY_R1/);
+});
+test('published baseline action is shown only after a published P74 Home marker is loaded',()=>{
+ const controls={
+  'preview-source-toggle':{hidden:true,textContent:'',setAttribute(){}},
+  'preview-source-tip':{hidden:true,textContent:''},
+  'edit-published-home':{hidden:true,disabled:true}
+ };
+ const s={page:'index',previewPublishedHome:false,busy:false,pageLoading:false,reviewSnapshot:null,uploadPending:0,
+  editor:{published:{status:'PUBLISHED',blocks:[{type:'element',selector:'#p74-home-config',text:'{}'}]}},
+  $:id=>controls[id]};
+ execute(code(studio,['isPublishedHomePreview','updatePreviewSourceToggle']),s);s.updatePreviewSourceToggle();
+ assert.equal(controls['edit-published-home'].hidden,false);
+ assert.equal(controls['edit-published-home'].disabled,false);
+ s.page='profile';s.updatePreviewSourceToggle();assert.equal(controls['edit-published-home'].hidden,true);
+});
+test('published Home can be promoted into an editable working copy without publishing',()=>{
+ const controls=Object.fromEntries(['page-title','selected','props','home-object-panel','home-tools-toggle'].map(id=>[id,{value:'',hidden:true,textContent:'',setAttribute(){},replaceChildren(){}}]));
+ const liveBlocks=[{type:'element',selector:'#p74-home-config',text:'{"version":74,"brand":"Live"}'},{type:'text',text:'Live block'}];
+ const draftBlocks=[{type:'element',selector:'#p74-home-config',text:'{"version":74,"brand":"Draft"}'}];
+ const calls=[];const s={
+  page:'index',editor:{revision:'draft-revision',hasDraft:true,published:{status:'PUBLISHED',revision:'published-revision',title:'Published Home',blocks:liveBlocks}},
+  blocks:draftBlocks,title:'Draft Home',initial:JSON.stringify({title:'Draft Home',blocks:draftBlocks}),
+  previewPublishedHome:true,homeToolsOpen:false,reviewSnapshot:null,busy:false,pageLoading:false,popupBusy:false,uploadPending:0,
+  workspaceBusy:()=>false,clone:structuredClone,confirm:()=>true,
+  window:{MMVS_Spatial:{usePublishedAsWorkingCopy(){calls.push('spatial');return true},isBusy:()=>false}},
+  $:id=>controls[id],document:{querySelector:()=>({classList:{add(){}}})},
+  updatePreviewSourceToggle(){calls.push('toggle')},setOperation(v){s.busy=v;calls.push('operation:'+v)},
+  checkpoint(){calls.push('checkpoint')},mountHomeTools(){calls.push('home-tools')},layoutHomePanel(){calls.push('layout-panel')},
+  drawEdits(){calls.push('draw-edits')},drawContentBlocks(){calls.push('draw-content')},syncDirty(){calls.push('sync')},
+  updateHistoryButtons(){calls.push('history')},reloadFrame(){calls.push('reload')},toast(m){calls.push(m)}
+ };
+ execute(code(studio,['startEditingFromPublishedHome']),s);s.startEditingFromPublishedHome();
+ assert.deepEqual(s.blocks,liveBlocks);assert.equal(s.title,'Published Home');
+ assert.equal(s.editor.revision,'draft-revision');assert.equal(s.previewPublishedHome,false);
+ assert.equal(s.homeToolsOpen,true);assert.equal(controls['home-object-panel'].hidden,false);
+ assert.ok(calls.indexOf('checkpoint')<calls.indexOf('spatial'));
+ assert.ok(calls.indexOf('home-tools')<calls.indexOf('reload'));
+ assert.equal(calls.filter(x=>x==='reload').length,1);
+});
+test('canceling published Home promotion leaves the current draft and live comparison untouched',()=>{
+ const blocks=[{type:'element',selector:'#p74-home-config',text:'{"version":74,"brand":"Draft"}'}],calls=[];
+ const s={page:'index',editor:{published:{status:'PUBLISHED',title:'Live',blocks:[{type:'element',selector:'#p74-home-config',text:'{"version":74}'}]}},
+  blocks,title:'Draft',previewPublishedHome:true,homeToolsOpen:false,reviewSnapshot:null,workspaceBusy:()=>false,clone:structuredClone,confirm:()=>false,
+  window:{MMVS_Spatial:{usePublishedAsWorkingCopy(){calls.push('spatial');return true}}},updatePreviewSourceToggle(){},setOperation(){},checkpoint(){},
+  $:()=>({}),document:{querySelector:()=>({classList:{add(){}}})},toast(){},mountHomeTools(){calls.push('mount')},layoutHomePanel(){},drawEdits(){},drawContentBlocks(){},syncDirty(){},updateHistoryButtons(){},reloadFrame(){calls.push('reload')}
+ };
+ execute(code(studio,['startEditingFromPublishedHome']),s);s.startEditingFromPublishedHome();
+ assert.equal(s.blocks,blocks);assert.equal(s.previewPublishedHome,true);assert.deepEqual(calls,[]);
+});
+test('published spatial layout becomes the editable working copy while the published snapshot stays immutable',()=>{
+ const published={items:[{selector:'#live-step',x:21,y:32,scale:1.2}],domMoves:[{selector:'#live-step',reference:'#mountain',placement:'after'}]};
+ const draft={items:[{selector:'#draft-step',x:2,y:3,scale:1}],domMoves:[]};
+ const calls=[];const s={loading:false,loadFailed:false,publishing:false,externalBusy:false,reviewLayout:null,
+  published:structuredClone(published),doc:structuredClone(draft),initial:JSON.stringify(draft),lastHistoryDoc:JSON.stringify(draft),
+  clone:structuredClone,selected:'#draft-step',groupSelection:['#draft-step'],groupMode:true,overlapItems:[1],layerItems:[1],touchedSelection:{},
+  mmvsVisualPinned:new Set(),groupSync(){calls.push('groups')},state(){s.dirty=JSON.stringify(s.doc)!==s.initial;s.lastHistoryDoc=JSON.stringify(s.doc);calls.push('state')},
+  renderProps(){calls.push('props')},renderBoundary(){calls.push('boundary')},preview(){calls.push('preview')},toast(m){calls.push(m)}
+ };
+ execute(code(spatial,['usePublishedAsWorkingCopy']),s);assert.equal(s.usePublishedAsWorkingCopy(),true);
+ assert.equal(JSON.stringify(s.doc),JSON.stringify(published));assert.deepEqual(s.published,published);assert.equal(s.dirty,true);
+ assert.equal(s.selected,'');assert.equal(s.groupMode,false);assert.equal(JSON.stringify(s.groupSelection),'[]');
+ assert.ok(calls.includes('preview'));
+});
+test('published spatial promotion refuses to change a read-only or busy workspace',()=>{
+ const original={items:[{selector:'#draft',x:1,y:2,scale:1}],domMoves:[]};
+ const s={loading:false,loadFailed:false,publishing:false,externalBusy:true,reviewLayout:null,published:{items:[{selector:'#live',x:5,y:6,scale:1}]},
+  doc:structuredClone(original),clone:structuredClone};
+ execute(code(spatial,['usePublishedAsWorkingCopy']),s);assert.equal(s.usePublishedAsWorkingCopy(),false);assert.deepEqual(s.doc,original);
+});
 test('Home defaults to editable draft; live comparison uses published layout and disables dragging',()=>{
  const s={page:'index',reviewSnapshot:null,previewPublishedHome:false,externalBusy:false,window:{MMVSWorkspace:{}},reviewLayout:null,published:{items:[{selector:'#published'}]},doc:{items:[{selector:'#draft'}]},clone:structuredClone,mode:true,grid:false,animationPlaying:false,selected:'',send:(type,data)=>messages.push({type,data}),groupSync(){},scanLayers(){}};const messages=[];
  execute(code(studio,['isPublishedHomePreview'])+'\n'+code(spatial,['preview']),s);s.window.MMVSWorkspace.isPublishedHomePreview=s.isPublishedHomePreview;

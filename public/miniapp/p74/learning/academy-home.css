@@ -9,11 +9,11 @@
   --academy-gold-bright:#ffe6a3;
   --academy-text:#f7f5eb;
   --academy-muted:#d0d9d0;
-  font-family:Doran,IRANSans,Tahoma,sans-serif;
+  font-family:MM-Peyda-FaNum,Tahoma,sans-serif;
 }
 *{box-sizing:border-box}
 html{min-height:100%;background:var(--academy-bg);scroll-behavior:smooth}
-body{margin:0;min-height:100vh;min-height:100dvh;color:var(--academy-text);background:var(--academy-bg);font-family:Doran,IRANSans,Tahoma,sans-serif;overflow-x:hidden}
+body{margin:0;min-height:100vh;min-height:100dvh;color:var(--academy-text);background:var(--academy-bg);font-family:MM-Peyda-FaNum,Tahoma,sans-serif;overflow-x:hidden}
 button,a{font:inherit}
 .academy-page{position:relative;isolation:isolate}
 .academy-atmosphere{
@@ -871,3 +871,14 @@ button,a{font:inherit}
     margin-bottom:0!important;
   }
 }
+
+/* R5 native academy layout: reading hierarchy; existing stages and lessons are dynamic. */
+.academy-shell{max-width:1120px;padding-bottom:max(122px,calc(100px + env(safe-area-inset-bottom,0px)))}
+.academy-header{padding-block:clamp(14px,2.5vw,28px);border-bottom:1px solid #94f1c32d}
+.academy-heading h1{font-size:clamp(25px,3.8vw,42px);line-height:1.4;text-wrap:balance}
+.academy-stages-wrap{max-width:980px;min-width:0}
+.academy-stage-card,.stage-card{min-width:0;overflow-wrap:anywhere}
+.academy-cta{min-height:48px;touch-action:manipulation}
+.academy-page :is(button,a):focus-visible{outline:3px solid #9effd5;outline-offset:3px}
+@media(min-width:960px){.academy-shell{padding-inline:32px}.academy-stages{gap:16px}.academy-header{margin-bottom:14px}}
+@media(max-width:380px){.academy-shell{padding-inline:10px}.academy-stages{gap:9px}}

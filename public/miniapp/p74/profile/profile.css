@@ -1,10 +1,10 @@
 /* P77 MMTrade Profile — single unified image background, interactive CSS overlays, no WebGL */
-@font-face{font-family:P77Doran;src:url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:P77Doran;src:url('/miniapp/fonts/doran/DoranFaNum-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
-@font-face{font-family:P77Doran;src:url('/miniapp/fonts/doran/DoranFaNum-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
-@font-face{font-family:P77Doran;src:url('/miniapp/fonts/doran/DoranFaNum-ExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
+@font-face{font-family:MM-Peyda-P77;src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:MM-Peyda-P77;src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:MM-Peyda-P77;src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:MM-Peyda-P77;src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-ExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
 :root{color-scheme:dark;--p77-bg:#061710;--p77-text:#f8f6ee;--p77-mut:#c0c9c0;--p77-gold:#e9ba7f;--p77-gold-light:#ffe2af;--p77-emerald:#32dfaa;--p77-glass:rgba(7,36,28,.76);--p77-stroke:rgba(219,178,120,.63);--p77-radius:20px;--p77-gap:10px;--p77-scale:1;--p77-hero-height:164px}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#03120e}body{font-family:P77Doran,Tahoma,Arial,sans-serif;color:var(--p77-text);-webkit-font-smoothing:antialiased}button,input,a{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #6bffd0;outline-offset:3px}button:disabled{opacity:.65;cursor:not-allowed}svg{display:block;flex:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;fill:none}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#03120e}body{font-family:MM-Peyda-P77,Tahoma,Arial,sans-serif;color:var(--p77-text);-webkit-font-smoothing:antialiased}button,input,a{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #6bffd0;outline-offset:3px}button:disabled{opacity:.65;cursor:not-allowed}svg{display:block;flex:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;fill:none}
 #p77-app{isolation:isolate;position:relative;min-height:100svh;background:#041711;direction:rtl;overflow:hidden}
 .p77-backdrop{position:absolute;inset:0;z-index:-2;pointer-events:none;background-image:url('./assets/profile_background_unified.webp');background-position:center top;background-size:100% 100%;background-repeat:no-repeat}
 .p77-backdrop:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(0,5,4,.23),transparent 20%,transparent 79%,rgba(0,5,4,.23));}
@@ -54,3 +54,11 @@
 #p77-app [hidden]{display:none!important}
 
 .p77-monogram{font-size:0;height:45px;padding:0;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 5px #eab46e4d)}.p77-monogram img{display:block;width:116px;height:45px;object-fit:contain}
+
+/* UUPM R5: actual dynamic profile DOM is grouped into one responsive dashboard. */
+.p77-overview-grid{display:grid;gap:var(--p77-gap);min-width:0;align-content:start}
+.p77-glass{border-color:#96dfbb5c;background-image:linear-gradient(145deg,#154b3bce,#051d1aee);box-shadow:inset 0 1px #ffffff1a,0 12px 30px #0006}
+.p77-mini-card,.p77-badge,.p77-metric,.p77-menu{min-height:44px;touch-action:manipulation}
+#p77-app :is(button,a):focus-visible{outline:3px solid #9affd1;outline-offset:3px}
+@media(min-width:900px){#p77-app{max-width:1180px;margin:0 auto;box-shadow:0 15px 100px #0009}.p77-shell{max-width:1120px;padding:28px 25px 145px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,.8fr);gap:20px;align-items:start}.p77-brand{grid-column:1/-1}.p77-identity{grid-column:1;min-height:300px}.p77-overview-grid{grid-column:2;grid-row:2/span 2}.p77-awards{grid-column:1}.p77-actions{grid-column:2}.p77-cta{grid-column:1/-1}}
+@media(max-width:899px){.p77-shell{display:flex;flex-direction:column}.p77-overview-grid{width:100%}}

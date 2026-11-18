@@ -1,0 +1,41 @@
+name: Visual editor published Home parity
+
+on:
+  push:
+    branches: [fix/visual-editor-published-home-parity-20261118]
+  pull_request:
+    branches: [design/uupm-r5-source-integrated]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-editor-home-parity-r5-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Check editor runtime syntax
+        run: |
+          node --check public/miniapp/p74/studio/studio.js
+          node --check public/miniapp/p74/studio/spatial.js
+      - name: Run focused Studio regression tests
+        run: node --experimental-strip-types --test tests/studio-state-regressions.test.mjs tests/home-object-integration.test.mjs
+      - name: Run complete repository test suite
+        run: npm test
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: TypeScript build
+        run: npm run build
