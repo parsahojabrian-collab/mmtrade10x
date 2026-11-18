@@ -308,7 +308,7 @@ function showInspector(info){const b=elementBlock(selected)||{};$('selected').te
  }
 }
 function setOperation(value,label='در حال ذخیره…'){
- busy=value;const blocked=value||pageLoading,readOnly=blocked||pageLoadError||!!reviewSnapshot||isPublishedHomePreview();
+ busy=value;updatePreviewSourceToggle();const blocked=value||pageLoading,readOnly=blocked||pageLoadError||!!reviewSnapshot||isPublishedHomePreview();
  window.MMTradeHomeEditor?.setReadOnly(readOnly);window.MMVS_Spatial?.setEditingBlocked?.(readOnly);operationLabel=label;
  for(const id of ['save','publish','reload'])$(id).disabled=blocked||((!!reviewSnapshot||pageLoadError)&&id!=='reload')||uploadPending>0;
  for(const selector of ['.inspector','.mmvs-library','#spatial-panel','#pages']){const node=document.querySelector(selector);if(node)node.inert=readOnly;}
