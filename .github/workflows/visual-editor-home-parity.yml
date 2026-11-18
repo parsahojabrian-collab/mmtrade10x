@@ -35,5 +35,7 @@ jobs:
         run: node --experimental-strip-types --test tests/studio-state-regressions.test.mjs tests/home-object-integration.test.mjs
       - name: Run complete repository test suite
         run: npm test
+      - name: Generate Prisma client
+        run: npm run db:generate
       - name: TypeScript build
         run: npm run build
