@@ -6,7 +6,7 @@
   --emerald:#18f779;--emerald-bright:#45ffa0;--white:#f4fff8;--muted:#c9dbd1;
   --pan:url('assets/pan.webp');--silver:#cedbd5;
   --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
-  --font-fa:'Vazirmatn','Noto Sans Arabic','Tahoma',sans-serif;
+  --font-fa:'MM-Peyda-FaNum',Tahoma,sans-serif;
   --font-en:'Inter','Segoe UI',Arial,sans-serif;
 }
 *{box-sizing:border-box}
@@ -342,3 +342,11 @@ bdi{unicode-bidi:isolate;direction:ltr;font-family:var(--font-en)}
     padding: 5px 7px;
   }
 }
+
+/* R5: native course navigation and legibility. */
+.row{min-height:44px;touch-action:manipulation}
+.row:focus-visible,.round-btn:focus-visible{outline:3px solid #a0ffd2;outline-offset:-2px}
+.wrap{max-width:560px}
+.list{min-height:0}
+@media(min-width:960px){.wrap{max-width:620px;box-shadow:0 0 90px #000b}.list{gap:10px;padding-inline:14px}}
+@media(prefers-reduced-motion:reduce){.row{transition:none!important}}
