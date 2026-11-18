@@ -1,14 +1,14 @@
 /* MMTrade 10X — Unified Liquid Glass Bottom Bar R2
    Translucent lens: background is deliberately see-through. No baked-in backdrop. */
 @font-face {
-  font-family: MMU-Doran;
-  src: url('/miniapp/fonts/doran/DoranFaNum-Regular.woff2') format('woff2');
+  font-family: MM-Peyda-Nav;
+  src: url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Regular.woff2') format('woff2');
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
-  font-family: MMU-Doran;
-  src: url('/miniapp/fonts/doran/DoranFaNum-Bold.woff2') format('woff2');
+  font-family: MM-Peyda-Nav;
+  src: url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Bold.woff2') format('woff2');
   font-weight: 700;
   font-display: swap;
 }
@@ -69,7 +69,7 @@ html.mmu-nav-ready .tenx-custom-page {
     inset 0 1px 0 rgba(255, 255, 255, .52),
     inset 0 -2px 2px rgba(3, 40, 30, .17),
     0 0 19px rgba(35, 242, 175, .09);
-  font-family: MMU-Doran, Tahoma, Arial, sans-serif;
+  font-family: MM-Peyda-Nav, Tahoma, Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
 }
@@ -121,7 +121,7 @@ html.mmu-nav-ready .tenx-custom-page {
   text-shadow: 0 1px 5px rgba(0, 14, 11, .66);
   background: transparent;
   text-decoration: none !important;
-  font: 700 10.8px/1.4 MMU-Doran, Tahoma, Arial, sans-serif;
+  font: 700 10.8px/1.4 MM-Peyda-Nav, Tahoma, Arial, sans-serif;
   white-space: nowrap;
   transition: color .24s ease, background .27s ease, box-shadow .27s ease, transform .27s cubic-bezier(.2,.8,.2,1);
 }
@@ -253,7 +253,7 @@ html body > #mmu-bottom-nav {
     inset 0 -1.6px 1.5px rgba(204, 255, 221, .46),
     inset 0 0 0 3px rgba(231, 255, 241, .038) !important;
   color: #effff4;
-  font-family: MMU-Doran, Tahoma, sans-serif;
+  font-family: MM-Peyda-Nav, Tahoma, sans-serif;
 }
 
 html body > #mmu-bottom-nav::before {
@@ -291,7 +291,7 @@ html body > #mmu-bottom-nav .mmu-tab {
   border-radius: 23px;
   color: #effff4;
   text-shadow: 0 1px 4px rgba(0, 21, 13, .77);
-  font: 700 11.8px/1.35 MMU-Doran, Tahoma, Arial, sans-serif;
+  font: 700 11.8px/1.35 MM-Peyda-Nav, Tahoma, Arial, sans-serif;
   background: transparent;
 }
 
@@ -469,3 +469,9 @@ html body > #mmu-bottom-nav[data-mmu-skin="solid"] {
   html body > #mmu-bottom-nav {transition:none!important;will-change:auto!important;}
 }
 /* MMU_R6_NAV_STUDIO_SKIN_END */
+
+/* R5 uses only the existing bottom navigation: separated, tactile, RTL. */
+#mmu-bottom-nav{border-color:#b1edcf59;box-shadow:inset 0 1px #fff2,0 15px 42px #000a;isolation:isolate}
+#mmu-bottom-nav :is(a,button){min-width:44px;min-height:44px;touch-action:manipulation}
+#mmu-bottom-nav :is(a,button):focus-visible{outline:3px solid #9affd0;outline-offset:-3px}
+@media(prefers-reduced-transparency:reduce){#mmu-bottom-nav{backdrop-filter:none}}
