@@ -150,8 +150,9 @@ function updatePreviewSourceToggle(){
  btn.textContent=pub?'ویرایش پیش‌نویس هوم':'نمایش هوم واقعی';
  btn.setAttribute('aria-pressed',pub?'false':'true');
  const published=editor?.published;
+ const hasPublishedHome=published?.status==='PUBLISHED'&&Array.isArray(published?.blocks)&&published.blocks.some(b=>b?.type==='element'&&b.selector==='#p74-home-config'&&typeof b.text==='string');
  if(edit){
-  edit.hidden=!home||published?.status!=='PUBLISHED'||!Array.isArray(published?.blocks);
+  edit.hidden=!home||!hasPublishedHome;
   edit.disabled=busy||pageLoading||!!reviewSnapshot||uploadPending>0;
  }
  if(tip){tip.hidden=!home;tip.textContent=pub?'نمایش دقیق تنظیمات و چیدمان منتشرشده':'پیش‌نمایش پیش‌نویس؛ برای شروع ویرایش از وضعیت فعلی کاربران، «شروع ویرایش از نسخه زنده» را بزن.'}
