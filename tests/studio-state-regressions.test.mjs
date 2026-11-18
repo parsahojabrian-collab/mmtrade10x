@@ -55,6 +55,20 @@ test('the latest media search is requested after an in-flight request and stale 
  execute(code(read('mmvs-media-library-r1.js'),['load']),s);const task=s.load();s.search.value='new';await s.load();finish({items:[{name:'old result'}],total:1});await task;
  assert.deepEqual(requests,['old','new']);assert.deepEqual(rendered,[['new result']]);
 });
+test('published baseline action is shown only after a published P74 Home marker is loaded',()=>{
+ const controls={
+  'preview-source-toggle':{hidden:true,textContent:'',setAttribute(){}},
+  'preview-source-tip':{hidden:true,textContent:''},
+  'edit-published-home':{hidden:true,disabled:true}
+ };
+ const s={page:'index',previewPublishedHome:false,busy:false,pageLoading:false,reviewSnapshot:null,uploadPending:0,
+  editor:{published:{status:'PUBLISHED',blocks:[{type:'element',selector:'#p74-home-config',text:'{}'}]}},
+  $:id=>controls[id]};
+ execute(code(studio,['updatePreviewSourceToggle']),s);s.updatePreviewSourceToggle();
+ assert.equal(controls['edit-published-home'].hidden,false);
+ assert.equal(controls['edit-published-home'].disabled,false);
+ s.page='profile';s.updatePreviewSourceToggle();assert.equal(controls['edit-published-home'].hidden,true);
+});
 test('published Home can be promoted into an editable working copy without publishing',()=>{
  const controls=Object.fromEntries(['page-title','selected','props','home-object-panel','home-tools-toggle'].map(id=>[id,{value:'',hidden:true,textContent:'',setAttribute(){},replaceChildren(){}}]));
  const liveBlocks=[{type:'element',selector:'#p74-home-config',text:'{"version":74,"brand":"Live"}'},{type:'text',text:'Live block'}];
