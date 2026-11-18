@@ -69,7 +69,7 @@ test('published baseline action is shown only after a published P74 Home marker 
  const s={page:'index',previewPublishedHome:false,busy:false,pageLoading:false,reviewSnapshot:null,uploadPending:0,
   editor:{published:{status:'PUBLISHED',blocks:[{type:'element',selector:'#p74-home-config',text:'{}'}]}},
   $:id=>controls[id]};
- execute(code(studio,['updatePreviewSourceToggle']),s);s.updatePreviewSourceToggle();
+ execute(code(studio,['isPublishedHomePreview','updatePreviewSourceToggle']),s);s.updatePreviewSourceToggle();
  assert.equal(controls['edit-published-home'].hidden,false);
  assert.equal(controls['edit-published-home'].disabled,false);
  s.page='profile';s.updatePreviewSourceToggle();assert.equal(controls['edit-published-home'].hidden,true);
@@ -114,7 +114,7 @@ test('published spatial layout becomes the editable working copy while the publi
  const calls=[];const s={loading:false,loadFailed:false,publishing:false,externalBusy:false,reviewLayout:null,
   published:structuredClone(published),doc:structuredClone(draft),initial:JSON.stringify(draft),lastHistoryDoc:JSON.stringify(draft),
   clone:structuredClone,selected:'#draft-step',groupSelection:['#draft-step'],groupMode:true,overlapItems:[1],layerItems:[1],touchedSelection:{},
-  mmvsVisualPinned:new Set(),groupSync(){calls.push('groups')},state(){this.dirty=JSON.stringify(this.doc)!==this.initial;this.lastHistoryDoc=JSON.stringify(this.doc);calls.push('state')},
+  mmvsVisualPinned:new Set(),groupSync(){calls.push('groups')},state(){s.dirty=JSON.stringify(s.doc)!==s.initial;s.lastHistoryDoc=JSON.stringify(s.doc);calls.push('state')},
   renderProps(){calls.push('props')},renderBoundary(){calls.push('boundary')},preview(){calls.push('preview')},toast(m){calls.push(m)}
  };
  execute(code(spatial,['usePublishedAsWorkingCopy']),s);assert.equal(s.usePublishedAsWorkingCopy(),true);
