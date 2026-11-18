@@ -14,7 +14,7 @@ html.p74-enabled,html.p74-enabled body{overflow:hidden!important}
 #p74-app .p74-page{position:relative;width:min(100%,540px);margin:0 auto;min-height:0;aspect-ratio:780/1770;background-color:#03140f;background-image:var(--p76-background,url('/miniapp/p74/assets/mountain_steps_5.webp'));background-position:center top;background-size:100% 100%;background-repeat:no-repeat;overflow:hidden;box-shadow:0 0 80px #0009;contain:layout style}
 #p74-app .p74-page::after{content:none!important;display:none!important}
 #p74-app .p74-brand{position:absolute;top:1.5%;left:7%;width:86%;height:14%;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;z-index:6;text-shadow:0 2px 12px #000d}
-#p74-app .p74-header-cube .p74-emblem{position:absolute;inset:20%;width:60%;height:60%;object-fit:contain;transform:translateZ(calc(var(--edge) / 2 + 3px));z-index:2;filter:drop-shadow(0 0 7px #000a)}
+#p74-app .p74-header-cube .p74-emblem{position:absolute;inset:20%;width:60%;height:60%;object-fit:contain;transform:translateZ(calc(var(--depth) + 3px));z-index:2;filter:drop-shadow(0 0 7px #000a)}
 #p74-app .p74-brand-name{font-family:MM-Peyda-P74,Tahoma,sans-serif;font-weight:800;font-size:clamp(16px,4.2vw,28px);line-height:1.2;max-width:100%;text-wrap:balance;direction:ltr;letter-spacing:.01em;background:linear-gradient(110deg,#f6fff9,#f9d6a0 75%,#bb8659);color:transparent;background-clip:text;-webkit-background-clip:text}
 #p74-app .p74-brand-sub{font-size:clamp(9px,2.6vw,15px);font-weight:400;color:#e6d8c7;line-height:1.4}
 /* Poster can be replaced and its rectangle sized from the full-page Object Studio. */
@@ -198,14 +198,14 @@ html.p74-enabled,html.p74-enabled body{overflow:hidden!important}
 }
 
 /* Native geometric identity, separate from editable scene objects. */
-#p74-app .p74-header-cube{--edge:clamp(39px,10.8vw,64px);position:relative;width:var(--edge);height:var(--edge);flex:none;transform-style:preserve-3d;transform:perspective(260px) rotateX(-27deg) rotateY(-36deg);filter:drop-shadow(0 7px 15px #0009) drop-shadow(0 0 11px #3ce6ad75);animation:p74-cube-glow 5.5s ease-in-out infinite}
+#p74-app .p74-header-cube{--edge:clamp(39px,10.8vw,64px);--depth:clamp(19.5px,5.4vw,32px);position:relative;width:var(--edge);height:var(--edge);flex:none;transform-style:preserve-3d;transform:perspective(260px) rotateX(-27deg) rotateY(-36deg);filter:drop-shadow(0 7px 15px #0009) drop-shadow(0 0 11px #3ce6ad75);animation:p74-cube-glow 5.5s ease-in-out infinite}
 #p74-app .p74-cube-face{position:absolute;inset:0;border:1px solid #b8ffe4a3;box-shadow:inset 0 1px 15px #d8fff032;backface-visibility:hidden;pointer-events:none}
-#p74-app .p74-cube-front{transform:translateZ(calc(var(--edge) / 2));background:linear-gradient(145deg,#43d5a880,#0f6d58db,#08251e)}
-#p74-app .p74-cube-top{transform:rotateX(90deg) translateZ(calc(var(--edge) / 2));background:linear-gradient(130deg,#d6fff0cf,#3be0aba8)}
-#p74-app .p74-cube-right{transform:rotateY(90deg) translateZ(calc(var(--edge) / 2));background:linear-gradient(160deg,#0d6d55,#051d19)}
+#p74-app .p74-cube-front{transform:translateZ(var(--depth));background:linear-gradient(145deg,#43d5a880,#0f6d58db,#08251e)}
+#p74-app .p74-cube-top{transform:rotateX(90deg) translateZ(var(--depth));background:linear-gradient(130deg,#d6fff0cf,#3be0aba8)}
+#p74-app .p74-cube-right{transform:rotateY(90deg) translateZ(var(--depth));background:linear-gradient(160deg,#0d6d55,#051d19)}
 #p74-app .p74-step{min-height:44px;touch-action:manipulation}
 #p74-app :is(a,button):focus-visible{outline:3px solid #a2ffda;outline-offset:4px}
 #p74-app .p74-progress{background:linear-gradient(145deg,#0e372cd9,#041e18e8);box-shadow:inset 0 1px #d3fff020,0 12px 32px #0008}
 @keyframes p74-cube-glow{50%{filter:drop-shadow(0 9px 17px #0009) drop-shadow(0 0 19px #3ce6adba)}}
-@media(max-width:360px){#p74-app .p74-header-cube{--edge:37px}#p74-app .p74-brand-name{font-size:15px}}
+@media(max-width:360px){#p74-app .p74-header-cube{--edge:37px;--depth:18.5px}#p74-app .p74-brand-name{font-size:15px}}
 @media(prefers-reduced-motion:reduce){#p74-app .p74-header-cube{animation:none!important}}
