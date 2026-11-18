@@ -57,8 +57,8 @@ test('the latest media search is requested after an in-flight request and stale 
 });
 test('Studio entrypoint cache-busts both published-baseline runtime modules',()=>{
  const html=read('index.html');
- assert.match(html,/studio\\.js\\?v=PUBLISHED_HOME_PARITY_R1/);
- assert.match(html,/spatial\\.js\\?v=PUBLISHED_HOME_PARITY_R1/);
+ assert.match(html,/studio\.js\?v=PUBLISHED_HOME_PARITY_R1/);
+ assert.match(html,/spatial\.js\?v=PUBLISHED_HOME_PARITY_R1/);
 });
 test('published baseline action is shown only after a published P74 Home marker is loaded',()=>{
  const controls={
