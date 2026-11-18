@@ -32,6 +32,8 @@ jobs:
           node --check public/miniapp/p74/profile/profile.js
       - name: Test R5 source contracts
         run: node --test tests/uiux-promax-r5-source.test.mjs
+      - name: Compile read-only R5 reconciliation script
+        run: python3 -m py_compile tools/mmtrade_uupm_r5_reconcile.py
       - name: Run complete repository test suite
         run: npm test
       - name: Generate Prisma client
