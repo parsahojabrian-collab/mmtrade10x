@@ -42,18 +42,18 @@ def exact_once(source,anchor,replacement,label):
 s=spatial.read_text(encoding='utf-8')
 if 'MMTRADE_HOME_SPATIAL_OWNER_R6' in s:
     raise RuntimeError('R6_ALREADY_INSTALLED')
-# The Home stage editor owns step geometry. General Spatial must not alter it.
+# Stage 4 geometry belongs to the Home editor, not generic Spatial.
 anchor='function eligible(el){if(mmvsR11Unsafe(el))return false;'
-insert="""/* MMTRADE_HOME_SPATIAL_OWNER_R6: stage geometry is owned by P74 Home editor. */
+insert="""/* MMTRADE_HOME_SPATIAL_OWNER_R6: step 4 geometry is owned by P74 Home editor. */
 function mmvsNativeHomeStage(el){
- return slug==='index' && !!el?.closest?.('#p74-app .p74-mountain-area .p74-step');
+ return slug==='index' && !!el?.closest?.('#p74-app .p74-mountain-area .p74-step[data-step="4"]');
 }
 function eligible(el){if(mmvsNativeHomeStage(el))return false;if(mmvsR11Unsafe(el))return false;"""
 s=exact_once(s,anchor,insert,'spatial.eligible')
 # DOM ordering is another Spatial pathway; it must not move native steps.
 dom_anchor='function mmvsDomSafeNode(el){\n'
 dom_insert="""function mmvsDomSafeNode(el){
- if(el?.closest?.('#p74-app .p74-mountain-area .p74-step'))return false;
+ if(el?.closest?.('#p74-app .p74-mountain-area .p74-step[data-step="4"]'))return false;
 """
 s=exact_once(s,dom_anchor,dom_insert,'spatial.domSafeNode')
 spatial.write_text(s,encoding='utf-8')
@@ -124,7 +124,7 @@ const html=f('public/miniapp/index.html');
 test('native Home steps are not eligible for generic spatial overrides',()=>{
   assert.match(spatial,/function mmvsNativeHomeStage\(el\)/);
   assert.match(spatial,/function eligible\(el\)\{if\(mmvsNativeHomeStage\(el\)\)return false;/);
-  assert.match(spatial,/function mmvsDomSafeNode\(el\)\{\s*if\(el\?\.closest\?\.\('#p74-app \.p74-mountain-area \.p74-step'\)\)return false;/);
+  assert.match(spatial,/function mmvsDomSafeNode\(el\)\{\s*if\(el\?\.closest\?\.\('#p74-app \.p74-mountain-area \.p74-step\[data-step="4"\]'\)\)return false;/);
 });
 test('Step 4 label has a dedicated RTL grid and wrap without geometry overrides',()=>{
   assert.match(css,/MMTRADE_STEP4_TEXT_ALIGN_R6/);
