@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MMTRADE Step34 DOM Inspector</title>
+<style>body{background:#071c16;color:#f2ead8;font:14px/1.75 Tahoma,Arial,sans-serif;margin:0;padding:12px}h1{font-size:19px;margin:0 0 8px}p{margin:4px 0 10px}button{border:1px solid #a5d9bb;background:#0c3b2b;color:#fff;border-radius:9px;padding:10px;margin-bottom:8px}pre{direction:ltr;text-align:left;background:#02110d;border:1px solid #396e56;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;max-height:50vh;overflow:auto;font:12px/1.5 monospace}iframe{display:block;width:min(100%,420px);height:550px;border:2px solid #946f4c;border-radius:8px;margin:12px auto;background:#02100d}</style></head><body>
+<h1>MMTRADE · بررسی رندر پله‌های ۳ و ۴</h1><p>این ابزار فقط اطلاعات نمایشی Home را می‌خواند؛ چیزی ذخیره یا ارسال نمی‌کند.</p>
+<button id="refresh">بررسی دوباره</button> <button id="copy">کپی گزارش</button>
+<pre id="report">در حال بارگذاری Home…</pre><iframe id="frame" title="Home diagnostic preview"></iframe>
+<script>
+(function(){
+'use strict';
+const frame=document.getElementById('frame'),report=document.getElementById('report');
+const round=n=>Math.round(n*10)/10;
+const rect=e=>{if(!e)return null;const r=e.getBoundingClientRect();return [round(r.left),round(r.top),round(r.width),round(r.height)];};
+function sample(){
+ try{
+ const d=frame.contentDocument,w=frame.contentWindow;
+ if(!d)throw Error('iframe DOM inaccessible');
+ const app=d.getElementById('p74-app'),page=d.querySelector('#p74-app .p74-page');
+ if(!page){report.textContent='HOME_NOT_RENDERED; gate='+String(w.__MM_PAGE_ENGINE__||'unknown')+'; status='+String(w.__MM_P74_ENTRY_DIAG__?.status||'unknown');return;}
+ const info={pageVersion:app?.dataset.version,stepCount:page.dataset.stepCount,engine:String(w.__MM_PAGE_ENGINE__||'unknown'),bootstrap:w.__MM_P74_ENTRY_DIAG__?.status,hiddenDuplicates:page.dataset.mmNativeDuplicateTextHidden,background:page.style.getPropertyValue('--p76-background').slice(0,250)};
+ const steps=[...d.querySelectorAll('#p74-app .p74-mountain-area .p74-step')].map(el=>{
+ const label=el.querySelector('.p74-step-label'),s=w.getComputedStyle(el),ls=label?w.getComputedStyle(label):null;
+ return {step:el.dataset.step,title:el.title,aria:el.getAttribute('aria-label'),label:label?.textContent,childElements:label?.children.length,box:rect(el),labelBox:rect(label),fontSize:ls?.fontSize,lineHeight:ls?.lineHeight,whiteSpace:ls?.whiteSpace,overflow:ls?.overflow,boxOverflow:s.overflow,visible:s.visibility,display:s.display};
+ });
+ const wanted=steps.filter(x=>x.step==='3'||x.step==='4'),others=[];
+ for(const el of d.querySelectorAll('body *')){
+   if(el.closest('script,style,template,noscript')||el.childElementCount)continue;
+   const txt=(el.textContent||'').replace(/\s+/g,' ').trim();
+   if(!txt||txt.length>100)continue;
+   const r=el.getBoundingClientRect();if(r.width<1||r.height<1)continue;
+   if(w.getComputedStyle(el).visibility==='hidden'||w.getComputedStyle(el).display==='none')continue;
+   if(!wanted.some(x=>x.box&&r.bottom>x.box[1]-20&&r.top<x.box[1]+x.box[3]+20&&r.right>x.box[0]-30&&r.left<x.box[0]+x.box[2]+30))continue;
+   others.push({tag:el.tagName,cls:(el.className?.baseVal||el.className||'').toString().slice(0,75),text:txt,box:rect(el)});
+   if(others.length>35)break;
+ }
+ report.textContent=JSON.stringify({info,steps,nearStepText:others},null,2);
+ }catch(e){report.textContent='INSPECTION_ERROR: '+String(e?.message||e);}
+}
+frame.onload=()=>{sample();setTimeout(sample,1100);setTimeout(sample,3500)};
+document.getElementById('refresh').onclick=sample;
+document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(report.textContent);alert('گزارش کپی شد')}catch(e){alert('متن گزارش را انتخاب و کپی کن')}};
+frame.src='/miniapp/?step34_diag='+Date.now();
+})();
+</script></body></html>
