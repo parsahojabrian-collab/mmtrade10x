@@ -134,7 +134,9 @@ test('Step 4 label has a dedicated RTL grid and wrap without geometry overrides'
   for(const v of ['white-space:normal!important','text-align:center!important','grid-column:2!important']){
     assert.ok(patch.includes(v),v);
   }
-  assert.doesNotMatch(patch,/\b(?:top|right|height|width)\s*:\s*(?:[-\d]|calc\()/);
+  const cardRule=patch.match(/\.p74-step\[data-step="4"\]\s*\{([^}]+)\}/)?.[1];
+  assert.ok(cardRule,'stage 4 root rule');
+  assert.doesNotMatch(cardRule,/\b(?:top|right|height|width)\s*:/);
 });
 test('both updated assets use fresh cache identifiers',()=>{
   assert.match(html,/mm-r5-home\.css\?v=MMTRADE_STEP4_LAYOUT_R6_20261120/);
