@@ -1,0 +1,190 @@
+/* UI UX Pro Max | MMTRADE R4 Structural Design | local private WOFF2 */
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Thin.woff2') format('woff2');font-style:normal;font-weight:100;font-display:swap;}
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-ExtraLight.woff2') format('woff2');font-style:normal;font-weight:200;font-display:swap;}
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Light.woff2') format('woff2');font-style:normal;font-weight:300;font-display:swap;}
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap;}
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Medium.woff2') format('woff2');font-style:normal;font-weight:500;font-display:swap;}
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-SemiBold.woff2') format('woff2');font-style:normal;font-weight:600;font-display:swap;}
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap;}
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-ExtraBold.woff2') format('woff2');font-style:normal;font-weight:800;font-display:swap;}
+@font-face{font-family:'MM4 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Black.woff2') format('woff2');font-style:normal;font-weight:900;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Thin.woff2') format('woff2');font-style:normal;font-weight:100;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-ExtraLight.woff2') format('woff2');font-style:normal;font-weight:200;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Light.woff2') format('woff2');font-style:normal;font-weight:300;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Medium.woff2') format('woff2');font-style:normal;font-weight:500;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-SemiBold.woff2') format('woff2');font-style:normal;font-weight:600;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-ExtraBold.woff2') format('woff2');font-style:normal;font-weight:800;font-display:swap;}
+@font-face{font-family:'MM4 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Black.woff2') format('woff2');font-style:normal;font-weight:900;font-display:swap;}
+
+/* Shared semantic tokens: fintech, cinematic restrained glass, genuine RTL. */
+:root{
+  --mm4-bg:#04150f; --mm4-panel:#0b2b22; --mm4-panel-hi:#124335;
+  --mm4-text:#f4fff9; --mm4-muted:#c3d9d0; --mm4-line:rgba(134,224,183,.28);
+  --mm4-mint:#73f4c6; --mm4-gold:#f0c78c; --mm4-danger:#ffa4a4;
+  --mm4-radius:22px; --mm4-gap:clamp(12px,2vw,24px);
+  --mm4-font:'MM4 Peyda FaNum','MM4 Peyda',Tahoma,sans-serif;
+  --mm4-surface:linear-gradient(145deg,rgba(17,62,50,.93),rgba(3,24,20,.95));
+  --mm4-shadow:0 16px 40px rgba(0,0,0,.26),inset 0 1px rgba(224,255,240,.08);
+}
+html[data-mm-r4-ready] {color-scheme:dark;scroll-behavior:smooth}
+html[data-mm-r4-ready] body,
+html[data-mm-r4-ready] body :is(button,input,textarea,select,label,p,small,span,li,td,th,h1,h2,h3,h4,summary,a),
+html[data-mm-r4-ready] :is(#p74-app,#p77-app,#p78-app,.academy-shell,.studio-shell,.mmu-bottom-nav),
+html[data-mm-r4-ready] :is(#p74-app,#p77-app,#p78-app,.academy-shell,.studio-shell,.mmu-bottom-nav) :is(button,input,textarea,select,p,span,a,h1,h2,h3,h4) {
+  font-family:var(--mm4-font)!important;
+  font-synthesis:none;
+}
+/* Preserve monospaced technical data, URLs, IDs; no fake monospaced metrics. */
+html[data-mm-r4-ready] :is(code,pre,kbd,samp,textarea[data-code],.monospace){font-family:ui-monospace,SFMono-Regular,Consolas,monospace!important}
+html[data-mm-r4-ready] :is(button,a,[role=button],input,select,textarea):focus-visible{
+  outline:3px solid var(--mm4-mint)!important;outline-offset:3px;scroll-margin:18px;
+}
+html[data-mm-r4-ready] :is(button,[role=button]){cursor:pointer;-webkit-tap-highlight-color:transparent}
+html[data-mm-r4-ready] :is(button,[role=button]):disabled{cursor:not-allowed;opacity:.58}
+html[data-mm-r4-ready] .mm4-skip{position:fixed;top:10px;right:10px;z-index:2147483647;
+  padding:12px 16px;background:#154837;color:#fff;border:2px solid var(--mm4-gold);border-radius:12px;
+  transform:translateY(-160%);font-family:var(--mm4-font);}
+html[data-mm-r4-ready] .mm4-skip:focus{transform:none}
+html[data-mm-r4-ready] :is(.mm4-context,.mm4-team-intro,.mm4-command-intro){
+  border:1px solid var(--mm4-line);border-radius:var(--mm4-radius);background:var(--mm4-surface);
+  box-shadow:var(--mm4-shadow);color:var(--mm4-text);min-width:0;isolation:isolate;
+}
+html[data-mm-r4-ready] .mm4-context{padding:clamp(16px,2vw,28px);align-self:start}
+html[data-mm-r4-ready] .mm4-eyebrow,html[data-mm-r4-ready] .mm4-overline{display:block;
+  color:var(--mm4-gold);font:700 12px/1.5 var(--mm4-font)!important;letter-spacing:.02em;margin-bottom:11px;}
+html[data-mm-r4-ready] .mm4-context-title{color:var(--mm4-text);font-size:clamp(20px,2vw,28px);line-height:1.55;margin:0 0 8px;font-weight:800}
+html[data-mm-r4-ready] .mm4-context-desc{font-size:clamp(13px,1.5vw,15px);line-height:1.95;color:var(--mm4-muted);margin:0;overflow-wrap:anywhere}
+html[data-mm-r4-ready] .mm4-context-note{display:inline-flex;max-width:100%;margin-top:22px;
+  padding:9px 12px;border-radius:999px;border:1px solid var(--mm4-line);
+  font-size:12px;line-height:1.6;color:var(--mm4-mint);white-space:normal}
+/* Common module surfaces - visually unified without wiping original artwork or cube. */
+html[data-mm-r4-ready] :is(.glass-card,.overview-card,.step-card,.academy-stage-card,.panel,.inspector,.preview-area,.metric-card,.course-card){
+  border-color:var(--mm4-line);box-shadow:var(--mm4-shadow);
+}
+html[data-mm-r4-ready] :is(.glass-card,.overview-card,.step-card,.academy-stage-card,.panel,.metric-card){
+  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+html[data-mm-r4-ready] :is(.glass-card,.overview-card,.step-card,.academy-stage-card,.panel,.metric-card):focus-within{border-color:var(--mm4-mint)}
+html[data-mm-r4-ready] :is(button,input,textarea,select){max-width:100%;}
+/* Academy: real semantic structure generated by mm-r4.js. */
+html[data-mm-r4-structural="academy"] .academy-shell{width:min(1180px,calc(100% - 24px));max-width:1180px}
+html[data-mm-r4-structural="academy"] .academy-header{border-bottom:1px solid var(--mm4-line);padding-bottom:20px;margin-bottom:clamp(20px,4vw,34px)}
+html[data-mm-r4-structural="academy"] .mm4-academy-layout{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(245px,320px);gap:var(--mm4-gap);align-items:start;
+}
+html[data-mm-r4-structural="academy"] .mm4-academy-layout > .academy-stages-wrap{grid-column:1;grid-row:1 / span 2;min-width:0}
+html[data-mm-r4-structural="academy"] .mm4-academy-layout > .mm4-context{grid-column:2;grid-row:1}
+html[data-mm-r4-structural="academy"] .mm4-academy-layout > .academy-cta-section{grid-column:2;grid-row:2;min-width:0;margin:0}
+html[data-mm-r4-structural="academy"] .academy-cta{min-height:52px;border-radius:16px}
+/* Support: contact method and topic panel become a true desktop composition. */
+html[data-mm-r4-structural="support"] #support-page{width:100%;max-width:1180px;margin-inline:auto}
+html[data-mm-r4-structural="support"] #support-page .hero{border-radius:0 0 28px 28px}
+html[data-mm-r4-structural="support"] .app-shell{width:min(100%,1180px)!important;max-width:1180px!important}
+html[data-mm-r4-structural="support"] .mm4-support-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(255px,1fr);gap:var(--mm4-gap);align-items:start;padding:24px clamp(14px,2vw,26px) 8px}
+html[data-mm-r4-structural="support"] .mm4-support-grid .main-actions,html[data-mm-r4-structural="support"] .mm4-support-grid .quick-help{margin:0;padding-inline:0;min-width:0}
+html[data-mm-r4-structural="support"] .mm4-support-grid .quick-help{padding:clamp(14px,2vw,22px);background:var(--mm4-surface);border-radius:var(--mm4-radius)}
+html[data-mm-r4-structural="support"] .mm4-support-context{margin:0 0 15px;border-radius:14px;box-shadow:none;background:rgba(0,0,0,.12)}
+html[data-mm-r4-structural="support"] .new-ticket{min-height:125px}
+html[data-mm-r4-structural="support"] .action-grid{margin-top:14px}
+html[data-mm-r4-structural="support"] .chips button{min-height:44px;white-space:normal}
+html[data-mm-r4-structural="support"] .brand-scene{border-radius:20px;margin:24px clamp(14px,2vw,26px) 0}
+/* ePlanet: persistent progress on desktop, step cards as reading column. */
+html[data-mm-r4-structural="eplanet"] main.app-shell{width:min(100%,1120px)!important;max-width:1120px!important}
+html[data-mm-r4-structural="eplanet"] .mm4-eplanet-layout{display:grid;grid-template-columns:minmax(230px,.65fr) minmax(0,1.35fr);gap:var(--mm4-gap);align-items:start;margin:clamp(14px,2vw,26px)}
+html[data-mm-r4-structural="eplanet"] .mm4-eplanet-layout .progress-panel{position:sticky;top:18px;margin:0;min-width:0;border:1px solid var(--mm4-line);border-radius:var(--mm4-radius);padding:clamp(16px,2vw,24px);background:var(--mm4-surface)}
+html[data-mm-r4-structural="eplanet"] .mm4-eplanet-layout .steps{margin:0;min-width:0}
+html[data-mm-r4-structural="eplanet"] .step-card{min-height:108px;border-radius:19px;overflow-wrap:anywhere}
+html[data-mm-r4-structural="eplanet"] .step-action{min-width:54px;min-height:44px}
+/* Copytrade: keep lesson activation buttons and existing section switching. */
+html[data-mm-r4-structural="copytrade"] #course-index{max-width:1120px;margin-inline:auto}
+html[data-mm-r4-structural="copytrade"] .mm4-course-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,290px);gap:var(--mm4-gap);align-items:start;padding-inline:clamp(10px,2vw,24px)}
+html[data-mm-r4-structural="copytrade"] .mm4-course-layout nav.list{min-width:0;width:100%}
+html[data-mm-r4-structural="copytrade"] .mm4-course-layout .mm4-context{position:sticky;top:14px}
+html[data-mm-r4-structural="copytrade"] .mm4-course-layout button.row{min-height:64px;max-width:100%}
+/* Editor architecture: real actions delegate to app's existing save/publish controls. */
+html[data-mm-r4-structural="visual-studio"] .workspace{grid-template-columns:minmax(178px,230px) minmax(0,1fr);gap:12px}
+html[data-mm-r4-structural="visual-studio"] .designer{display:grid;grid-template-columns:minmax(0,1fr) minmax(275px,350px);gap:14px;align-items:start}
+html[data-mm-r4-structural="visual-studio"] .header{flex-wrap:wrap;gap:14px;min-height:80px}
+html[data-mm-r4-structural="academy-studio"] .studio-header{flex-wrap:wrap;gap:12px}
+html[data-mm-r4-ready] .mm4-workflow{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-inline-start:auto;
+  border:1px solid var(--mm4-line);border-radius:16px;padding:8px 10px;background:rgba(3,25,19,.78)}
+html[data-mm-r4-ready] .mm4-workflow-title{color:var(--mm4-muted);font-size:12px;margin-inline:4px 6px}
+html[data-mm-r4-ready] .mm4-workflow-action{min-height:44px;min-width:68px;padding:8px 14px;
+  border:1px solid rgba(158,222,188,.3);border-radius:12px;
+  background:linear-gradient(145deg,#173f32,#08241e);color:#f4fff9;font-size:13px;line-height:1.5}
+html[data-mm-r4-ready] .mm4-workflow-action:hover{background:#205544;border-color:var(--mm4-mint)}
+/* Command Center: top dashboard summary and shortcuts sourced from actual nav buttons. */
+html[data-mm-r4-structural="command-center"] .mm4-command-intro{padding:clamp(16px,2.4vw,28px);margin-bottom:20px}
+html[data-mm-r4-structural="command-center"] .mm4-command-intro h2{font-size:clamp(23px,3vw,32px);margin:0 0 6px;color:var(--mm4-text);font-weight:800}
+html[data-mm-r4-structural="command-center"] .mm4-command-intro p{margin:0;color:var(--mm4-muted);font-size:14px;line-height:1.9}
+html[data-mm-r4-ready] .mm4-command-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+html[data-mm-r4-ready] .mm4-tab-shortcut{min-height:44px;min-width:88px;padding:9px 14px;
+  border:1px solid var(--mm4-line);border-radius:12px;background:#164537;color:#f8fff9;font-size:13px}
+html[data-mm-r4-ready] .mm4-tab-shortcut:hover{background:#24644c;border-color:var(--mm4-mint)}
+/* Profile P77: actual DOM groups retain original award/account action nodes and handlers. */
+html[data-mm-r4-structural="profile"] .p77-shell{max-width:1140px!important;width:min(100% - 22px,1140px)!important;margin-inline:auto}
+html[data-mm-r4-structural="profile"] .mm4-profile-dashboard{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--mm4-gap);align-items:start;margin-block:18px}
+html[data-mm-r4-structural="profile"] .mm4-profile-dashboard .p77-metrics-primary{grid-column:1;grid-row:1;margin:0;min-width:0}
+html[data-mm-r4-structural="profile"] .mm4-profile-dashboard .p77-metrics-stats{grid-column:2;grid-row:1;margin:0;min-width:0}
+html[data-mm-r4-structural="profile"] .mm4-profile-dashboard .p77-mini-rows{grid-column:1 / -1;grid-row:2;margin:0;min-width:0}
+html[data-mm-r4-structural="profile"] .mm4-profile-detail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--mm4-gap);align-items:start}
+html[data-mm-r4-structural="profile"] .mm4-profile-detail :is(.p77-awards,.p77-actions){margin:0;min-width:0}
+html[data-mm-r4-structural="profile"] .p77-cta{min-height:54px}
+@media(max-width:800px){
+ html[data-mm-r4-structural="profile"] .mm4-profile-dashboard,html[data-mm-r4-structural="profile"] .mm4-profile-detail{grid-template-columns:minmax(0,1fr)}
+ html[data-mm-r4-structural="profile"] .mm4-profile-dashboard .p77-metrics-primary,
+ html[data-mm-r4-structural="profile"] .mm4-profile-dashboard .p77-metrics-stats,
+ html[data-mm-r4-structural="profile"] .mm4-profile-dashboard .p77-mini-rows{grid-column:1;grid-row:auto}
+}
+/* Team: semantic header, same auth and data flow. */
+html[data-mm-r4-structural="team"] .mm4-team-intro{padding:20px 24px;margin:0 0 22px}
+html[data-mm-r4-structural="team"] .mm4-team-intro h2{margin:0 0 6px;font-size:clamp(22px,3vw,30px);line-height:1.5}
+html[data-mm-r4-structural="team"] .mm4-team-intro p{font-size:14px;margin:0;color:var(--mm4-muted);line-height:1.8}
+/* Shared buttons, form focus and bottom-navigation safe-area. */
+html[data-mm-r4-ready] :is(.primary,.btn.primary,.academy-cta,.dialog-primary,.new-ticket):not(:disabled){
+  border-radius:16px;box-shadow:0 8px 24px rgba(14,150,101,.13),inset 0 1px rgba(255,255,255,.12)}
+html[data-mm-r4-ready] :is(input,textarea,select):focus{border-color:var(--mm4-mint)!important;box-shadow:0 0 0 3px rgba(115,244,198,.16)}
+html[data-mm-r4-ready] :is(.mmu-bottom-nav,.bottom-nav){padding-bottom:max(0px,env(safe-area-inset-bottom))}
+/* Responsiveness: do not force desktop sidebars into mobile Telegram WebView. */
+@media(max-width:900px){
+ html[data-mm-r4-structural="academy"] .mm4-academy-layout{grid-template-columns:minmax(0,1fr)}
+ html[data-mm-r4-structural="academy"] .mm4-academy-layout>.academy-stages-wrap,
+ html[data-mm-r4-structural="academy"] .mm4-academy-layout>.academy-cta-section,
+ html[data-mm-r4-structural="academy"] .mm4-academy-layout>.mm4-context{grid-column:auto;grid-row:auto}
+ html[data-mm-r4-structural="academy"] .mm4-academy-layout>.mm4-context{order:-1}
+ html[data-mm-r4-structural="eplanet"] .mm4-eplanet-layout{grid-template-columns:minmax(0,1fr)}
+ html[data-mm-r4-structural="eplanet"] .mm4-eplanet-layout .progress-panel{position:static}
+ html[data-mm-r4-structural="copytrade"] .mm4-course-layout{grid-template-columns:minmax(0,1fr)}
+ html[data-mm-r4-structural="copytrade"] .mm4-course-layout .mm4-context{position:static;order:-1}
+ html[data-mm-r4-structural="visual-studio"] .workspace{display:block}
+ html[data-mm-r4-structural="visual-studio"] .designer{grid-template-columns:minmax(0,1fr)}
+ html[data-mm-r4-ready] .mm4-workflow{justify-content:flex-start;margin-inline-start:0;width:100%}
+}
+@media(max-width:650px){
+ html[data-mm-r4-structural="support"] .mm4-support-grid{grid-template-columns:minmax(0,1fr);padding:12px;gap:16px}
+ html[data-mm-r4-structural="support"] .mm4-support-grid .main-actions{padding:0}
+ html[data-mm-r4-structural="support"] .mm4-support-grid .quick-help{margin:0}
+ html[data-mm-r4-structural="support"] .mm4-support-context{padding:12px}
+ html[data-mm-r4-structural="eplanet"] .mm4-eplanet-layout{margin:12px}
+ html[data-mm-r4-ready] .mm4-context-note{font-size:12px}
+ html[data-mm-r4-ready] .mm4-command-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ html[data-mm-r4-ready] .mm4-tab-shortcut{min-width:0;white-space:normal}
+ html[data-mm-r4-ready] .mm4-workflow-action{flex:1;min-width:0}
+ html[data-mm-r4-ready] .mm4-workflow-title{width:100%}
+}
+@media(max-width:375px){
+ html[data-mm-r4-ready] .mm4-context{padding:13px}
+ html[data-mm-r4-structural="support"] .action-grid{gap:8px}
+ html[data-mm-r4-ready] .mm4-workflow{padding:7px}
+ html[data-mm-r4-ready] .mm4-workflow-action{padding:9px 8px}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-mm-r4-ready],html[data-mm-r4-ready] *,html[data-mm-r4-ready] *::before,html[data-mm-r4-ready] *::after{
+   scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;
+ }
+}
+/* Structural boxes must include padding in mobile widths. */
+html[data-mm-r4-ready] :is(.mm4-workflow,.mm4-context,.mm4-course-layout,.mm4-support-grid,.mm4-eplanet-layout,.mm4-academy-layout,.mm4-command-intro,.mm4-team-intro){box-sizing:border-box;min-width:0;max-width:100%}
+html[data-mm-r4-ready] .mm4-workflow{box-sizing:border-box}

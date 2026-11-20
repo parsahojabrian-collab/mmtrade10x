@@ -1,0 +1,265 @@
+/* MMTRADE / UI UX Pro Max — R3 structural interface redesign
+   2026-11-18 · Additive and reversible · RTL first · no external dependencies
+   Preserves the cinematic P74 stage, the central cube, mountain, image assets, and bot/API logic.
+   Pages are tagged by mm-r3.js. Important geometry is never overridden on #p74-app. */
+
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Thin.woff2') format('woff2');font-style:normal;font-weight:100;font-display:swap}
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-ExtraLight.woff2') format('woff2');font-style:normal;font-weight:200;font-display:swap}
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Light.woff2') format('woff2');font-style:normal;font-weight:300;font-display:swap}
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Medium.woff2') format('woff2');font-style:normal;font-weight:500;font-display:swap}
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-SemiBold.woff2') format('woff2');font-style:normal;font-weight:600;font-display:swap}
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-ExtraBold.woff2') format('woff2');font-style:normal;font-weight:800;font-display:swap}
+@font-face{font-family:'MM3 Peyda';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/standard/PeydaWeb-Black.woff2') format('woff2');font-style:normal;font-weight:900;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Thin.woff2') format('woff2');font-style:normal;font-weight:100;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-ExtraLight.woff2') format('woff2');font-style:normal;font-weight:200;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Light.woff2') format('woff2');font-style:normal;font-weight:300;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Medium.woff2') format('woff2');font-style:normal;font-weight:500;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-SemiBold.woff2') format('woff2');font-style:normal;font-weight:600;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-ExtraBold.woff2') format('woff2');font-style:normal;font-weight:800;font-display:swap}
+@font-face{font-family:'MM3 Peyda FaNum';src:url('/miniapp/p74/mm-uux-r1/fonts/peyda/fanum/PeydaWebFaNum-Black.woff2') format('woff2');font-style:normal;font-weight:900;font-display:swap}
+:root{
+  --mm3-font:'MM3 Peyda',Tahoma,Arial,sans-serif;
+  --mm3-number:'MM3 Peyda FaNum','MM3 Peyda',Tahoma,sans-serif;
+  --mm3-black:#02120e;--mm3-bg:#041a14;--mm3-surface:#082920;
+  --mm3-raised:#104035;--mm3-over:#174d3d;--mm3-input:#09231c;
+  --mm3-line:rgba(147,238,193,.25);--mm3-line-strong:rgba(175,252,214,.53);
+  --mm3-emerald:#59eab3;--mm3-mint:#b5ffe2;--mm3-gold:#ebc58c;
+  --mm3-gold-deep:#9f7040;--mm3-text:#f3fff8;--mm3-muted:#c1d8cb;
+  --mm3-danger:#ffaaa5;--mm3-success:#9affcf;--mm3-focus:#ffe0a6;
+  --mm3-glass:linear-gradient(147deg,rgba(27,79,61,.80),rgba(4,26,21,.87));
+  --mm3-glass-strong:linear-gradient(135deg,rgba(21,76,56,.96),rgba(5,31,25,.96));
+  --mm3-depth:0 20px 56px rgba(0,9,7,.32),inset 0 1px rgba(255,255,255,.075);
+  --mm3-depth-sm:0 8px 24px rgba(0,12,8,.22),inset 0 1px rgba(255,255,255,.055);
+  --mm3-s12:12px;--mm3-s16:16px;--mm3-s20:20px;--mm3-s24:24px;
+  --mm3-radius-sm:12px;--mm3-radius-md:18px;--mm3-radius-lg:26px;
+  --mm3-ease:cubic-bezier(.19,.73,.28,1);--mm3-speed:180ms;
+  --mm-font-ui:var(--mm3-font);--mm-font-display:var(--mm3-font);
+  --mmx-font:var(--mm3-font);--font-fa:var(--mm3-font);
+  color-scheme:dark;
+}
+
+/* CORE / Scoped typography, preserving SVG paths, glyph fonts, brand logos, usernames and code */
+html[data-mm-r3-ready] body {font-family:var(--mm3-font)!important}
+html[data-mm-r3-ready] body :is(p,span,strong,small,em,h1,h2,h3,h4,h5,h6,li,dt,dd,label,legend,figcaption,blockquote,table,th,td,button,input,textarea,select,a,summary,output):not(.material-icons):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.fa):not(.fas):not(.far):not(.fab):not(.mdi):not(.icon-font):not(.mm-latin):not([lang='en']):not([data-mm-font-lock='true']),
+html[data-mm-r3-ready] body :is(#p74-app,#p77-app,#p78-app,#workspace,#mmu-bottom-nav,.app-shell,.studio-shell,.academy-shell,.mm-app,.mmct-root),
+html[data-mm-r3-ready] body :is(#p74-app,#p77-app,#p78-app,#workspace,#mmu-bottom-nav,.app-shell,.studio-shell,.academy-shell,.mm-app,.mmct-root) :is(button,a,input,textarea,select,p,span,small,strong,label,h1,h2,h3,h4,h5,h6):not(.material-icons):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.fa):not(.fas):not(.far):not(.fab):not(.mdi):not(.icon-font):not(.mm-latin):not([lang='en']):not([data-mm-font-lock='true']) {font-family:var(--mm3-font)!important}
+html[data-mm-r3-ready] body :is(code,pre,kbd,samp,.monaco-editor,.cm-editor){font-family:ui-monospace,Consolas,monospace!important}
+html[data-mm-r3-ready] body :is([data-mm-fanum='true'],.mm-fa-num,.p77-metric-value){font-family:var(--mm3-number)!important;font-variant-numeric:tabular-nums}
+html[data-mm-r3-ready] body :is(input,textarea,select){accent-color:var(--mm3-emerald);caret-color:var(--mm3-emerald)}
+html[data-mm-r3-ready]{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html[data-mm-r3-ready] body :is(h1,h2,h3,h4){text-wrap:balance}
+html[data-mm-r3-ready] body :is(p,.hint,.description,.subtext){overflow-wrap:break-word}
+html[data-mm-r3-ready] body ::selection{background:rgba(78,235,176,.32);color:#fff}
+html[data-mm-r3-ready] body :is(button,a,input,select,textarea,[role=button],[role=tab],summary):focus-visible{outline:3px solid var(--mm3-focus)!important;outline-offset:3px}
+html[data-mm-r3-ready] body :is(button,a,[role=button]):not(:disabled){-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html[data-mm-r3-ready] body :is(button,input,select,textarea):disabled{cursor:not-allowed;opacity:.57}
+html[data-mm-r3-ready] body :is(input,textarea,select):focus-visible{border-color:var(--mm3-emerald)!important;box-shadow:0 0 0 3px rgba(89,234,179,.12)}
+html[data-mm-r3-ready] body :is(.error,[aria-invalid='true'],[role='alert']){overflow-wrap:anywhere}
+.mm3-skip{position:fixed;inset-block-start:-120px;inset-inline-start:16px;z-index:2147483647;background:var(--mm3-gold);color:#152219;padding:10px 16px;border-radius:12px;text-decoration:none;font:700 14px var(--mm3-font);box-shadow:var(--mm3-depth)}
+.mm3-skip:focus{inset-block-start:calc(8px + env(safe-area-inset-top,0px))}
+
+/* PAGE-SPECIFIC DESIGN LANGUAGE / cohesive responsive composition without flattening scenic artwork */
+html[data-mm-r3-ready] body :is(.studio-shell,.academy-shell,.app-shell,.mm-app,#workspace) {--card-border:var(--mm3-line);--card-radius:var(--mm3-radius-lg)}
+html[data-mm-r3-ready] body :is(.card,.panel,.glass-card,.studio-panel,.overview-card,.metric-card,.step-card,.stage-card){background-clip:padding-box}
+
+/* BUTTON SYSTEM / all interaction states are visible; text labels stay readable */
+html[data-mm-r3-ready] body :is(.primary,.btn.primary,.btn.gold,.dialog-primary,.academy-cta,.p77-cta,.connect-cta):not(.mm3-no-reskin){
+  color:#08241a; font-weight:800; border:1px solid rgba(255,237,182,.58);
+  background:linear-gradient(119deg,#f5d6a0,#e7ae6b 48%,#d49b5e);
+  box-shadow:0 8px 22px rgba(93,48,4,.25),inset 0 1px rgba(255,255,255,.45);
+  text-shadow:none;
+}
+html[data-mm-r3-ready] body :is(.btn.secondary,.btn.ghost,.minor,.toolbtn,.navbtn,.tab,.step-action):not(.mm3-no-reskin){
+  border-color:var(--mm3-line);background-color:rgba(12,52,40,.74);color:var(--mm3-text);
+}
+html[data-mm-r3-ready] body :is(.primary,.btn,.minor,.toolbtn,.navbtn,.tab,.step-action,.glass-card,.new-ticket,.p77-cta,.academy-cta){
+  transition:background-color var(--mm3-speed) var(--mm3-ease),border-color var(--mm3-speed) var(--mm3-ease),box-shadow var(--mm3-speed) var(--mm3-ease),filter var(--mm3-speed) var(--mm3-ease);
+}
+@media(hover:hover){html[data-mm-r3-ready] body :is(.primary,.btn,.minor,.toolbtn,.navbtn,.tab,.step-action,.glass-card,.new-ticket,.p77-cta,.academy-cta):hover:not(:disabled){filter:brightness(1.085);border-color:var(--mm3-line-strong)}}
+
+/* FORM SYSTEM / optical hierarchy, clear error and focus, stable on iOS */
+html[data-mm-r3-ready] body :is(.studio-shell,#workspace,.app-shell,.team-shell,.mm-admin-shell) :is(input:not([type=checkbox]):not([type=radio]),textarea,select){
+  border:1px solid var(--mm3-line);background-color:var(--mm3-input);color:var(--mm3-text);
+  border-radius:var(--mm3-radius-sm);min-block-size:44px;padding-block:9px;padding-inline:13px;line-height:1.65;
+}
+html[data-mm-r3-ready] body :is(.studio-shell,#workspace,.app-shell,.team-shell,.mm-admin-shell) :is(input,textarea)::placeholder{color:#a7c7b8;opacity:.9}
+html[data-mm-r3-ready] body :is(label,.field label){color:var(--mm3-muted);font-weight:600;line-height:1.7}
+html[data-mm-r3-ready] body :is(.notice,.status,.state,.pill,.tag){border-radius:999px}
+
+/* 01 HOME / P74: exact reference-scene geometry and cube are locked; reskin overlays and controls only */
+#p74-app{--p74-ivory:var(--mm3-text);--p74-emerald:var(--mm3-emerald);--p74-copper:var(--mm3-gold)}
+#p74-app :is(.p74-hero,.p74-info-card,.p74-modal-body){border-color:rgba(245,216,155,.61);box-shadow:0 18px 50px rgba(0,13,9,.35),inset 0 1px rgba(255,255,255,.11)}
+#p74-app :is(.p74-hero-title,.p74-journey-title){text-shadow:0 4px 20px rgba(0,12,8,.9);letter-spacing:0;line-height:1.38}
+#p74-app .p74-step-label{line-height:1.65;text-wrap:balance}
+#p74-app :is(.p74-play,.p74-cta,.p74-modal-close,.p74-action){min-inline-size:44px;min-block-size:44px}
+#p74-app .p74-modal-body{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+#p74-app .p74-step:is(:hover,:focus-visible){filter:brightness(1.12) saturate(1.04)}
+/* The following are intentionally NOT overridden: transforms, positioning, stage, canvas, mountain imagery, central cube coordinates. */
+
+/* 02 BOTTOM BAR / separate floating glass nav, even when injected dynamically */
+#mmu-bottom-nav{border:1px solid rgba(189,255,222,.53)!important;border-radius:26px;background:linear-gradient(145deg,rgba(17,70,53,.87),rgba(3,25,21,.93))!important;box-shadow:0 17px 48px rgba(0,12,8,.56),inset 0 1px rgba(255,255,255,.28),0 0 22px rgba(74,247,172,.14)!important;backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%)}
+#mmu-bottom-nav .mmu-tab{min-block-size:60px;min-inline-size:0;border-radius:18px;line-height:1.5;color:#c5e8d6}
+#mmu-bottom-nav .mmu-tab.is-active{color:#eafff2;background:linear-gradient(170deg,rgba(72,211,153,.19),rgba(24,105,74,.12))}
+#mmu-bottom-nav :is(.mmu-tab span,.mmu-tab-label){font-size:clamp(10px,2.65vw,12px);overflow-wrap:normal}
+html.mmu-nav-ready :is(.academy-shell,.app-shell,.p77-shell,.p78-shell,.mm-app){scroll-padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+
+/* 03 PROFILE / identity → metrics → actions; exact content and illustrations remain */
+html[data-mm-r3-page='profile'] body{background:radial-gradient(circle at 50% 0,rgba(35,102,75,.22),transparent 42%),#031711}
+#p77-app :is(.p77-glass,.p77-metric,.p77-stat,.p77-mini-card,.p77-menu){border:1px solid var(--mm3-line);border-radius:clamp(18px,4vw,26px);background-blend-mode:soft-light;box-shadow:var(--mm3-depth-sm)}
+#p77-app :is(.p77-identity,.p77-profile-card){border-color:var(--mm3-line-strong);background-image:linear-gradient(151deg,rgba(29,94,67,.18),rgba(3,20,16,.07))}
+#p77-app :is(.p77-metric-value,.p77-stat strong){font-variant-numeric:tabular-nums;font-weight:800;color:var(--mm3-mint)}
+#p77-app :is(.p77-menu a,.p77-menu button,.p77-cta){min-block-size:48px;border-radius:16px}
+#p77-app :is(.p77-section-heading,.p77-metric-title){font-weight:700;color:var(--mm3-muted)}
+#p77-app :is(.p77-dialog,.p77-modal){border:1px solid var(--mm3-line-strong);box-shadow:var(--mm3-depth)}
+
+/* 04 SUPPORT / hero → primary ticket CTA → two secondary actions → searchable FAQ / sheets */
+html[data-mm-r3-page='support'] body{background:#031713}
+#p78-app :is(.app-shell,.p78-shell), html[data-mm-r3-page='support'] .app-shell{border-inline:1px solid rgba(110,235,182,.13)}
+#p78-app :is(.new-ticket,.glass-card,.quick-help,.ticket),html[data-mm-r3-page='support'] :is(.new-ticket,.glass-card,.quick-help,.ticket){border:1px solid var(--mm3-line);box-shadow:var(--mm3-depth-sm);border-radius:var(--mm3-radius-lg)}
+#p78-app .new-ticket,html[data-mm-r3-page='support'] .new-ticket{background:linear-gradient(125deg,rgba(26,132,94,.82),rgba(3,48,36,.96));border-color:var(--mm3-line-strong);min-block-size:116px}
+#p78-app :is(.glass-card,.quick-help),html[data-mm-r3-page='support'] :is(.glass-card,.quick-help){background:var(--mm3-glass)}
+#p78-app :is(.sheet,.dialog .sheet),html[data-mm-r3-page='support'] .sheet{background:var(--mm3-glass-strong);border-color:var(--mm3-line-strong);box-shadow:0 -22px 70px rgba(0,8,7,.5);border-radius:26px 26px 0 0}
+#p78-app :is(.chips button,.primary,.sheet header button),html[data-mm-r3-page='support'] :is(.chips button,.sheet header button){min-block-size:44px;min-inline-size:44px}
+#p78-app :is(.ticket,.message,.notice),html[data-mm-r3-page='support'] :is(.ticket,.message,.notice){line-height:1.8;overflow-wrap:anywhere}
+
+/* 05 ACADEMY / timeline-like progression, higher visual density, semantic modals */
+html[data-mm-r3-page='academy'] body{--mm3-section:rgba(10,43,31,.66)}
+.academy-shell{position:relative;isolation:isolate}
+.academy-shell :is(.academy-header,.academy-cta-section){border-color:var(--mm3-line)}
+.academy-shell :is(.stage-card,.academy-cta,.academy-modal-panel){border:1px solid var(--mm3-line);border-radius:24px;box-shadow:var(--mm3-depth-sm);backdrop-filter:blur(9px)}
+.academy-shell .stage-card{background-image:linear-gradient(141deg,rgba(24,82,59,.32),rgba(5,29,22,.10));min-inline-size:0}
+.academy-shell :is(.stage-title,.stage-description,.academy-modal-content){overflow-wrap:break-word;line-height:1.8}
+.academy-shell :is(.academy-modal-close,.academy-cta){min-block-size:46px;min-inline-size:46px}
+.academy-shell .academy-modal-panel{background:var(--mm3-glass-strong);border-color:var(--mm3-line-strong)}
+.stage :is(.lesson,.progressbox,.next,.demo-note){border:1px solid var(--mm3-line);border-radius:20px;background:var(--mm3-glass);box-shadow:var(--mm3-depth-sm)}
+.stage :is(.lesson-heading,.lesson-title,.answer){line-height:1.9}
+.stage :is(.next,.back,.tool-btn){min-block-size:44px;border-radius:14px}
+
+/* 06 COPY TRADING / course cards, lesson reading panel, side navigation */
+#course-index .hd{padding-inline:clamp(10px,4vw,30px)}
+#course-index .ttl{color:var(--mm3-text);font-weight:800;line-height:1.4}
+#course-index :is(.row.glass,.list){min-inline-size:0}
+#course-index .row.glass{border:1px solid var(--mm3-line);border-radius:20px;background:var(--mm3-glass);box-shadow:var(--mm3-depth-sm);min-block-size:70px}
+#course-index .row.glass .t{font-weight:700;line-height:1.7;overflow-wrap:anywhere}
+#course-index .row.glass:focus-visible{border-color:var(--mm3-gold)}
+#D :is(.lesson-panel,.lesson-card,.lesson-items,.connect-cta){border-color:var(--mm3-line);border-radius:18px}
+#D :is(.lesson-intro,.item-copy,.lesson-panel){line-height:1.95;overflow-wrap:break-word}
+#D :is(.round-btn,.nav-btn,.next-btn,.bookmark){min-block-size:44px;min-inline-size:44px}
+#D :is(.note,.lesson-note){border-inline-start:3px solid var(--mm3-gold);padding-inline-start:12px}
+
+/* 07 ePLANET / four-step conversion with accessible completion states */
+html[data-mm-r3-page='eplanet'] body{background:radial-gradient(ellipse at 50% 0,rgba(30,106,81,.2),transparent 45%),#02150f}
+html[data-mm-r3-page='eplanet'] .app-shell{max-inline-size:690px;min-inline-size:0}
+html[data-mm-r3-page='eplanet'] :is(.topbar,.progress-panel,.completion){border-color:var(--mm3-line)}
+html[data-mm-r3-page='eplanet'] .progress-panel{border:1px solid var(--mm3-line-strong);background:var(--mm3-glass);border-radius:24px;box-shadow:var(--mm3-depth-sm)}
+html[data-mm-r3-page='eplanet'] .steps{display:grid;gap:clamp(10px,2.6vw,16px)}
+html[data-mm-r3-page='eplanet'] .steps .step-card{border:1px solid var(--mm3-line);background:var(--mm3-glass);border-radius:22px;box-shadow:var(--mm3-depth-sm);min-inline-size:0}
+html[data-mm-r3-page='eplanet'] .steps .step-card.current{border-color:var(--mm3-gold);box-shadow:0 0 0 1px rgba(230,190,125,.21),var(--mm3-depth-sm)}
+html[data-mm-r3-page='eplanet'] .steps .step-card :is(h3,.step-content,.step-meta,.step-state){min-inline-size:0;overflow-wrap:anywhere}
+html[data-mm-r3-page='eplanet'] :is(.step-action,.dialog-primary,.refresh-status,.back){min-block-size:44px}
+html[data-mm-r3-page='eplanet'] .step-dialog{border-radius:25px;border:1px solid var(--mm3-line-strong);background:var(--mm3-glass-strong);color:var(--mm3-text);box-shadow:var(--mm3-depth)}
+
+/* 08 ACADEMY STUDIO / meaningful dashboard layout, tabs, metrics, preview panels */
+html[data-mm-r3-page='academy-studio'] body{background:radial-gradient(ellipse at 60% 0,rgba(39,93,67,.25),transparent 30%),#041911}
+.studio-shell{max-inline-size:1500px;margin-inline:auto;padding-inline:clamp(12px,2.4vw,28px)}
+.studio-shell .studio-header{border-bottom:1px solid var(--mm3-line);background:linear-gradient(110deg,rgba(15,60,43,.82),rgba(4,26,19,.83));backdrop-filter:blur(12px);border-radius:0 0 24px 24px}
+.studio-shell .studio-tabs{display:flex;gap:8px;overflow-x:auto;max-inline-size:100%;scrollbar-width:thin;padding-block:12px;scroll-padding-inline:14px}
+.studio-shell .studio-tabs .tab{flex:0 0 auto;border-radius:15px;min-block-size:44px;padding-inline:15px}
+.studio-shell .studio-tabs .tab.active{border-color:var(--mm3-gold);background:linear-gradient(135deg,rgba(200,156,92,.26),rgba(35,88,62,.36));color:var(--mm3-text)}
+.studio-shell :is(.overview-card,.overview-metric,.studio-panel,.metric-card,.stage-editor-panel,.stage-list-panel,.preview-frame-wrap){border:1px solid var(--mm3-line);border-radius:22px;background-color:var(--mm3-surface);box-shadow:var(--mm3-depth-sm);min-inline-size:0}
+.studio-shell .overview-metric{background:linear-gradient(139deg,rgba(28,92,69,.88),rgba(6,36,28,.97));padding:clamp(12px,1.5vw,20px)}
+.studio-shell .studio-panel{padding:clamp(14px,2vw,28px)}
+.studio-shell :is(.quick-action,.stage-list-item,.btn){min-block-size:44px;border-radius:14px}
+.studio-shell :is(.preview-frame-wrap,.preview-panel){overflow:hidden}
+
+/* 09 VISUAL STUDIO / real grid redesign while leaving preview iframe and transforms alone */
+html[data-mm-r3-page='visual-studio'] body{--bg:var(--mm3-bg);--panel:var(--mm3-surface);--raised:var(--mm3-raised);--border:var(--mm3-line);--gold:var(--mm3-gold);--mint:var(--mm3-emerald);--text:var(--mm3-text);--muted:var(--mm3-muted)}
+html[data-mm-r3-page='visual-studio'] .header{position:relative;z-index:2;border-bottom:1px solid var(--mm3-line-strong);background:linear-gradient(112deg,#0b3428,#051913);box-shadow:0 12px 30px rgba(0,10,6,.2);padding-block:14px}
+html[data-mm-r3-page='visual-studio'] .workspace{display:grid;grid-template-columns:minmax(210px,248px) minmax(0,1fr);min-block-size:calc(100dvh - 80px);gap:0;background:var(--mm3-bg)}
+html[data-mm-r3-page='visual-studio'] .side{background:linear-gradient(180deg,#0c2d24,#061f1a);border-left:1px solid var(--mm3-line);padding:clamp(12px,1.4vw,20px)}
+html[data-mm-r3-page='visual-studio'] .work{padding:clamp(12px,2.1vw,25px);min-inline-size:0}
+html[data-mm-r3-page='visual-studio'] :is(.toolbar,.preview-area,.inspector,.panel,.preview-frame-wrap,.spatial-panel){border:1px solid var(--mm3-line);border-radius:20px;background:var(--mm3-glass);box-shadow:var(--mm3-depth-sm);min-inline-size:0}
+html[data-mm-r3-page='visual-studio'] .toolbar{padding:12px 16px;gap:10px}
+html[data-mm-r3-page='visual-studio'] .designer{display:grid;grid-template-columns:minmax(0,1fr) minmax(275px,340px);gap:clamp(12px,1.6vw,21px)}
+html[data-mm-r3-page='visual-studio'] :is(.tab,.page-list button,.actions button){min-block-size:42px;border-radius:13px}
+html[data-mm-r3-page='visual-studio'] :is(.tab.active,.page-list button.active){color:var(--mm3-text);background:linear-gradient(130deg,rgba(39,134,92,.39),rgba(25,84,66,.7));border-color:var(--mm3-gold)}
+html[data-mm-r3-page='visual-studio'] .inspector{overflow-y:auto;max-block-size:calc(100dvh - 165px)}
+html[data-mm-r3-page='visual-studio'] :is(.popup-item,.version-item,.mmvs-block-item,.spatial-object-row){border-radius:14px;border-color:var(--mm3-line)}
+html[data-mm-r3-page='visual-studio'] .preview-holder{background:#04120f;border:1px solid rgba(99,172,133,.24);border-radius:16px}
+html[data-mm-r3-page='visual-studio'] .preview-holder iframe{box-shadow:0 18px 60px rgba(0,7,5,.38)}
+
+/* 10 COMMAND CENTER / two-column console → stack on tablet */
+html[data-mm-r3-page='control-center'] body{background:var(--mm3-bg)}
+html[data-mm-r3-page='control-center'] .shell{min-block-size:100dvh;display:grid;grid-template-columns:minmax(220px,260px) minmax(0,1fr);gap:0}
+html[data-mm-r3-page='control-center'] .sidebar{background:linear-gradient(180deg,#0b3227,#061e18);border-inline-end:1px solid var(--mm3-line);padding:20px 14px}
+html[data-mm-r3-page='control-center'] .main{min-inline-size:0;padding:clamp(14px,2.5vw,32px)}
+html[data-mm-r3-page='control-center'] .topbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;border:1px solid var(--mm3-line);background:var(--mm3-glass);border-radius:23px;padding:16px 20px;box-shadow:var(--mm3-depth-sm)}
+html[data-mm-r3-page='control-center'] :is(.sidebar .navbtn,.btn,.toolbtn){min-block-size:44px;border-radius:14px}
+html[data-mm-r3-page='control-center'] .sidebar .navbtn.active{border-color:var(--mm3-gold);background:rgba(48,143,102,.24)}
+html[data-mm-r3-page='control-center'] :is(.layers,.inspector){background:var(--mm3-glass);border:1px solid var(--mm3-line);border-radius:20px;min-inline-size:0}
+html[data-mm-r3-page='control-center'] :is(.layer,.panel,.card,.metric){border-color:var(--mm3-line);border-radius:18px}
+
+/* 11 SUPER ADMIN + TEAM / accessible dense business workspace */
+html[data-mm-r3-page='admin'] body,html[data-mm-r3-page='team'] body{--bg:var(--mm3-bg);--card:var(--mm3-surface);--line:var(--mm3-line);--ink:var(--mm3-text);--mut:var(--mm3-muted);--pri:var(--mm3-emerald);background:radial-gradient(ellipse at 40% 0,rgba(26,83,61,.17),transparent 42%),#041710}
+html[data-mm-r3-page='admin'] body :is(.panel,.card,.toolbar,.box,.metric,.stat),html[data-mm-r3-page='team'] body :is(.panel,.card,.toolbar,.box,.metric,.stat){background:var(--mm3-glass);border:1px solid var(--mm3-line);border-radius:20px;box-shadow:var(--mm3-depth-sm);min-inline-size:0}
+html[data-mm-r3-page='admin'] body :is(.btn,button,.primary),html[data-mm-r3-page='team'] body :is(.btn,button,.primary){min-block-size:38px;border-radius:12px}
+html[data-mm-r3-page='admin'] body :is(table,thead,tbody,tr,td,th),html[data-mm-r3-page='team'] body :is(table,thead,tbody,tr,td,th){border-color:var(--mm3-line);line-height:1.6}
+html[data-mm-r3-page='admin'] body :is(td,th),html[data-mm-r3-page='team'] body :is(td,th){padding-block:10px;padding-inline:12px}
+html[data-mm-r3-page='admin'] body th,html[data-mm-r3-page='team'] body th{background:rgba(29,91,69,.6);color:var(--mm3-mint);font-weight:700}
+html[data-mm-r3-page='admin'] body :is(.panel-title,h2,h3),html[data-mm-r3-page='team'] body :is(.panel-title,h2,h3){color:var(--mm3-text);letter-spacing:0}
+html[data-mm-r3-page='admin'] body :is(.danger,.error),html[data-mm-r3-page='team'] body :is(.danger,.error){color:var(--mm3-danger)}
+html[data-mm-r3-page='team'] body :is(main,.app-shell){max-inline-size:1460px;margin-inline:auto}
+
+/* 12 SHARED PREVIEWS, NON-CRITICAL GENERIC MODULES */
+.mm-app :is(.mm-stage,.mm-mini,.mm-cta,.mm-feature),#mmtrade10x-view :is(.mm10-progress-card,.mm10-hero,details),.tenx-custom-page :is(.card,.panel){border-color:var(--mm3-line);border-radius:var(--mm3-radius-md);box-shadow:var(--mm3-depth-sm)}
+#mmtrade10x-view :is(.mm10-risk,.mm10-track,.mm10-content){overflow-wrap:break-word}
+#mmtrade10x-view #mm10-lessons summary{line-height:1.85;min-block-size:44px}
+
+/* BREAKPOINTS / no global disabling of zoom, no clipping of long Persian text */
+@media(min-width:900px){
+  html[data-mm-r3-page='eplanet'] .app-shell{border:1px solid var(--mm3-line);border-radius:26px;margin-block:20px;overflow:hidden;box-shadow:var(--mm3-depth)}
+  html[data-mm-r3-page='support'] .app-shell{border:1px solid var(--mm3-line);border-radius:24px;margin-block:22px;box-shadow:var(--mm3-depth)}
+  #course-index .list{max-inline-size:900px;margin-inline:auto}
+  .studio-shell .overview-card{padding:clamp(16px,1.5vw,24px)}
+}
+@media(max-width:1050px){
+  html[data-mm-r3-page='visual-studio'] .workspace{grid-template-columns:184px minmax(0,1fr)}
+  html[data-mm-r3-page='visual-studio'] .designer{grid-template-columns:minmax(0,1fr) 290px}
+  html[data-mm-r3-page='control-center'] .shell{grid-template-columns:196px minmax(0,1fr)}
+}
+@media(max-width:820px){
+  html[data-mm-r3-page='visual-studio'] .workspace{display:block}
+  html[data-mm-r3-page='visual-studio'] .side{position:relative;display:flex;flex-wrap:wrap;gap:6px;padding:12px;border-left:0;border-bottom:1px solid var(--mm3-line)}
+  html[data-mm-r3-page='visual-studio'] .side :is(.tab,.page-list button){flex:0 0 auto;width:auto;min-block-size:40px}
+  html[data-mm-r3-page='visual-studio'] .designer{grid-template-columns:minmax(0,1fr)}
+  html[data-mm-r3-page='visual-studio'] .inspector{max-block-size:none}
+  html[data-mm-r3-page='control-center'] .shell{display:block}
+  html[data-mm-r3-page='control-center'] .sidebar{display:flex;gap:10px;align-items:center;overflow-x:auto;border-inline-end:0;border-bottom:1px solid var(--mm3-line)}
+  html[data-mm-r3-page='control-center'] .sidebar nav{display:flex;gap:6px;overflow-x:auto}
+  html[data-mm-r3-page='control-center'] .sidebar .navbtn{flex:0 0 auto}
+}
+@media(max-width:430px){
+  html[data-mm-r3-ready] body :is(input,textarea,select){font-size:max(16px,1em)}
+  .studio-shell{padding-inline:10px}
+  .studio-shell .studio-panel{padding:14px}
+  #p78-app .sheet,html[data-mm-r3-page='support'] .sheet{padding-bottom:calc(25px + env(safe-area-inset-bottom,0px))}
+  html[data-mm-r3-page='visual-studio'] .header{padding-inline:10px;gap:8px}
+  html[data-mm-r3-page='visual-studio'] .work{padding:9px}
+  html[data-mm-r3-page='visual-studio'] :is(.toolbar,.preview-area,.inspector,.panel){padding:10px}
+  html[data-mm-r3-page='eplanet'] .steps .step-card{border-radius:17px}
+  #mmu-bottom-nav .mmu-tab{min-block-size:60px}
+}
+@media(hover:none){html[data-mm-r3-ready] body :is(button,a,[role='button']):active:not(:disabled){filter:brightness(1.10)}}
+@media(prefers-reduced-motion:reduce){
+  html[data-mm-r3-ready]{scroll-behavior:auto!important}
+  html[data-mm-r3-ready] body :is(button,a,[role=button],.glass-card,.step-card,.stage-card){transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+
+/* Mobile studio sidebar disclosure is user-controlled: default is fully visible. */
+html[data-mm-r3-page='visual-studio'] .mm3-studio-nav-toggle{margin-inline-start:auto;min-block-size:44px;background:var(--mm3-glass);border:1px solid var(--mm3-line-strong);color:var(--mm3-text);border-radius:14px;padding:9px 14px;cursor:pointer}
+html[data-mm-r3-page='visual-studio'][data-mm-r3-side-hidden='true'] .workspace .side{display:none}
+html[data-mm-r3-page='visual-studio'][data-mm-r3-side-hidden='true'] .workspace{grid-template-columns:minmax(0,1fr)}

@@ -1,0 +1,112 @@
+/* MMTRADE UUPM R5 — Home (P74) usability pass, 2026-11-19.
+   Keeps the original scene, palette, font and admin-set geometry.
+   Loaded last; remove this file + its <link> to roll back. */
+
+/* 1) Keep the CTA clear of the bottom bar when the legacy in-page nav is used.
+      (The shared liquid-glass nav already reserves --mmu-nav-reserve.) */
+html:not(.mmu-nav-ready) #p74-app .p74-scroll{
+  padding-bottom:calc(clamp(79px,22vw,100px) + 18px + env(safe-area-inset-bottom,0px));
+  scroll-padding-bottom:calc(clamp(79px,22vw,100px) + 18px + env(safe-area-inset-bottom,0px));
+}
+
+/* 2) Stage buttons: use the height set in the Studio instead of a forced 44px,
+      so neighbouring buttons on the mountain no longer overlap (tap goes to the
+      right stage). 30px floor stays above the WCAG 2.2 24px target size. */
+#p74-app:not(.p75-editing) .p74-mountain-area .p74-step{
+  min-height:30px;
+}
+
+/* 3) Readable type: nothing under 12px on a 375px phone. */
+#p74-app .p74-brand-sub{font-size:clamp(12px,3.2vw,16px);line-height:1.5}
+#p74-app .p74-journey-sub{font-size:clamp(12px,3.2vw,16px);line-height:1.6}
+#p74-app .p74-progress-content small{font-size:clamp(12px,3.2vw,16px)}
+#p74-app .p74-video-badge{font-size:clamp(12px,3.1vw,15px)}
+#p74-app:not(.p75-editing) .p74-mountain-area .p74-step .p74-step-label{
+  font-size:clamp(12px,3.2vw,15px)!important;
+}
+#p74-app:not(.p75-editing) .p74-mountain-area .p74-step[data-compact="1"] .p74-step-label,
+#p74-app .p74-page:is([data-step-count="7"],[data-step-count="8"]) .p74-step-label{
+  font-size:clamp(11px,2.9vw,13px)!important;
+}
+#p74-app:not(.p75-editing) .p74-mountain-area .p74-step .p74-step-label-group{
+  font-size:clamp(11px,3vw,15px)!important;
+}
+#p74-app:not(.p75-editing) .p74-mountain-area .p74-step .p74-step-label-sub{
+  font-size:clamp(10px,2.6vw,12px);
+}
+
+/* 4) SVG icons (replacing unicode glyphs) — same gold tone as before. */
+#p74-app .p74-step-icon,
+#p74-app .p74-cta-chevron,
+#p74-app .p74-progress-arrow,
+#p74-app .p74-video-badge{display:inline-flex;align-items:center;justify-content:center;gap:4px}
+#p74-app .p74-step-icon svg{
+  width:clamp(14px,3.8vw,20px);height:clamp(14px,3.8vw,20px);
+  fill:none;stroke:#f9cc95;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+}
+#p74-app .p74-step[data-state="completed"] .p74-step-icon svg,
+#p74-app .p74-step[data-state="current"] .p74-step-icon svg{stroke:#fff1d6}
+#p74-app .p74-cta-chevron svg,
+#p74-app .p74-progress-arrow svg{
+  width:clamp(20px,5.4vw,28px);height:clamp(20px,5.4vw,28px);
+  fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+}
+#p74-app .p74-video-badge svg{
+  width:1.1em;height:1.1em;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+#p74-app .p74-video-badge{
+  padding:2px 7px;border-radius:999px;background:#03100cb3;
+  border:1px solid #ffd6a64d;color:#f4efe7;
+}
+
+/* 6) Contrast: soft scrim under the small route description over the photo. */
+#p74-app .p74-journey-sub{
+  left:8%;width:84%;padding:3px 10px;border-radius:999px;
+  background:radial-gradient(ellipse at center,#020b08b8 0%,#020b0880 60%,transparent 100%);
+  color:#f2eee8;text-shadow:0 1px 4px #000;
+}
+#p74-app .p74-brand-sub{color:#efe4d5}
+
+@media(max-width:360px){
+  #p74-app:not(.p75-editing) .p74-mountain-area .p74-step .p74-step-label{font-size:11.5px!important}
+}
+
+
+/* MMTRADE_STEP34_LAYOUT_R1
+   Display-only correction for mountain steps 3 and 4.
+   No editor, position, link or database overrides.
+*/
+#p74-app:not(.p75-editing) .p74-mountain-area
+.p74-step:is([data-step="3"],[data-step="4"]){
+  overflow:hidden!important;
+  background:linear-gradient(
+    165deg,#112e26 0%,#081b15 72%,#2d261e 100%
+  )!important;
+}
+#p74-app:not(.p75-editing) .p74-mountain-area
+.p74-step:is([data-step="3"],[data-step="4"])[data-state="current"]{
+  background:linear-gradient(150deg,#116148,#073729)!important;
+}
+#p74-app:not(.p75-editing) .p74-mountain-area
+.p74-step:is([data-step="3"],[data-step="4"])[data-state="completed"]{
+  background:linear-gradient(150deg,#0d714e,#073b2a)!important;
+}
+#p74-app:not(.p75-editing) .p74-mountain-area
+.p74-step:is([data-step="3"],[data-step="4"]) .p74-step-label{
+  white-space:normal!important;
+  text-wrap:wrap!important;
+  overflow-wrap:break-word!important;
+  text-overflow:clip!important;
+  line-height:1.2!important;
+  max-height:100%;
+  font-size:clamp(11px,2.9vw,14px)!important;
+}
+#p74-app:not(.p75-editing) .p74-mountain-area
+.p74-step:is([data-step="3"],[data-step="4"]) .p74-step-label-group{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:1px!important;
+}
