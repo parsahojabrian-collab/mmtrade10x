@@ -43,14 +43,21 @@ replace_exact('blocks.js',
 if(slug==='index' && target.closest &&
    target.closest('#p74-app .p74-mountain-area'))return;
 // TENX_V9_8_PUBLISHED_DELETE""")
-# A single stable statement is the anchor; surrounding whitespace and the
-# following "if(b.deleted)" can vary between the deployed and repository files.
-replace_exact('p74/studio/bridge.js',
-    "const el=safeSelect(b.selector);if(!el)return;",
-    """const el=safeSelect(b.selector);if(!el)return;
- // MMTRADE_HOME_STUDIO_SINGLE_OWNER_R5: native stages belong to Home editor.
+# Match only the uniquely identified target lookup in applyOne; do not depend on
+# adjacent if statements or indentation in separately deployed Studio files.
+bridge=root/'p74/studio/bridge.js'
+bridge_code=bridge.read_text(encoding='utf-8')
+bridge_anchor=re.compile(r'const[ \t]+el[ \t]*=[ \t]*safeSelect\([ \t]*b\.selector[ \t]*\)[ \t]*;[ \t]*if[ \t]*\([ \t]*![ \t]*el[ \t]*\)[ \t]*return[ \t]*;')
+if len(bridge_anchor.findall(bridge_code))!=1:
+    raise RuntimeError('ABORT_BRIDGE_ANCHOR: expected exactly one element lookup')
+bridge_code=bridge_anchor.sub(
+    lambda m: m.group(0)+"""
+ // MMTRADE_HOME_STUDIO_SINGLE_OWNER_R5: native Home steps are managed by
+ // the dedicated step editor, never by legacy generic element overrides.
  if(slug==='index' && el.closest &&
-    el.closest('#p74-app .p74-mountain-area'))return;""")
+    el.closest('#p74-app .p74-mountain-area'))return;""",
+    bridge_code,count=1)
+bridge.write_text(bridge_code,encoding='utf-8')
 replace_exact('p74/studio/bridge.js',
     """if(target.matches?.('#p74-app,#mf62-home,#mmvs-root,#app,main.home-shell,.stage-page,.stage-shell'))return;
 const sel=uniqueSelector(target);""",
@@ -161,8 +168,7 @@ rollback() {
    cp -a "$BACKUP/source/$rel" "$BASE/$rel"
    cp -a "$BACKUP/live/$rel" "$LIVE/$rel"
   done
-  rm -f "$ROOT/$TEST"
- fi
+   fi
  exit "$rc"
 }
 trap rollback ERR
@@ -172,10 +178,9 @@ for rel in "${FILES[@]}"; do
  install -m 644 "$STAGE/public/miniapp/$rel" "$LIVE/$rel"
  cmp "$BASE/$rel" "$LIVE/$rel"
 done
-cp -a "$STAGE/$TEST" "$ROOT/$TEST"
 nginx -t
 trap - ERR
-echo 'HOME_STUDIO_SINGLE_OWNER_R4=PASS'
+echo 'HOME_STUDIO_SINGLE_OWNER_R5=PASS'
 echo 'TESTS_AND_BUILD=PASS'
 echo "BACKUP=$BACKUP"
 echo 'DATABASE_WRITES=NONE'
