@@ -58,20 +58,23 @@ bridge_code=bridge_anchor.sub(
     el.closest('#p74-app .p74-mountain-area'))return;""",
     bridge_code,count=1)
 bridge.write_text(bridge_code,encoding='utf-8')
+# Stage selection is intercepted immediately before the stable uniqueSelector call.
 replace_exact('p74/studio/bridge.js',
-    """if(target.matches?.('#p74-app,#mf62-home,#mmvs-root,#app,main.home-shell,.stage-page,.stage-shell'))return;
-const sel=uniqueSelector(target);""",
-    """if(target.matches?.('#p74-app,#mf62-home,#mmvs-root,#app,main.home-shell,.stage-page,.stage-shell'))return;
-const nativeStage=slug==='index'&&target.closest?.('#p74-app .p74-mountain-area .p74-step');
+    "const sel=uniqueSelector(target);",
+    """const nativeStage=slug==='index'&&target.closest?.('#p74-app .p74-mountain-area .p74-step');
 if(nativeStage){
  e.preventDefault();e.stopImmediatePropagation();
  window.parent.postMessage({type:'MMVS_HOME_NATIVE_STEP',step:Number(nativeStage.dataset.step)},location.origin);
  return;
 }
 const sel=uniqueSelector(target);""")
-replace_exact('p74/studio/studio.js',
-    "else if(e.data.type==='MMVS_SELECT'){chooseElement(e.data.element)}",
-    """else if(e.data.type==='MMVS_SELECT'){chooseElement(e.data.element)}
+# Match the existing message handler despite optional semicolon/whitespace variants.
+studio_path=root/'p74/studio/studio.js'
+studio_code=studio_path.read_text(encoding='utf-8')
+studio_anchor=re.compile(r"else[ \t]+if[ \t]*\([ \t]*e\.data\.type[ \t]*===[ \t]*['\"]MMVS_SELECT['\"][ \t]*\)[ \t]*\{[ \t]*chooseElement\([ \t]*e\.data\.element[ \t]*\)[ \t]*;?[ \t]*\}")
+if len(studio_anchor.findall(studio_code))!=1:
+    raise RuntimeError('ABORT_STUDIO_ANCHOR: expected exactly one selection handler')
+studio_code=studio_anchor.sub(lambda m:m.group(0)+"""
 else if(e.data.type==='MMVS_HOME_NATIVE_STEP'&&page==='index'){
  const n=Number(e.data.step);
  if(!Number.isInteger(n)||n<1||n>8)return;
@@ -81,7 +84,8 @@ else if(e.data.type==='MMVS_HOME_NATIVE_STEP'&&page==='index'){
    if(!homeToolsOpen&&!workspaceBusy())toggleHomeTools();
    toast('مرحله '+n+' را از پنل اختصاصی Home ویرایش کن؛ متن تکراری عمومی اعمال نمی‌شود.');
  }
-}""")
+}""",studio_code,count=1)
+studio_path.write_text(studio_code,encoding='utf-8')
 
 def refresh_query(rel, prefixes):
     p=root/rel
