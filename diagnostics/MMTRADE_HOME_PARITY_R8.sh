@@ -137,7 +137,7 @@ studio=(r/'p74/studio/studio.js').read_text()
 home=(r/'p74/home.js').read_text()
 index=(r/'index.html').read_text()
 admin=(r/'p74/studio/index.html').read_text()
-assert 'previewPublishedHome=slug===\\'index\\'&&!homeToolsOpen' in studio
+assert "previewPublishedHome=slug==='index'&&!homeToolsOpen" in studio
 assert "if(!isPublishedHomePreview()){url.searchParams.set('visualPreview','1');" in studio
 assert 'publishedHomeFallback=await loadPublishedHomeFallback(r)' in studio
 assert "else if(selector==='#p74-home-config'&&page==='index'&&publishedHomeFallback)" in studio
