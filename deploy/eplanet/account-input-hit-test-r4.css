@@ -1,0 +1,35 @@
+
+/* MMTRADE_ACCOUNT_INPUT_HITTEST_R4_BEGIN */
+/* Avoid an additional filtered layer between the iOS WebKit input and the touch surface. */
+dialog#stepDialog[open]::before {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+dialog#stepDialog[open] > #accountField:not([hidden]) {
+  isolation: isolate !important;
+  z-index: 20 !important;
+  pointer-events: auto !important;
+}
+dialog#stepDialog[open] > #accountField:not([hidden]) > label,
+dialog#stepDialog[open] > #accountField:not([hidden]) > input#accountId {
+  position: relative !important;
+  z-index: 21 !important;
+  pointer-events: auto !important;
+}
+dialog#stepDialog[open] > #accountField:not([hidden]) > input#accountId {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 45px !important;
+  background: #061c17 !important;
+  border: 1px solid rgba(171,237,207,.5) !important;
+  border-radius: 12px !important;
+  color: #f5fff9 !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  touch-action: manipulation !important;
+}
+/* MMTRADE_ACCOUNT_INPUT_HITTEST_R4_END */
