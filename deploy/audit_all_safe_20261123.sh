@@ -58,10 +58,10 @@ printf 'JS_FILES=%s JS_ERRORS=%s\n' "$js_total" "$js_fail"
 if (( js_fail > 0 )); then failed=$((failed+1)); fi
 
 printf '\n=== SOURCE_LIVE_PARITY (informational) ===\n'
-python3 - <<'PY'
+AUDIT_SOURCE="$ROOT/public/miniapp" python3 - <<'PY'
 from pathlib import Path
-import hashlib
-source=Path('/root/miniapp10x/public/miniapp')
+import hashlib, os
+source=Path(os.environ['AUDIT_SOURCE'])
 live=Path('/srv/tenx-public/miniapp')
 if not live.exists():
     print('SOURCE_LIVE=SKIPPED_LIVE_NOT_FOUND')
