@@ -1,0 +1,29 @@
+/* MMTRADE ePlanet Sandbox-only overlay styles. This file is not loaded in production. */
+.sandbox-banner{position:relative;z-index:5;margin:12px 10px 18px;padding:16px;border:1px solid rgba(27,227,164,.46);
+border-radius:18px;background:linear-gradient(135deg,rgba(7,28,37,.95),rgba(4,49,43,.96));
+box-shadow:0 14px 34px rgba(0,0,0,.22);color:#effff9;direction:rtl}
+.sandbox-tag{display:inline-flex;align-items:center;padding:7px 11px;border-radius:99px;background:#0f705d;
+color:#fff;font-size:11px;font-weight:800;letter-spacing:.035em;direction:ltr}
+.sandbox-subtitle{color:#c0ddd7;font-size:12px;line-height:1.85;margin:9px 0 15px}
+.sandbox-controls{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-end}
+.sandbox-control-label{display:flex;flex:1 1 210px;flex-direction:column;gap:6px;font-size:12px;color:#ddfff2}
+.sandbox-select,.sandbox-reset,.sandbox-run{border-radius:11px;min-height:44px;padding:9px 13px;font:inherit;font-size:13px}
+.sandbox-select{background:#082d2a;color:white;border:1px solid #3a8b78;max-width:100%}
+.sandbox-reset{background:transparent;border:1px solid #3a8b78;color:#d1eee5;cursor:pointer}
+.sandbox-run{background:linear-gradient(105deg,#117c66,#12b88c);border:1px solid #38d5ae;color:white;font-weight:800;cursor:pointer}
+.sandbox-select:focus-visible,.sandbox-reset:focus-visible,.sandbox-run:focus-visible{outline:2px solid #70edcc;outline-offset:2px}
+.sandbox-balance{margin-top:13px;padding-top:11px;border-top:1px solid rgba(91,221,184,.24);font-size:11px;color:#bfddd3;line-height:1.9}
+.sandbox-current-status{margin:7px 0 0;font-size:12px;color:#a5f7da;line-height:1.8}
+.sandbox-registration{display:grid;gap:12px;margin:12px 0}
+.sandbox-registration[hidden]{display:none!important}
+.sandbox-field{display:flex;flex-direction:column;gap:7px;color:#eafff4;font-size:13px;line-height:1.7}
+.sandbox-input{min-height:43px;border:1px solid rgba(135,226,199,.45);border-radius:12px;background:rgba(2,25,24,.75);
+color:#fff;padding:8px 13px;font:inherit;direction:ltr;text-align:left;box-sizing:border-box;width:100%}
+.sandbox-input:focus-visible{outline:2px solid #34ddb1;outline-offset:1px}
+.sandbox-audit{margin:12px 10px 22px;border:1px solid rgba(55,168,144,.27);border-radius:12px;
+padding:12px;background:rgba(5,21,25,.55);color:#d8f0ea;direction:rtl}
+.sandbox-audit summary{cursor:pointer;font-size:12px;font-weight:700}
+.sandbox-audit-pre{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;direction:ltr;text-align:left;font-size:11px;max-height:220px;overflow-y:auto}
+.step-card.current .step-action{cursor:pointer}
+@media(max-width:520px){.sandbox-banner{margin:10px 0 16px;padding:12px}.sandbox-controls{flex-direction:column;align-items:stretch}
+.sandbox-select,.sandbox-reset,.sandbox-run{width:100%}.sandbox-control-label{flex-basis:auto}.sandbox-audit{margin:14px 0}}
