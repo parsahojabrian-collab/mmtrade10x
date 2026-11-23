@@ -7,6 +7,8 @@ export type TelegramInitDataResult =
 /** Validates Telegram WebApp initData using Telegram's documented HMAC-SHA-256 scheme. */
 export function validateTelegramInitData(initData: string, botToken: string, maxAgeSeconds = 86400): TelegramInitDataResult {
   try {
+    // Invalid environment settings must never disable the signature lifetime check.
+    if (!Number.isFinite(maxAgeSeconds) || maxAgeSeconds <= 0) return { ok: false, reason: 'invalid_max_age' };
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
     const authDate = Number(params.get('auth_date'));

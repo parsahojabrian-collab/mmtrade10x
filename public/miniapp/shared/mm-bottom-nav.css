@@ -17,6 +17,7 @@
 /* Switch over only once the new shared navigation has mounted. */
 html.mmu-nav-ready .tenx-bottom-nav,
 html.mmu-nav-ready .tabbar,
+html.mmu-nav-ready .mf-global-bottom-nav,
 html.mmu-nav-ready .p74-nav,
 html.mmu-nav-ready .p77-nav,
 html.mmu-nav-ready .p78-nav,
