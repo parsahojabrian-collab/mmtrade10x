@@ -2,7 +2,7 @@
 """MMTRADE10X read-only VPS source/drift auditor. No uploads, build, restarts or credentials."""
 from pathlib import Path
 from collections import Counter
-import hashlib,subprocess,sys
+import hashlib,subprocess,sys,os
 ROOT=Path('/root/miniapp10x')
 LIVE=Path('/srv/tenx-public/miniapp')
 API=ROOT/'apps/api/src/index.ts'
@@ -13,7 +13,16 @@ def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()[:16]
 def read(p):return p.read_text(encoding='utf-8',errors='replace') if p.is_file() else ''
 def find_files(path):
  if not path.is_dir():return []
- return [p for p in path.rglob('*') if p.is_file() and p.suffix in EXT and not SKIP.intersection(p.parts) and p.stat().st_size<=3_000_000]
+ result=[]
+ for dirname,subdirs,files in os.walk(path,followlinks=False):
+  subdirs[:]=[d for d in subdirs if d not in SKIP and not d.startswith('.venv')]
+  parent=Path(dirname)
+  for name in files:
+   p=parent/name
+   try:
+    if p.suffix in EXT and not p.is_symlink() and p.stat().st_size<=3_000_000:result.append(p)
+   except OSError:continue
+ return result
 def run(args):
  try:
   x=subprocess.run(args,capture_output=True,text=True,timeout=12)
