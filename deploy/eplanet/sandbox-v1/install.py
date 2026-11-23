@@ -78,7 +78,8 @@ def sanitize(h):
  h=re.sub(rb'<a\b[^>]*>',clean_anchor,h,flags=re.I)
  h=re.sub(rb'<form\b([^>]*)>',clean_form,h,flags=re.I)
  h=h.replace(URL_B,URL_DEMO)
- h=h.replace(b'</head>',CSP+STYLE+b'</head>',1)
+ h=h.replace(b'<head>',b'<head>'+CSP+b'<meta name="robots" content="noindex,nofollow,noarchive">',1)
+ h=h.replace(b'</head>',STYLE+b'</head>',1)
  h=h.replace(b'</body>',MARK+TAG+b'</body>',1)
  if h.count(TAG)!=1 or h.count(STYLE)!=1 or b'onclick=' in h.lower():
   raise RuntimeError('SANDBOX_HTML_SAFETY_CHECK_FAILED')
