@@ -7,6 +7,8 @@
   var NAV_ID = 'mf-global-bottom-nav';
   var ACADEMY_HOME = '/miniapp/p74/learning/academy-home.html';
   var STAGE1 = '/miniapp/index.html?view=mmtrade10x';
+  // Match the ePlanet destination of P74 Home step four.
+  var P74_STEP4_HREF = '/eplanet';
 
   var iconPaths = {
     home: 'M3 10 L12 3 L21 10 V21 H14 V14 H10 V21 H3 Z',
@@ -23,7 +25,7 @@
     { id: 'home', label: 'خانه', href: '/miniapp', icon: 'home', enabled: true, sort: 10 },
     { id: 'academy', label: 'آکادمی', href: ACADEMY_HOME, icon: 'academy', enabled: true, sort: 20 },
     { id: 'support', label: 'پشتیبانی', href: '/miniapp/p74/support/support.html', icon: 'support', enabled: true, sort: 30 },
-    { id: 'copy-trading', label: 'آموزش کپی‌ترید', href: '/miniapp/p74/copytrade-academy/index.html', icon: 'chart', enabled: true, sort: 40 }
+    { id: 'copy-trading', label: 'آموزش کپی‌ترید', href: P74_STEP4_HREF, icon: 'chart', enabled: true, sort: 40 }
   ];
 
   function cleanPath(value) {
@@ -38,6 +40,13 @@
       value.indexOf('..') === -1;
   }
 
+  function isCopyTradingItem(item) {
+    var id = String(item.id || '').toLowerCase();
+    var label = String(item.label || '').replace(/[\u200c\u200f]/g, ' ').trim();
+    return id === 'copy-trading' || id === 'copy_trading' || id === 'copytrade' ||
+      /^(?:کپی\s*ترید(?:ینگ)?|copy[\s-]*trad(?:e|ing))$/i.test(label);
+  }
+
   function makeItems(source) {
     var items = (Array.isArray(source) ? source : []).filter(function (item) {
       return item && item.enabled === true &&
@@ -48,7 +57,7 @@
       return {
         id: String(item.id || ''),
         label: item.label.trim().slice(0, 32),
-        href: item.href,
+        href: isCopyTradingItem(item) ? P74_STEP4_HREF : item.href,
         icon: item.icon,
         sort: Number(item.sort) || 0
       };
@@ -76,6 +85,9 @@
   function activeItem(items) {
     var path = cleanPath(location.pathname);
     var view = new URLSearchParams(location.search).get('view');
+    if (path === '/miniapp/p74/eplanet/index.html') {
+      return items.find(isCopyTradingItem) || null;
+    }
     if (view === 'academy') return items.find(function (item) { return item.id === 'academy'; }) || null;
     if (view === 'mmtrade10x') return items.find(function (item) { return item.id === 'mmtrade10x'; }) || null;
 

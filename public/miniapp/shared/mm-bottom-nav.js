@@ -28,7 +28,16 @@
   book:['M3 4h7a2 2 0 0 1 2 2v15a5 5 0 0 0-5-3H3z','M21 4h-7a2 2 0 0 0-2 2v15a5 5 0 0 1 5-3h4z'],
   star:['m12 2 3 7 7 .7-5.3 5 1.4 7.3L12 18.5 5.2 22l1.4-7.3-5.3-5L9 9z']
  };
- const routeIds={
+ // Copy Trade always opens the same ePlanet destination as P74 Home step four.
+  const P74_STEP4_HREF='/eplanet';
+  function isCopyTradingItem(item){
+   const id=String(item?.id||'').toLowerCase();
+   const label=String(item?.label||'').replace(/[\u200c\u200f]/g,' ').trim();
+   return id==='copy-trading'||id==='copy_trading'||id==='copytrade'||
+    /^(?:کپی\s*ترید(?:ینگ)?|copy[\s-]*trad(?:e|ing))$/i.test(label);
+  }
+  function targetHref(item){return isCopyTradingItem(item)?P74_STEP4_HREF:item.href;}
+  const routeIds={
   home:['/','/miniapp','/miniapp/index.html'],
   academy:['/academy','/miniapp/academy.html','/miniapp/p74/learning/academy-home.html'],
   challenge:['/challenge','/miniapp/p74/learning/stage2.html'],
@@ -51,8 +60,11 @@
  function activeId(){
   const curr=(location.pathname.replace(/\/+$/,'')||'/').toLowerCase();
   const view=(q.get('view')||'').toLowerCase();
+  if(curr==='/miniapp/p74/eplanet/index.html'){
+   const copyItem=items.find(isCopyTradingItem);if(copyItem)return copyItem.id;
+  }
   if((routeIds.home.includes(curr))&&view){for(const [id,slugs] of Object.entries(slugIds))if(slugs.includes(view))return id;}
-  for(const it of items){if(safeHref(it.href)?.split(/[?#]/)[0].replace(/\/+$/,'').toLowerCase()===curr)return it.id;}
+  for(const it of items){if(safeHref(targetHref(it))?.split(/[?#]/)[0].replace(/\/+$/,'').toLowerCase()===curr)return it.id;}
   for(const [id,paths] of Object.entries(routeIds))if(paths.includes(curr))return id;
   const slug=(q.get('slug')||curr.split('/').filter(Boolean).pop()||'').replace(/\.html$/,'');
   for(const [id,slugs] of Object.entries(slugIds))if(slugs.includes(slug))return id;
@@ -69,7 +81,7 @@
   const curr=activeId(),frag=document.createDocumentFragment();
   for(const it of enabled){
    const a=document.createElement('a');a.className='mmu-tab'+(it.id==='challenge'?' mmu-tab--challenge':'')+(it.id===curr?' is-active':'');
-   a.href=it.href;a.dataset.mmuId=it.id;a.setAttribute('aria-label',it.label);
+   a.href=targetHref(it);a.dataset.mmuId=it.id;a.setAttribute('aria-label',it.label);
    if(it.id===curr)a.setAttribute('aria-current','page');
    const image=document.createElement('span');image.className='mmu-icon';image.append(icon(it.icon));
    const label=document.createElement('span');label.textContent=it.label;
