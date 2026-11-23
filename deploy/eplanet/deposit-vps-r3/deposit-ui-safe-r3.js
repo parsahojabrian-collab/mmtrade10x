@@ -121,7 +121,7 @@
    const {response,data}=await call('check',{requestId:key});
    if(session!==epoch||!isDeposit()||activeId!==key)return;
    if(!response.ok){
-    if(response.status===404||response.status===503){
+    if(response.status===404||(response.status===503&&['ENGINE_DISABLED','BROKER_NOT_CONFIGURED'].includes(data.code))){
      legacy(response.status===404?'سرویس بررسی موجودی هنوز راه‌اندازی نشده است':
       'موتور بررسی موجودی هنوز فعال یا پیکربندی نشده است');
      return;
