@@ -18,10 +18,10 @@ DEST_SRC=REAL_SRC.parent/'eplanet-sandbox'
 DEST_LIVE=REAL_LIVE.parent/'eplanet-sandbox'
 WORK=Path('/root/MMTRADE_EPLANET_SANDBOX_V1')
 STATE=WORK/'state.json'
-REV='ac358098c436abb94077709ab661f53d806671ec'
+REV='d3c3348fff88df6aa475fd423b3cf97dd1ac287f'
 BASE=f'https://raw.githubusercontent.com/parsahojabrian-collab/mmtrade10x/{REV}/deploy/eplanet/sandbox-v1/'
 PIN={
- 'sandbox-state.mjs':'cbc8827e872eb07257ee880811ad265dbe22da8a',
+ 'sandbox-state.mjs':'94a9183e204971d85d0ec3489cf106dfe434df1a',
  'sandbox-ui.mjs':'92403fcb239056c586b31dccde69d943c9571bb5',
  'sandbox.css':'bb1f27d1ed9d8ffc9a8103f8543b2c30d2c174b5',
  'sandbox.test.mjs':'75b4019145b731df66c3adb758d84b70ab292463'
