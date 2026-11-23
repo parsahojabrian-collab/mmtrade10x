@@ -18,7 +18,7 @@
 \`\`\`bash
 mkdir -p /root/MMTRADE_EPLANET_SANDBOX_V1
 curl -fSL --retry 3 \
- 'https://raw.githubusercontent.com/parsahojabrian-collab/mmtrade10x/a8c50f161b451785b21080561e1508fcdc7e871b/deploy/eplanet/sandbox-v1/install.py' \
+ 'https://raw.githubusercontent.com/parsahojabrian-collab/mmtrade10x/e999c1f2f4292c7321612c8b51ac7c990e3e626c/deploy/eplanet/sandbox-v1/install.py' \
  -o /root/MMTRADE_EPLANET_SANDBOX_V1/install.py
 python3 /root/MMTRADE_EPLANET_SANDBOX_V1/install.py audit &&
 python3 /root/MMTRADE_EPLANET_SANDBOX_V1/install.py install &&
