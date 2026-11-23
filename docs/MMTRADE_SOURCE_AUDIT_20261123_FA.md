@@ -22,6 +22,9 @@
 - مسیرها و دکمه‌های Copy Trade در PR قبلی به `/eplanet` متصل شده‌اند.
 - فایل‌های `.env` واقعی در نمای فعلی Git مشاهده نشدند؛ تنها `.env.example` قابل مشاهده بود. این ادعا شامل تمام تاریخچه Git یا سرور نیست.
 
+## کنترل ارجاعات فایل‌های رابط کاربری
+- تمام ۲۵ فایل HTML موجود در `public/miniapp` از نظر `src`/`href` مستقیم با مسیر مطلق `/miniapp/` و پسوندهای رایج HTML/CSS/JS/تصویر/فونت با درخت Git بررسی شدند؛ هیچ ارجاع مستقیمی به فایل غایب از Git در این دامنه مشاهده نشد. لینک‌های تولیدشده در JavaScript، مقادیر runtime، URLهای خارجی و دسترسی واقعی HTTP در این کنترل پوشش داده نمی‌شوند.
+
 ## گام لازم روی VPS
 1. اجرای `node --experimental-strip-types --test --test-concurrency=2 tests/*.test.mjs` با `node_modules` نصب‌شده.
 2. اجرای `./node_modules/.bin/tsc --noEmit -p tsconfig.json` برای بررسی نوع‌ها بدون ایجاد فایل build.
