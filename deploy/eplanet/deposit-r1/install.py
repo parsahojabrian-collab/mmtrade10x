@@ -57,7 +57,7 @@ def check_base():
  if hs!=hl:raise RuntimeError('EPLANET_HTML_SOURCE_LIVE_DIFFER')
  if api.count(MARKER)!=1 or api.count(b"import 'dotenv/config';")!=1:
   raise RuntimeError('API_INJECTION_ANCHOR_MISSING_OR_DUPLICATE')
- for needle in (b'const eplanetSerialize=',b'function eplanetStatuses',b'app.post(\'/miniapp/eplanet/submit\'',
+ for needle in (b'async function eplanetSerialize',b'function eplanetStatuses',b'app.post(\'/miniapp/eplanet/submit\'',
                 b'async function p37LockWorkflow',b'async function p37ChangeWorkflow'):
   if needle not in api:raise RuntimeError('API_BASELINE_MISSING:'+needle.decode())
  if IMPORT in api or b'MMTRADE_EPLANET_DEPOSIT_ENGINE_R1' in api:
