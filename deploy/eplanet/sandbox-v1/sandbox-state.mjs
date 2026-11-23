@@ -25,7 +25,7 @@ export function steps(state){
   return {key,status};
  });
 }
-const emailRx=/^[^\s@]+@[^\s@]+\.test$/i;
+const emailRx=/^[a-z0-9._%+-]+@[a-z0-9.-]+\.test$/i;
 function eventLog(state,action,details={}){
  state.audit.push({seq:state.audit.length+1,action,details});
  if(state.audit.length>100)state.audit.shift();
