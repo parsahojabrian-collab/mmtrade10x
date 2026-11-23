@@ -85,6 +85,9 @@
   function activeItem(items) {
     var path = cleanPath(location.pathname);
     var view = new URLSearchParams(location.search).get('view');
+    if (path === '/miniapp/p74/eplanet/index.html') {
+      return items.find(isCopyTradingItem) || null;
+    }
     if (view === 'academy') return items.find(function (item) { return item.id === 'academy'; }) || null;
     if (view === 'mmtrade10x') return items.find(function (item) { return item.id === 'mmtrade10x'; }) || null;
 
