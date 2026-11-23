@@ -60,6 +60,9 @@
  function activeId(){
   const curr=(location.pathname.replace(/\/+$/,'')||'/').toLowerCase();
   const view=(q.get('view')||'').toLowerCase();
+  if(curr==='/miniapp/p74/eplanet/index.html'){
+   const copyItem=items.find(isCopyTradingItem);if(copyItem)return copyItem.id;
+  }
   if((routeIds.home.includes(curr))&&view){for(const [id,slugs] of Object.entries(slugIds))if(slugs.includes(view))return id;}
   for(const it of items){if(safeHref(targetHref(it))?.split(/[?#]/)[0].replace(/\/+$/,'').toLowerCase()===curr)return it.id;}
   for(const [id,paths] of Object.entries(routeIds))if(paths.includes(curr))return id;
