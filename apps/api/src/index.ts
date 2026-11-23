@@ -2852,10 +2852,14 @@ app.put('/admin/settings', async (request, reply) => {
     return reply.code(400).send({ error: 'duplicate_page_path' });
   }
 
-  await prisma.$transaction(Object.entries(values).map(([key, value]) => prisma.systemSetting.upsert({
-    where: { key }, create: { key, value }, update: { value }
-  })));
-  await prisma.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'ADMIN_SETTINGS_UPDATED', entityType: 'SystemSetting', metadata: { keys: Object.keys(values) } } });
+  // Commit the settings and their audit trail together; never report a failed
+  // update after settings were already persisted without the audit entry.
+  await prisma.$transaction([
+    ...Object.entries(values).map(([key, value]) => prisma.systemSetting.upsert({
+      where: { key }, create: { key, value }, update: { value }
+    })),
+    prisma.auditLog.create({ data: { adminUserId: adminIdOf(request), action: 'ADMIN_SETTINGS_UPDATED', entityType: 'SystemSetting', metadata: { keys: Object.keys(values) } } })
+  ]);
   return { ok: true, message: 'settings_saved' };
 });
 
