@@ -59,7 +59,7 @@ def source_check():
  css=REAL_LIVE.joinpath('styles.css').read_bytes()
  if html!=REAL_SRC.joinpath('index.html').read_bytes() or css!=REAL_SRC.joinpath('styles.css').read_bytes():
   raise RuntimeError('SOURCE_LIVE_NOT_SYNC')
- for anchor in (b'<head',b'</head>',b'</body>',b'id="stepDialog"',
+ for anchor in (b'<head>',b'</head>',b'</body>',b'id="stepDialog"',
                 b'id="submitVerification"',b'id="progressFill"',b'id="doneCount"'):
   if html.count(anchor)!=1:raise RuntimeError('LIVE_HTML_CONTRACT:'+anchor.decode())
  for n in range(4):
