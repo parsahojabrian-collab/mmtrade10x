@@ -55,6 +55,8 @@ COMPILE=r'''
 const fs=require('node:fs'),path=require('node:path');
 const {createRequire}=require('node:module');
 const [root,filename,candidate,output]=process.argv.slice(2);
+// Resolve implicit @types libraries from the project, not the temporary compiler directory.
+process.chdir(root);
 const ts=createRequire(path.join(root,'package.json'))('typescript');
 const text=fs.readFileSync(candidate,'utf8');
 const config=ts.readConfigFile(path.join(root,'tsconfig.json'),ts.sys.readFile);
@@ -62,7 +64,16 @@ if(config.error)throw Error('TS_CONFIG_INVALID');
 const parsed=ts.parseJsonConfigFileContent(config.config,ts.sys,root);
 if(parsed.errors.length)throw Error('TS_CONFIG_DIAGNOSTICS');
 const opts={...parsed.options,noEmit:true,incremental:false,composite:false};
+if(!opts.typeRoots){
+ const projectRequire=createRequire(path.join(root,'package.json'));
+ let nodeTypes;
+ try{nodeTypes=projectRequire.resolve('@types/node/package.json');}
+ catch{throw Error('NODE_TYPES_NOT_FOUND_IN_PROJECT');}
+ opts.typeRoots=[path.dirname(path.dirname(nodeTypes)),path.join(root,'node_modules','@types')];
+}
+console.log('NODE_TYPE_ROOTS_RESOLVED');
 const host=ts.createCompilerHost(opts);
+host.getCurrentDirectory=()=>root;
 const original=host.readFile.bind(host);
 host.readFile=p=>path.resolve(p)===filename?text:original(p);
 const program=ts.createProgram([filename],opts,host);
@@ -105,7 +116,7 @@ def prepare():
   # Rerun the staged backend tests before deploying any code.
   t=subprocess.run(['node',str(STAGE/'tests.cjs'),str(ROOT),str(STAGE/'candidate.ts')],env=clean_env,cwd=d,timeout=45)
   if t.returncode:raise RuntimeError('BACKEND_MOCK_TESTS_FAILED')
-  t=subprocess.run(['node',str(script),str(ROOT),str(SRC),str(STAGE/'candidate.ts'),str(output)],env=clean_env,cwd=d,timeout=75)
+  t=subprocess.run(['node',str(script),str(ROOT),str(SRC),str(STAGE/'candidate.ts'),str(output)],env=clean_env,cwd=ROOT,timeout=75)
   if t.returncode:raise RuntimeError('ISOLATED_TYPESCRIPT_CHECK_FAILED')
   t=subprocess.run(['node','--check',str(output)],env=clean_env,cwd=d,timeout=15)
   if t.returncode:raise RuntimeError('ESM_SYNTAX_FAILED')
