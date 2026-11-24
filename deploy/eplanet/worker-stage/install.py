@@ -21,8 +21,8 @@ def patch(s):
  }''')
  s=once(s,"if(last&&ELIGIBLE_STATES.has(last.status))",
           "if(last&&last.userId===userId&&scheduled(last))")
- s=once(s,"if(!job||!ELIGIBLE_STATES.has(job.status)||!job.nextCheckAfter",
-          "if(!scheduled(job)")
+ s=once(s,"if(!job||!ELIGIBLE_STATES.has(job.status)||!job.nextCheckAfter\n      ||Date.parse(job.nextCheckAfter)>now",
+          "if(!scheduled(job)\n      ||Date.parse(job.nextCheckAfter)>now")
  s=once(s,"if(!identity?.verified||identity.version!==job.identityVersion||job.policyVersion!==options().policy){",
           "const current=options();\n   if(!current.ready||!identity?.verified||identity.version!==job.identityVersion||job.policyVersion!==current.policy){")
  s=once(s,"if(finiteAmount(upstreamResult.amount))job.availableBalance=upstreamResult.amount;",
