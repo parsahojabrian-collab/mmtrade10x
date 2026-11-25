@@ -1,94 +1,33 @@
-/* Academy visual parity with the copytrade course. Single layout; no legacy override stack.
-   Shared artwork and glass frame are reused from the canonical second-step academy.
-   All academy-home DOM hooks, stage data and studio bridge remain intact. */
-:root{
- color-scheme:dark;
- --academy-bg:#020a07;--academy-text:#f4fff8;--academy-muted:#c9dbd1;
- --academy-emerald:#18f779;--academy-neon:#45ffa0;
- --academy-gold:#18f779;--academy-gold-bright:#c7ffdf;
- --academy-pan:url('/miniapp/p74/copytrade-academy/assets/pan.webp');
- --academy-lens:url('/miniapp/p74/copytrade-academy/assets/mm-liquid-glass-approved.png');
- --academy-underlay:url('/miniapp/p74/copytrade-academy/assets/glass-underlay.svg');
- --academy-safe-top:env(safe-area-inset-top,0px);
- --academy-safe-bottom:env(safe-area-inset-bottom,0px);
- --academy-font:var(--mm-font-ui,'Vazirmatn',Tahoma,sans-serif);
- --academy-latin:var(--mm-font-latin,Arial,sans-serif);
-}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-html{min-height:100%;background:#020a07}
-body.academy-page{margin:0;min-height:100vh;min-height:100dvh;position:relative;isolation:isolate;overflow-x:hidden;color:var(--academy-text);background:radial-gradient(ellipse at 50% 0%,#0b3224,#000 72%);font-family:var(--academy-font);-webkit-font-smoothing:antialiased}
-button,a{font:inherit;-webkit-tap-highlight-color:transparent}
-button{color:inherit;cursor:pointer}
-button:focus-visible,a:focus-visible{outline:2px solid #e7ffe7;outline-offset:3px}
-.academy-atmosphere{position:fixed;z-index:-1;inset:0;pointer-events:none;opacity:.24;background-position:center top;background-size:100% 100%,auto var(--mf-academy-bg-coverage,100%),cover;background-repeat:no-repeat;background-image:radial-gradient(ellipse at 50% 20%,#0b3224,transparent 70%)}
-.academy-atmosphere.mf-bg-scroll{position:absolute;background-size:100% 100%,100% var(--mf-academy-bg-coverage,100%),cover}
-.academy-shell{position:relative;width:min(100%,440px);min-width:0;margin:0 auto;padding:max(5px,var(--academy-safe-top)) 9px 18px;display:flex;flex-direction:column;gap:8px}
-html.mmu-nav-ready body.academy-page{padding-bottom:var(--mmu-nav-reserve,111px)}
-.academy-header{position:relative;isolation:isolate;min-height:clamp(130px,23.5dvh,205px);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 3px 5px}
-.academy-header::before{content:'';position:absolute;z-index:-1;inset:5% -9% 0;background:url('/miniapp/p74/copytrade-academy/assets/bb.webp') center/contain no-repeat;opacity:.78;pointer-events:none;filter:drop-shadow(0 0 6px #19ff6a59)}
-.academy-brand{direction:ltr;display:flex;flex-direction:column;align-items:center;gap:4px;color:#f4fff8;text-shadow:0 2px 7px #00170c}
-.academy-monogram{width:clamp(46px,13vw,68px);height:auto;color:#d9ffed;filter:drop-shadow(0 0 8px #18f77990)}
-.academy-logo{display:none;max-width:60vw;width:auto;height:clamp(40px,8dvh,66px);object-fit:contain;filter:drop-shadow(0 0 10px #18f77970)}
-.academy-brand.has-custom-logo .academy-monogram{display:none}
-.academy-brand.has-custom-logo .academy-logo:not([hidden]){display:block}
-.academy-brand-copy{font:700 clamp(9px,2.7vw,12px)/1.25 var(--academy-latin);letter-spacing:.055em;white-space:normal}
-.academy-brand-copy b,.academy-brand-copy span{color:#91ffbf}
-.academy-heading{width:100%;display:grid;justify-items:center;gap:5px}
-.academy-heading h1,.stage-card{position:relative;isolation:isolate;background:transparent}
-.academy-heading h1::before,.stage-card::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;border:18px solid transparent;border-image:var(--academy-pan) 67 fill / 18px stretch}
-.academy-heading h1{margin:0;width:min(88%,360px);min-height:clamp(39px,6.3dvh,58px);padding:5px 15px;display:grid;place-items:center;font-size:clamp(20px,5.7vw,28px);font-weight:900;line-height:1.35;color:#f4fff8;text-shadow:0 2px 5px #001b0d,0 0 10px #19ff6a61}
-.academy-heading p{margin:0;max-width:100%;font-size:clamp(11px,3vw,13px);line-height:1.6;color:#c7e6d3;text-shadow:0 2px 4px #000}
-.academy-stages-wrap{width:100%;min-width:0}
-.academy-stages{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(5px,.85dvh,9px)}
-.academy-loading,.academy-disabled{padding:18px;text-align:center;border:1px solid #59e7a469;border-radius:16px;background:#08261a;color:#e7ffef}
-.stage-card{display:flex;align-items:center;gap:clamp(5px,1.5vw,10px);width:100%;min-width:0;min-height:clamp(62px,8.5dvh,85px);padding:6px 12px;border:0;border-radius:26px;text-align:right;transition:transform .18s ease,filter .18s ease}
-.stage-card:active:not(:disabled){transform:scale(.992);filter:brightness(1.25)}
-.stage-number{display:grid;place-items:center;flex:0 0 auto;width:clamp(28px,8.5vw,39px);height:clamp(28px,8.5vw,39px);border:1px solid #3aff8ce6;border-radius:50%;box-shadow:0 0 9px #1dff7f70,inset 0 0 8px #18f77955;color:#ddffed;font-size:clamp(14px,4vw,18px);font-weight:800}
-.stage-copy{display:flex;flex:1 1 0;min-width:0;flex-direction:column;gap:2px;text-shadow:0 1px 4px #000}
-.stage-title{display:block;font-size:clamp(13px,4vw,17px);line-height:1.4;font-weight:800;overflow-wrap:anywhere}
-.stage-description{display:block;color:var(--academy-muted);font-size:clamp(10px,2.8vw,12.5px);font-weight:500;line-height:1.5;overflow-wrap:anywhere}
-.stage-art{flex:0 0 clamp(58px,23vw,104px);height:clamp(43px,7.2dvh,65px);display:grid;place-items:center;min-width:0}
-.stage-art img{display:block;width:100%;height:100%;min-height:0;object-fit:contain;filter:drop-shadow(0 3px 9px #000a)}
-.stage-card.is-complete .stage-number{background:#155c37;box-shadow:0 0 10px #18f77999}
-.stage-card.is-complete .stage-number::after{content:'✓';position:absolute;inset:auto 4px 4px auto;color:#bdfad2;font-size:11px}
-.stage-card.is-locked{opacity:.62;cursor:not-allowed}
-.academy-cta-section{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px 4px;text-align:center}
-.academy-cta-section::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--academy-footer-image,none) center/cover no-repeat;opacity:.14;pointer-events:none}
-.academy-cta,.academy-modal-actions button,.academy-modal-actions a,.academy-lesson-video-link{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:8px 14px;border:1px solid #80ffc4bb;border-radius:22px;background:linear-gradient(135deg,#c4ffdea8,#1bdd75d1 38%,#01663dc4);box-shadow:inset 0 2px 4px #ffffff5e,0 0 12px #1cf68d69;color:#f4fff8;text-decoration:none;font-weight:800;line-height:1.5}
-.academy-cta{width:min(88%,340px);font-size:clamp(16px,4.6vw,20px)}
-.academy-cta-arrow{font-family:var(--academy-latin);font-size:21px}
-.academy-footer-text{margin:0;color:#d7eee1;font-size:12px;line-height:1.7}
-.academy-risk-note{margin:0;color:#b6c9bf;font-size:10px;line-height:1.6}
-.academy-modal{position:fixed;z-index:2147483601;inset:0;display:grid;place-items:center;padding:max(8px,var(--academy-safe-top)) 9px max(8px,var(--academy-safe-bottom))}
-.academy-modal-backdrop{position:absolute;inset:0;border:0;background:#000c;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.academy-modal-panel{position:relative;isolation:isolate;width:min(100%,440px);max-height:100%;min-height:0;display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #d9fff88f;border-radius:23px;background:linear-gradient(128deg,#dcfff915,#042823ed 35%,#000d0ef7 70%,#09533dce);box-shadow:inset 0 1px 1px #ffffff5e,0 0 15px #13e67c1c,0 8px 35px #0009;overflow:hidden}
-.academy-modal-panel::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--academy-underlay) center/100% 100% no-repeat;opacity:.45;pointer-events:none}
-.academy-modal-panel::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;border:12px solid transparent;border-image:var(--academy-lens) 180 215 180 215 / 12px stretch;opacity:.48}
-.academy-modal-panel>*{position:relative;z-index:1}
-.academy-modal-topline{height:2px;flex:none;margin:0 14px;background:linear-gradient(90deg,transparent,#e9fff4d4,#20e586ae,transparent)}
-.academy-modal-header,.academy-modal-content,.academy-modal-actions{border:1px solid #d9fff854;border-radius:17px;background:linear-gradient(134deg,#f3fffe14,#051e1c55 35%,#03161460);box-shadow:inset 0 1px 2px #ffffff38;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.academy-modal-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;padding:9px 10px}
-.academy-modal-header>div{min-width:0}
-.academy-modal-stage{color:#9decbf;font-size:11px}
-.academy-modal-header h2{margin:3px 0 0;font-size:clamp(16px,4.7vw,22px);line-height:1.45;overflow-wrap:anywhere}
-.academy-modal-close{flex:0 0 37px;width:37px;height:37px;border-radius:50%;border:1px solid #c3fff7a0;background:linear-gradient(#3d4c4799,#021309bb);font-size:25px;line-height:1;color:#f4fff8}
-.academy-modal-content{min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px;color:#e7eee8;font-size:13px;line-height:1.85;overflow-wrap:anywhere;scrollbar-width:thin;scrollbar-color:#4bee9d7a transparent}
-.academy-modal-content p{margin:0 0 10px}
-.academy-modal-content h3{margin:14px 0 5px;color:#a9ffd0;font-size:14px;line-height:1.6}
-.academy-modal-content ul,.academy-modal-content ol{margin:6px 0 12px;padding-inline-start:22px}
-.academy-modal-content li{margin:4px 0}
-.academy-lesson-note{padding:9px 10px;border:1px solid #ecffde6e;border-radius:12px;background:linear-gradient(105deg,#f3f9f01f,#1b413026);color:#e6ecd7}
-.academy-lesson-image{display:block;width:min(100%,340px);max-height:260px;object-fit:contain;margin:12px auto;border-radius:12px}
-.academy-lesson-video{display:block;width:100%;max-height:280px;margin:12px 0;border-radius:12px}
-.academy-lesson-video-link{margin:10px 0}
-.academy-modal-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;gap:6px;padding:5px}
-.academy-modal-actions a,.academy-modal-actions button{flex:1 1 115px;font-size:12px;min-height:42px;padding:5px 8px;text-align:center}
-.academy-modal-actions .secondary{border-color:#d9fff982;background:linear-gradient(150deg,#fbfffe36,#1c363142 40%,#0619173d);box-shadow:inset 0 1px 3px #ffffff5e;color:#e7f8ee}
-.academy-modal-actions :disabled{opacity:.68;cursor:default}
-.academy-live-status{position:fixed;z-index:2147483602;bottom:calc(var(--mmu-nav-reserve,111px) + 8px);left:50%;transform:translate(-50%,16px);opacity:0;pointer-events:none;width:max-content;max-width:calc(100% - 28px);padding:10px 16px;border:1px solid #7bffbb;border-radius:12px;background:#092116;color:#eaf8ef;font-size:12px;line-height:1.7;box-shadow:0 8px 25px #0006;transition:opacity .2s,transform .2s}
-.academy-live-status.show{opacity:1;transform:translate(-50%,0)}
-@media(max-width:345px){.stage-card{padding-inline:9px;gap:5px}.stage-art{flex-basis:53px}.stage-title{font-size:12.5px}.stage-description{font-size:10px}.academy-brand-copy{font-size:9px}}
-@media(max-height:620px){.academy-header{min-height:110px;gap:3px;padding-block:5px}.academy-monogram{width:42px}.stage-card{min-height:56px}.stage-art{height:42px}.academy-modal-panel{gap:5px;padding:7px}.academy-modal-content{padding:8px}.academy-modal-actions a,.academy-modal-actions button{min-height:38px}}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.academy-modal-header,.academy-modal-content,.academy-modal-actions{background-color:#08221e}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+/* Exact shared reference: copytrade-academy/style.css owns all common visuals.
+   This adapter only accommodates the extra main-academy registration and progress controls. */
+.academy-page{position:relative;isolation:isolate}
+.academy-atmosphere{position:absolute;inset:0;z-index:-1;pointer-events:none;background-size:cover;background-position:center;opacity:.25}
+.academy-atmosphere.mf-bg-scroll{background-size:100% var(--mf-academy-bg-coverage,100%)}
+.academy-shell{overflow-y:auto;overscroll-behavior:contain}
+.academy-shell .s1{height:auto;min-height:100%;grid-template-rows:clamp(115px,23.5dvh,205px) auto auto;align-content:start}
+.academy-stages-wrap{min-height:0;min-width:0}
+.academy-stages.list{grid-template-rows:repeat(7,minmax(55px,1fr));grid-auto-rows:minmax(55px,auto)}
+.academy-stages .row{min-height:clamp(55px,8dvh,76px)}
+.academy-stages .row .ic{max-height:clamp(52px,8dvh,75px)}
+.academy-stages .row .t{overflow-wrap:anywhere}
+.academy-stages .row .t small{line-height:1.35}
+.academy-header .sub{font-family:var(--font-fa);letter-spacing:0;direction:rtl;font-size:clamp(10px,1.5dvh,13px)}
+.academy-header .ttl{font-size:clamp(18px,2.95dvh,30px)}
+.stage-card:disabled{opacity:.6;cursor:not-allowed}
+.academy-cta-section{padding:4px 12px 10px;text-align:center}
+.academy-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:85%;min-height:40px;margin:auto;text-decoration:none;border:1px solid #80ffc4bb;border-radius:22px;background:linear-gradient(#35fa9a,#0b934e);color:white;font-weight:800}
+.academy-footer-text,.academy-risk-note{margin:5px 0 0;font-size:10px;line-height:1.5;color:var(--muted)}
+.academy-modal{max-width:440px;margin-inline:auto}
+.academy-modal-content{overflow:auto;line-height:1.75;font-size:13px;overflow-wrap:anywhere}
+.academy-modal-content p{margin:0 0 8px}
+.academy-modal-content h3{font-size:14px;margin:8px 0 2px}
+.academy-modal-content ul{padding-inline-start:20px;margin:3px 0 8px}
+.academy-lesson-note{padding:6px;border:1px solid #ebf8c654;border-radius:10px;color:#e6ecd7}
+.academy-lesson-image{max-width:100%;max-height:220px;object-fit:contain;align-self:center}
+.academy-lesson-video-link{color:#a9ffd0}
+.academy-modal-actions.lesson-footer{display:flex;flex-wrap:wrap;height:auto;flex:0 0 auto;min-height:40px}
+.academy-modal-actions .nav-btn{flex:1 1 90px;min-height:39px;height:auto;padding:5px;text-decoration:none;white-space:normal;text-align:center;color:#fff}
+.academy-live-status{position:fixed;z-index:2147483602;bottom:calc(var(--mmu-nav-reserve,0px) + 10px);left:50%;transform:translateX(-50%);opacity:0;pointer-events:none;max-width:90%;padding:8px 12px;border:1px solid #7bffbb;border-radius:12px;background:#092116;font-size:12px}
+.academy-live-status.show{opacity:1}
+.academy-loading,.academy-disabled{text-align:center;padding:10px}
+@media(max-height:620px){.academy-shell .s1{grid-template-rows:clamp(104px,22dvh,139px) auto auto}}

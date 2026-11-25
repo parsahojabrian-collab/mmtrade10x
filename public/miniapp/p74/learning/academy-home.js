@@ -7,6 +7,13 @@
   const previewMode = new URLSearchParams(location.search).get('preview') === '1';
   const studioPreview = new URLSearchParams(location.search).get('visualPreview') === '1';
   const asset = (name) => '/miniapp/p74/learning/academy-assets/' + name;
+  const parityAsset = name => '/miniapp/p74/copytrade-academy/assets/' + name;
+  const parityIcons = ['book.webp','pair.webp','swap.webp','laptop.webp','candles.webp','tether.webp','mag.webp'];
+  function stageIcon(stage,index) {
+    const candidate = safeUrl(stage.icon);
+    return candidate && !/\/academy-assets\/stage-0[1-7]-[^/]+\.webp(?:\?.*)?$/.test(candidate)
+      ? candidate : parityAsset(parityIcons[index] || 'book.webp');
+  }
   const DEFAULT_CONFIG = {
     schemaVersion: 1,
     enabled: true,
@@ -135,7 +142,7 @@
     if (logo && brand && logoUrl && !legacyLogo) {
       logo.src = logoUrl; logo.hidden = false; brand.classList.add('has-custom-logo');
     } else if (logo && brand) {
-      logo.removeAttribute('src'); logo.hidden = true; brand.classList.remove('has-custom-logo');
+      logo.src = parityAsset('logo.webp'); logo.hidden = false; brand.classList.remove('has-custom-logo');
     }
     const atmosphere = document.querySelector('.academy-atmosphere');
     const bg = safeUrl(config.background || DEFAULT_CONFIG.background);
@@ -143,11 +150,11 @@
       atmosphere.classList.toggle('mf-bg-scroll', config.layout.backgroundScroll);
       atmosphere.style.setProperty('--mf-academy-bg-coverage', `${config.layout.backgroundCoverage}%`);
       document.documentElement.style.setProperty('--mf-academy-bg-coverage', `${config.layout.backgroundCoverage}%`);
-      if (bg) atmosphere.style.backgroundImage = `linear-gradient(180deg,rgba(0,12,9,.12) 0%,rgba(0,17,12,.18) 23%,rgba(0,19,13,.52) 54%,rgba(0,20,14,.62) 100%),url("${bg.replace(/"/g, '')}"),radial-gradient(ellipse at 50% 25%,#073c2a 0%,#031710 70%)`;
+      if (bg && !/\/academy-assets\/academy-bg-portrait\.webp(?:\?.*)?$/.test(bg)) atmosphere.style.backgroundImage = `linear-gradient(180deg,rgba(0,12,9,.12) 0%,rgba(0,17,12,.18) 23%,rgba(0,19,13,.52) 54%,rgba(0,20,14,.62) 100%),url("${bg.replace(/"/g, '')}"),radial-gradient(ellipse at 50% 25%,#073c2a 0%,#031710 70%)`;
     }
     const footer = $('academy-cta-section');
     const footerBg = safeUrl(config.footerBackground || DEFAULT_CONFIG.footerBackground);
-    if (footer && footerBg) footer.style.setProperty('--academy-footer-image', `url("${footerBg.replace(/"/g, '')}")`);
+    if (footer && footerBg && !/\/academy-assets\/academy-footer-mountains\.webp(?:\?.*)?$/.test(footerBg)) footer.style.setProperty('--academy-footer-image', `url("${footerBg.replace(/"/g, '')}")`);
     const cta = $('academy-cta');
     const ctaHref = safeUrl(config.cta.href || '/profile');
     cta.href = ctaHref || '/profile';
@@ -162,27 +169,29 @@
   }
   function renderStages() {
     const root = $('academy-stages');
+    if (!root) return;
     root.replaceChildren();
     const stages = config.stages.filter(stage => stage && stage.enabled !== false);
     stages.forEach((stage, visibleIndex) => {
       const originalIndex = config.stages.findIndex(x => x.id === stage.id);
-      const button = node('button', 'stage-card' + (readStages.has(stage.id) ? ' is-complete' : '') + (stage.locked ? ' is-locked' : ''));
+      const button = node('button', 'stage-card row glass' + (readStages.has(stage.id) ? ' is-complete' : '') + (stage.locked ? ' is-locked' : ''));
       button.type = 'button';
       button.disabled = !!stage.locked;
       button.setAttribute('aria-label', `مرحله ${faNum(originalIndex + 1)}: ${stage.title}`);
-      const number = node('span', 'stage-number', faNum(originalIndex + 1));
-      const copy = node('span', 'stage-copy');
-      copy.append(node('strong', 'stage-title', stage.title));
+      const inner = node('span', 'in');
+      const number = node('span', 'stage-number ch', '‹');
+      number.setAttribute('aria-hidden','true');
+      const copy = node('span', 'stage-copy t');
+      copy.append(node('span', 'stage-title', stage.title));
       copy.append(node('small', 'stage-description', stage.description || 'برای مشاهده آموزش لمس کنید'));
-      const art = node('span', 'stage-art');
-      const img = node('img');
-      img.src = safeUrl(stage.icon) || asset('stage-01-rocket.webp');
+      const img = node('img', 'stage-art ic');
+      img.src = stageIcon(stage, originalIndex);
       img.alt = '';
       img.loading = visibleIndex > 2 ? 'lazy' : 'eager';
       img.decoding = 'async';
       img.onerror = () => { img.hidden = true; };
-      art.append(img);
-      button.append(number, copy, art);
+      inner.append(number, copy, img);
+      button.append(inner);
       button.addEventListener('click', () => openLesson(stage, originalIndex));
       root.append(button);
     });
@@ -204,6 +213,8 @@
     modalReturnFocus = document.activeElement;
     $('lesson-stage-label').textContent = `مرحله ${faNum(index + 1)} از ۷`;
     $('lesson-title').textContent = stage.lesson?.title || stage.title;
+    $('academy-lesson-icon').src = stageIcon(stage,index);
+    $('academy-lesson-progress').style.width = ((index+1)/7*100)+'%';
     const content = $('lesson-content');
     content.replaceChildren();
     if (stage.lesson?.intro) content.append(node('p', '', stage.lesson.intro));
@@ -225,25 +236,29 @@
     actions.replaceChildren();
     if (stage.lesson?.ctaText && stage.lesson?.ctaUrl) {
       const url = safeUrl(stage.lesson.ctaUrl);
-      if (url) { const link = node('a', '', stage.lesson.ctaText); link.href = url; if (/^https:\/\//.test(url)) { link.target = '_blank'; link.rel = 'noopener noreferrer'; } actions.append(link); }
+      if (url) { const link = node('a', 'nav-btn next-btn', stage.lesson.ctaText); link.href = url; if (/^https:\/\//.test(url)) { link.target = '_blank'; link.rel = 'noopener noreferrer'; } actions.append(link); }
     }
     if (readStages.has(stage.id)) {
-      const done = node('button', 'secondary', '✓ این مرحله مطالعه شده است');
+      const done = node('button', 'secondary nav-btn', '✓ مطالعه شده');
       done.type = 'button'; done.disabled = true; actions.append(done);
     } else {
-      const complete = node('button', '', '✓ مطالعه کردم');
+      const complete = node('button', 'nav-btn next-btn', '✓ مطالعه کردم');
       complete.type = 'button';
       complete.addEventListener('click', () => completeStage(stage.id, complete));
       actions.append(complete);
     }
-    const close = node('button', 'secondary', 'بستن');
+    const close = node('button', 'secondary nav-btn', 'بستن');
     close.type = 'button'; close.addEventListener('click', closeLesson); actions.append(close);
     $('academy-modal').hidden = false;
+    document.querySelector('.academy-shell').hidden = true;
+    document.body.classList.add('lesson-open');
     document.body.style.overflow = 'hidden';
     $('academy-modal-close')?.focus?.();
   }
   function closeLesson() {
     $('academy-modal').hidden = true;
+    document.querySelector('.academy-shell').hidden = false;
+    document.body.classList.remove('lesson-open');
     document.body.style.overflow = '';
     currentStage = null;
     if (modalReturnFocus && typeof modalReturnFocus.focus === 'function') modalReturnFocus.focus();
