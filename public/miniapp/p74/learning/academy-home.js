@@ -17,7 +17,7 @@
   const DEFAULT_CONFIG = {
     schemaVersion: 1,
     enabled: true,
-    title: 'آکادمی متین فیوچر',
+    title: 'آکادمی MMTRADE',
     subtitle: 'مسیر آموزشی ۷ مرحله‌ای برای شروع کپی‌ترید',
     logo: '',
     background: asset('academy-bg-portrait.webp'),
