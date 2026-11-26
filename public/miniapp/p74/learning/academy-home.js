@@ -7,33 +7,39 @@
   const previewMode = new URLSearchParams(location.search).get('preview') === '1';
   const studioPreview = new URLSearchParams(location.search).get('visualPreview') === '1';
   const asset = (name) => '/miniapp/p74/learning/academy-assets/' + name;
+  const parityAsset = name => '/miniapp/p74/copytrade-academy/assets/' + name;
+  const parityIcons = ['book.webp','pair.webp','swap.webp','laptop.webp','candles.webp','tether.webp','mag.webp'];
+  function stageIcon(stage,index) {
+    const candidate = safeUrl(stage.icon);
+    return candidate && !/\/academy-assets\/stage-0[1-7]-[^/]+\.webp(?:\?.*)?$/.test(candidate)
+      ? candidate : parityAsset(parityIcons[index] || 'book.webp');
+  }
   const DEFAULT_CONFIG = {
     schemaVersion: 1,
     enabled: true,
-    title: 'آکادمی متین فیوچر',
+    title: 'آکادمی MMTRADE',
     subtitle: 'مسیر آموزشی ۷ مرحله‌ای برای شروع کپی‌ترید',
     logo: '',
     background: asset('academy-bg-portrait.webp'),
     footerBackground: asset('academy-footer-mountains.webp'),
     cta: { enabled: true, text: 'شروع ثبت‌نام', href: '/profile', icon: '➜' },
     footerText: 'آماده ورود به مرحله بعدی هستید؟',
-    riskText: 'معاملات بازارهای مالی با ریسک همراه‌اند؛ سود تضمین‌شده نیست.',
     layout: { backgroundScroll: false, backgroundCoverage: 100 },
     stages: [
       {
         id: 'welcome', title: 'خوش آمدید', description: 'آشنایی سریع با مسیر پروژه و نحوه شروع', icon: asset('stage-01-rocket.webp'), enabled: true, locked: false,
-        lesson: { intro: 'به MATIN FUTURE خوش آمدید. این مسیر برای آشنایی با بازار طلا، سازوکار کپی‌ترید، افتتاح حساب و اتصال حساب معاملاتی طراحی شده است. قبل از شروع، این هفت مرحله را به ترتیب مرور کنید.', sections: [
+        lesson: { intro: 'به آکادمی MMTRADE خوش آمدید. این مسیر برای آشنایی با بازار طلا، سازوکار کپی‌ترید، افتتاح حساب و اتصال حساب معاملاتی طراحی شده است. قبل از شروع، این هفت مرحله را به ترتیب مرور کنید.', sections: [
           { heading: 'در این مسیر چه یاد می‌گیرید؟', body: 'از شناخت بازار طلا تا آماده‌سازی حساب و پایش معاملات، قدم‌به‌قدم با فرآیند آشنا می‌شوید.', bullets: ['شناخت نماد XAUUSD و ویژگی‌های بازار طلا', 'درک سازوکار کپی‌ترید و نحوه اجرای معاملات', 'افتتاح حساب، تعیین ریسک و اتصال به MMTrade', 'شروع و بررسی عملکرد حساب معاملاتی'] },
           { heading: 'چطور از آکادمی استفاده کنید؟', body: 'هر مرحله را باز کنید، محتوای آن را بخوانید و پس از یادگیری، مطالعه را تأیید کنید تا پیشرفت شما ثبت شود.' }
-        ], note: 'این آکادمی محتوای آموزشی است و هیچ سود یا بازدهی را تضمین نمی‌کند.' }
+        ] }
       },
       {
         id: 'gold', title: 'بازار طلا', description: 'شناخت XAUUSD و دلیل تمرکز ما روی طلا', icon: asset('stage-02-gold.webp'), enabled: true, locked: false,
         lesson: { intro: 'XAUUSD نماد رایج قیمت هر اونس طلا در برابر دلار آمریکاست. در این نماد، معامله‌گر با پیش‌بینی حرکت قیمت می‌تواند موقعیت خرید یا فروش باز کند.', sections: [
           { heading: 'خرید و فروش یعنی چه؟', body: 'در موقعیت BUY انتظار دارید قیمت افزایش پیدا کند؛ در موقعیت SELL انتظار دارید قیمت کاهش پیدا کند. در هر دو حالت، حرکت خلاف پیش‌بینی می‌تواند زیان ایجاد کند.' },
           { heading: 'چه عواملی روی طلا اثر می‌گذارند؟', body: 'قدرت دلار، نرخ بهره، داده‌های تورمی و اشتغال، تصمیم‌های بانک‌های مرکزی و رویدادهای ژئوپلیتیکی می‌توانند نوسان طلا را افزایش دهند.' },
-          { heading: 'چرا تمرکز این پروژه روی طلاست؟', body: 'طلا بازاری شناخته‌شده و پرمعامله است؛ با این حال نقدشوندگی و فرصت معاملاتی به معنی کم‌ریسک بودن آن نیست.' }
-        ], note: 'هنگام انتشار اخبار مهم، نوسان و لغزش قیمت می‌تواند بیشتر شود. از ریسک معامله آگاه باشید.' }
+          { heading: 'چرا تمرکز این پروژه روی طلاست؟', body: 'طلا بازاری شناخته‌شده و پرمعامله است و به همین دلیل در این مسیر آموزشی بررسی می‌شود.' }
+        ] }
       },
       {
         id: 'copy', title: 'کپی ترید', description: 'درک نحوه کپی شدن معاملات در حساب شما', icon: asset('stage-03-copy.webp'), enabled: true, locked: false,
@@ -41,7 +47,7 @@
           { heading: 'فرآیند چگونه انجام می‌شود؟', body: 'با باز یا بسته شدن معامله در حساب مبدأ، دستور متناظر طبق تنظیمات و محدودیت‌های اتصال برای حساب شما ارسال می‌شود.' },
           { heading: 'حساب معاملاتی متعلق به چه کسی است؟', body: 'معاملات در حساب معاملاتی خودتان اجرا می‌شوند. موجودی، معاملات باز و سود و زیان را از پنل بروکر بررسی می‌کنید.' },
           { heading: 'چه چیزی را باید کنترل کنید؟', body: 'میزان سرمایه درگیر، ضریب یا حجم کپی، حد ریسک، وضعیت اتصال و اختلاف احتمالی قیمت اجرا را بررسی کنید.' }
-        ], note: 'کپی‌ترید سود را تضمین نمی‌کند؛ نتیجه حساب شما ممکن است با حساب مبدأ متفاوت باشد.' }
+        ] }
       },
       {
         id: 'account', title: 'افتتاح حساب', description: 'ثبت‌نام و ساخت حساب معاملاتی در ePlanet', icon: asset('stage-04-account.webp'), enabled: true, locked: false,
@@ -54,7 +60,7 @@
         id: 'risk', title: 'سرمایه و ریسک', description: 'انتخاب سرمایه و تنظیم ریسک متناسب با شرایط شما', icon: asset('stage-05-risk.webp'), enabled: true, locked: false,
         lesson: { intro: 'پیش از اتصال حساب، مشخص کنید چه مقدار از سرمایه را آگاهانه در معرض ریسک معاملات قرار می‌دهید. مبلغ انتخابی باید با شرایط مالی و توان تحمل زیان شما متناسب باشد.', sections: [
           { heading: 'قبل از شروع بررسی کنید', body: 'میزان سرمایه قابل‌ریسک، حجم معاملات، اهرم، افت سرمایه قابل‌تحمل و شرایط توقف کپی را بشناسید.', bullets: ['با پول موردنیاز زندگی یا بدهی وارد معامله نشوید', 'ریسک هر معامله و مجموع معاملات باز را در نظر بگیرید', 'حداکثر زیان قابل‌تحمل خود را از قبل مشخص کنید', 'عملکرد حساب را به‌صورت منظم بررسی کنید'] },
-          { heading: 'انتظار واقع‌بینانه داشته باشید', body: 'دوره‌های زیان، نوسان و افت سرمایه بخشی از معاملات هستند. عملکرد گذشته تضمین‌کننده نتایج آینده نیست.' }
+          { heading: 'ارزیابی عملکرد', body: 'برای ارزیابی استراتژی، بازده، نوسان و افت سرمایه را در بازه‌های مختلف کنار هم بررسی کنید؛ عملکرد گذشته به‌تنهایی معیار کافی برای تصمیم‌گیری نیست.' }
         ], note: 'ممکن است بخشی یا تمام سرمایه‌ای که در معاملات درگیر می‌کنید از دست برود.' }
       },
       {
@@ -63,14 +69,14 @@
           { heading: 'اطلاعات موردنیاز', body: 'شناسه حساب و اطلاعاتی را که در فرآیند رسمی اتصال درخواست می‌شود، آماده داشته باشید. فقط از روش‌های تأییدشده پروژه استفاده کنید.' },
           { heading: 'پس از اتصال', body: 'وضعیت اتصال را بررسی کنید، تنظیمات کپی و میزان سرمایه درگیر را تأیید کنید و مطمئن شوید حساب صحیح انتخاب شده است.' },
           { heading: 'امنیت حساب', body: 'رمز اصلی بروکر، کد تأیید دومرحله‌ای و اطلاعات حساس را در پیام یا فرم غیررسمی وارد نکنید.' }
-        ], note: 'اتصال موفق به‌تنهایی به معنی فعال شدن معاملات یا تضمین نتیجه نیست.', ctaText: 'ورود به پنل کاربری', ctaUrl: '/profile' }
+        ], ctaText: 'ورود به پنل کاربری', ctaUrl: '/profile' }
       },
       {
         id: 'start', title: 'شروع معاملات', description: 'فعال‌سازی سیستم و پایش عملکرد حساب', icon: asset('stage-07-growth.webp'), enabled: true, locked: false,
         lesson: { intro: 'پیش از فعال‌سازی، اتصال حساب و تنظیمات ریسک را دوباره بررسی کنید. پس از شروع، وضعیت معاملات را در حساب شخصی خود پایش کنید.', sections: [
           { heading: 'چک‌لیست شروع', body: 'این موارد را پیش از فعال‌سازی مرور کنید.', bullets: ['شناسه حساب متصل‌شده صحیح است', 'میزان سرمایه و تنظیمات کپی را بررسی کرده‌اید', 'ریسک و افت سرمایه قابل‌تحمل را می‌شناسید', 'روش توقف یا قطع اتصال را می‌دانید'] },
           { heading: 'پس از فعال‌سازی', body: 'وضعیت اتصال، معاملات باز، موجودی و سود و زیان را به‌صورت منظم بررسی کنید. در صورت تغییر شرایط بازار یا وضعیت حساب، تنظیمات را دوباره ارزیابی کنید.' }
-        ], note: 'عنوان 10X وعده ده‌برابر شدن سرمایه نیست. معامله‌گری و کپی‌ترید همواره با احتمال زیان همراه‌اند.', ctaText: 'ورود به پنل کاربری', ctaUrl: '/profile' }
+        ], ctaText: 'ورود به پنل کاربری', ctaUrl: '/profile' }
       }
     ]
   };
@@ -122,20 +128,25 @@
     const coverage = Number(config.layout.backgroundCoverage);
     config.layout.backgroundCoverage = Number.isFinite(coverage) ? Math.max(50, Math.min(100, Math.round(coverage / 5) * 5)) : 100;
     if (!Array.isArray(config.stages) || config.stages.length !== 7) config.stages = structuredClone(DEFAULT_CONFIG.stages);
+    // Keep repeated promotional disclaimers out of the lesson UI, including server/studio overrides.
+    const conciseLessonNotes = new Set(['welcome', 'gold', 'copy', 'connection', 'start']);
+    config.stages = config.stages.map(stage => conciseLessonNotes.has(stage?.id) && stage.lesson
+      ? { ...stage, lesson: { ...stage.lesson, note: '' } }
+      : stage);
+    config.riskText = '';
     $('academy-title').textContent = config.title || DEFAULT_CONFIG.title;
     $('academy-subtitle').textContent = config.subtitle || DEFAULT_CONFIG.subtitle;
     $('academy-footer-text').textContent = config.footerText || '';
-    $('academy-risk-note').textContent = config.riskText || '';
     const logo = document.querySelector('.academy-logo');
     const brand = document.querySelector('.academy-brand');
     const logoUrl = safeUrl(config.logo || DEFAULT_CONFIG.logo);
-    // Older default assets contain the MMTrade wordmark, not the MATIN FUTURE mark shown in the approved reference.
+    // Keep the approved MMTRADE wordmark unless a dedicated academy lockup is configured.
     // Keep the purpose-built MF monogram until the admin uploads a dedicated brand lockup.
     const legacyLogo = /academy-mmtrade-challenge10x-logo-p42|matin-future-logo\.png/i.test(logoUrl);
     if (logo && brand && logoUrl && !legacyLogo) {
       logo.src = logoUrl; logo.hidden = false; brand.classList.add('has-custom-logo');
     } else if (logo && brand) {
-      logo.removeAttribute('src'); logo.hidden = true; brand.classList.remove('has-custom-logo');
+      logo.src = parityAsset('logo.webp'); logo.hidden = false; brand.classList.remove('has-custom-logo');
     }
     const atmosphere = document.querySelector('.academy-atmosphere');
     const bg = safeUrl(config.background || DEFAULT_CONFIG.background);
@@ -143,11 +154,11 @@
       atmosphere.classList.toggle('mf-bg-scroll', config.layout.backgroundScroll);
       atmosphere.style.setProperty('--mf-academy-bg-coverage', `${config.layout.backgroundCoverage}%`);
       document.documentElement.style.setProperty('--mf-academy-bg-coverage', `${config.layout.backgroundCoverage}%`);
-      if (bg) atmosphere.style.backgroundImage = `linear-gradient(180deg,rgba(0,12,9,.12) 0%,rgba(0,17,12,.18) 23%,rgba(0,19,13,.52) 54%,rgba(0,20,14,.62) 100%),url("${bg.replace(/"/g, '')}"),radial-gradient(ellipse at 50% 25%,#073c2a 0%,#031710 70%)`;
+      if (bg && !/\/academy-assets\/academy-bg-portrait\.webp(?:\?.*)?$/.test(bg)) atmosphere.style.backgroundImage = `linear-gradient(180deg,rgba(0,12,9,.12) 0%,rgba(0,17,12,.18) 23%,rgba(0,19,13,.52) 54%,rgba(0,20,14,.62) 100%),url("${bg.replace(/"/g, '')}"),radial-gradient(ellipse at 50% 25%,#073c2a 0%,#031710 70%)`;
     }
     const footer = $('academy-cta-section');
     const footerBg = safeUrl(config.footerBackground || DEFAULT_CONFIG.footerBackground);
-    if (footer && footerBg) footer.style.setProperty('--academy-footer-image', `url("${footerBg.replace(/"/g, '')}")`);
+    if (footer && footerBg && !/\/academy-assets\/academy-footer-mountains\.webp(?:\?.*)?$/.test(footerBg)) footer.style.setProperty('--academy-footer-image', `url("${footerBg.replace(/"/g, '')}")`);
     const cta = $('academy-cta');
     const ctaHref = safeUrl(config.cta.href || '/profile');
     cta.href = ctaHref || '/profile';
@@ -162,27 +173,29 @@
   }
   function renderStages() {
     const root = $('academy-stages');
+    if (!root) return;
     root.replaceChildren();
     const stages = config.stages.filter(stage => stage && stage.enabled !== false);
     stages.forEach((stage, visibleIndex) => {
       const originalIndex = config.stages.findIndex(x => x.id === stage.id);
-      const button = node('button', 'stage-card' + (readStages.has(stage.id) ? ' is-complete' : '') + (stage.locked ? ' is-locked' : ''));
+      const button = node('button', 'stage-card row glass' + (readStages.has(stage.id) ? ' is-complete' : '') + (stage.locked ? ' is-locked' : ''));
       button.type = 'button';
       button.disabled = !!stage.locked;
       button.setAttribute('aria-label', `مرحله ${faNum(originalIndex + 1)}: ${stage.title}`);
-      const number = node('span', 'stage-number', faNum(originalIndex + 1));
-      const copy = node('span', 'stage-copy');
-      copy.append(node('strong', 'stage-title', stage.title));
+      const inner = node('span', 'in');
+      const number = node('span', 'stage-number ch', '‹');
+      number.setAttribute('aria-hidden','true');
+      const copy = node('span', 'stage-copy t');
+      copy.append(node('span', 'stage-title', stage.title));
       copy.append(node('small', 'stage-description', stage.description || 'برای مشاهده آموزش لمس کنید'));
-      const art = node('span', 'stage-art');
-      const img = node('img');
-      img.src = safeUrl(stage.icon) || asset('stage-01-rocket.webp');
+      const img = node('img', 'stage-art ic');
+      img.src = stageIcon(stage, originalIndex);
       img.alt = '';
       img.loading = visibleIndex > 2 ? 'lazy' : 'eager';
       img.decoding = 'async';
       img.onerror = () => { img.hidden = true; };
-      art.append(img);
-      button.append(number, copy, art);
+      inner.append(number, copy, img);
+      button.append(inner);
       button.addEventListener('click', () => openLesson(stage, originalIndex));
       root.append(button);
     });
@@ -204,6 +217,8 @@
     modalReturnFocus = document.activeElement;
     $('lesson-stage-label').textContent = `مرحله ${faNum(index + 1)} از ۷`;
     $('lesson-title').textContent = stage.lesson?.title || stage.title;
+    $('academy-lesson-icon').src = stageIcon(stage,index);
+    $('academy-lesson-progress').style.width = ((index+1)/7*100)+'%';
     const content = $('lesson-content');
     content.replaceChildren();
     if (stage.lesson?.intro) content.append(node('p', '', stage.lesson.intro));
@@ -225,25 +240,29 @@
     actions.replaceChildren();
     if (stage.lesson?.ctaText && stage.lesson?.ctaUrl) {
       const url = safeUrl(stage.lesson.ctaUrl);
-      if (url) { const link = node('a', '', stage.lesson.ctaText); link.href = url; if (/^https:\/\//.test(url)) { link.target = '_blank'; link.rel = 'noopener noreferrer'; } actions.append(link); }
+      if (url) { const link = node('a', 'nav-btn next-btn', stage.lesson.ctaText); link.href = url; if (/^https:\/\//.test(url)) { link.target = '_blank'; link.rel = 'noopener noreferrer'; } actions.append(link); }
     }
     if (readStages.has(stage.id)) {
-      const done = node('button', 'secondary', '✓ این مرحله مطالعه شده است');
+      const done = node('button', 'secondary nav-btn', '✓ مطالعه شده');
       done.type = 'button'; done.disabled = true; actions.append(done);
     } else {
-      const complete = node('button', '', '✓ مطالعه کردم');
+      const complete = node('button', 'nav-btn next-btn', '✓ مطالعه کردم');
       complete.type = 'button';
       complete.addEventListener('click', () => completeStage(stage.id, complete));
       actions.append(complete);
     }
-    const close = node('button', 'secondary', 'بستن');
+    const close = node('button', 'secondary nav-btn', 'بستن');
     close.type = 'button'; close.addEventListener('click', closeLesson); actions.append(close);
     $('academy-modal').hidden = false;
+    document.querySelector('.academy-shell').hidden = true;
+    document.body.classList.add('lesson-open');
     document.body.style.overflow = 'hidden';
     $('academy-modal-close')?.focus?.();
   }
   function closeLesson() {
     $('academy-modal').hidden = true;
+    document.querySelector('.academy-shell').hidden = false;
+    document.body.classList.remove('lesson-open');
     document.body.style.overflow = '';
     currentStage = null;
     if (modalReturnFocus && typeof modalReturnFocus.focus === 'function') modalReturnFocus.focus();
