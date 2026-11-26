@@ -136,7 +136,7 @@
     const logo = document.querySelector('.academy-logo');
     const brand = document.querySelector('.academy-brand');
     const logoUrl = safeUrl(config.logo || DEFAULT_CONFIG.logo);
-    // Older default assets contain the MMTrade wordmark, not the MATIN FUTURE mark shown in the approved reference.
+    // Keep the approved MMTRADE wordmark unless a dedicated academy lockup is configured.
     // Keep the purpose-built MF monogram until the admin uploads a dedicated brand lockup.
     const legacyLogo = /academy-mmtrade-challenge10x-logo-p42|matin-future-logo\.png/i.test(logoUrl);
     if (logo && brand && logoUrl && !legacyLogo) {
