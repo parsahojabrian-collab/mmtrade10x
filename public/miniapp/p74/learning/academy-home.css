@@ -86,3 +86,96 @@
 @media(max-height:620px){
   .academy-shell .s1{grid-template-rows:clamp(104px,22dvh,139px) minmax(0,1fr) auto}
 }
+
+
+/* MMTRADE_ACADEMY_SCROLL_LAYOUT_R4 */
+
+/* The academy is a fixed-height app surface; make the page shell the
+   single vertical scroll owner instead of shrinking seven cards into a grid. */
+html,
+body.academy-page {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.academy-shell.wrap {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-padding-bottom: calc(var(--mmu-nav-reserve, 111px) + 16px);
+  padding-bottom: calc(
+    var(--mmu-nav-reserve, 111px) +
+    env(safe-area-inset-bottom, 0px) +
+    18px
+  ) !important;
+}
+
+.academy-shell.wrap::-webkit-scrollbar {
+  display: none;
+}
+
+/* Return the index to natural document flow. Keep the existing artwork,
+   header composition, card skin, CTA and lesson/modal markup unchanged. */
+.academy-shell.wrap > .s1 {
+  display: block !important;
+  width: 100%;
+  height: auto !important;
+  min-height: 100% !important;
+  overflow: visible !important;
+}
+
+.academy-shell .academy-header.hd {
+  height: auto;
+  min-height: 0;
+}
+
+.academy-stages-wrap {
+  height: auto !important;
+  min-height: 0;
+  overflow: visible !important;
+}
+
+.academy-stages.list {
+  display: grid !important;
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  grid-template-rows: none !important;
+  grid-auto-rows: minmax(clamp(78px, 7.6dvh, 88px), auto) !important;
+  gap: clamp(5px, .7dvh, 8px);
+  padding: 3px 9px 12px;
+}
+
+.academy-stages .row {
+  width: 100%;
+  height: auto !important;
+  min-height: clamp(78px, 7.6dvh, 88px) !important;
+}
+
+.academy-stages .row .ic {
+  width: clamp(64px, 26%, 108px);
+  height: auto;
+  max-height: clamp(60px, 7dvh, 76px) !important;
+  object-fit: contain;
+}
+
+.academy-cta-section {
+  margin-bottom: 8px;
+}
+
+@media (max-height: 620px) {
+  .academy-stages.list {
+    grid-auto-rows: minmax(72px, auto) !important;
+    gap: 5px;
+  }
+
+  .academy-stages .row {
+    min-height: 72px !important;
+  }
+}
